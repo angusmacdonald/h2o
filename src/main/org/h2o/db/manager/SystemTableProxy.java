@@ -325,7 +325,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public Set<DatabaseInstanceWrapper> getDatabaseInstances() throws RPCException, MovedException {
 
         try {
-            return marshaller.deserializeCollectionDatabaseInstanceWrapper(makeCall("getDatabaseInstances").getJSONArray());
+            return marshaller.deserializeSetDatabaseInstanceWrapper(makeCall("getDatabaseInstances").getJSONArray());
         }
         catch (final MovedException e) {
             throw e;
@@ -357,7 +357,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
         try {
             final JSONArray params = new JSONArray();
             params.put(marshaller.serializeDatabaseID(localMachineLocation).getValue());
-            return marshaller.deserializeCollectionTableManagerWrapper(makeCall("getLocalDatabaseInstances", params).getJSONArray());
+            return marshaller.deserializeSetTableManagerWrapper(makeCall("getLocalDatabaseInstances", params).getJSONArray());
         }
         catch (final MovedException e) {
             throw e;

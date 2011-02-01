@@ -1,6 +1,7 @@
 package org.h2o.db;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -496,13 +497,31 @@ public class H2OMarshaller extends Marshaller {
         return new JSONValue(object);
     }
 
-    public Set<DatabaseInstanceWrapper> deserializeCollectionDatabaseInstanceWrapper(final JSONArray array) throws DeserializationException {
+    public Set<DatabaseInstanceWrapper> deserializeSetDatabaseInstanceWrapper(final JSONArray array) throws DeserializationException {
 
         if (array == null) { return null; }
 
         try {
 
             final Set<DatabaseInstanceWrapper> result = new HashSet<DatabaseInstanceWrapper>();
+            for (int i = 0; i < array.length(); i++) {
+                result.add(deserializeDatabaseInstanceWrapper(array.getJSONObject(i)));
+            }
+
+            return result;
+        }
+        catch (final Exception e) {
+            throw new DeserializationException(e);
+        }
+    }
+
+    public Collection<DatabaseInstanceWrapper> deserializeCollectionDatabaseInstanceWrapper(final JSONArray array) throws DeserializationException {
+
+        if (array == null) { return null; }
+
+        try {
+
+            final Collection<DatabaseInstanceWrapper> result = new ArrayList<DatabaseInstanceWrapper>(array.length());
             for (int i = 0; i < array.length(); i++) {
                 result.add(deserializeDatabaseInstanceWrapper(array.getJSONObject(i)));
             }
@@ -648,7 +667,7 @@ public class H2OMarshaller extends Marshaller {
         return object;
     }
 
-    public Set<TableManagerWrapper> deserializeCollectionTableManagerWrapper(final JSONArray array) throws DeserializationException {
+    public Set<TableManagerWrapper> deserializeSetTableManagerWrapper(final JSONArray array) throws DeserializationException {
 
         if (array == null) { return null; }
 
@@ -752,7 +771,7 @@ public class H2OMarshaller extends Marshaller {
         return object;
     }
 
-    private Set<Set<DatabaseID>> deserializeCollectionSetDatabaseID(final JSONArray array) throws DeserializationException {
+    private Set<Set<DatabaseID>> deserializeSetSetDatabaseID(final JSONArray array) throws DeserializationException {
 
         if (array == null) { return null; }
 
@@ -760,7 +779,25 @@ public class H2OMarshaller extends Marshaller {
 
             final HashSet<Set<DatabaseID>> result = new HashSet<Set<DatabaseID>>();
             for (int i = 0; i < array.length(); i++) {
-                result.add(deserializeCollectionDatabaseID(array.getJSONArray(i)));
+                result.add(deserializeSetDatabaseID(array.getJSONArray(i)));
+            }
+
+            return result;
+        }
+        catch (final Exception e) {
+            throw new DeserializationException(e);
+        }
+    }
+
+    private Collection<Set<DatabaseID>> deserializeCollectionSetDatabaseID(final JSONArray array) throws DeserializationException {
+
+        if (array == null) { return null; }
+
+        try {
+
+            final Collection<Set<DatabaseID>> result = new ArrayList<Set<DatabaseID>>(array.length());
+            for (int i = 0; i < array.length(); i++) {
+                result.add(deserializeSetDatabaseID(array.getJSONArray(i)));
             }
 
             return result;
@@ -781,13 +818,13 @@ public class H2OMarshaller extends Marshaller {
         return new JSONValue(object);
     }
 
-    public Set<TableManagerWrapper> deserializeSetTableManagerWrapper(final JSONArray array) throws DeserializationException {
+    public Collection<TableManagerWrapper> deserializeCollectionTableManagerWrapper(final JSONArray array) throws DeserializationException {
 
         if (array == null) { return null; }
 
         try {
 
-            final Set<TableManagerWrapper> result = new HashSet<TableManagerWrapper>();
+            final Collection<TableManagerWrapper> result = new ArrayList<TableManagerWrapper>(array.length());
             for (int i = 0; i < array.length(); i++) {
                 result.add(deserializeTableManagerWrapper(array.getJSONObject(i)));
             }
@@ -856,13 +893,13 @@ public class H2OMarshaller extends Marshaller {
         return object;
     }
 
-    private Set<DatabaseID> deserializeCollectionDatabaseID(final JSONArray array) throws DeserializationException {
+    private Collection<DatabaseID> deserializeCollectionDatabaseID(final JSONArray array) throws DeserializationException {
 
         if (array == null) { return null; }
 
         try {
 
-            final Set<DatabaseID> result = new HashSet<DatabaseID>();
+            final Collection<DatabaseID> result = new ArrayList<DatabaseID>(array.length());
             for (int i = 0; i < array.length(); i++) {
                 result.add(deserializeDatabaseID(array.getJSONObject(i)));
             }
@@ -1023,7 +1060,7 @@ public class H2OMarshaller extends Marshaller {
         if (object == null) { return null; }
 
         try {
-            final Set<DatabaseInstanceWrapper> keys = deserializeCollectionDatabaseInstanceWrapper(object.getJSONArray(KEYS));
+            final Set<DatabaseInstanceWrapper> keys = deserializeSetDatabaseInstanceWrapper(object.getJSONArray(KEYS));
             final Collection<Integer> values = deserializeCollectionInteger(object.getJSONArray(VALUES));
 
             final HashMap<DatabaseInstanceWrapper, Integer> result = new HashMap<DatabaseInstanceWrapper, Integer>();
@@ -1061,7 +1098,7 @@ public class H2OMarshaller extends Marshaller {
 
         try {
 
-            final Set<Integer> result = new HashSet<Integer>();
+            final Collection<Integer> result = new ArrayList<Integer>(array.length());
             for (int i = 0; i < array.length(); i++) {
                 result.add(array.getInt(i));
             }

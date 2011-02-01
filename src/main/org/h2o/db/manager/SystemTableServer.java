@@ -166,7 +166,7 @@ public class SystemTableServer extends ApplicationServer {
 
                 final ITableManagerRemote p0 = marshaller.deserializeITableManagerRemote(args.getString(0));
                 final TableInfo p1 = marshaller.deserializeTableInfo(args.getJSONObject(1));
-                final Set<DatabaseInstanceWrapper> p2 = marshaller.deserializeCollectionDatabaseInstanceWrapper(args.getJSONArray(2));
+                final Set<DatabaseInstanceWrapper> p2 = marshaller.deserializeSetDatabaseInstanceWrapper(args.getJSONArray(2));
                 return new JSONValue(system_table.addTableInformation(p0, p1, p2));
             }
         });

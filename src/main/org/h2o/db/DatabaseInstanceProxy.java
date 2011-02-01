@@ -61,6 +61,7 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     @Override
     public boolean isAlive() throws RPCException, MovedException {
 
+        System.out.println("calling isAlive");
         try {
             return makeCall("isAlive").getBoolean();
         }
@@ -68,6 +69,7 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
             throw e;
         }
         catch (final Exception e) {
+            System.err.println("isAlive:" + e.getMessage());
             dealWithException(e);
             return false; // not reached
         }

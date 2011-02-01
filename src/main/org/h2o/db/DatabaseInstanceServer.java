@@ -81,6 +81,15 @@ public class DatabaseInstanceServer extends ApplicationServer {
             }
         });
 
+        handler_map.put("isAlive", new IHandler() {
+
+            @Override
+            public JSONValue execute(final JSONArray args) throws Exception {
+
+                return new JSONValue(instance.isAlive());
+            }
+        });
+
         // DatabaseID getSystemTableURL() throws RPCException;
 
         handler_map.put("getSystemTableURL", new IHandler() {

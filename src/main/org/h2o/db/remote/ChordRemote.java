@@ -145,6 +145,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
     private DatabaseID predecessorURL;
 
+    public static final String REGISTRY_PREFIX = "H2O_DATABASE_INSTANCE_";
+
     /**
      * Port to be used for the next database instance. Currently used for testing.
      */
@@ -498,12 +500,15 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
             final Map<String, Integer> serverLocations = registry.getEntries();
 
-            for (final Entry<String, Integer> databaseServerLocation : serverLocations.entrySet()) {
+            for (final Entry<String, Integer> applicationRegistryMap : serverLocations.entrySet()) {
 
-                if (!databaseServerLocation.equals(localMachineLocation.getID())) {
+                if (applicationRegistryMap.getKey().startsWith(REGISTRY_PREFIX) && !applicationRegistryMap.getKey().equals(REGISTRY_PREFIX + localMachineLocation.getID())) {
+
                     //If this is not the local machine being listed.
 
-                    final IDatabaseInstanceRemote instanceReference = DatabaseInstanceProxy.getProxy(new InetSocketAddress(hostname, databaseServerLocation.getValue()));
+                    Diagnostic.trace("Looking for another active database ID in application registry. Currently looking at: " + applicationRegistryMap.getKey());
+
+                    final IDatabaseInstanceRemote instanceReference = DatabaseInstanceProxy.getProxy(new InetSocketAddress(hostname, applicationRegistryMap.getValue()));
 
                     try {
                         instanceReference.isAlive();
@@ -511,6 +516,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                         return instanceReference; // return a reference if this database instance is active.
                     }
                     catch (final Exception e) {
+
+                        ErrorHandling.hardExceptionError(e, "Couldn't connect to database instance with ID: " + applicationRegistryMap.getKey());
                         //Try again if the database is not active.
                     }
                 }
@@ -551,7 +558,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         try {
             final IRegistry registry = LocateRegistry.getRegistry(InetAddress.getByName(hostname));
 
-            final int port = registry.lookup(databaseName);
+            final int port = registry.lookup(REGISTRY_PREFIX + databaseName);
 
             return DatabaseInstanceProxy.getProxy(new InetSocketAddress(hostname, port));
         }
