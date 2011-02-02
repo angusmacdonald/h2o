@@ -18,7 +18,7 @@ import uk.ac.standrews.cs.nds.rpc.Marshaller;
 
 public class TableManagerServer extends ApplicationServer {
 
-    private static final String DEFAULT_TABLE_MANAGER_REGISTRY_KEY = "H2O_TABLE_MANAGER";
+    private static final String DEFAULT_TABLE_MANAGER_REGISTRY_KEY = null;
 
     private final ITableManagerRemote table_manager;
     private final H2OMarshaller marshaller;

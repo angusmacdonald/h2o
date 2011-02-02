@@ -22,7 +22,7 @@ import uk.ac.standrews.cs.nds.util.NetworkUtil;
 
 public class SystemTableServer extends ApplicationServer {
 
-    private static final String DEFAULT_SYSTEM_TABLE_REGISTRY_KEY = "H2O_SYSTEM_TABLE";
+    private static final String DEFAULT_SYSTEM_TABLE_REGISTRY_KEY = null;
 
     private final ISystemTableMigratable system_table;
     private final H2OMarshaller marshaller;

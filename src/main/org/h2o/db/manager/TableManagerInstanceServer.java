@@ -25,7 +25,7 @@ import uk.ac.standrews.cs.nds.util.NetworkUtil;
  */
 public class TableManagerInstanceServer extends ApplicationServer {
 
-    private static final String DEFAULT_REGISTRY_KEY = "H2O_TABLE_MANAGER_INSTANCE";
+    private static final String DEFAULT_REGISTRY_KEY = null;
 
     private final H2OMarshaller marshaller;
 
@@ -36,11 +36,6 @@ public class TableManagerInstanceServer extends ApplicationServer {
 
     public TableManagerInstanceServer(final int port) {
 
-        this(port, DEFAULT_REGISTRY_KEY);
-    }
-
-    public TableManagerInstanceServer(final int port, final String registry_key) {
-
         super.setPort(port);
         try {
             super.setLocalAddress(NetworkUtil.getLocalIPv4Address());
@@ -50,7 +45,7 @@ public class TableManagerInstanceServer extends ApplicationServer {
         }
 
         marshaller = new H2OMarshaller();
-        this.registry_key = registry_key;
+        registry_key = null;
 
         table_manager_instances = new HashMap<String, TableManagerServer>();
     }
