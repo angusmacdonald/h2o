@@ -333,7 +333,7 @@ public class SystemTableServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                final IDatabaseInstanceRemote p0 = marshaller.deserializeIDatabaseInstanceRemote(args.getJSONObject(0));
+                final IDatabaseInstanceRemote p0 = marshaller.deserializeIDatabaseInstanceRemote(args.getString(0));
                 system_table.removeConnectionInformation(p0);
                 return JSONValue.NULL;
             }

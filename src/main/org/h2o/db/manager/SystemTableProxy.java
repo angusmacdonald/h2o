@@ -140,12 +140,12 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     }
 
     @Override
-    public int addConnectionInformation(final DatabaseID databaseURL, final DatabaseInstanceWrapper databaseInstanceWrapper) throws RPCException, MovedException, SQLException {
+    public int addConnectionInformation(final DatabaseID databaseID, final DatabaseInstanceWrapper databaseInstanceWrapper) throws RPCException, MovedException, SQLException {
 
         try {
 
             final JSONArray params = new JSONArray();
-            params.put(marshaller.serializeDatabaseID(databaseURL).getValue());
+            params.put(marshaller.serializeDatabaseID(databaseID).getValue());
             params.put(marshaller.serializeDatabaseInstanceWrapper(databaseInstanceWrapper).getValue());
             return makeCall("addConnectionInformation", params).getInt();
         }
@@ -310,7 +310,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
         try {
             final JSONArray params = new JSONArray();
             params.put(marshaller.serializeDatabaseID(databaseURL).getValue());
-            return marshaller.deserializeIDatabaseInstanceRemote(makeCall("getDatabaseInstance", params).getJSONObject());
+            return marshaller.deserializeIDatabaseInstanceRemote(makeCall("getDatabaseInstance", params).getString());
         }
         catch (final MovedException e) {
             throw e;

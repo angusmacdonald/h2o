@@ -200,5 +200,14 @@ public class DatabaseInstanceServer extends ApplicationServer {
             }
         });
 
+        handler_map.put("getAddress", new IHandler() {
+
+            @Override
+            public JSONValue execute(final JSONArray args) throws Exception {
+
+                return marshaller.serializeInetSocketAddress(instance.getAddress());
+            }
+        });
+
     }
 }

@@ -150,10 +150,11 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    public IDatabaseInstanceRemote deserializeIDatabaseInstanceRemote(final JSONObject object) {
+    public IDatabaseInstanceRemote deserializeIDatabaseInstanceRemote(final String address_string) throws DeserializationException {
 
-        // TODO FIX ME I AM A REFERENCE TYPE
-        return null;
+        final InetSocketAddress address = deserializeInetSocketAddress(address_string);
+
+        return DatabaseInstanceProxy.getProxy(address);
     }
 
     /////////////////////
@@ -163,8 +164,8 @@ public class H2OMarshaller extends Marshaller {
         if (source == null) { return JSONValue.NULL; }
         final JSONObject object = new JSONObject();
         try {
-            object.put(DATABASE_ID, new JSONValue(source.getID()));
-            object.put(DATABASE_URL, new JSONValue(source.getURLwithRMIPort()));
+            object.put(DATABASE_ID, source.getID());
+            object.put(DATABASE_URL, source.getURLwithRMIPort());
         }
         catch (final JSONException e) {
             Diagnostic.trace(DiagnosticLevel.RUN, "error serializing DatabaseID: " + e.getMessage());
@@ -331,13 +332,12 @@ public class H2OMarshaller extends Marshaller {
 
         final JSONValue databaseURL = serializeDatabaseID(source.getURL());
         final JSONValue databaseInstance = serializeIDatabaseInstanceRemote(source.getDatabaseInstance());
-        final JSONValue active = new JSONValue(source.getActive());
 
         final JSONObject object = new JSONObject();
         try {
-            object.put(DATABASE_URL, databaseURL);
-            object.put(DATABASE_INSTANCE, databaseInstance);
-            object.put(ACTIVE, active);
+            object.put(DATABASE_URL, databaseURL.getValue());
+            object.put(DATABASE_INSTANCE, databaseInstance.getValue());
+            object.put(ACTIVE, source.getActive());
         }
         catch (final JSONException e) {
             Diagnostic.trace(DiagnosticLevel.RUN, "error serializing DatabaseInstanceWrapper: " + e.getMessage());
@@ -352,7 +352,7 @@ public class H2OMarshaller extends Marshaller {
         try {
 
             final DatabaseID databaseURL = deserializeDatabaseID(object.getJSONObject(DATABASE_URL));
-            final IDatabaseInstanceRemote databaseInstance = deserializeIDatabaseInstanceRemote(object.getJSONObject(DATABASE_INSTANCE));
+            final IDatabaseInstanceRemote databaseInstance = deserializeIDatabaseInstanceRemote(object.getString(DATABASE_INSTANCE));
             final boolean active = object.getBoolean(ACTIVE);
 
             return new DatabaseInstanceWrapper(databaseURL, databaseInstance, active);
@@ -1031,6 +1031,7 @@ public class H2OMarshaller extends Marshaller {
             return result;
         }
         catch (final Exception e) {
+            ErrorHandling.exceptionErrorNoEvent(e, "Failure on database instance wrapper queue deserialization.");
             throw new DeserializationException(e);
         }
     }

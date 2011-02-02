@@ -273,7 +273,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                         final String chordPort = localSettings.getProperty("chordPort");
 
                         int portToUse = getCurrentPort();
-                        if (chordPort != null) {
+                        if (chordPort != null) { //TODO remove
                             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Obtained chord port from disk: " + chordPort);
                             portToUse = Integer.parseInt(chordPort);
                         }
@@ -523,7 +523,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                 }
             }
 
-            ErrorHandling.errorNoEvent("Failed to find an active instance on the machine specified: " + hostname);
+            ErrorHandling.errorNoEvent("Failed to find an active instance on the machine specified: " + hostname + ". Number of application registry entries: " + serverLocations.size());
 
             return null;
         }
@@ -669,8 +669,14 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
         try {
             final IDatabaseInstanceRemote lookupInstance = getDatabaseInstanceAt(remoteHostname);
-            actualSystemTableLocation = lookupInstance.getSystemTableURL();
-            systemTableRef.setSystemTableURL(actualSystemTableLocation);
+
+            if (lookupInstance != null) {
+                actualSystemTableLocation = lookupInstance.getSystemTableURL();
+                systemTableRef.setSystemTableURL(actualSystemTableLocation);
+            }
+            else {
+                ErrorHandling.hardError("Couldn't find another lookup instance on startup.");
+            }
         }
         catch (final RPCException e) {
             e.printStackTrace();
@@ -858,25 +864,31 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
             final IDatabaseInstanceRemote successorInstance = getDatabaseInstanceAt(hostname);
 
-            if (systemTableRef.isSystemTableLocal() || localTableManagers != null && localTableManagers.size() > 0) {
+            if (successorInstance != null) {
 
-                final DatabaseInstanceWrapper successorInstanceWrapper = new DatabaseInstanceWrapper(successorInstance.getURL(), successorInstance, true);
+                if (systemTableRef.isSystemTableLocal() || localTableManagers != null && localTableManagers.size() > 0) {
 
-                metaDataReplicaManager.replicateMetaDataToRemoteInstance(systemTableRef, true, successorInstanceWrapper);
+                    final DatabaseInstanceWrapper successorInstanceWrapper = new DatabaseInstanceWrapper(successorInstance.getURL(), successorInstance, true);
+
+                    metaDataReplicaManager.replicateMetaDataToRemoteInstance(systemTableRef, true, successorInstanceWrapper);
+                }
+
+                /*
+                 * Now do the same thing for table manager replication.
+                 */
+
+                if (localTableManagers != null && metaDataReplicaManager != null) {
+
+                    // delete query must remove entries for all table managers
+                    // replicated on this machine.
+
+                    final DatabaseInstanceWrapper successorInstanceWrapper = new DatabaseInstanceWrapper(successorInstance.getURL(), successorInstance, true);
+
+                    metaDataReplicaManager.replicateMetaDataToRemoteInstance(systemTableRef, false, successorInstanceWrapper);
+                }
             }
-
-            /*
-             * Now do the same thing for table manager replication.
-             */
-
-            if (localTableManagers != null && metaDataReplicaManager != null) {
-
-                // delete query must remove entries for all table managers
-                // replicated on this machine.
-
-                final DatabaseInstanceWrapper successorInstanceWrapper = new DatabaseInstanceWrapper(successorInstance.getURL(), successorInstance, true);
-
-                metaDataReplicaManager.replicateMetaDataToRemoteInstance(systemTableRef, false, successorInstanceWrapper);
+            else {
+                Diagnostic.trace("Not yet able to find the successor instance of this database, so unable to replicate any more state onto it.");
             }
         }
         catch (final RPCException e) {

@@ -6,8 +6,9 @@ import java.net.UnknownHostException;
 
 import org.h2.util.NetUtils;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
-
 
 public class H2ONetUtils {
 
@@ -18,17 +19,17 @@ public class H2ONetUtils {
      * @return an open TCP port.
      */
     public static int getInactiveTCPPort(final int preferredTCPPort) {
-    
+
         Socket sock = null; //Attempt to create a socket connection to the specified port.
-    
+
         int tcpPortToUse = preferredTCPPort; //The port we'll try to connect to. The upcoming loop will keep on attempting connections until an open port is found.
-    
+
         boolean freePortFound = false;
-    
+
         while (!freePortFound) {
             try {
                 sock = new Socket(NetUtils.getLocalAddress(), tcpPortToUse);
-                ErrorHandling.errorNoEvent("Can't use preferred TCP port " + tcpPortToUse + "");
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Can't use preferred TCP port " + tcpPortToUse + "");
                 tcpPortToUse++;
             }
             catch (final UnknownHostException e) {
@@ -48,11 +49,10 @@ public class H2ONetUtils {
                 catch (final IOException e) {
                     //Not important at this point.
                 }
-    
+
             }
         }
-    
+
         return tcpPortToUse;
     }
-
 }
