@@ -194,12 +194,12 @@ public class H2OMarshaller extends Marshaller {
 
     public JSONValue serializeTableInfo(final TableInfo source) {
 
-        final JSONValue tableName = new JSONValue(source.getTableName());
-        final JSONValue schemaName = new JSONValue(source.getSchemaName());
+        final String tableName = source.getTableName();
+        final String schemaName = source.getSchemaName();
         final JSONValue modificationID = new JSONValue(source.getModificationID());
         final JSONValue tableSet = new JSONValue(source.getTableSet());
-        final JSONValue tableType = new JSONValue(source.getTableType());
-        final JSONValue dbLocation = serializeDatabaseID(source.getDatabaseID());
+        final String tableType = source.getTableType();
+        final JSONValue databaseID = serializeDatabaseID(source.getDatabaseID());
 
         final JSONObject object = new JSONObject();
         try {
@@ -207,8 +207,20 @@ public class H2OMarshaller extends Marshaller {
             object.put(SCHEMA_NAME, schemaName);
             object.put(MODIFICATION_ID, modificationID);
             object.put(TABLE_SET, tableSet);
-            object.put(TABLE_TYPE, tableType);
-            object.put(DATABASE_LOCATION, dbLocation);
+
+            if (source.getTableType() != null) {
+                object.put(TABLE_TYPE, tableType);
+            }
+            else {
+                object.put(TABLE_TYPE, JSONObject.NULL);
+            }
+
+            if (source.getDatabaseID() != null) {
+                object.put(DATABASE_LOCATION, databaseID.getValue());
+            }
+            else {
+                object.put(DATABASE_LOCATION, JSONObject.NULL);
+            }
         }
         catch (final JSONException e) {
             Diagnostic.trace(DiagnosticLevel.RUN, "error serializing TableInfo: " + e.getMessage());
@@ -226,12 +238,20 @@ public class H2OMarshaller extends Marshaller {
             final String schemaName = object.getString(SCHEMA_NAME);
             final long modificationID = object.getLong(MODIFICATION_ID);
             final int tableSet = object.getInt(TABLE_SET);
-            final String tableType = object.getString(TABLE_TYPE);
-            final DatabaseID dbLocation = deserializeDatabaseID(object.getJSONObject(DATABASE_LOCATION));
 
+            String tableType = null;
+            if (!object.isNull(TABLE_TYPE)) {
+                tableType = object.getString(TABLE_TYPE);
+            }
+
+            DatabaseID dbLocation = null;
+            if (!object.isNull(DATABASE_LOCATION)) {
+                dbLocation = deserializeDatabaseID(object.getJSONObject(DATABASE_LOCATION));
+            }
             return new TableInfo(tableName, schemaName, modificationID, tableSet, tableType, dbLocation);
         }
         catch (final Exception e) {
+            ErrorHandling.exceptionError(e, "Couldn't deserialize TableInfo");
             throw new DeserializationException(e);
         }
     }
@@ -404,6 +424,8 @@ public class H2OMarshaller extends Marshaller {
 
     public JSONValue serializeTableManagerWrapper(final TableManagerWrapper source) {
 
+        if (source == null) { return JSONValue.NULL; }
+
         final JSONValue tableInfo = serializeTableInfo(source.getTableInfo());
         final JSONValue tableManager = serializeITableManagerRemote(source.getTableManager());
         final JSONValue tableManagerURL = serializeDatabaseID(source.getURL());
@@ -412,7 +434,13 @@ public class H2OMarshaller extends Marshaller {
         try {
             object.put(TABLE_INFO, tableInfo);
             object.put(TABLE_MANAGER, tableManager);
-            object.put(TABLE_MANAGER_URL, tableManagerURL);
+
+            if (source.getURL() == null) {
+                object.put(TABLE_MANAGER_URL, JSONObject.NULL);
+            }
+            else {
+                object.put(TABLE_MANAGER_URL, tableManagerURL);
+            }
         }
         catch (final JSONException e) {
             Diagnostic.trace(DiagnosticLevel.RUN, "error serializing LockType: " + e.getMessage());
@@ -427,7 +455,12 @@ public class H2OMarshaller extends Marshaller {
         try {
             final TableInfo tableInfo = deserializeTableInfo(object.getJSONObject(TABLE_INFO));
             final ITableManagerRemote tableManager = deserializeITableManagerRemote(object.getString(TABLE_MANAGER));
-            final DatabaseID tableManagerURL = deserializeDatabaseID(object.getJSONObject(TABLE_MANAGER_URL));
+
+            DatabaseID tableManagerURL = null;
+
+            if (!object.isNull(TABLE_MANAGER_URL)) {
+                tableManagerURL = deserializeDatabaseID(object.getJSONObject(TABLE_MANAGER_URL));
+            }
 
             return new TableManagerWrapper(tableInfo, tableManager, tableManagerURL);
         }

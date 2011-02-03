@@ -24,6 +24,7 @@ import org.json.JSONArray;
 import uk.ac.standrews.cs.nds.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.rpc.Proxy;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
@@ -77,6 +78,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
             throw e;
         }
         catch (final Exception e) {
+            ErrorHandling.exceptionError(e, "Error looking up a table manager location.");
             dealWithException(e);
             return null; // not reached
         }
