@@ -69,6 +69,7 @@ import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 import uk.ac.standrews.cs.stachord.impl.ChordNodeFactory;
 import uk.ac.standrews.cs.stachord.impl.RemoteChordException;
 import uk.ac.standrews.cs.stachord.interfaces.IChordNode;
@@ -500,6 +501,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
             final Map<String, Integer> serverLocations = registry.getEntries();
 
+            Diagnostic.trace(PrettyPrinter.toString("Registry contents: " + serverLocations.keySet()));
+
             for (final Entry<String, Integer> applicationRegistryMap : serverLocations.entrySet()) {
 
                 if (applicationRegistryMap.getKey().startsWith(REGISTRY_PREFIX) && !applicationRegistryMap.getKey().equals(REGISTRY_PREFIX + localMachineLocation.getID())) {
@@ -642,6 +645,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             try {
                 chordNode = ChordNodeFactory.createLocalNode(localChordAddress);
                 chordNode.join(ChordNodeFactory.bindToRemoteNode(knownHostAddress));
+
+                Diagnostic.trace("Created chord node on: " + localChordAddress);
             }
             catch (final RemoteChordException e) { // database instance we're trying to connect to doesn't exist.
 

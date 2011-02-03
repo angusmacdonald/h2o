@@ -94,6 +94,8 @@ public class TableManagerInstanceServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
+                if (args.length() == 0) { return JSONValue.NULL; }
+
                 final String table_name = args.getString(0);
                 args.remove(0); // remove the table name from the parameter list
                 final TableManagerServer object_server = table_manager_instances.get(table_name);
