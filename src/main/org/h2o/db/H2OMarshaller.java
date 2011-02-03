@@ -443,7 +443,7 @@ public class H2OMarshaller extends Marshaller {
             }
         }
         catch (final JSONException e) {
-            Diagnostic.trace(DiagnosticLevel.RUN, "error serializing LockType: " + e.getMessage());
+            Diagnostic.trace(DiagnosticLevel.RUN, "error serializing TableManagerWrapper: " + e.getMessage());
         }
         return new JSONValue(object);
     }
@@ -453,7 +453,6 @@ public class H2OMarshaller extends Marshaller {
         if (object == null) { return null; }
 
         try {
-            final TableInfo tableInfo = deserializeTableInfo(object.getJSONObject(TABLE_INFO));
             final ITableManagerRemote tableManager = deserializeITableManagerRemote(object.getString(TABLE_MANAGER));
 
             DatabaseID tableManagerURL = null;
@@ -461,6 +460,7 @@ public class H2OMarshaller extends Marshaller {
             if (!object.isNull(TABLE_MANAGER_URL)) {
                 tableManagerURL = deserializeDatabaseID(object.getJSONObject(TABLE_MANAGER_URL));
             }
+            final TableInfo tableInfo = deserializeTableInfo(object.getJSONObject(TABLE_INFO));
 
             return new TableManagerWrapper(tableInfo, tableManager, tableManagerURL);
         }

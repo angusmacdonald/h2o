@@ -151,7 +151,6 @@ public class TestBase {
         createProperties("jdbc:h2:mem:one", true);
         createProperties("jdbc:h2:mem:two", true);
         createProperties("jdbc:h2:mem:three", true);
-        createProperties("jdbc:h2:three", true);
         createProperties("jdbc:h2:sm:tcp://localhost:9081/db_data/unittests/schema_test", true);
     }
 
