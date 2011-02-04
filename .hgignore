@@ -1,0 +1,5 @@
+
+syntax: regexp
+^config$
+syntax: regexp
+^db_files$

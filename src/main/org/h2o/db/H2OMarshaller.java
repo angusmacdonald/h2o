@@ -162,6 +162,7 @@ public class H2OMarshaller extends Marshaller {
     public JSONValue serializeDatabaseID(final DatabaseID source) {
 
         if (source == null) { return JSONValue.NULL; }
+
         final JSONObject object = new JSONObject();
         try {
             object.put(DATABASE_ID, source.getID());
@@ -178,7 +179,6 @@ public class H2OMarshaller extends Marshaller {
         if (object == null) { return null; }
 
         try {
-
             final String database_id = object.getString(DATABASE_ID);
             final String database_url = object.getString(DATABASE_URL);
             final DatabaseURL url = DatabaseURL.parseURL(database_url);
@@ -196,8 +196,8 @@ public class H2OMarshaller extends Marshaller {
 
         final String tableName = source.getTableName();
         final String schemaName = source.getSchemaName();
-        final JSONValue modificationID = new JSONValue(source.getModificationID());
-        final JSONValue tableSet = new JSONValue(source.getTableSet());
+        final long modificationID = source.getModificationID();
+        final int tableSet = source.getTableSet();
         final String tableType = source.getTableType();
         final JSONValue databaseID = serializeDatabaseID(source.getDatabaseID());
 
@@ -208,19 +208,8 @@ public class H2OMarshaller extends Marshaller {
             object.put(MODIFICATION_ID, modificationID);
             object.put(TABLE_SET, tableSet);
 
-            if (source.getTableType() != null) {
-                object.put(TABLE_TYPE, tableType);
-            }
-            else {
-                object.put(TABLE_TYPE, JSONObject.NULL);
-            }
-
-            if (source.getDatabaseID() != null) {
-                object.put(DATABASE_LOCATION, databaseID.getValue());
-            }
-            else {
-                object.put(DATABASE_LOCATION, JSONObject.NULL);
-            }
+            putDealingWithNull(object, TABLE_TYPE, tableType);
+            putDealingWithNull(object, DATABASE_LOCATION, databaseID);
         }
         catch (final JSONException e) {
             Diagnostic.trace(DiagnosticLevel.RUN, "error serializing TableInfo: " + e.getMessage());
@@ -233,21 +222,16 @@ public class H2OMarshaller extends Marshaller {
         if (object == null) { return null; }
 
         try {
-
             final String tableName = object.getString(TABLE_NAME);
             final String schemaName = object.getString(SCHEMA_NAME);
             final long modificationID = object.getLong(MODIFICATION_ID);
             final int tableSet = object.getInt(TABLE_SET);
 
-            String tableType = null;
-            if (!object.isNull(TABLE_TYPE)) {
-                tableType = object.getString(TABLE_TYPE);
-            }
+            final String tableType = getString(object, TABLE_TYPE);
 
-            DatabaseID dbLocation = null;
-            if (!object.isNull(DATABASE_LOCATION)) {
-                dbLocation = deserializeDatabaseID(object.getJSONObject(DATABASE_LOCATION));
-            }
+            final JSONObject location = getJSONObject(object, DATABASE_LOCATION);
+            final DatabaseID dbLocation = deserializeDatabaseID(location);
+
             return new TableInfo(tableName, schemaName, modificationID, tableSet, tableType, dbLocation);
         }
         catch (final Exception e) {
@@ -267,7 +251,6 @@ public class H2OMarshaller extends Marshaller {
 
         try {
             return LockType.valueOf(LockType.class, s);
-
         }
         catch (final Exception e) {
             throw new DeserializationException(e);
@@ -283,7 +266,7 @@ public class H2OMarshaller extends Marshaller {
 
         final JSONObject object = new JSONObject();
         try {
-            object.put(DATABASE_MAKING_REQUEST, serializeDatabaseInstanceWrapper(databaseMakingRequest));
+            object.put(DATABASE_MAKING_REQUEST, serializeDatabaseInstanceWrapper(databaseMakingRequest).getValue());
             object.put(SESSION_ID, sessionID);
         }
         catch (final JSONException e) {
@@ -297,10 +280,8 @@ public class H2OMarshaller extends Marshaller {
         if (object == null) { return null; }
 
         try {
-
             final DatabaseInstanceWrapper databaseMakingRequest = deserializeDatabaseInstanceWrapper(object.getJSONObject(DATABASE_MAKING_REQUEST));
             final int sessionID = object.getInt(SESSION_ID);
-            // ...
 
             return new LockRequest(databaseMakingRequest, sessionID);
         }
@@ -319,9 +300,9 @@ public class H2OMarshaller extends Marshaller {
 
         final JSONObject object = new JSONObject();
         try {
-            object.put(ALL_REPLICAS, allReplicas);
-            object.put(ACTIVE_REPLICAS, activeReplicas);
-            object.put(PRIMARY_LOCATION, primaryLocation);
+            object.put(ALL_REPLICAS, allReplicas.getValue());
+            object.put(ACTIVE_REPLICAS, activeReplicas.getValue());
+            object.put(PRIMARY_LOCATION, primaryLocation.getValue());
         }
         catch (final JSONException e) {
             Diagnostic.trace(DiagnosticLevel.RUN, "error serializing ReplicaManager: " + e.getMessage());
@@ -334,7 +315,6 @@ public class H2OMarshaller extends Marshaller {
         if (object == null) { return null; }
 
         try {
-
             final Map<DatabaseInstanceWrapper, Integer> allReplicas = deserializeMapDatabaseInstanceWrapperInteger(object.getJSONObject(ALL_REPLICAS));
             final Map<DatabaseInstanceWrapper, Integer> activeReplicas = deserializeMapDatabaseInstanceWrapperInteger(object.getJSONObject(ACTIVE_REPLICAS));
             final DatabaseInstanceWrapper primaryLocation = deserializeDatabaseInstanceWrapper(object.getJSONObject(PRIMARY_LOCATION));
@@ -370,7 +350,6 @@ public class H2OMarshaller extends Marshaller {
         if (object == null) { return null; }
 
         try {
-
             final DatabaseID databaseURL = deserializeDatabaseID(object.getJSONObject(DATABASE_URL));
             final IDatabaseInstanceRemote databaseInstance = deserializeIDatabaseInstanceRemote(object.getString(DATABASE_INSTANCE));
             final boolean active = object.getBoolean(ACTIVE);
@@ -388,12 +367,12 @@ public class H2OMarshaller extends Marshaller {
 
         final JSONObject object = new JSONObject();
         try {
-            object.put(EXPECTED_TIME_TO_COMPLETION, new JSONValue(source.expectedTimeToCompletion));
-            object.put(IMMEDIATE_DISK_SPACE, new JSONValue(source.immediateDiskSpace));
-            object.put(CPU, new JSONValue(source.cpu));
-            object.put(MEMORY, new JSONValue(source.memory));
-            object.put(NETWORK, new JSONValue(source.network));
-            object.put(DISK, new JSONValue(source.disk));
+            object.put(EXPECTED_TIME_TO_COMPLETION, source.expectedTimeToCompletion);
+            object.put(IMMEDIATE_DISK_SPACE, source.immediateDiskSpace);
+            object.put(CPU, source.cpu);
+            object.put(MEMORY, source.memory);
+            object.put(NETWORK, source.network);
+            object.put(DISK, source.disk);
         }
         catch (final JSONException e) {
             Diagnostic.trace(DiagnosticLevel.RUN, "error serializing LockType: " + e.getMessage());
@@ -420,27 +399,21 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     public JSONValue serializeTableManagerWrapper(final TableManagerWrapper source) {
 
         if (source == null) { return JSONValue.NULL; }
 
-        final JSONValue tableInfo = serializeTableInfo(source.getTableInfo());
-        final JSONValue tableManager = serializeITableManagerRemote(source.getTableManager());
-        final JSONValue tableManagerURL = serializeDatabaseID(source.getURL());
+        final JSONValue serialized_table_info = serializeTableInfo(source.getTableInfo());
+        final JSONValue serialized_table_manager_remote = serializeITableManagerRemote(source.getTableManager());
+        final JSONValue serialized_database_id = serializeDatabaseID(source.getURL());
 
         final JSONObject object = new JSONObject();
         try {
-            object.put(TABLE_INFO, tableInfo);
-            object.put(TABLE_MANAGER, tableManager);
-
-            if (source.getURL() == null) {
-                object.put(TABLE_MANAGER_URL, JSONObject.NULL);
-            }
-            else {
-                object.put(TABLE_MANAGER_URL, tableManagerURL);
-            }
+            putDealingWithNull(object, TABLE_INFO, serialized_table_info);
+            putDealingWithNull(object, TABLE_MANAGER, serialized_table_manager_remote);
+            putDealingWithNull(object, TABLE_MANAGER_URL, serialized_database_id);
         }
         catch (final JSONException e) {
             Diagnostic.trace(DiagnosticLevel.RUN, "error serializing TableManagerWrapper: " + e.getMessage());
@@ -455,11 +428,9 @@ public class H2OMarshaller extends Marshaller {
         try {
             final ITableManagerRemote tableManager = deserializeITableManagerRemote(object.getString(TABLE_MANAGER));
 
-            DatabaseID tableManagerURL = null;
+            final JSONObject serialized_database_id = getJSONObject(object, TABLE_MANAGER_URL);
+            final DatabaseID tableManagerURL = deserializeDatabaseID(serialized_database_id);
 
-            if (!object.isNull(TABLE_MANAGER_URL)) {
-                tableManagerURL = deserializeDatabaseID(object.getJSONObject(TABLE_MANAGER_URL));
-            }
             final TableInfo tableInfo = deserializeTableInfo(object.getJSONObject(TABLE_INFO));
 
             return new TableManagerWrapper(tableInfo, tableManager, tableManagerURL);
@@ -469,7 +440,7 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     public JSONValue serializeTableProxy(final TableProxy source) {
 
@@ -479,17 +450,17 @@ public class H2OMarshaller extends Marshaller {
         final JSONValue allReplicas = serializeMapDatabaseInstanceWrapperInteger(source.getAllReplicas());
         final JSONValue tableManager = serializeITableManagerRemote(source.getTableManager());
         final JSONValue requestingDatabase = serializeLockRequest(source.getRequestingDatabase());
-        final JSONValue updateID = new JSONValue(source.getUpdateID());
+        final int updateID = source.getUpdateID();
 
         final JSONObject object = new JSONObject();
         try {
-            object.put(LOCK_GRANTED, lockGranted);
-            object.put(TABLE_NAME, tableName);
-            object.put(ALL_REPLICAS, allReplicas);
-            object.put(TABLE_MANAGER, tableManager);
-            object.put(REQUESTING_DATABASE, requestingDatabase);
+            object.put(LOCK_GRANTED, lockGranted.getValue());
+            object.put(LOCK_REQUESTED, lockRequested.getValue());
+            object.put(TABLE_NAME, tableName.getValue());
+            object.put(ALL_REPLICAS, allReplicas.getValue());
+            object.put(TABLE_MANAGER, tableManager.getValue());
+            object.put(REQUESTING_DATABASE, requestingDatabase.getValue());
             object.put(UPDATE_ID, updateID);
-            object.put(LOCK_REQUESTED, lockRequested);
         }
         catch (final JSONException e) {
             Diagnostic.trace(DiagnosticLevel.RUN, "error serializing TableProxy: " + e.getMessage());
@@ -512,7 +483,6 @@ public class H2OMarshaller extends Marshaller {
             final LockType lockRequested = deserializeLockType(object.getString(LOCK_REQUESTED));
 
             return new TableProxy(lockGranted, tableName, allReplicas, tableManager, requestingDatabase, updateID, lockRequested);
-
         }
         catch (final Exception e) {
             throw new DeserializationException(e);
@@ -523,11 +493,11 @@ public class H2OMarshaller extends Marshaller {
 
     public JSONValue serializeCollectionDatabaseInstanceWrapper(final Collection<DatabaseInstanceWrapper> source) {
 
-        final JSONArray object = new JSONArray();
+        final JSONArray array = new JSONArray();
         for (final DatabaseInstanceWrapper instance : source) {
-            object.put(serializeDatabaseInstanceWrapper(instance).getValue());
+            array.put(serializeDatabaseInstanceWrapper(instance).getValue());
         }
-        return new JSONValue(object);
+        return new JSONValue(array);
     }
 
     public Set<DatabaseInstanceWrapper> deserializeSetDatabaseInstanceWrapper(final JSONArray array) throws DeserializationException {
@@ -535,7 +505,6 @@ public class H2OMarshaller extends Marshaller {
         if (array == null) { return null; }
 
         try {
-
             final Set<DatabaseInstanceWrapper> result = new HashSet<DatabaseInstanceWrapper>();
             for (int i = 0; i < array.length(); i++) {
                 result.add(deserializeDatabaseInstanceWrapper(array.getJSONObject(i)));
@@ -553,7 +522,6 @@ public class H2OMarshaller extends Marshaller {
         if (array == null) { return null; }
 
         try {
-
             final Collection<DatabaseInstanceWrapper> result = new ArrayList<DatabaseInstanceWrapper>(array.length());
             for (int i = 0; i < array.length(); i++) {
                 result.add(deserializeDatabaseInstanceWrapper(array.getJSONObject(i)));
@@ -573,11 +541,11 @@ public class H2OMarshaller extends Marshaller {
         final JSONObject object = new JSONObject();
         try {
 
-            final JSONArray key_array = serializeSetDatabaseID(source.keySet());
-            final JSONArray value_arrray = serializeCollectionDatabaseInstanceWrapper(source.values()).getJSONArray();
+            final JSONValue key_array = serializeSetDatabaseID(source.keySet());
+            final JSONValue value_arrray = serializeCollectionDatabaseInstanceWrapper(source.values());
 
-            object.put(KEYS, key_array);
-            object.put(VALUES, value_arrray);
+            object.put(KEYS, key_array.getValue());
+            object.put(VALUES, value_arrray.getValue());
 
         }
         catch (final JSONException e) {
@@ -614,13 +582,13 @@ public class H2OMarshaller extends Marshaller {
 
     /////////////////////
 
-    private JSONArray serializeSetDatabaseID(final Set<DatabaseID> source) {
+    private JSONValue serializeSetDatabaseID(final Set<DatabaseID> source) {
 
-        final JSONArray object = new JSONArray();
+        final JSONArray array = new JSONArray();
         for (final DatabaseID instance : source) {
-            object.put(serializeDatabaseID(instance).getValue());
+            array.put(serializeDatabaseID(instance).getValue());
         }
-        return object;
+        return new JSONValue(array);
     }
 
     private Set<DatabaseID> deserializeSetDatabaseID(final JSONArray array) throws DeserializationException {
@@ -628,7 +596,6 @@ public class H2OMarshaller extends Marshaller {
         if (array == null) { return null; }
 
         try {
-
             final Set<DatabaseID> result = new HashSet<DatabaseID>();
             for (int i = 0; i < array.length(); i++) {
                 result.add(deserializeDatabaseID(array.getJSONObject(i)));
@@ -648,11 +615,11 @@ public class H2OMarshaller extends Marshaller {
         final JSONObject object = new JSONObject();
         try {
 
-            final JSONArray key_array = serializeSetTableInfo(source.keySet());
-            final JSONArray value_arrray = serializeCollectionTableManagerWrapper(source.values());
+            final JSONValue key_array = serializeSetTableInfo(source.keySet());
+            final JSONValue value_arrray = serializeCollectionTableManagerWrapper(source.values());
 
-            object.put(KEYS, key_array);
-            object.put(VALUES, value_arrray);
+            object.put(KEYS, key_array.getValue());
+            object.put(VALUES, value_arrray.getValue());
 
         }
         catch (final JSONException e) {
@@ -660,8 +627,6 @@ public class H2OMarshaller extends Marshaller {
         }
         return new JSONValue(object);
     }
-
-    /////////////////////
 
     public Map<TableInfo, TableManagerWrapper> deserializeMapTableInfoTableManagerWrapper(final JSONObject object) throws DeserializationException {
 
@@ -691,13 +656,13 @@ public class H2OMarshaller extends Marshaller {
 
     /////////////////////
 
-    private JSONArray serializeCollectionTableManagerWrapper(final Collection<TableManagerWrapper> source) {
+    private JSONValue serializeCollectionTableManagerWrapper(final Collection<TableManagerWrapper> source) {
 
-        final JSONArray object = new JSONArray();
+        final JSONArray array = new JSONArray();
         for (final TableManagerWrapper instance : source) {
-            object.put(serializeTableManagerWrapper(instance).getValue());
+            array.put(serializeTableManagerWrapper(instance).getValue());
         }
-        return object;
+        return new JSONValue(array);
     }
 
     public Set<TableManagerWrapper> deserializeSetTableManagerWrapper(final JSONArray array) throws DeserializationException {
@@ -705,7 +670,6 @@ public class H2OMarshaller extends Marshaller {
         if (array == null) { return null; }
 
         try {
-
             final Set<TableManagerWrapper> result = new HashSet<TableManagerWrapper>();
             for (int i = 0; i < array.length(); i++) {
                 result.add(deserializeTableManagerWrapper(array.getJSONObject(i)));
@@ -720,13 +684,13 @@ public class H2OMarshaller extends Marshaller {
 
     /////////////////////
 
-    private JSONArray serializeSetTableInfo(final Set<TableInfo> source) {
+    private JSONValue serializeSetTableInfo(final Set<TableInfo> source) {
 
-        final JSONArray object = new JSONArray();
+        final JSONArray array = new JSONArray();
         for (final TableInfo instance : source) {
-            object.put(serializeTableInfo(instance).getValue());
+            array.put(serializeTableInfo(instance).getValue());
         }
-        return object;
+        return new JSONValue(array);
     }
 
     private Set<TableInfo> deserializeSetTableInfo(final JSONArray array) throws DeserializationException {
@@ -734,7 +698,6 @@ public class H2OMarshaller extends Marshaller {
         if (array == null) { return null; }
 
         try {
-
             final Set<TableInfo> result = new HashSet<TableInfo>();
             for (int i = 0; i < array.length(); i++) {
                 result.add(deserializeTableInfo(array.getJSONObject(i)));
@@ -754,11 +717,11 @@ public class H2OMarshaller extends Marshaller {
         final JSONObject object = new JSONObject();
         try {
 
-            final JSONArray key_array = serializeSetTableInfo(source.keySet());
-            final JSONArray value_arrray = serializeCollectionSetDatabaseID(source.values());
+            final JSONValue key_array = serializeSetTableInfo(source.keySet());
+            final JSONValue value_arrray = serializeCollectionSetDatabaseID(source.values());
 
-            object.put(KEYS, key_array);
-            object.put(VALUES, value_arrray);
+            object.put(KEYS, key_array.getValue());
+            object.put(VALUES, value_arrray.getValue());
 
         }
         catch (final JSONException e) {
@@ -795,13 +758,13 @@ public class H2OMarshaller extends Marshaller {
 
     /////////////////////
 
-    private JSONArray serializeCollectionSetDatabaseID(final Collection<Set<DatabaseID>> source) {
+    private JSONValue serializeCollectionSetDatabaseID(final Collection<Set<DatabaseID>> source) {
 
-        final JSONArray object = new JSONArray();
+        final JSONArray array = new JSONArray();
         for (final Set<DatabaseID> instance : source) {
-            object.put(serializeSetDatabaseID(instance)); //<<<<<<<<<<<<<<<<
+            array.put(serializeSetDatabaseID(instance).getValue());
         }
-        return object;
+        return new JSONValue(array);
     }
 
     private Set<Set<DatabaseID>> deserializeSetSetDatabaseID(final JSONArray array) throws DeserializationException {
@@ -809,7 +772,6 @@ public class H2OMarshaller extends Marshaller {
         if (array == null) { return null; }
 
         try {
-
             final HashSet<Set<DatabaseID>> result = new HashSet<Set<DatabaseID>>();
             for (int i = 0; i < array.length(); i++) {
                 result.add(deserializeSetDatabaseID(array.getJSONArray(i)));
@@ -827,7 +789,6 @@ public class H2OMarshaller extends Marshaller {
         if (array == null) { return null; }
 
         try {
-
             final Collection<Set<DatabaseID>> result = new ArrayList<Set<DatabaseID>>(array.length());
             for (int i = 0; i < array.length(); i++) {
                 result.add(deserializeSetDatabaseID(array.getJSONArray(i)));
@@ -844,11 +805,11 @@ public class H2OMarshaller extends Marshaller {
 
     public JSONValue serializeSetTableManagerWrapper(final Set<TableManagerWrapper> source) {
 
-        final JSONArray object = new JSONArray();
+        final JSONArray array = new JSONArray();
         for (final TableManagerWrapper instance : source) {
-            object.put(serializeTableManagerWrapper(instance).getValue());
+            array.put(serializeTableManagerWrapper(instance).getValue());
         }
-        return new JSONValue(object);
+        return new JSONValue(array);
     }
 
     public Collection<TableManagerWrapper> deserializeCollectionTableManagerWrapper(final JSONArray array) throws DeserializationException {
@@ -856,7 +817,6 @@ public class H2OMarshaller extends Marshaller {
         if (array == null) { return null; }
 
         try {
-
             final Collection<TableManagerWrapper> result = new ArrayList<TableManagerWrapper>(array.length());
             for (int i = 0; i < array.length(); i++) {
                 result.add(deserializeTableManagerWrapper(array.getJSONObject(i)));
@@ -876,11 +836,11 @@ public class H2OMarshaller extends Marshaller {
         final JSONObject object = new JSONObject();
         try {
 
-            final JSONArray key_array = serializeSetTableInfo(source.keySet());
-            final JSONArray value_arrray = serializeCollectionDatabaseID(source.values());
+            final JSONValue key_array = serializeSetTableInfo(source.keySet());
+            final JSONValue value_arrray = serializeCollectionDatabaseID(source.values());
 
-            object.put(KEYS, key_array);
-            object.put(VALUES, value_arrray);
+            object.put(KEYS, key_array.getValue());
+            object.put(VALUES, value_arrray.getValue());
 
         }
         catch (final JSONException e) {
@@ -917,13 +877,13 @@ public class H2OMarshaller extends Marshaller {
 
     /////////////////////
 
-    private JSONArray serializeCollectionDatabaseID(final Collection<DatabaseID> source) {
+    private JSONValue serializeCollectionDatabaseID(final Collection<DatabaseID> source) {
 
-        final JSONArray object = new JSONArray();
+        final JSONArray array = new JSONArray();
         for (final DatabaseID instance : source) {
-            object.put(serializeDatabaseID(instance));
+            array.put(serializeDatabaseID(instance));
         }
-        return object;
+        return new JSONValue(array);
     }
 
     private Collection<DatabaseID> deserializeCollectionDatabaseID(final JSONArray array) throws DeserializationException {
@@ -931,7 +891,6 @@ public class H2OMarshaller extends Marshaller {
         if (array == null) { return null; }
 
         try {
-
             final Collection<DatabaseID> result = new ArrayList<DatabaseID>(array.length());
             for (int i = 0; i < array.length(); i++) {
                 result.add(deserializeDatabaseID(array.getJSONObject(i)));
@@ -950,12 +909,11 @@ public class H2OMarshaller extends Marshaller {
 
         final JSONObject object = new JSONObject();
         try {
-            object.put(COMMIT, new JSONValue(source.isCommit()));
-            object.put(WRAPPER, serializeDatabaseInstanceWrapper(source.getDatabaseInstanceWrapper()));
-            object.put(UPDATE_ID, new JSONValue(source.getUpdateID()));
-            object.put(EXPECTED_UPDATE_ID, new JSONValue(source.getExpectedUpdateID()));
-            object.put(TABLE_NAME, serializeTableInfo(source.getTable()));
-
+            object.put(COMMIT, source.isCommit());
+            object.put(WRAPPER, serializeDatabaseInstanceWrapper(source.getDatabaseInstanceWrapper()).getValue());
+            object.put(UPDATE_ID, source.getUpdateID());
+            object.put(EXPECTED_UPDATE_ID, source.getExpectedUpdateID());
+            object.put(TABLE_NAME, serializeTableInfo(source.getTable()).getValue());
         }
         catch (final JSONException e) {
             Diagnostic.trace(DiagnosticLevel.RUN, "error serializing LockType: " + e.getMessage());
@@ -985,11 +943,11 @@ public class H2OMarshaller extends Marshaller {
 
     public JSONValue serializeCollectionCommitResult(final Collection<CommitResult> source) {
 
-        final JSONArray object = new JSONArray();
+        final JSONArray array = new JSONArray();
         for (final CommitResult instance : source) {
-            object.put(serializeCommitResult(instance).getValue());
+            array.put(serializeCommitResult(instance).getValue());
         }
-        return new JSONValue(object);
+        return new JSONValue(array);
     }
 
     public Set<CommitResult> deserializeCollectionCommitResult(final JSONArray array) throws DeserializationException {
@@ -997,7 +955,6 @@ public class H2OMarshaller extends Marshaller {
         if (array == null) { return null; }
 
         try {
-
             final Set<CommitResult> result = new HashSet<CommitResult>();
             for (int i = 0; i < array.length(); i++) {
                 result.add(deserializeCommitResult(array.getJSONObject(i)));
@@ -1014,11 +971,11 @@ public class H2OMarshaller extends Marshaller {
 
     public JSONValue serializeSetString(final Set<String> source) {
 
-        final JSONArray object = new JSONArray();
+        final JSONArray array = new JSONArray();
         for (final String s : source) {
-            object.put(s);
+            array.put(s);
         }
-        return new JSONValue(object);
+        return new JSONValue(array);
     }
 
     public Set<String> deserializeSetString(final JSONArray array) throws DeserializationException {
@@ -1026,7 +983,6 @@ public class H2OMarshaller extends Marshaller {
         if (array == null) { return null; }
 
         try {
-
             final Set<String> result = new HashSet<String>();
             for (int i = 0; i < array.length(); i++) {
                 result.add(array.getString(i));
@@ -1043,11 +999,11 @@ public class H2OMarshaller extends Marshaller {
 
     public JSONValue serializeQueueDatabaseInstanceWrapper(final Queue<DatabaseInstanceWrapper> source) {
 
-        final JSONArray object = new JSONArray();
+        final JSONArray array = new JSONArray();
         for (final DatabaseInstanceWrapper instance : source) {
-            object.put(serializeDatabaseInstanceWrapper(instance).getValue());
+            array.put(serializeDatabaseInstanceWrapper(instance).getValue());
         }
-        return new JSONValue(object);
+        return new JSONValue(array);
     }
 
     public Queue<DatabaseInstanceWrapper> deserializeQueueDatabaseInstanceWrapper(final JSONArray array) throws DeserializationException {
@@ -1055,7 +1011,6 @@ public class H2OMarshaller extends Marshaller {
         if (array == null) { return null; }
 
         try {
-
             final Queue<DatabaseInstanceWrapper> result = new PriorityQueue<DatabaseInstanceWrapper>();
             for (int i = 0; i < array.length(); i++) {
                 result.add(deserializeDatabaseInstanceWrapper(array.getJSONObject(i)));
@@ -1075,12 +1030,11 @@ public class H2OMarshaller extends Marshaller {
 
         final JSONObject object = new JSONObject();
         try {
+            final JSONValue key_array = serializeCollectionDatabaseInstanceWrapper(source.keySet());
+            final JSONValue value_arrray = serializeCollectionInteger(source.values());
 
-            final JSONArray key_array = serializeCollectionDatabaseInstanceWrapper(source.keySet()).getJSONArray();
-            final JSONArray value_arrray = serializeCollectionInteger(source.values());
-
-            object.put(KEYS, key_array);
-            object.put(VALUES, value_arrray);
+            object.put(KEYS, key_array.getValue());
+            object.put(VALUES, value_arrray.getValue());
 
         }
         catch (final JSONException e) {
@@ -1117,13 +1071,13 @@ public class H2OMarshaller extends Marshaller {
 
     /////////////////////
 
-    private JSONArray serializeCollectionInteger(final Collection<Integer> source) {
+    private JSONValue serializeCollectionInteger(final Collection<Integer> source) {
 
-        final JSONArray object = new JSONArray();
+        final JSONArray array = new JSONArray();
         for (final Integer instance : source) {
-            object.put(instance);
+            array.put(instance);
         }
-        return object;
+        return new JSONValue(array);
     }
 
     private Collection<Integer> deserializeCollectionInteger(final JSONArray array) throws DeserializationException {
@@ -1131,7 +1085,6 @@ public class H2OMarshaller extends Marshaller {
         if (array == null) { return null; }
 
         try {
-
             final Collection<Integer> result = new ArrayList<Integer>(array.length());
             for (int i = 0; i < array.length(); i++) {
                 result.add(array.getInt(i));
@@ -1143,5 +1096,4 @@ public class H2OMarshaller extends Marshaller {
             throw new DeserializationException(e);
         }
     }
-
 }
