@@ -445,7 +445,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
         try {
             final JSONArray params = new JSONArray();
             params.put(marshaller.serializeTableInfo(table).getValue());
-            return marshaller.deserializeITableManagerRemote(makeCall("recreateTableManager", params).getString());
+            return marshaller.deserializeITableManagerRemote(makeCall("recreateTableManager", params).getJSONObject());
         }
         catch (final MovedException e) {
             throw e;

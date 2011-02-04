@@ -7,6 +7,7 @@ import java.util.Map;
 import org.h2o.db.H2OMarshaller;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.json.JSONArray;
+import org.json.JSONException;
 
 import uk.ac.standrews.cs.nds.rpc.ApplicationServer;
 import uk.ac.standrews.cs.nds.rpc.IHandler;
@@ -94,11 +95,14 @@ public class TableManagerInstanceServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                if (args.length() == 0) { return JSONValue.NULL; }
+                if (args.length() == 0) { throw new JSONException("Could not find table manager. No table name given."); }
 
                 final String table_name = args.getString(0);
                 args.remove(0); // remove the table name from the parameter list
                 final TableManagerServer object_server = table_manager_instances.get(table_name);
+
+                if (object_server == null) { throw new JSONException("Could not find table manager for table : " + table_name); }
+
                 return object_server.getHandler(method_name).execute(args);
             }
         };

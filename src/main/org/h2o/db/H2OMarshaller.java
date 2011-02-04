@@ -47,11 +47,10 @@ public class H2OMarshaller extends Marshaller {
     private static final String COMMIT = "commit";
     private static final String UPDATE_ID = "updateID";
     private static final String REQUESTING_DATABASE = "requestingDatabase";
-    private static final String TABLE_MANAGER2 = "tableManager";
+    private static final String TABLE_MANAGER = "tableManager";
     private static final String LOCK_REQUESTED = "lockRequested";
     private static final String LOCK_GRANTED = "lockGranted";
     private static final String TABLE_MANAGER_URL = "tableManagerURL";
-    private static final String TABLE_MANAGER = TABLE_MANAGER2;
     private static final String TABLE_INFO = "tableInfo";
     private static final String DISK = "disk";
     private static final String NETWORK = "network";
@@ -77,6 +76,7 @@ public class H2OMarshaller extends Marshaller {
     private static final String KEYS = "keys";
     private static final String VALUES = "values";
     private static final String WRAPPER = "wrapper";
+    private static final String TABLE_MANAGER_ADDRESS = "tableManagerAddress";
 
     private final ChordRemoteMarshaller chord_marshaller;
 
@@ -101,20 +101,36 @@ public class H2OMarshaller extends Marshaller {
 
     public JSONValue serializeITableManagerRemote(final ITableManagerRemote source) { // yes is a reference type
 
+        if (source == null) { return JSONValue.NULL; }
+
+        final JSONObject object = new JSONObject();
         try {
-            return serializeInetSocketAddress(source.getAddress());
+            object.put(TABLE_NAME, source.getTableInfo().getFullTableName());
+            object.put(TABLE_MANAGER_ADDRESS, serializeInetSocketAddress(source.getAddress()));
         }
-        catch (final RPCException e) {
-            ErrorHandling.exceptionError(e, "Unexpected RPCException.");
-            return JSONValue.NULL;
+        catch (final Exception e) {
+            ErrorHandling.exceptionError(e, "Failed when serializing ITableManagerRemote instance.");
         }
+        return new JSONValue(object);
+
     }
 
-    public ITableManagerRemote deserializeITableManagerRemote(final String address_string) throws DeserializationException {
+    public ITableManagerRemote deserializeITableManagerRemote(final JSONObject object) throws DeserializationException {
 
-        final InetSocketAddress address = deserializeInetSocketAddress(address_string);
+        if (object == null) { return null; }
 
-        return TableManagerProxy.getProxy(address);
+        try {
+            final String tableName = object.getString(TABLE_NAME);
+            final InetSocketAddress socketAddress = deserializeInetSocketAddress(object.getString(TABLE_MANAGER_ADDRESS));
+
+            return TableManagerProxy.getProxy(socketAddress, tableName);
+        }
+        catch (final JSONException e) {
+            ErrorHandling.exceptionError(e, "Failed when deserializing ITableManagerRemote instance.");
+
+            throw new DeserializationException(e);
+        }
+
     }
 
     /////////////////////
@@ -426,7 +442,7 @@ public class H2OMarshaller extends Marshaller {
         if (object == null) { return null; }
 
         try {
-            final ITableManagerRemote tableManager = deserializeITableManagerRemote(object.getString(TABLE_MANAGER));
+            final ITableManagerRemote tableManager = deserializeITableManagerRemote(object.getJSONObject(TABLE_MANAGER));
 
             final JSONObject serialized_database_id = getJSONObject(object, TABLE_MANAGER_URL);
             final DatabaseID tableManagerURL = deserializeDatabaseID(serialized_database_id);
@@ -477,7 +493,7 @@ public class H2OMarshaller extends Marshaller {
             final LockType lockGranted = deserializeLockType(object.getString(LOCK_GRANTED));
             final TableInfo tableName = deserializeTableInfo(object.getJSONObject(TABLE_NAME));
             final Map<DatabaseInstanceWrapper, Integer> allReplicas = deserializeMapDatabaseInstanceWrapperInteger(object.getJSONObject(ALL_REPLICAS));
-            final ITableManagerRemote tableManager = deserializeITableManagerRemote(object.getString(TABLE_MANAGER));
+            final ITableManagerRemote tableManager = deserializeITableManagerRemote(object.getJSONObject(TABLE_MANAGER));
             final LockRequest requestingDatabase = deserializeLockRequest(object.getJSONObject(REQUESTING_DATABASE));
             final int updateID = object.getInt(UPDATE_ID);
             final LockType lockRequested = deserializeLockType(object.getString(LOCK_REQUESTED));

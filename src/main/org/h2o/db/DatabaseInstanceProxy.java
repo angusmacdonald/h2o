@@ -187,7 +187,7 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
             final JSONArray params = new JSONArray();
             params.put(marshaller.serializeTableInfo(tableInfo).getValue());
             params.put(searchOnlyCache);
-            return marshaller.deserializeITableManagerRemote(makeCall("findTableManagerReference", params).getString());
+            return marshaller.deserializeITableManagerRemote(makeCall("findTableManagerReference", params).getJSONObject());
         }
         catch (final Exception e) {
             dealWithException(e);

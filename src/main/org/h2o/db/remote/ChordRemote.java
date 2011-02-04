@@ -904,6 +904,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     @Override
     public void shutdown() {
 
+        Diagnostic.printStackTrace();
+
         if (inShutdown) {
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Chord node is already shutting down: " + chordNode);
             return;

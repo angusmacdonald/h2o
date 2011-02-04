@@ -567,6 +567,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
         try {
             persistToCompleteStartup(tableInfo);
+            getDB().getTableManagerServer().exportObject(this);
             H2OEventBus.publish(new H2OEvent(db.getID().getURL(), DatabaseStates.TABLE_CREATION, tableInfo.getFullTableName()));
         }
         catch (final StartupException e) {

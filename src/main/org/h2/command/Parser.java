@@ -4948,6 +4948,7 @@ public class Parser {
                 return tableManager.getTableProxy(LockType.NONE, new LockRequest(session));
             }
             catch (final RPCException e1) {
+                e.printStackTrace();
                 // Recreate Table Manager then try again.
                 try {
                     tableManager = systemTableReference.getSystemTable().recreateTableManager(tableInfo);
