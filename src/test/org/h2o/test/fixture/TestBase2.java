@@ -20,6 +20,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.h2.engine.Constants;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.util.NetUtils;
 import org.h2o.H2O;
@@ -105,6 +106,7 @@ public class TestBase2 {
     @After
     public void tearDown() throws SQLException, InterruptedException {
 
+        Constants.IS_TEAR_DOWN = true;
         try {
             if (!sa.isClosed()) {
                 sa.close();

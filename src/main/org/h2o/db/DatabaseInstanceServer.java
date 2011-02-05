@@ -209,5 +209,19 @@ public class DatabaseInstanceServer extends ApplicationServer {
             }
         });
 
+        //int execute(String query, String transactionName, boolean commitOperation) throws RPCException, SQLException;
+
+        handler_map.put("execute", new IHandler() {
+
+            @Override
+            public JSONValue execute(final JSONArray args) throws Exception {
+
+                final String p0 = args.getString(0);
+                final String p1 = args.getString(1);
+                final boolean p2 = args.getBoolean(2);
+                return new JSONValue(instance.execute(p0, p1, p2));
+            }
+        });
+
     }
 }

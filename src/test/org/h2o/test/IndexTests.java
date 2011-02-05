@@ -89,28 +89,44 @@ public class IndexTests {
      * @throws java.lang.Exception
      */
     @After
-    public void tearDown() {
+    public void tearDown() throws SQLException, InterruptedException {
 
-        try {
-            sa.execute("DROP TABLE IF EXISTS Address, Person");
-            sb.execute("DROP TABLE IF EXISTS Address, Person");
+        if (sa != null) {
+            sa.execute("DROP ALL OBJECTS");
 
-            sa.close();
-            sb.close();
+            if (!sa.isClosed()) {
+                sa.close();
+            }
 
-            ca.close();
-            cb.close();
-            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "END OF LAST TEST (TEAR DOWN 1).");
-            TestBase.closeDatabaseCompletely();
+            if (!ca.isClosed()) {
+                ca.close();
+            }
         }
-        catch (final Exception e) {
-            e.printStackTrace();
-            fail("Connections aren't bein closed correctly.");
+
+        if (sb != null) {
+            sb.execute("DROP ALL OBJECTS");
+
+            if (!sb.isClosed()) {
+                sb.close();
+            }
+
+            if (!cb.isClosed()) {
+                cb.close();
+            }
+
         }
+
+        TestBase.closeDatabaseCompletely();
+
+        ca = null;
+        cb = null;
+        sa = null;
+        sb = null;
+
         ls.setRunning(false);
         while (!ls.isFinished()) {
+            Thread.sleep(TestBase.SHUTDOWN_CHECK_DELAY);
         };
-        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "END OF LAST TEST (TEAR DOWN 2).");
     }
 
     /**

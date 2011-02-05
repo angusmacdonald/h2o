@@ -210,6 +210,8 @@ public class H2OMarshaller extends Marshaller {
 
     public JSONValue serializeTableInfo(final TableInfo source) {
 
+        if (source == null) { return JSONValue.NULL; }
+
         final String tableName = source.getTableName();
         final String schemaName = source.getSchemaName();
         final long modificationID = source.getModificationID();
@@ -946,7 +948,7 @@ public class H2OMarshaller extends Marshaller {
             final DatabaseInstanceWrapper wrapper = deserializeDatabaseInstanceWrapper(object.getJSONObject(WRAPPER));
             final int updateID = object.getInt(UPDATE_ID);
             final int expectedUpdateID = object.getInt(EXPECTED_UPDATE_ID);
-            final TableInfo tableName = deserializeTableInfo(object.getJSONObject(TABLE_NAME));
+            final TableInfo tableName = deserializeTableInfo(getJSONObject(object, TABLE_NAME));
 
             return new CommitResult(commit, wrapper, updateID, expectedUpdateID, tableName);
         }
@@ -959,6 +961,8 @@ public class H2OMarshaller extends Marshaller {
 
     public JSONValue serializeCollectionCommitResult(final Collection<CommitResult> source) {
 
+        if (source == null) { return new JSONValue(new JSONArray()); }
+
         final JSONArray array = new JSONArray();
         for (final CommitResult instance : source) {
             array.put(serializeCommitResult(instance).getValue());
@@ -968,7 +972,7 @@ public class H2OMarshaller extends Marshaller {
 
     public Set<CommitResult> deserializeCollectionCommitResult(final JSONArray array) throws DeserializationException {
 
-        if (array == null) { return null; }
+        if (array == null || array.length() == 0) { return null; }
 
         try {
             final Set<CommitResult> result = new HashSet<CommitResult>();
