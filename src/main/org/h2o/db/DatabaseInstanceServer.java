@@ -5,12 +5,15 @@ import java.net.UnknownHostException;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
-import org.json.JSONArray;
 
 import uk.ac.standrews.cs.nds.rpc.ApplicationServer;
 import uk.ac.standrews.cs.nds.rpc.IHandler;
-import uk.ac.standrews.cs.nds.rpc.JSONValue;
 import uk.ac.standrews.cs.nds.rpc.Marshaller;
+import uk.ac.standrews.cs.nds.rpc.json.JSONArray;
+import uk.ac.standrews.cs.nds.rpc.json.JSONBoolean;
+import uk.ac.standrews.cs.nds.rpc.json.JSONInteger;
+import uk.ac.standrews.cs.nds.rpc.json.JSONString;
+import uk.ac.standrews.cs.nds.rpc.json.JSONValue;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.NetworkUtil;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
@@ -66,7 +69,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                return new JSONValue(instance.getConnectionString());
+                return new JSONString(instance.getConnectionString());
             }
         });
 
@@ -86,7 +89,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                return new JSONValue(instance.isAlive());
+                return new JSONBoolean(instance.isAlive());
             }
         });
 
@@ -110,7 +113,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
 
                 final String p0 = args.getString(0);
                 final boolean p1 = args.getBoolean(1);
-                return new JSONValue(instance.executeUpdate(p0, p1));
+                return new JSONInteger(instance.executeUpdate(p0, p1));
             }
         });
 
@@ -124,7 +127,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
                 final IChordRemoteReference p0 = marshaller.deserializeChordRemoteReference(args.getJSONObject(0));
                 final DatabaseID p1 = marshaller.deserializeDatabaseID(args.getJSONObject(1));
                 instance.setSystemTableLocation(p0, p1);
-                return JSONValue.NULL;
+                return null;
             }
         });
 
@@ -150,7 +153,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
 
                 final boolean p0 = args.getBoolean(0);
                 instance.setAlive(p0);
-                return JSONValue.NULL;
+                return null;
             }
         });
 
@@ -174,7 +177,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
 
                 final TableInfo p0 = marshaller.deserializeTableInfo(args.getJSONObject(0));
                 final DatabaseID p1 = marshaller.deserializeDatabaseID(args.getJSONObject(1));
-                return new JSONValue(instance.recreateTableManager(p0, p1));
+                return new JSONBoolean(instance.recreateTableManager(p0, p1));
             }
         });
 
@@ -185,7 +188,7 @@ public class DatabaseInstanceServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                return new JSONValue(instance.isSystemTable());
+                return new JSONBoolean(instance.isSystemTable());
             }
         });
 
@@ -219,9 +222,8 @@ public class DatabaseInstanceServer extends ApplicationServer {
                 final String p0 = args.getString(0);
                 final String p1 = args.getString(1);
                 final boolean p2 = args.getBoolean(2);
-                return new JSONValue(instance.execute(p0, p1, p2));
+                return new JSONInteger(instance.execute(p0, p1, p2));
             }
         });
-
     }
 }

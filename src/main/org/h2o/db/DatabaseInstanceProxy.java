@@ -12,11 +12,12 @@ import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.manager.recovery.SystemTableAccessException;
 import org.h2o.util.exceptions.MovedException;
-import org.json.JSONArray;
 
 import uk.ac.standrews.cs.nds.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.rpc.Proxy;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
+import uk.ac.standrews.cs.nds.rpc.json.JSONArray;
+import uk.ac.standrews.cs.nds.rpc.json.JSONObject;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRemote {
@@ -62,7 +63,7 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public boolean isAlive() throws RPCException, MovedException {
 
         try {
-            return makeCall("isAlive").getBoolean();
+            return (Boolean) makeCall("isAlive").getValue();
         }
         catch (final MovedException e) {
             throw e;
@@ -81,7 +82,7 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
             params.put(query);
             params.put(transactionName);
             params.put(commitOperation);
-            return makeCall("execute", params).getInt();
+            return (Integer) makeCall("execute", params).getValue();
         }
         catch (final SQLException e) {
             throw e;
@@ -98,7 +99,7 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
         try {
             final JSONArray params = new JSONArray();
             params.put(transactionName);
-            return makeCall("prepare", params).getInt();
+            return (Integer) makeCall("prepare", params).getValue();
         }
         catch (final SQLException e) {
             throw e;
@@ -114,7 +115,7 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public String getConnectionString() throws RPCException {
 
         try {
-            return makeCall("getConnectionString").getString();
+            return (String) makeCall("getConnectionString").getValue();
         }
         catch (final Exception e) {
             dealWithException(e);
@@ -127,7 +128,7 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public DatabaseID getURL() throws RPCException {
 
         try {
-            return marshaller.deserializeDatabaseID(makeCall("getURL").getJSONObject());
+            return marshaller.deserializeDatabaseID((JSONObject) makeCall("getURL").getValue());
         }
         catch (final Exception e) {
             dealWithException(e);
@@ -139,7 +140,7 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public DatabaseID getSystemTableURL() throws RPCException {
 
         try {
-            return marshaller.deserializeDatabaseID(makeCall("getSystemTableURL").getJSONObject());
+            return marshaller.deserializeDatabaseID((JSONObject) makeCall("getSystemTableURL").getValue());
         }
         catch (final Exception e) {
             dealWithException(e);
@@ -154,7 +155,7 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
             final JSONArray params = new JSONArray();
             params.put(sql);
             params.put(systemTableCommand);
-            return makeCall("executeUpdate", params).getInt();
+            return (Integer) makeCall("executeUpdate", params).getValue();
         }
         catch (final SQLException e) {
             throw e;
@@ -170,8 +171,8 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
 
         try {
             final JSONArray params = new JSONArray();
-            params.put(marshaller.serializeChordRemoteReference(systemTableLocation).getValue());
-            params.put(marshaller.serializeDatabaseID(databaseURL).getValue());
+            params.put(marshaller.serializeChordRemoteReference(systemTableLocation));
+            params.put(marshaller.serializeDatabaseID(databaseURL));
             makeCall("setSystemTableLocation", params);
         }
         catch (final Exception e) {
@@ -185,9 +186,9 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
 
         try {
             final JSONArray params = new JSONArray();
-            params.put(marshaller.serializeTableInfo(tableInfo).getValue());
+            params.put(marshaller.serializeTableInfo(tableInfo));
             params.put(searchOnlyCache);
-            return marshaller.deserializeITableManagerRemote(makeCall("findTableManagerReference", params).getJSONObject());
+            return marshaller.deserializeITableManagerRemote((JSONObject) makeCall("findTableManagerReference", params).getValue());
         }
         catch (final Exception e) {
             dealWithException(e);
@@ -213,7 +214,7 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public ISystemTableMigratable recreateSystemTable() throws RPCException, SQLException, SystemTableAccessException {
 
         try {
-            return marshaller.deserializeISystemTableMigratable(makeCall("recreateSystemTable").getString());
+            return marshaller.deserializeISystemTableMigratable((String) makeCall("recreateSystemTable").getValue());
         }
         catch (final SQLException e) {
             throw e;
@@ -232,9 +233,9 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
 
         try {
             final JSONArray params = new JSONArray();
-            params.put(marshaller.serializeTableInfo(tableInfo).getValue());
-            params.put(marshaller.serializeDatabaseID(databaseURL).getValue());
-            return makeCall("recreateTableManager", params).getBoolean();
+            params.put(marshaller.serializeTableInfo(tableInfo));
+            params.put(marshaller.serializeDatabaseID(databaseURL));
+            return (Boolean) makeCall("recreateTableManager", params).getValue();
         }
         catch (final Exception e) {
             dealWithException(e);
@@ -246,7 +247,7 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public boolean isSystemTable() throws RPCException {
 
         try {
-            return makeCall("isSystemTable").getBoolean();
+            return (Boolean) makeCall("isSystemTable").getValue();
         }
         catch (final Exception e) {
             dealWithException(e);
@@ -258,7 +259,7 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public ISystemTableMigratable getSystemTable() throws RPCException {
 
         try {
-            return marshaller.deserializeISystemTableMigratable(makeCall("getSystemTable").getString());
+            return marshaller.deserializeISystemTableMigratable((String) makeCall("getSystemTable").getValue());
         }
         catch (final Exception e) {
             dealWithException(e);
@@ -270,7 +271,7 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public InetSocketAddress getAddress() throws RPCException {
 
         try {
-            return marshaller.deserializeInetSocketAddress(makeCall("getAddress").getString());
+            return marshaller.deserializeInetSocketAddress((String) makeCall("getAddress").getValue());
         }
         catch (final Exception e) {
             dealWithException(e);

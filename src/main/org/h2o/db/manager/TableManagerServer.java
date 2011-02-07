@@ -9,12 +9,15 @@ import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
-import org.json.JSONArray;
 
 import uk.ac.standrews.cs.nds.rpc.ApplicationServer;
 import uk.ac.standrews.cs.nds.rpc.IHandler;
-import uk.ac.standrews.cs.nds.rpc.JSONValue;
 import uk.ac.standrews.cs.nds.rpc.Marshaller;
+import uk.ac.standrews.cs.nds.rpc.json.JSONArray;
+import uk.ac.standrews.cs.nds.rpc.json.JSONBoolean;
+import uk.ac.standrews.cs.nds.rpc.json.JSONInteger;
+import uk.ac.standrews.cs.nds.rpc.json.JSONString;
+import uk.ac.standrews.cs.nds.rpc.json.JSONValue;
 
 public class TableManagerServer extends ApplicationServer {
 
@@ -77,7 +80,7 @@ public class TableManagerServer extends ApplicationServer {
 
                 final DatabaseID p0 = marshaller.deserializeDatabaseID(args.getJSONObject(0));
                 final TableInfo p1 = marshaller.deserializeTableInfo(args.getJSONObject(1));
-                return new JSONValue(table_manager.addTableInformation(p0, p1));
+                return new JSONBoolean(table_manager.addTableInformation(p0, p1));
             }
         });
 
@@ -90,7 +93,7 @@ public class TableManagerServer extends ApplicationServer {
 
                 final TableInfo p0 = marshaller.deserializeTableInfo(args.getJSONObject(0));
                 table_manager.addReplicaInformation(p0);
-                return JSONValue.NULL;
+                return null;
             }
         });
 
@@ -103,7 +106,7 @@ public class TableManagerServer extends ApplicationServer {
 
                 final TableInfo p0 = marshaller.deserializeTableInfo(args.getJSONObject(0));
                 table_manager.removeReplicaInformation(p0);
-                return JSONValue.NULL;
+                return null;
             }
         });
 
@@ -114,7 +117,7 @@ public class TableManagerServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                return new JSONValue(table_manager.removeTableInformation());
+                return new JSONBoolean(table_manager.removeTableInformation());
             }
         });
 
@@ -141,7 +144,7 @@ public class TableManagerServer extends ApplicationServer {
                 final Collection<CommitResult> p2 = marshaller.deserializeCollectionCommitResult(args.getJSONArray(2));
                 final boolean p3 = args.getBoolean(3);
                 table_manager.releaseLockAndUpdateReplicaState(p0, p1, p2, p3);
-                return JSONValue.NULL;
+                return null;
             }
         });
 
@@ -154,7 +157,7 @@ public class TableManagerServer extends ApplicationServer {
 
                 final boolean p0 = args.getBoolean(0);
                 table_manager.remove(p0);
-                return JSONValue.NULL;
+                return null;
             }
         });
 
@@ -165,7 +168,7 @@ public class TableManagerServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                return new JSONValue(table_manager.getSchemaName());
+                return new JSONString(table_manager.getSchemaName());
             }
         });
 
@@ -176,7 +179,7 @@ public class TableManagerServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                return new JSONValue(table_manager.getTableName());
+                return new JSONString(table_manager.getTableName());
             }
         });
 
@@ -187,7 +190,7 @@ public class TableManagerServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                return new JSONValue(table_manager.getTableSet());
+                return new JSONInteger(table_manager.getTableSet());
             }
         });
 
@@ -200,7 +203,7 @@ public class TableManagerServer extends ApplicationServer {
 
                 final ITableManagerRemote p0 = marshaller.deserializeITableManagerRemote(args.getJSONObject(0));
                 table_manager.buildTableManagerState(p0);
-                return JSONValue.NULL;
+                return null;
             }
         });
 
@@ -224,8 +227,7 @@ public class TableManagerServer extends ApplicationServer {
 
                 final String p0 = args.getString(0);
                 table_manager.recreateReplicaManagerState(p0);
-                return JSONValue.NULL;
-
+                return null;
             }
         });
 
@@ -236,7 +238,7 @@ public class TableManagerServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                return new JSONValue(table_manager.getNumberofReplicas());
+                return new JSONInteger(table_manager.getNumberofReplicas());
             }
         });
 
@@ -249,7 +251,7 @@ public class TableManagerServer extends ApplicationServer {
 
                 final TableInfo p0 = marshaller.deserializeTableInfo(args.getJSONObject(0));
                 table_manager.persistToCompleteStartup(p0);
-                return JSONValue.NULL;
+                return null;
             }
         });
 

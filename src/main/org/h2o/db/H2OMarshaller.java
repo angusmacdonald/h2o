@@ -27,16 +27,15 @@ import org.h2o.db.query.locking.LockType;
 import org.h2o.db.replication.ReplicaManager;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import uk.ac.standrews.cs.nds.rpc.DeserializationException;
-import uk.ac.standrews.cs.nds.rpc.JSONValue;
 import uk.ac.standrews.cs.nds.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
-import uk.ac.standrews.cs.nds.util.Diagnostic;
-import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.rpc.json.JSONArray;
+import uk.ac.standrews.cs.nds.rpc.json.JSONObject;
+import uk.ac.standrews.cs.nds.rpc.json.JSONString;
+import uk.ac.standrews.cs.nds.rpc.json.JSONValue;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.stachord.impl.ChordRemoteMarshaller;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
@@ -85,7 +84,7 @@ public class H2OMarshaller extends Marshaller {
         chord_marshaller = new ChordRemoteMarshaller();
     }
 
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     public JSONValue serializeChordRemoteReference(final IChordRemoteReference source) {
 
@@ -97,27 +96,27 @@ public class H2OMarshaller extends Marshaller {
         return chord_marshaller.deserializeChordRemoteReference(object);
     }
 
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeITableManagerRemote(final ITableManagerRemote source) { // yes is a reference type
+    public JSONValue serializeITableManagerRemote(final ITableManagerRemote source) {
 
-        if (source == null) { return JSONValue.NULL; }
+        if (source == null) { return JSONObject.NULL; }
 
         final JSONObject object = new JSONObject();
         try {
             object.put(TABLE_NAME, source.getTableInfo().getFullTableName());
             object.put(TABLE_MANAGER_ADDRESS, serializeInetSocketAddress(source.getAddress()));
         }
-        catch (final Exception e) {
+        catch (final RPCException e) {
             ErrorHandling.exceptionError(e, "Failed when serializing ITableManagerRemote instance.");
         }
-        return new JSONValue(object);
+        return object;
 
     }
 
     public ITableManagerRemote deserializeITableManagerRemote(final JSONObject object) throws DeserializationException {
 
-        if (object == null) { return null; }
+        if (object == JSONObject.NULL) { return null; }
 
         try {
             final String tableName = object.getString(TABLE_NAME);
@@ -133,16 +132,16 @@ public class H2OMarshaller extends Marshaller {
 
     }
 
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeISystemTableMigratable(final ISystemTableMigratable source) { // yes is a reference type
+    public JSONValue serializeISystemTableMigratable(final ISystemTableMigratable source) {
 
         try {
             return serializeInetSocketAddress(source.getAddress());
         }
         catch (final RPCException e) {
             ErrorHandling.exceptionError(e, "Unexpected RPCException.");
-            return JSONValue.NULL;
+            return JSONObject.NULL;
         }
     }
 
@@ -153,7 +152,7 @@ public class H2OMarshaller extends Marshaller {
         return SystemTableProxy.getProxy(address);
     }
 
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     public JSONValue serializeIDatabaseInstanceRemote(final IDatabaseInstanceRemote source) {
 
@@ -162,7 +161,7 @@ public class H2OMarshaller extends Marshaller {
         }
         catch (final RPCException e) {
             ErrorHandling.exceptionError(e, "Unexpected RPCException.");
-            return JSONValue.NULL;
+            return JSONObject.NULL;
         }
     }
 
@@ -173,26 +172,23 @@ public class H2OMarshaller extends Marshaller {
         return DatabaseInstanceProxy.getProxy(address);
     }
 
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     public JSONValue serializeDatabaseID(final DatabaseID source) {
 
-        if (source == null) { return JSONValue.NULL; }
+        if (source == null) { return JSONObject.NULL; }
 
         final JSONObject object = new JSONObject();
-        try {
-            object.put(DATABASE_ID, source.getID());
-            object.put(DATABASE_URL, source.getURLwithRMIPort());
-        }
-        catch (final JSONException e) {
-            Diagnostic.trace(DiagnosticLevel.RUN, "error serializing DatabaseID: " + e.getMessage());
-        }
-        return new JSONValue(object);
+
+        object.put(DATABASE_ID, source.getID());
+        object.put(DATABASE_URL, source.getURLwithRMIPort());
+
+        return object;
     }
 
     public DatabaseID deserializeDatabaseID(final JSONObject object) throws DeserializationException {
 
-        if (object == null) { return null; }
+        if (object == JSONObject.NULL) { return null; }
 
         try {
             final String database_id = object.getString(DATABASE_ID);
@@ -206,48 +202,36 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     public JSONValue serializeTableInfo(final TableInfo source) {
 
-        if (source == null) { return JSONValue.NULL; }
-
-        final String tableName = source.getTableName();
-        final String schemaName = source.getSchemaName();
-        final long modificationID = source.getModificationID();
-        final int tableSet = source.getTableSet();
-        final String tableType = source.getTableType();
-        final JSONValue databaseID = serializeDatabaseID(source.getDatabaseID());
+        if (source == null) { return JSONObject.NULL; }
 
         final JSONObject object = new JSONObject();
-        try {
-            object.put(TABLE_NAME, tableName);
-            object.put(SCHEMA_NAME, schemaName);
-            object.put(MODIFICATION_ID, modificationID);
-            object.put(TABLE_SET, tableSet);
 
-            putDealingWithNull(object, TABLE_TYPE, tableType);
-            putDealingWithNull(object, DATABASE_LOCATION, databaseID);
-        }
-        catch (final JSONException e) {
-            Diagnostic.trace(DiagnosticLevel.RUN, "error serializing TableInfo: " + e.getMessage());
-        }
-        return new JSONValue(object);
+        object.put(TABLE_NAME, source.getTableName());
+        object.put(SCHEMA_NAME, source.getSchemaName());
+        object.put(MODIFICATION_ID, source.getModificationID());
+        object.put(TABLE_SET, source.getTableSet());
+        object.put(TABLE_TYPE, source.getTableType());
+        object.put(DATABASE_LOCATION, serializeDatabaseID(source.getDatabaseID()));
+
+        return object;
     }
 
     public TableInfo deserializeTableInfo(final JSONObject object) throws DeserializationException {
 
-        if (object == null) { return null; }
+        if (object == JSONObject.NULL) { return null; }
 
         try {
             final String tableName = object.getString(TABLE_NAME);
             final String schemaName = object.getString(SCHEMA_NAME);
             final long modificationID = object.getLong(MODIFICATION_ID);
             final int tableSet = object.getInt(TABLE_SET);
+            final String tableType = object.getString(TABLE_TYPE);
+            final JSONObject location = object.getJSONObject(DATABASE_LOCATION);
 
-            final String tableType = getString(object, TABLE_TYPE);
-
-            final JSONObject location = getJSONObject(object, DATABASE_LOCATION);
             final DatabaseID dbLocation = deserializeDatabaseID(location);
 
             return new TableInfo(tableName, schemaName, modificationID, tableSet, tableType, dbLocation);
@@ -258,11 +242,11 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     public JSONValue serializeLockType(final LockType source) {
 
-        return new JSONValue(source.toString());
+        return new JSONString(source.toString());
     }
 
     public LockType deserializeLockType(final String s) throws DeserializationException {
@@ -275,27 +259,23 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     public JSONValue serializeLockRequest(final LockRequest source) {
 
-        final DatabaseInstanceWrapper databaseMakingRequest = source.getRequestLocation();
-        final int sessionID = source.getSessionID();
+        if (source == null) { return JSONObject.NULL; }
 
         final JSONObject object = new JSONObject();
-        try {
-            object.put(DATABASE_MAKING_REQUEST, serializeDatabaseInstanceWrapper(databaseMakingRequest).getValue());
-            object.put(SESSION_ID, sessionID);
-        }
-        catch (final JSONException e) {
-            Diagnostic.trace(DiagnosticLevel.RUN, "error serializing LockRequest: " + e.getMessage());
-        }
-        return new JSONValue(object);
+
+        object.put(DATABASE_MAKING_REQUEST, serializeDatabaseInstanceWrapper(source.getRequestLocation()));
+        object.put(SESSION_ID, source.getSessionID());
+
+        return object;
     }
 
     public LockRequest deserializeLockRequest(final JSONObject object) throws DeserializationException {
 
-        if (object == null) { return null; }
+        if (object == JSONObject.NULL) { return null; }
 
         try {
             final DatabaseInstanceWrapper databaseMakingRequest = deserializeDatabaseInstanceWrapper(object.getJSONObject(DATABASE_MAKING_REQUEST));
@@ -308,29 +288,24 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     public JSONValue serializeReplicaManager(final ReplicaManager source) {
 
-        final JSONValue allReplicas = serializeMapDatabaseInstanceWrapperInteger(source.getActiveReplicas());
-        final JSONValue activeReplicas = serializeMapDatabaseInstanceWrapperInteger(source.getAllReplicas());
-        final JSONValue primaryLocation = serializeDatabaseInstanceWrapper(source.getPrimaryLocation());
+        if (source == null) { return JSONObject.NULL; }
 
         final JSONObject object = new JSONObject();
-        try {
-            object.put(ALL_REPLICAS, allReplicas.getValue());
-            object.put(ACTIVE_REPLICAS, activeReplicas.getValue());
-            object.put(PRIMARY_LOCATION, primaryLocation.getValue());
-        }
-        catch (final JSONException e) {
-            Diagnostic.trace(DiagnosticLevel.RUN, "error serializing ReplicaManager: " + e.getMessage());
-        }
-        return new JSONValue(object);
+
+        object.put(ALL_REPLICAS, serializeMapDatabaseInstanceWrapperInteger(source.getActiveReplicas()));
+        object.put(ACTIVE_REPLICAS, serializeMapDatabaseInstanceWrapperInteger(source.getAllReplicas()));
+        object.put(PRIMARY_LOCATION, serializeDatabaseInstanceWrapper(source.getPrimaryLocation()));
+
+        return object;
     }
 
     public ReplicaManager deserializeReplicaManager(final JSONObject object) throws DeserializationException {
 
-        if (object == null) { return null; }
+        if (object == JSONObject.NULL) { return null; }
 
         try {
             final Map<DatabaseInstanceWrapper, Integer> allReplicas = deserializeMapDatabaseInstanceWrapperInteger(object.getJSONObject(ALL_REPLICAS));
@@ -344,28 +319,24 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     public JSONValue serializeDatabaseInstanceWrapper(final DatabaseInstanceWrapper source) {
 
-        final JSONValue databaseURL = serializeDatabaseID(source.getURL());
-        final JSONValue databaseInstance = serializeIDatabaseInstanceRemote(source.getDatabaseInstance());
+        if (source == null) { return JSONObject.NULL; }
 
         final JSONObject object = new JSONObject();
-        try {
-            object.put(DATABASE_URL, databaseURL.getValue());
-            object.put(DATABASE_INSTANCE, databaseInstance.getValue());
-            object.put(ACTIVE, source.getActive());
-        }
-        catch (final JSONException e) {
-            Diagnostic.trace(DiagnosticLevel.RUN, "error serializing DatabaseInstanceWrapper: " + e.getMessage());
-        }
-        return new JSONValue(object);
+
+        object.put(DATABASE_URL, serializeDatabaseID(source.getURL()));
+        object.put(DATABASE_INSTANCE, serializeIDatabaseInstanceRemote(source.getDatabaseInstance()));
+        object.put(ACTIVE, source.getActive());
+
+        return object;
     }
 
     public DatabaseInstanceWrapper deserializeDatabaseInstanceWrapper(final JSONObject object) throws DeserializationException {
 
-        if (object == null) { return null; }
+        if (object == JSONObject.NULL) { return null; }
 
         try {
             final DatabaseID databaseURL = deserializeDatabaseID(object.getJSONObject(DATABASE_URL));
@@ -379,28 +350,27 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     public JSONValue serializeActionRequest(final ActionRequest source) {
 
+        if (source == null) { return JSONObject.NULL; }
+
         final JSONObject object = new JSONObject();
-        try {
-            object.put(EXPECTED_TIME_TO_COMPLETION, source.expectedTimeToCompletion);
-            object.put(IMMEDIATE_DISK_SPACE, source.immediateDiskSpace);
-            object.put(CPU, source.cpu);
-            object.put(MEMORY, source.memory);
-            object.put(NETWORK, source.network);
-            object.put(DISK, source.disk);
-        }
-        catch (final JSONException e) {
-            Diagnostic.trace(DiagnosticLevel.RUN, "error serializing LockType: " + e.getMessage());
-        }
-        return new JSONValue(object);
+
+        object.put(EXPECTED_TIME_TO_COMPLETION, source.expectedTimeToCompletion);
+        object.put(IMMEDIATE_DISK_SPACE, source.immediateDiskSpace);
+        object.put(CPU, source.cpu);
+        object.put(MEMORY, source.memory);
+        object.put(NETWORK, source.network);
+        object.put(DISK, source.disk);
+
+        return object;
     }
 
     public ActionRequest deserializeActionRequest(final JSONObject object) throws DeserializationException {
 
-        if (object == null) { return null; }
+        if (object == JSONObject.NULL) { return null; }
 
         try {
             final long expectedTimeToCompletion = object.getLong(EXPECTED_TIME_TO_COMPLETION);
@@ -421,34 +391,24 @@ public class H2OMarshaller extends Marshaller {
 
     public JSONValue serializeTableManagerWrapper(final TableManagerWrapper source) {
 
-        if (source == null) { return JSONValue.NULL; }
-
-        final JSONValue serialized_table_info = serializeTableInfo(source.getTableInfo());
-        final JSONValue serialized_table_manager_remote = serializeITableManagerRemote(source.getTableManager());
-        final JSONValue serialized_database_id = serializeDatabaseID(source.getURL());
+        if (source == null) { return JSONObject.NULL; }
 
         final JSONObject object = new JSONObject();
-        try {
-            putDealingWithNull(object, TABLE_INFO, serialized_table_info);
-            putDealingWithNull(object, TABLE_MANAGER, serialized_table_manager_remote);
-            putDealingWithNull(object, TABLE_MANAGER_URL, serialized_database_id);
-        }
-        catch (final JSONException e) {
-            Diagnostic.trace(DiagnosticLevel.RUN, "error serializing TableManagerWrapper: " + e.getMessage());
-        }
-        return new JSONValue(object);
+
+        object.put(TABLE_INFO, serializeTableInfo(source.getTableInfo()));
+        object.put(TABLE_MANAGER, serializeITableManagerRemote(source.getTableManager()));
+        object.put(TABLE_MANAGER_URL, serializeDatabaseID(source.getURL()));
+
+        return object;
     }
 
     public TableManagerWrapper deserializeTableManagerWrapper(final JSONObject object) throws DeserializationException {
 
-        if (object == null) { return null; }
+        if (object == JSONObject.NULL) { return null; }
 
         try {
             final ITableManagerRemote tableManager = deserializeITableManagerRemote(object.getJSONObject(TABLE_MANAGER));
-
-            final JSONObject serialized_database_id = getJSONObject(object, TABLE_MANAGER_URL);
-            final DatabaseID tableManagerURL = deserializeDatabaseID(serialized_database_id);
-
+            final DatabaseID tableManagerURL = deserializeDatabaseID(object.getJSONObject(TABLE_MANAGER_URL));
             final TableInfo tableInfo = deserializeTableInfo(object.getJSONObject(TABLE_INFO));
 
             return new TableManagerWrapper(tableInfo, tableManager, tableManagerURL);
@@ -462,43 +422,34 @@ public class H2OMarshaller extends Marshaller {
 
     public JSONValue serializeTableProxy(final TableProxy source) {
 
-        final JSONValue lockGranted = serializeLockType(source.getLockGranted());
-        final JSONValue lockRequested = serializeLockType(source.getLockRequested());
-        final JSONValue tableName = serializeTableInfo(source.getTableName());
-        final JSONValue allReplicas = serializeMapDatabaseInstanceWrapperInteger(source.getAllReplicas());
-        final JSONValue tableManager = serializeITableManagerRemote(source.getTableManager());
-        final JSONValue requestingDatabase = serializeLockRequest(source.getRequestingDatabase());
-        final int updateID = source.getUpdateID();
+        if (source == null) { return JSONObject.NULL; }
 
         final JSONObject object = new JSONObject();
-        try {
-            object.put(LOCK_GRANTED, lockGranted.getValue());
-            object.put(LOCK_REQUESTED, lockRequested.getValue());
-            object.put(TABLE_NAME, tableName.getValue());
-            object.put(ALL_REPLICAS, allReplicas.getValue());
-            object.put(TABLE_MANAGER, tableManager.getValue());
-            object.put(REQUESTING_DATABASE, requestingDatabase.getValue());
-            object.put(UPDATE_ID, updateID);
-        }
-        catch (final JSONException e) {
-            Diagnostic.trace(DiagnosticLevel.RUN, "error serializing TableProxy: " + e.getMessage());
-        }
-        return new JSONValue(object);
+
+        object.put(LOCK_GRANTED, serializeLockType(source.getLockGranted()));
+        object.put(LOCK_REQUESTED, serializeLockType(source.getLockRequested()));
+        object.put(TABLE_NAME, serializeTableInfo(source.getTableName()));
+        object.put(ALL_REPLICAS, serializeMapDatabaseInstanceWrapperInteger(source.getAllReplicas()));
+        object.put(TABLE_MANAGER, serializeITableManagerRemote(source.getTableManager()));
+        object.put(REQUESTING_DATABASE, serializeLockRequest(source.getRequestingDatabase()));
+        object.put(UPDATE_ID, source.getUpdateID());
+
+        return object;
     }
 
     public TableProxy deserializeTableProxy(final JSONObject object) throws DeserializationException {
 
-        if (object == null) { return null; }
+        if (object == JSONObject.NULL) { return null; }
 
         try {
 
             final LockType lockGranted = deserializeLockType(object.getString(LOCK_GRANTED));
+            final LockType lockRequested = deserializeLockType(object.getString(LOCK_REQUESTED));
             final TableInfo tableName = deserializeTableInfo(object.getJSONObject(TABLE_NAME));
             final Map<DatabaseInstanceWrapper, Integer> allReplicas = deserializeMapDatabaseInstanceWrapperInteger(object.getJSONObject(ALL_REPLICAS));
             final ITableManagerRemote tableManager = deserializeITableManagerRemote(object.getJSONObject(TABLE_MANAGER));
             final LockRequest requestingDatabase = deserializeLockRequest(object.getJSONObject(REQUESTING_DATABASE));
             final int updateID = object.getInt(UPDATE_ID);
-            final LockType lockRequested = deserializeLockType(object.getString(LOCK_REQUESTED));
 
             return new TableProxy(lockGranted, tableName, allReplicas, tableManager, requestingDatabase, updateID, lockRequested);
         }
@@ -507,20 +458,22 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     public JSONValue serializeCollectionDatabaseInstanceWrapper(final Collection<DatabaseInstanceWrapper> source) {
 
+        if (source == null) { return JSONArray.NULL; }
+
         final JSONArray array = new JSONArray();
         for (final DatabaseInstanceWrapper instance : source) {
-            array.put(serializeDatabaseInstanceWrapper(instance).getValue());
+            array.put(serializeDatabaseInstanceWrapper(instance));
         }
-        return new JSONValue(array);
+        return array;
     }
 
     public Set<DatabaseInstanceWrapper> deserializeSetDatabaseInstanceWrapper(final JSONArray array) throws DeserializationException {
 
-        if (array == null) { return null; }
+        if (array == JSONArray.NULL) { return null; }
 
         try {
             final Set<DatabaseInstanceWrapper> result = new HashSet<DatabaseInstanceWrapper>();
@@ -537,7 +490,7 @@ public class H2OMarshaller extends Marshaller {
 
     public Collection<DatabaseInstanceWrapper> deserializeCollectionDatabaseInstanceWrapper(final JSONArray array) throws DeserializationException {
 
-        if (array == null) { return null; }
+        if (array == JSONArray.NULL) { return null; }
 
         try {
             final Collection<DatabaseInstanceWrapper> result = new ArrayList<DatabaseInstanceWrapper>(array.length());
@@ -552,29 +505,23 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     public JSONValue serializeMapDatabaseIDDatabaseInstanceWrapper(final Map<DatabaseID, DatabaseInstanceWrapper> source) {
 
+        if (source == null) { return JSONObject.NULL; }
+
         final JSONObject object = new JSONObject();
-        try {
 
-            final JSONValue key_array = serializeSetDatabaseID(source.keySet());
-            final JSONValue value_arrray = serializeCollectionDatabaseInstanceWrapper(source.values());
+        object.put(KEYS, serializeSetDatabaseID(source.keySet()));
+        object.put(VALUES, serializeCollectionDatabaseInstanceWrapper(source.values()));
 
-            object.put(KEYS, key_array.getValue());
-            object.put(VALUES, value_arrray.getValue());
-
-        }
-        catch (final JSONException e) {
-            Diagnostic.trace(DiagnosticLevel.RUN, "error serializing LockType: " + e.getMessage());
-        }
-        return new JSONValue(object);
+        return object;
     }
 
     public Map<DatabaseID, DatabaseInstanceWrapper> deserializeMapDatabaseIDDatabaseInstanceWrapper(final JSONObject object) throws DeserializationException {
 
-        if (object == null) { return null; }
+        if (object == JSONObject.NULL) { return null; }
 
         try {
             final Set<DatabaseID> keys = deserializeSetDatabaseID(object.getJSONArray(KEYS));
@@ -598,57 +545,23 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    /////////////////////
-
-    private JSONValue serializeSetDatabaseID(final Set<DatabaseID> source) {
-
-        final JSONArray array = new JSONArray();
-        for (final DatabaseID instance : source) {
-            array.put(serializeDatabaseID(instance).getValue());
-        }
-        return new JSONValue(array);
-    }
-
-    private Set<DatabaseID> deserializeSetDatabaseID(final JSONArray array) throws DeserializationException {
-
-        if (array == null) { return null; }
-
-        try {
-            final Set<DatabaseID> result = new HashSet<DatabaseID>();
-            for (int i = 0; i < array.length(); i++) {
-                result.add(deserializeDatabaseID(array.getJSONObject(i)));
-            }
-
-            return result;
-        }
-        catch (final Exception e) {
-            throw new DeserializationException(e);
-        }
-    }
-
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     public JSONValue serializeMapTableInfoTableManagerWrapper(final Map<TableInfo, TableManagerWrapper> source) {
 
+        if (source == null) { return JSONObject.NULL; }
+
         final JSONObject object = new JSONObject();
-        try {
 
-            final JSONValue key_array = serializeSetTableInfo(source.keySet());
-            final JSONValue value_arrray = serializeCollectionTableManagerWrapper(source.values());
+        object.put(KEYS, serializeSetTableInfo(source.keySet()));
+        object.put(VALUES, serializeCollectionTableManagerWrapper(source.values()));
 
-            object.put(KEYS, key_array.getValue());
-            object.put(VALUES, value_arrray.getValue());
-
-        }
-        catch (final JSONException e) {
-            Diagnostic.trace(DiagnosticLevel.RUN, "error serializing LockType: " + e.getMessage());
-        }
-        return new JSONValue(object);
+        return object;
     }
 
     public Map<TableInfo, TableManagerWrapper> deserializeMapTableInfoTableManagerWrapper(final JSONObject object) throws DeserializationException {
 
-        if (object == null) { return null; }
+        if (object == JSONObject.NULL) { return null; }
 
         try {
             final Set<TableInfo> keys = deserializeSetTableInfo(object.getJSONArray(KEYS));
@@ -672,20 +585,22 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     private JSONValue serializeCollectionTableManagerWrapper(final Collection<TableManagerWrapper> source) {
 
+        if (source == null) { return JSONArray.NULL; }
+
         final JSONArray array = new JSONArray();
         for (final TableManagerWrapper instance : source) {
-            array.put(serializeTableManagerWrapper(instance).getValue());
+            array.put(serializeTableManagerWrapper(instance));
         }
-        return new JSONValue(array);
+        return array;
     }
 
     public Set<TableManagerWrapper> deserializeSetTableManagerWrapper(final JSONArray array) throws DeserializationException {
 
-        if (array == null) { return null; }
+        if (array == JSONArray.NULL) { return null; }
 
         try {
             final Set<TableManagerWrapper> result = new HashSet<TableManagerWrapper>();
@@ -700,57 +615,23 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    /////////////////////
-
-    private JSONValue serializeSetTableInfo(final Set<TableInfo> source) {
-
-        final JSONArray array = new JSONArray();
-        for (final TableInfo instance : source) {
-            array.put(serializeTableInfo(instance).getValue());
-        }
-        return new JSONValue(array);
-    }
-
-    private Set<TableInfo> deserializeSetTableInfo(final JSONArray array) throws DeserializationException {
-
-        if (array == null) { return null; }
-
-        try {
-            final Set<TableInfo> result = new HashSet<TableInfo>();
-            for (int i = 0; i < array.length(); i++) {
-                result.add(deserializeTableInfo(array.getJSONObject(i)));
-            }
-
-            return result;
-        }
-        catch (final Exception e) {
-            throw new DeserializationException(e);
-        }
-    }
-
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     public JSONValue serializeMapTableInfoSetDatabaseID(final Map<TableInfo, Set<DatabaseID>> source) {
 
+        if (source == null) { return JSONObject.NULL; }
+
         final JSONObject object = new JSONObject();
-        try {
 
-            final JSONValue key_array = serializeSetTableInfo(source.keySet());
-            final JSONValue value_arrray = serializeCollectionSetDatabaseID(source.values());
+        object.put(KEYS, serializeSetTableInfo(source.keySet()));
+        object.put(VALUES, serializeCollectionSetDatabaseID(source.values()));
 
-            object.put(KEYS, key_array.getValue());
-            object.put(VALUES, value_arrray.getValue());
-
-        }
-        catch (final JSONException e) {
-            Diagnostic.trace(DiagnosticLevel.RUN, "error serializing LockType: " + e.getMessage());
-        }
-        return new JSONValue(object);
+        return object;
     }
 
     public Map<TableInfo, Set<DatabaseID>> deserializeMapTableInfoSetDatabaseID(final JSONObject object) throws DeserializationException {
 
-        if (object == null) { return null; }
+        if (object == JSONObject.NULL) { return null; }
 
         try {
             final Set<TableInfo> keys = deserializeSetTableInfo(object.getJSONArray(KEYS));
@@ -774,65 +655,22 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    /////////////////////
-
-    private JSONValue serializeCollectionSetDatabaseID(final Collection<Set<DatabaseID>> source) {
-
-        final JSONArray array = new JSONArray();
-        for (final Set<DatabaseID> instance : source) {
-            array.put(serializeSetDatabaseID(instance).getValue());
-        }
-        return new JSONValue(array);
-    }
-
-    private Set<Set<DatabaseID>> deserializeSetSetDatabaseID(final JSONArray array) throws DeserializationException {
-
-        if (array == null) { return null; }
-
-        try {
-            final HashSet<Set<DatabaseID>> result = new HashSet<Set<DatabaseID>>();
-            for (int i = 0; i < array.length(); i++) {
-                result.add(deserializeSetDatabaseID(array.getJSONArray(i)));
-            }
-
-            return result;
-        }
-        catch (final Exception e) {
-            throw new DeserializationException(e);
-        }
-    }
-
-    private Collection<Set<DatabaseID>> deserializeCollectionSetDatabaseID(final JSONArray array) throws DeserializationException {
-
-        if (array == null) { return null; }
-
-        try {
-            final Collection<Set<DatabaseID>> result = new ArrayList<Set<DatabaseID>>(array.length());
-            for (int i = 0; i < array.length(); i++) {
-                result.add(deserializeSetDatabaseID(array.getJSONArray(i)));
-            }
-
-            return result;
-        }
-        catch (final Exception e) {
-            throw new DeserializationException(e);
-        }
-    }
-
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     public JSONValue serializeSetTableManagerWrapper(final Set<TableManagerWrapper> source) {
 
+        if (source == null) { return JSONArray.NULL; }
+
         final JSONArray array = new JSONArray();
         for (final TableManagerWrapper instance : source) {
-            array.put(serializeTableManagerWrapper(instance).getValue());
+            array.put(serializeTableManagerWrapper(instance));
         }
-        return new JSONValue(array);
+        return array;
     }
 
     public Collection<TableManagerWrapper> deserializeCollectionTableManagerWrapper(final JSONArray array) throws DeserializationException {
 
-        if (array == null) { return null; }
+        if (array == JSONArray.NULL) { return null; }
 
         try {
             final Collection<TableManagerWrapper> result = new ArrayList<TableManagerWrapper>(array.length());
@@ -847,24 +685,18 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     public JSONValue serializeMapTableInfoDatabaseID(final Map<TableInfo, DatabaseID> source) {
 
+        if (source == null) { return JSONObject.NULL; }
+
         final JSONObject object = new JSONObject();
-        try {
 
-            final JSONValue key_array = serializeSetTableInfo(source.keySet());
-            final JSONValue value_arrray = serializeCollectionDatabaseID(source.values());
+        object.put(KEYS, serializeSetTableInfo(source.keySet()));
+        object.put(VALUES, serializeCollectionDatabaseID(source.values()));
 
-            object.put(KEYS, key_array.getValue());
-            object.put(VALUES, value_arrray.getValue());
-
-        }
-        catch (final JSONException e) {
-            Diagnostic.trace(DiagnosticLevel.RUN, "error serializing LockType: " + e.getMessage());
-        }
-        return new JSONValue(object);
+        return object;
     }
 
     public Map<TableInfo, DatabaseID> deserializeMapTableInfoDatabaseID(final JSONObject object) throws DeserializationException {
@@ -893,86 +725,22 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    /////////////////////
-
-    private JSONValue serializeCollectionDatabaseID(final Collection<DatabaseID> source) {
-
-        final JSONArray array = new JSONArray();
-        for (final DatabaseID instance : source) {
-            array.put(serializeDatabaseID(instance));
-        }
-        return new JSONValue(array);
-    }
-
-    private Collection<DatabaseID> deserializeCollectionDatabaseID(final JSONArray array) throws DeserializationException {
-
-        if (array == null) { return null; }
-
-        try {
-            final Collection<DatabaseID> result = new ArrayList<DatabaseID>(array.length());
-            for (int i = 0; i < array.length(); i++) {
-                result.add(deserializeDatabaseID(array.getJSONObject(i)));
-            }
-
-            return result;
-        }
-        catch (final Exception e) {
-            throw new DeserializationException(e);
-        }
-    }
-
-    /////////////////////
-
-    private JSONValue serializeCommitResult(final CommitResult source) {
-
-        final JSONObject object = new JSONObject();
-        try {
-            object.put(COMMIT, source.isCommit());
-            object.put(WRAPPER, serializeDatabaseInstanceWrapper(source.getDatabaseInstanceWrapper()).getValue());
-            object.put(UPDATE_ID, source.getUpdateID());
-            object.put(EXPECTED_UPDATE_ID, source.getExpectedUpdateID());
-            object.put(TABLE_NAME, serializeTableInfo(source.getTable()).getValue());
-        }
-        catch (final JSONException e) {
-            Diagnostic.trace(DiagnosticLevel.RUN, "error serializing LockType: " + e.getMessage());
-        }
-        return new JSONValue(object);
-    }
-
-    private CommitResult deserializeCommitResult(final JSONObject object) throws DeserializationException {
-
-        if (object == null) { return null; }
-
-        try {
-            final boolean commit = object.getBoolean(COMMIT);
-            final DatabaseInstanceWrapper wrapper = deserializeDatabaseInstanceWrapper(object.getJSONObject(WRAPPER));
-            final int updateID = object.getInt(UPDATE_ID);
-            final int expectedUpdateID = object.getInt(EXPECTED_UPDATE_ID);
-            final TableInfo tableName = deserializeTableInfo(getJSONObject(object, TABLE_NAME));
-
-            return new CommitResult(commit, wrapper, updateID, expectedUpdateID, tableName);
-        }
-        catch (final Exception e) {
-            throw new DeserializationException(e);
-        }
-    }
-
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     public JSONValue serializeCollectionCommitResult(final Collection<CommitResult> source) {
 
-        if (source == null) { return new JSONValue(new JSONArray()); }
+        if (source == null) { return JSONArray.NULL; }
 
         final JSONArray array = new JSONArray();
         for (final CommitResult instance : source) {
-            array.put(serializeCommitResult(instance).getValue());
+            array.put(serializeCommitResult(instance));
         }
-        return new JSONValue(array);
+        return array;
     }
 
     public Set<CommitResult> deserializeCollectionCommitResult(final JSONArray array) throws DeserializationException {
 
-        if (array == null || array.length() == 0) { return null; }
+        if (array == JSONArray.NULL) { return null; }
 
         try {
             final Set<CommitResult> result = new HashSet<CommitResult>();
@@ -987,20 +755,22 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     public JSONValue serializeSetString(final Set<String> source) {
+
+        if (source == null) { return JSONArray.NULL; }
 
         final JSONArray array = new JSONArray();
         for (final String s : source) {
             array.put(s);
         }
-        return new JSONValue(array);
+        return array;
     }
 
     public Set<String> deserializeSetString(final JSONArray array) throws DeserializationException {
 
-        if (array == null) { return null; }
+        if (array == JSONArray.NULL) { return null; }
 
         try {
             final Set<String> result = new HashSet<String>();
@@ -1015,20 +785,22 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     public JSONValue serializeQueueDatabaseInstanceWrapper(final Queue<DatabaseInstanceWrapper> source) {
 
+        if (source == null) { return JSONArray.NULL; }
+
         final JSONArray array = new JSONArray();
         for (final DatabaseInstanceWrapper instance : source) {
-            array.put(serializeDatabaseInstanceWrapper(instance).getValue());
+            array.put(serializeDatabaseInstanceWrapper(instance));
         }
-        return new JSONValue(array);
+        return array;
     }
 
     public Queue<DatabaseInstanceWrapper> deserializeQueueDatabaseInstanceWrapper(final JSONArray array) throws DeserializationException {
 
-        if (array == null) { return null; }
+        if (array == JSONArray.NULL) { return null; }
 
         try {
             final Queue<DatabaseInstanceWrapper> result = new PriorityQueue<DatabaseInstanceWrapper>();
@@ -1044,28 +816,23 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     public JSONValue serializeMapDatabaseInstanceWrapperInteger(final Map<DatabaseInstanceWrapper, Integer> source) {
 
+        if (source == null) { return JSONObject.NULL; }
+
         final JSONObject object = new JSONObject();
-        try {
-            final JSONValue key_array = serializeCollectionDatabaseInstanceWrapper(source.keySet());
-            final JSONValue value_arrray = serializeCollectionInteger(source.values());
 
-            object.put(KEYS, key_array.getValue());
-            object.put(VALUES, value_arrray.getValue());
+        object.put(KEYS, serializeCollectionDatabaseInstanceWrapper(source.keySet()));
+        object.put(VALUES, serializeCollectionInteger(source.values()));
 
-        }
-        catch (final JSONException e) {
-            Diagnostic.trace(DiagnosticLevel.RUN, "error serializing LockType: " + e.getMessage());
-        }
-        return new JSONValue(object);
+        return object;
     }
 
     public Map<DatabaseInstanceWrapper, Integer> deserializeMapDatabaseInstanceWrapperInteger(final JSONObject object) throws DeserializationException {
 
-        if (object == null) { return null; }
+        if (object == JSONObject.NULL) { return null; }
 
         try {
             final Set<DatabaseInstanceWrapper> keys = deserializeSetDatabaseInstanceWrapper(object.getJSONArray(KEYS));
@@ -1089,20 +856,22 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    /////////////////////
+    // -------------------------------------------------------------------------------------------------------
 
     private JSONValue serializeCollectionInteger(final Collection<Integer> source) {
+
+        if (source == null) { return JSONArray.NULL; }
 
         final JSONArray array = new JSONArray();
         for (final Integer instance : source) {
             array.put(instance);
         }
-        return new JSONValue(array);
+        return array;
     }
 
     private Collection<Integer> deserializeCollectionInteger(final JSONArray array) throws DeserializationException {
 
-        if (array == null) { return null; }
+        if (array == JSONArray.NULL) { return null; }
 
         try {
             final Collection<Integer> result = new ArrayList<Integer>(array.length());
@@ -1111,6 +880,178 @@ public class H2OMarshaller extends Marshaller {
             }
 
             return result;
+        }
+        catch (final Exception e) {
+            throw new DeserializationException(e);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------------------
+
+    private JSONValue serializeSetDatabaseID(final Set<DatabaseID> source) {
+
+        if (source == null) { return JSONArray.NULL; }
+
+        final JSONArray array = new JSONArray();
+        for (final DatabaseID instance : source) {
+            array.put(serializeDatabaseID(instance));
+        }
+        return array;
+    }
+
+    private Set<DatabaseID> deserializeSetDatabaseID(final JSONArray array) throws DeserializationException {
+
+        if (array == JSONArray.NULL) { return null; }
+
+        try {
+            final Set<DatabaseID> result = new HashSet<DatabaseID>();
+            for (int i = 0; i < array.length(); i++) {
+                result.add(deserializeDatabaseID(array.getJSONObject(i)));
+            }
+
+            return result;
+        }
+        catch (final Exception e) {
+            throw new DeserializationException(e);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------------------
+
+    private JSONValue serializeSetTableInfo(final Set<TableInfo> source) {
+
+        if (source == null) { return JSONArray.NULL; }
+
+        final JSONArray array = new JSONArray();
+        for (final TableInfo instance : source) {
+            array.put(serializeTableInfo(instance));
+        }
+        return array;
+    }
+
+    private Set<TableInfo> deserializeSetTableInfo(final JSONArray array) throws DeserializationException {
+
+        if (array == JSONArray.NULL) { return null; }
+
+        try {
+            final Set<TableInfo> result = new HashSet<TableInfo>();
+            for (int i = 0; i < array.length(); i++) {
+                result.add(deserializeTableInfo(array.getJSONObject(i)));
+            }
+
+            return result;
+        }
+        catch (final Exception e) {
+            throw new DeserializationException(e);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------------------
+
+    private JSONValue serializeCollectionSetDatabaseID(final Collection<Set<DatabaseID>> source) {
+
+        if (source == null) { return JSONArray.NULL; }
+
+        final JSONArray array = new JSONArray();
+        for (final Set<DatabaseID> instance : source) {
+            array.put(serializeSetDatabaseID(instance));
+        }
+        return array;
+    }
+
+    private Set<Set<DatabaseID>> deserializeSetSetDatabaseID(final JSONArray array) throws DeserializationException {
+
+        if (array == JSONArray.NULL) { return null; }
+
+        try {
+            final HashSet<Set<DatabaseID>> result = new HashSet<Set<DatabaseID>>();
+            for (int i = 0; i < array.length(); i++) {
+                result.add(deserializeSetDatabaseID(array.getJSONArray(i)));
+            }
+
+            return result;
+        }
+        catch (final Exception e) {
+            throw new DeserializationException(e);
+        }
+    }
+
+    private Collection<Set<DatabaseID>> deserializeCollectionSetDatabaseID(final JSONArray array) throws DeserializationException {
+
+        if (array == JSONArray.NULL) { return null; }
+
+        try {
+            final Collection<Set<DatabaseID>> result = new ArrayList<Set<DatabaseID>>(array.length());
+            for (int i = 0; i < array.length(); i++) {
+                result.add(deserializeSetDatabaseID(array.getJSONArray(i)));
+            }
+
+            return result;
+        }
+        catch (final Exception e) {
+            throw new DeserializationException(e);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------------------
+
+    private JSONValue serializeCollectionDatabaseID(final Collection<DatabaseID> source) {
+
+        if (source == null) { return JSONArray.NULL; }
+
+        final JSONArray array = new JSONArray();
+        for (final DatabaseID instance : source) {
+            array.put(serializeDatabaseID(instance));
+        }
+        return array;
+    }
+
+    private Collection<DatabaseID> deserializeCollectionDatabaseID(final JSONArray array) throws DeserializationException {
+
+        if (array == JSONArray.NULL) { return null; }
+
+        try {
+            final Collection<DatabaseID> result = new ArrayList<DatabaseID>(array.length());
+            for (int i = 0; i < array.length(); i++) {
+                result.add(deserializeDatabaseID(array.getJSONObject(i)));
+            }
+
+            return result;
+        }
+        catch (final Exception e) {
+            throw new DeserializationException(e);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------------------
+
+    private JSONValue serializeCommitResult(final CommitResult source) {
+
+        if (source == null) { return JSONObject.NULL; }
+
+        final JSONObject object = new JSONObject();
+
+        object.put(COMMIT, source.isCommit());
+        object.put(WRAPPER, serializeDatabaseInstanceWrapper(source.getDatabaseInstanceWrapper()));
+        object.put(UPDATE_ID, source.getUpdateID());
+        object.put(EXPECTED_UPDATE_ID, source.getExpectedUpdateID());
+        object.put(TABLE_NAME, serializeTableInfo(source.getTable()));
+
+        return object;
+    }
+
+    private CommitResult deserializeCommitResult(final JSONObject object) throws DeserializationException {
+
+        if (object == JSONObject.NULL) { return null; }
+
+        try {
+            final boolean commit = object.getBoolean(COMMIT);
+            final DatabaseInstanceWrapper wrapper = deserializeDatabaseInstanceWrapper(object.getJSONObject(WRAPPER));
+            final int updateID = object.getInt(UPDATE_ID);
+            final int expectedUpdateID = object.getInt(EXPECTED_UPDATE_ID);
+            final TableInfo tableName = deserializeTableInfo(object.getJSONObject(TABLE_NAME));
+
+            return new CommitResult(commit, wrapper, updateID, expectedUpdateID, tableName);
         }
         catch (final Exception e) {
             throw new DeserializationException(e);

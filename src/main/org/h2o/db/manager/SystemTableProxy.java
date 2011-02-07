@@ -19,11 +19,12 @@ import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
 import org.h2o.util.exceptions.MigrationException;
 import org.h2o.util.exceptions.MovedException;
-import org.json.JSONArray;
 
 import uk.ac.standrews.cs.nds.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.rpc.Proxy;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
+import uk.ac.standrews.cs.nds.rpc.json.JSONArray;
+import uk.ac.standrews.cs.nds.rpc.json.JSONObject;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
@@ -71,8 +72,8 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
             final JSONArray params = new JSONArray();
-            params.put(marshaller.serializeTableInfo(ti).getValue());
-            return marshaller.deserializeTableManagerWrapper(makeCall("lookup", params).getJSONObject());
+            params.put(marshaller.serializeTableInfo(ti));
+            return marshaller.deserializeTableManagerWrapper((JSONObject) makeCall("lookup", params).getValue());
         }
         catch (final MovedException e) {
             throw e;
@@ -89,8 +90,9 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
             final JSONArray params = new JSONArray();
-            params.put(marshaller.serializeTableInfo(ti).getValue());
-            return makeCall("exists", params).getBoolean();
+
+            params.put(marshaller.serializeTableInfo(ti));
+            return (Boolean) makeCall("exists", params).getValue();
         }
         catch (final MovedException e) {
             throw e;
@@ -106,11 +108,12 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
             final JSONArray params = new JSONArray();
-            params.put(marshaller.serializeITableManagerRemote(tableManager).getValue());
-            params.put(marshaller.serializeTableInfo(tableDetails).getValue());
-            params.put(marshaller.serializeCollectionDatabaseInstanceWrapper(replicaLocations).getJSONArray());
 
-            return makeCall("addTableInformation", params).getBoolean();
+            params.put(marshaller.serializeITableManagerRemote(tableManager));
+            params.put(marshaller.serializeTableInfo(tableDetails));
+            params.put(marshaller.serializeCollectionDatabaseInstanceWrapper(replicaLocations));
+
+            return (Boolean) makeCall("addTableInformation", params).getValue();
         }
         catch (final MovedException e) {
             throw e;
@@ -129,8 +132,8 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
             final JSONArray params = new JSONArray();
-            params.put(marshaller.serializeTableInfo(ti).getValue());
-            return makeCall("removeTableInformation", params).getBoolean();
+            params.put(marshaller.serializeTableInfo(ti));
+            return (Boolean) makeCall("removeTableInformation", params).getValue();
         }
         catch (final MovedException e) {
             throw e;
@@ -147,9 +150,9 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
         try {
 
             final JSONArray params = new JSONArray();
-            params.put(marshaller.serializeDatabaseID(databaseID).getValue());
-            params.put(marshaller.serializeDatabaseInstanceWrapper(databaseInstanceWrapper).getValue());
-            return makeCall("addConnectionInformation", params).getInt();
+            params.put(marshaller.serializeDatabaseID(databaseID));
+            params.put(marshaller.serializeDatabaseInstanceWrapper(databaseInstanceWrapper));
+            return (Integer) makeCall("addConnectionInformation", params).getValue();
         }
         catch (final MovedException e) {
             throw e;
@@ -167,7 +170,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public int getNewTableSetNumber() throws RPCException, MovedException {
 
         try {
-            return makeCall("getNewTableSetNumber").getInt();
+            return (Integer) makeCall("getNewTableSetNumber").getValue();
         }
         catch (final MovedException e) {
             throw e;
@@ -184,8 +187,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
         try {
             final JSONArray params = new JSONArray();
             params.put(schemaName);
-            return marshaller.deserializeSetString(makeCall("getAllTablesInSchema", params).getJSONArray());
-
+            return marshaller.deserializeSetString((JSONArray) makeCall("getAllTablesInSchema", params).getValue());
         }
         catch (final MovedException e) {
             throw e;
@@ -194,7 +196,6 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
             dealWithException(e);
             return null; // not returned
         }
-
     }
 
     @Override
@@ -205,7 +206,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
             try {
                 final JSONArray params = new JSONArray();
-                params.put(marshaller.serializeISystemTableMigratable(migratableSystemTable).getValue());
+                params.put(marshaller.serializeISystemTableMigratable(migratableSystemTable));
                 makeCall("recreateSystemTable", params);
             }
             catch (final MovedException e) {
@@ -245,7 +246,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public Map<DatabaseID, DatabaseInstanceWrapper> getConnectionInformation() throws RPCException, MovedException, SQLException {
 
         try {
-            return marshaller.deserializeMapDatabaseIDDatabaseInstanceWrapper(makeCall("getConnectionInformation").getJSONObject());
+            return marshaller.deserializeMapDatabaseIDDatabaseInstanceWrapper((JSONObject) makeCall("getConnectionInformation").getValue());
         }
         catch (final MovedException e) {
             throw e;
@@ -264,7 +265,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public Map<TableInfo, TableManagerWrapper> getTableManagers() throws RPCException, MovedException {
 
         try {
-            return marshaller.deserializeMapTableInfoTableManagerWrapper(makeCall("getTableManagers").getJSONObject());
+            return marshaller.deserializeMapTableInfoTableManagerWrapper((JSONObject) makeCall("getTableManagers").getValue());
         }
         catch (final MovedException e) {
             throw e;
@@ -280,7 +281,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public Map<TableInfo, Set<DatabaseID>> getReplicaLocations() throws RPCException, MovedException {
 
         try {
-            return marshaller.deserializeMapTableInfoSetDatabaseID(makeCall("getReplicaLocations").getJSONObject());
+            return marshaller.deserializeMapTableInfoSetDatabaseID((JSONObject) makeCall("getReplicaLocations").getValue());
         }
         catch (final MovedException e) {
             throw e;
@@ -311,8 +312,8 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
             final JSONArray params = new JSONArray();
-            params.put(marshaller.serializeDatabaseID(databaseURL).getValue());
-            return marshaller.deserializeIDatabaseInstanceRemote(makeCall("getDatabaseInstance", params).getString());
+            params.put(marshaller.serializeDatabaseID(databaseURL));
+            return marshaller.deserializeIDatabaseInstanceRemote((String) makeCall("getDatabaseInstance", params).getValue());
         }
         catch (final MovedException e) {
             throw e;
@@ -327,7 +328,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public Set<DatabaseInstanceWrapper> getDatabaseInstances() throws RPCException, MovedException {
 
         try {
-            return marshaller.deserializeSetDatabaseInstanceWrapper(makeCall("getDatabaseInstances").getJSONArray());
+            return marshaller.deserializeSetDatabaseInstanceWrapper((JSONArray) makeCall("getDatabaseInstances").getValue());
         }
         catch (final MovedException e) {
             throw e;
@@ -358,8 +359,8 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
             final JSONArray params = new JSONArray();
-            params.put(marshaller.serializeDatabaseID(localMachineLocation).getValue());
-            return marshaller.deserializeSetTableManagerWrapper(makeCall("getLocalDatabaseInstances", params).getJSONArray());
+            params.put(marshaller.serializeDatabaseID(localMachineLocation));
+            return marshaller.deserializeSetTableManagerWrapper((JSONArray) makeCall("getLocalDatabaseInstances", params).getValue());
         }
         catch (final MovedException e) {
             throw e;
@@ -375,8 +376,8 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
             final JSONArray params = new JSONArray();
-            params.put(marshaller.serializeITableManagerRemote(stub).getValue());
-            params.put(marshaller.serializeTableInfo(tableInfo).getValue());
+            params.put(marshaller.serializeITableManagerRemote(stub));
+            params.put(marshaller.serializeTableInfo(tableInfo));
             makeCall("changeTableManagerLocation", params);
         }
         catch (final MovedException e) {
@@ -392,9 +393,9 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
             final JSONArray params = new JSONArray();
-            params.put(marshaller.serializeTableInfo(table).getValue());
-            params.put(marshaller.serializeDatabaseID(replicaLocation).getValue());
-            params.put(marshaller.serializeDatabaseID(primaryLocation).getValue());
+            params.put(marshaller.serializeTableInfo(table));
+            params.put(marshaller.serializeDatabaseID(replicaLocation));
+            params.put(marshaller.serializeDatabaseID(primaryLocation));
             params.put(active);
             makeCall("addTableManagerStateReplica", params);
         }
@@ -410,7 +411,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public Map<TableInfo, DatabaseID> getPrimaryLocations() throws RPCException, MovedException {
 
         try {
-            return marshaller.deserializeMapTableInfoDatabaseID(makeCall("getPrimaryLocations").getJSONObject());
+            return marshaller.deserializeMapTableInfoDatabaseID((JSONObject) makeCall("getPrimaryLocations").getValue());
         }
         catch (final MovedException e) {
             throw e;
@@ -419,7 +420,6 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
             dealWithException(e);
             return null; //not reached
         }
-
     }
 
     @Override
@@ -427,8 +427,8 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
             final JSONArray params = new JSONArray();
-            params.put(marshaller.serializeTableInfo(table).getValue());
-            params.put(marshaller.serializeDatabaseID(replicaLocation).getValue());
+            params.put(marshaller.serializeTableInfo(table));
+            params.put(marshaller.serializeDatabaseID(replicaLocation));
             makeCall("removeTableManagerStateReplica", params);
         }
         catch (final MovedException e) {
@@ -444,8 +444,8 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
             final JSONArray params = new JSONArray();
-            params.put(marshaller.serializeTableInfo(table).getValue());
-            return marshaller.deserializeITableManagerRemote(makeCall("recreateTableManager", params).getJSONObject());
+            params.put(marshaller.serializeTableInfo(table));
+            return marshaller.deserializeITableManagerRemote((JSONObject) makeCall("recreateTableManager", params).getValue());
         }
         catch (final MovedException e) {
             throw e;
@@ -460,7 +460,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public boolean checkTableManagerAccessibility() throws RPCException, MovedException {
 
         try {
-            return makeCall("checkTableManagerAccessibility").getBoolean();
+            return (Boolean) makeCall("checkTableManagerAccessibility").getValue();
         }
         catch (final MovedException e) {
             throw e;
@@ -476,8 +476,8 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
             final JSONArray params = new JSONArray();
-            params.put(marshaller.serializeActionRequest(typeOfRequest).getValue());
-            return marshaller.deserializeQueueDatabaseInstanceWrapper(makeCall("getAvailableMachines", params).getJSONArray());
+            params.put(marshaller.serializeActionRequest(typeOfRequest));
+            return marshaller.deserializeQueueDatabaseInstanceWrapper((JSONArray) makeCall("getAvailableMachines", params).getValue());
         }
         catch (final MovedException e) {
             throw e;
@@ -516,7 +516,6 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
         catch (final Exception e) {
             dealWithException(e);
         }
-
     }
 
     @Override
@@ -531,7 +530,6 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
         catch (final Exception e) {
             dealWithException(e);
         }
-
     }
 
     @Override
@@ -548,27 +546,25 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
         catch (final Exception e) {
             dealWithException(e);
         }
-
     }
 
     @Override
     public IChordRemoteReference getChordReference() throws RPCException {
 
         try {
-            return marshaller.deserializeChordRemoteReference(makeCall("getChordReference").getJSONObject());
+            return marshaller.deserializeChordRemoteReference((JSONObject) makeCall("getChordReference").getValue());
         }
         catch (final Exception e) {
             dealWithException(e);
             return null; // not reached
         }
-
     }
 
     @Override
     public boolean isAlive() throws RPCException, MovedException {
 
         try {
-            return makeCall("isAlive").getBoolean();
+            return (Boolean) makeCall("isAlive").getValue();
         }
         catch (final Exception e) {
             dealWithException(e);
@@ -580,7 +576,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public InetSocketAddress getAddress() throws RPCException {
 
         try {
-            return marshaller.deserializeInetSocketAddress(makeCall("getAddress").getString());
+            return marshaller.deserializeInetSocketAddress((String) makeCall("getAddress").getValue());
         }
         catch (final Exception e) {
             dealWithException(e);

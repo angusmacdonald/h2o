@@ -39,7 +39,7 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
  * Base class for JUnit tests. Performs a basic setup of two in-memory databases which are used for the rest of testing.
- * 
+ *
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class TestBase {
@@ -52,7 +52,7 @@ public class TestBase {
     protected Statement sb = null;
     protected LocatorServer ls;
 
-    private static int chordPort = 40000;
+    private static int chordPort = 50000;
 
     /**
      * The number of rows that are in the test table after the initial @see {@link #setUp()} call.
@@ -102,7 +102,7 @@ public class TestBase {
 
     /**
      * @throws SQLException
-     * @throws InterruptedException 
+     * @throws InterruptedException
      * @throws java.lang.Exception
      */
     @After
@@ -156,7 +156,7 @@ public class TestBase {
 
     /**
      * This is done because the server doesn't release the original port when it is stopped programmatically.
-     * @throws IOException 
+     * @throws IOException
      */
     public static void resetLocatorFile() throws IOException {
 
@@ -180,7 +180,7 @@ public class TestBase {
     /**
      * Utility method which checks that the results of a test query match up to the set of expected values. The 'TEST' class is being used
      * in these tests so the primary keys (int) and names (varchar/string) are required to check the validity of the resultset.
-     * 
+     *
      * @param key
      *            The set of expected primary keys.
      * @param secondCol
@@ -233,7 +233,7 @@ public class TestBase {
     /**
      * Validate the result of a query on the second replica against expected values by selecting everything in a table sorted by ID and
      * comparing with each entry.
-     * 
+     *
      * @param pKey
      *            Primary key value
      * @param secondCol
@@ -249,7 +249,7 @@ public class TestBase {
     /**
      * Validate the result of a query on the first replica against expected values by selecting everything in a table sorted by ID and
      * comparing with each entry.
-     * 
+     *
      * @param pKey
      *            Primary key value
      * @param secondCol
@@ -294,7 +294,7 @@ public class TestBase {
 
     /**
      * Delete all of the database files created in these tests
-     * @throws SQLException 
+     * @throws SQLException
      */
     private static void deleteDatabaseData(final String baseDir, final String db) throws SQLException {
 
@@ -303,7 +303,7 @@ public class TestBase {
 
     /**
      * Create a replica on the second test database.
-     * 
+     *
      * @throws SQLException
      */
     private void createReplicaOnB(final String tableName) throws SQLException {

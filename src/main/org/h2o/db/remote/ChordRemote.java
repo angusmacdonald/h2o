@@ -995,9 +995,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             }
         }
 
-        if (!Constants.IS_NON_SM_TEST) {
-            chordNode.shutDown();
-        }
+        chordNode.shutDown();
     }
 
     @Override
