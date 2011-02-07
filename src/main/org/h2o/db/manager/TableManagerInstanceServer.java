@@ -14,6 +14,8 @@ import uk.ac.standrews.cs.nds.rpc.IHandler;
 import uk.ac.standrews.cs.nds.rpc.JSONValue;
 import uk.ac.standrews.cs.nds.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.NetworkUtil;
 
@@ -74,6 +76,7 @@ public class TableManagerInstanceServer extends ApplicationServer {
     public void exportObject(final ITableManagerRemote tm) {
 
         try {
+            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Exported Table Manager object to instance server: " + tm.getTableName());
             table_manager_instances.put(tm.getTableInfo().getFullTableName(), new TableManagerServer(tm));
         }
         catch (final RPCException e) {

@@ -216,6 +216,8 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
         location = database.getChordInterface().getLocalChordReference();
 
         relationReplicationFactor = Integer.parseInt(database.getDatabaseSettings().get("RELATION_REPLICATION_FACTOR"));
+
+        getDB().getTableManagerServer().exportObject(this);
     }
 
     public static String getMetaTableName(final String databaseName, final String tablePostfix) {
@@ -567,7 +569,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
         try {
             persistToCompleteStartup(tableInfo);
-            getDB().getTableManagerServer().exportObject(this);
+
             H2OEventBus.publish(new H2OEvent(db.getID().getURL(), DatabaseStates.TABLE_CREATION, tableInfo.getFullTableName()));
         }
         catch (final StartupException e) {
