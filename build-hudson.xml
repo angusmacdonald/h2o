@@ -82,7 +82,7 @@
 
 	<!-- Generate project release containing jar and libraries. -->
 	<target name="project-release">
-		<zip destfile="bin/stachord.zip">
+		<zip destfile="bin/h2o.zip">
 			<fileset dir="bin" includes="**/*.jar" />
 			<fileset dir="lib" includes="**/*.jar" />
 		</zip>
