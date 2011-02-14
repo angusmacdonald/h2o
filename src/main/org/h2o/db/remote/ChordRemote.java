@@ -520,7 +520,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                     }
                     catch (final Exception e) {
 
-                        ErrorHandling.hardExceptionError(e, "Couldn't connect to database instance with ID: " + applicationRegistryMap.getKey() + " on server port " + applicationRegistryMap.getValue());
+                        ErrorHandling.exceptionError(e, "Couldn't connect to database instance with ID: " + applicationRegistryMap.getKey() + " on server port " + applicationRegistryMap.getValue());
                         //Try again if the database is not active.
                     }
                 }
@@ -996,6 +996,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         }
 
         chordNode.shutDown();
+
     }
 
     @Override

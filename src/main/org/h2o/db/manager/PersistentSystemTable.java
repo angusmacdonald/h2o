@@ -256,7 +256,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
                 final String dbLocation = row[3].getString();
                 final int dbPort = row[4].getInt();
                 final int rmiPort = row[5].getInt();
-                final DatabaseID dbID = new DatabaseID(null, new DatabaseURL(connectionType, hostName, dbPort, dbLocation, false));
+                final DatabaseID dbID = new DatabaseID(new DatabaseURL(connectionType, hostName, dbPort, dbLocation, false));
                 dbID.setRMIPort(rmiPort);
                 databaseLocations.put(dbID, null);
             }
@@ -330,7 +330,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
                 final String schemaName = row[5].getString();
                 final int chord_port = row[6].getInt();
 
-                final DatabaseID dbID = new DatabaseID(null, new DatabaseURL(connectionType, machineName, Integer.parseInt(connectionPort), dbLocation, false, chord_port));
+                final DatabaseID dbID = new DatabaseID(new DatabaseURL(connectionType, machineName, Integer.parseInt(connectionPort), dbLocation, false, chord_port));
                 final TableInfo ti = new TableInfo(tableName, schemaName);
 
                 /*

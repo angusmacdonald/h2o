@@ -154,6 +154,8 @@ public class SystemTableTests {
     @Test
     public void schemaTableCreationPersistence() throws ClassNotFoundException, InterruptedException, SQLException, IOException {
 
+        Constants.IS_NON_SM_TEST = false;
+
         Connection conn = null;
         // start the server, allows to access the database remotely
         Server server = null;
@@ -215,6 +217,8 @@ public class SystemTableTests {
             finally {
                 shutdownServer(server);
             }
+
+            Constants.IS_NON_SM_TEST = true;
         }
     }
 

@@ -511,11 +511,11 @@ public class H2O {
 
         switch (databaseType) {
             case DISK: {
-                databaseID = new DatabaseID(databaseInstanceIdentifier, new DatabaseURL(tcpPortToUse, databaseBaseDirectoryPath, databaseInstanceIdentifier));
+                databaseID = new DatabaseID(new DatabaseURL(tcpPortToUse, databaseBaseDirectoryPath, databaseInstanceIdentifier));
                 break;
             }
             case MEMORY: {
-                databaseID = new DatabaseID(databaseInstanceIdentifier, new DatabaseURL(databaseInstanceIdentifier));
+                databaseID = new DatabaseID(new DatabaseURL(databaseInstanceIdentifier));
                 break;
             }
             default: {
