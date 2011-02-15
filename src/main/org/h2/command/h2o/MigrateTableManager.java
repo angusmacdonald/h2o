@@ -136,7 +136,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
          * Stop the old, remote, manager from accepting any more requests.
          */
         try {
-            oldTableManager.prepareForMigration(db.getID().getURLwithRMIPort());
+            oldTableManager.prepareForMigration(db.getID().getURL());
         }
         catch (final RPCException e) {
             e.printStackTrace();

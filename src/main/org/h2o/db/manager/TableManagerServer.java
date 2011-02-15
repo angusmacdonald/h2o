@@ -16,6 +16,7 @@ import uk.ac.standrews.cs.nds.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.rpc.json.JSONArray;
 import uk.ac.standrews.cs.nds.rpc.json.JSONBoolean;
 import uk.ac.standrews.cs.nds.rpc.json.JSONInteger;
+import uk.ac.standrews.cs.nds.rpc.json.JSONObject;
 import uk.ac.standrews.cs.nds.rpc.json.JSONString;
 import uk.ac.standrews.cs.nds.rpc.json.JSONValue;
 
@@ -93,7 +94,7 @@ public class TableManagerServer extends ApplicationServer {
 
                 final TableInfo p0 = marshaller.deserializeTableInfo(args.getJSONObject(0));
                 table_manager.addReplicaInformation(p0);
-                return null;
+                return JSONObject.NULL;
             }
         });
 
@@ -106,7 +107,7 @@ public class TableManagerServer extends ApplicationServer {
 
                 final TableInfo p0 = marshaller.deserializeTableInfo(args.getJSONObject(0));
                 table_manager.removeReplicaInformation(p0);
-                return null;
+                return JSONObject.NULL;
             }
         });
 
@@ -144,7 +145,7 @@ public class TableManagerServer extends ApplicationServer {
                 final Collection<CommitResult> p2 = marshaller.deserializeCollectionCommitResult(args.getJSONArray(2));
                 final boolean p3 = args.getBoolean(3);
                 table_manager.releaseLockAndUpdateReplicaState(p0, p1, p2, p3);
-                return null;
+                return JSONObject.NULL;
             }
         });
 
@@ -157,7 +158,7 @@ public class TableManagerServer extends ApplicationServer {
 
                 final boolean p0 = args.getBoolean(0);
                 table_manager.remove(p0);
-                return null;
+                return JSONObject.NULL;
             }
         });
 
@@ -203,7 +204,7 @@ public class TableManagerServer extends ApplicationServer {
 
                 final ITableManagerRemote p0 = marshaller.deserializeITableManagerRemote(args.getJSONObject(0));
                 table_manager.buildTableManagerState(p0);
-                return null;
+                return JSONObject.NULL;
             }
         });
 
@@ -227,7 +228,7 @@ public class TableManagerServer extends ApplicationServer {
 
                 final String p0 = args.getString(0);
                 table_manager.recreateReplicaManagerState(p0);
-                return null;
+                return JSONObject.NULL;
             }
         });
 
@@ -251,7 +252,7 @@ public class TableManagerServer extends ApplicationServer {
 
                 final TableInfo p0 = marshaller.deserializeTableInfo(args.getJSONObject(0));
                 table_manager.persistToCompleteStartup(p0);
-                return null;
+                return JSONObject.NULL;
             }
         });
 
@@ -295,7 +296,49 @@ public class TableManagerServer extends ApplicationServer {
 
                 final String p0 = args.getString(0);
                 table_manager.prepareForMigration(p0);
-                return null;
+                return JSONObject.NULL;
+
+            }
+        });
+
+        handler_map.put("completeMigration", new IHandler() {
+
+            @Override
+            public JSONValue execute(final JSONArray args) throws Exception {
+
+                table_manager.completeMigration();
+                return JSONObject.NULL;
+
+            }
+        });
+
+        handler_map.put("getDatabaseLocation", new IHandler() {
+
+            @Override
+            public JSONValue execute(final JSONArray args) throws Exception {
+
+                return marshaller.serializeDatabaseInstanceWrapper(table_manager.getDatabaseLocation());
+
+            }
+        });
+
+        handler_map.put("getAddress", new IHandler() {
+
+            @Override
+            public JSONValue execute(final JSONArray args) throws Exception {
+
+                return marshaller.serializeInetSocketAddress(table_manager.getAddress());
+
+            }
+        });
+
+        handler_map.put("checkConnection", new IHandler() {
+
+            @Override
+            public JSONValue execute(final JSONArray args) throws Exception {
+
+                table_manager.checkConnection();
+                return JSONObject.NULL;
 
             }
         });

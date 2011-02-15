@@ -126,7 +126,6 @@ public class StartDatabaseInstance extends Thread {
             }
         }
         catch (final SQLException e) {
-            e.printStackTrace();
         }
     }
 

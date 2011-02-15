@@ -5,6 +5,7 @@ import java.net.UnknownHostException;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
+import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 
 import uk.ac.standrews.cs.nds.rpc.ApplicationServer;
 import uk.ac.standrews.cs.nds.rpc.IHandler;
@@ -12,6 +13,7 @@ import uk.ac.standrews.cs.nds.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.rpc.json.JSONArray;
 import uk.ac.standrews.cs.nds.rpc.json.JSONBoolean;
 import uk.ac.standrews.cs.nds.rpc.json.JSONInteger;
+import uk.ac.standrews.cs.nds.rpc.json.JSONObject;
 import uk.ac.standrews.cs.nds.rpc.json.JSONString;
 import uk.ac.standrews.cs.nds.rpc.json.JSONValue;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -199,7 +201,13 @@ public class DatabaseInstanceServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                return marshaller.serializeISystemTableMigratable(instance.getSystemTable());
+                final ISystemTableMigratable systemTable = instance.getSystemTable();
+                if (systemTable != null) {
+                    return marshaller.serializeISystemTableMigratable(systemTable);
+                }
+                else {
+                    return JSONObject.NULL;
+                }
             }
         });
 

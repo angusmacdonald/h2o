@@ -106,6 +106,8 @@ public class TableManagerInstanceServer extends ApplicationServer {
 
                 if (object_server == null) { throw new JSONException("Could not find table manager for table : " + table_name); }
 
+                if (object_server.getHandler(method_name) == null) { throw new JSONException("Could not find the method '" + method_name + "' in this table manager."); }
+
                 return object_server.getHandler(method_name).execute(args);
             }
         };

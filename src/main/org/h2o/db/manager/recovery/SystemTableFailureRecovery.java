@@ -329,6 +329,8 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
             throw new SystemTableAccessException("Failed to create new in-memory System Table.");
         }
 
+        db.startSystemTableServer(newSystemTable);
+
         /*
          * Stop the old, remote, manager from accepting any more requests.
          */
@@ -440,6 +442,9 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         try {
             Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Creating new System Table instance");
             newSystemTable = new SystemTable(db, false); // false - don't overwrite saved persisted state.
+
+            db.startSystemTableServer(newSystemTable);
+
         }
         catch (final Exception e) {
             ErrorHandling.exceptionError(e, "Failed to create new in-memory System Table.");

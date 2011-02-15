@@ -1077,17 +1077,7 @@ public class Database implements DataHandler {
                 ErrorHandling.hardError(e.getMessage());
             }
 
-            int preferredSystemTablePort = Integer.parseInt(databaseSettings.get("SYSTEM_TABLE_SERVER_PORT"));
-            preferredSystemTablePort = H2ONetUtils.getInactiveTCPPort(preferredSystemTablePort);
-
-            system_table_server = new SystemTableServer(systemTable, preferredSystemTablePort); // added if we become a system table.
-
-            try {
-                system_table_server.start();
-            }
-            catch (final Exception e) {
-                ErrorHandling.hardExceptionError(e, "Couldn't start system table instance server.");
-            }
+            startSystemTableServer(systemTable);
 
             systemTableRef.setSystemTable(systemTable);
 
@@ -1097,6 +1087,21 @@ public class Database implements DataHandler {
         else {
             // Not a System Table - Get a reference to the System Table.
             systemTableRef.findSystemTable();
+        }
+    }
+
+    public void startSystemTableServer(final ISystemTableMigratable newSystemTable) {
+
+        int preferredSystemTablePort = Integer.parseInt(databaseSettings.get("SYSTEM_TABLE_SERVER_PORT"));
+        preferredSystemTablePort = H2ONetUtils.getInactiveTCPPort(preferredSystemTablePort);
+
+        system_table_server = new SystemTableServer(newSystemTable, preferredSystemTablePort); // added if we become a system table.
+
+        try {
+            system_table_server.start();
+        }
+        catch (final Exception e) {
+            ErrorHandling.hardExceptionError(e, "Couldn't start system table instance server.");
         }
     }
 
