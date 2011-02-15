@@ -25,6 +25,7 @@
 
 package org.h2o;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.sql.Connection;
@@ -45,6 +46,7 @@ import org.h2.tools.Server;
 import org.h2.util.FileUtils;
 import org.h2.util.NetUtils;
 import org.h2.util.SortedProperties;
+import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.manager.PersistentSystemTable;
@@ -204,7 +206,7 @@ public class H2O {
     private void init(final String databaseName, final String databaseInstanceIdentifier, final int webPort, final String databaseBaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
 
         this.databaseName = databaseName;
-        this.databaseInstanceIdentifier = databaseInstanceIdentifier;
+        this.databaseInstanceIdentifier = databaseName;
         this.webPort = webPort;
         this.databaseBaseDirectoryPath = databaseBaseDirectoryPath;
         this.databaseDescriptorLocation = databaseDescriptorLocation;
@@ -218,7 +220,7 @@ public class H2O {
     private void init(final String databaseName, final String databaseInstanceIdentifier, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
 
         this.databaseName = databaseName;
-        this.databaseInstanceIdentifier = databaseInstanceIdentifier;
+        this.databaseInstanceIdentifier = databaseName;
 
         this.databaseDescriptorLocation = databaseDescriptorLocation;
         this.diagnosticLevel = diagnosticLevel;
@@ -540,5 +542,89 @@ public class H2O {
     public String getURL() {
 
         return databaseID.getURL();
+    }
+
+    /**
+     * Get the port on which a database has started up its JDBC port. This is specified in the databases properties file,
+     * which is passed in as a parameter to this method.
+     * @param pathToDatabase the path to the database files (i.e. the folders it is contained in - for example path/to/database, which is relative
+     *  to the current working directory.
+     *  @param databaseName the name of the database (e.g. databaseOne).
+     * @return The port on which the databases JDBC server is running.
+     */
+    public static int getDatabasesJDBCPort(final String pathToDatabase, final String databaseName) {
+
+        return getDatabasesJDBCPort(pathToDatabase, databaseName, 1);
+    }
+
+    /**
+     * Get the port on which a database has started up its JDBC port. This is specified in the databases properties file,
+     * which is passed in as a parameter to this method.
+     * @param pathToDatabase the path to the database files (i.e. the folders it is contained in - for example path/to/database, which is relative
+     *  to the current working directory.
+     *  @param maxAttempts           The maximum number of attempts to get this information. If the properties file is not located
+     *  @param databaseName the name of the database (e.g. databaseOne).
+     * @return The port on which the databases JDBC server is running.
+     */
+    public static int getDatabasesJDBCPort(final String pathToDatabase, final String databaseName, final int maxAttempts) {
+
+        final String databasePathAndName = pathToDatabase + File.separator + databaseName;
+        final String propertiesFilePath = pathToDatabase + File.separator + DatabaseURL.getPropertiesFileName(databasePathAndName) + ".properties";
+
+        return getDatabasesJDBCPort(propertiesFilePath, maxAttempts);
+    }
+
+    /**
+     * Get the port on which a database has started up its JDBC port. This is specified in the databases properties file,
+     * which is passed in as a parameter to this method.
+     * @param propertiesFilePath    Path to and name of the properties file for the database in question.
+     * @return The port on which the databases JDBC server is running.
+     */
+    public static int getDatabasesJDBCPort(final String propertiesFilePath) {
+
+        return getDatabasesJDBCPort(propertiesFilePath, 1);
+    }
+
+    /**
+     * Get the port on which a database has started up its JDBC port. This is specified in the databases properties file,
+     * which is passed in as a parameter to this method.
+     * @param propertiesFilePath    Path to and name of the properties file for the database in question.
+     * @param maxAttempts           The maximum number of attempts to get this information. If the properties file is not located
+     * this method will sleep for a second then try to get the database's port again. It will do this up until a maximum number of attempts.
+     * @return The port on which the databases JDBC server is running.
+     */
+    public static int getDatabasesJDBCPort(final String propertiesFilePath, final int maxAttempts) {
+
+        final H2OPropertiesWrapper localSettings = H2OPropertiesWrapper.getWrapper(propertiesFilePath);
+
+        String port = "";
+
+        boolean found = false;
+        int attempts = 0;
+        while (!found && attempts < maxAttempts) {
+            try {
+                localSettings.loadProperties();
+
+                port = localSettings.getProperty(Settings.JDBC_PORT);
+                localSettings.saveAndClose();
+                found = true;
+            }
+            catch (final IOException e) {
+                attempts++;
+
+                if (attempts < maxAttempts) {
+                    try {
+                        Thread.sleep(1000);
+                    }
+                    catch (final InterruptedException e1) {
+                    }
+                }
+                else {
+                    throw new IllegalArgumentException("Couldn't access properties file at path '" + propertiesFilePath + "' after " + maxAttempts + " attempts.");
+                }
+            }
+        }
+        final int iPort = Integer.parseInt(port);
+        return iPort;
     }
 }

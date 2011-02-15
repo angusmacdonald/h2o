@@ -287,5 +287,17 @@ public class TableManagerServer extends ApplicationServer {
                 return marshaller.serializeTableInfo(table_manager.getTableInfo());
             }
         });
+
+        handler_map.put("prepareForMigration", new IHandler() {
+
+            @Override
+            public JSONValue execute(final JSONArray args) throws Exception {
+
+                final String p0 = args.getString(0);
+                table_manager.prepareForMigration(p0);
+                return null;
+
+            }
+        });
     }
 }

@@ -10,6 +10,8 @@ import java.util.Set;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
 
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
+
 public abstract class ConnectionDriver {
 
     protected Connection connection;
@@ -42,7 +44,7 @@ public abstract class ConnectionDriver {
             }
 
             catch (final Exception e) {
-                e.printStackTrace();
+                ErrorHandling.exceptionError(e, "Error connecting to database at: " + jdbcURL.getURL());
                 // Wait and retry.
                 sleep(2000);
             }

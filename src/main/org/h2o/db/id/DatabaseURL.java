@@ -238,7 +238,18 @@ public class DatabaseURL implements Serializable {
      */
     public String sanitizedLocation() {
 
-        return getDbLocation().replace("/", "_").replace("\\", "_").replace("~", "_").replace("-", "__");
+        return getPropertiesFileName(getDbLocation());
+    }
+
+    /**
+     * Accepts a database location of the form <i>path/to/database/databaseName</i> and turns it into a name without slashes
+     * that corresponds to the name of the properties file for this database instance.
+     * @param databaseLocation
+     * @return
+     */
+    public static String getPropertiesFileName(final String databaseLocation) {
+
+        return databaseLocation.replace("/", "_").replace("\\", "_").replace("~", "_").replace("-", "__");
     }
 
     /**

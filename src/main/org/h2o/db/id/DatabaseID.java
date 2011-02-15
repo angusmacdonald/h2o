@@ -63,14 +63,13 @@ public class DatabaseID implements Serializable {
 
         this.databaseURL = databaseURL;
 
-        databaseID = databaseURL.getName();
+        databaseID = databaseURL.sanitizedLocation();
     }
 
-    public DatabaseID(final String databaseURL) {
+    public DatabaseID(final String strDatabaseURL) {
 
-        this.databaseURL = DatabaseURL.parseURL(databaseURL);
+        this(DatabaseURL.parseURL(strDatabaseURL));
 
-        databaseID = this.databaseURL.getName();
     }
 
     public static DatabaseID parseURL(final String url) {

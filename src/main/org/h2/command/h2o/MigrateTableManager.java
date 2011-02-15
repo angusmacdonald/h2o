@@ -106,6 +106,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
             throw e;
         }
         catch (final Exception e) {
+            e.printStackTrace();
             throw new SQLException("Failed to migrate table manager for " + getSchema().getName() + "." + tableName + ".");
         }
 

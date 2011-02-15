@@ -1,5 +1,6 @@
 package org.h2o.test.fixture;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -7,6 +8,7 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import org.h2o.H2O;
+import org.h2o.db.id.DatabaseURL;
 
 import uk.ac.standrews.cs.nds.madface.ProcessManager;
 import uk.ac.standrews.cs.nds.madface.UnknownPlatformException;
@@ -19,6 +21,8 @@ public class DiskTestManager extends TestManager {
 
     private Process[] db_processes;
     private final IDiskConnectionDriverFactory connection_driver_factory;
+
+    private String[] databaseNames;
 
     public DiskTestManager(final int number_of_databases, final IDiskConnectionDriverFactory connection_driver_factory) {
 
@@ -58,9 +62,12 @@ public class DiskTestManager extends TestManager {
     @Override
     public ConnectionDriver makeConnectionDriver(final int db_index) {
 
-        final int db_port = first_db_port + db_index;
+        final String databaseName = DatabaseURL.getPropertiesFileName(databaseNames[db_index]);
 
-        final ConnectionDriver makeConnectionDriver = connection_driver_factory.makeConnectionDriver(db_port, database_base_directory_paths[db_index], DATABASE_NAME_ROOT, USER_NAME, PASSWORD, connections_to_be_closed);
+        final String propertiesFilePath = database_base_directory_paths[db_index] + File.separator + databaseName + ".properties";
+
+        final int iPort = H2O.getDatabasesJDBCPort(propertiesFilePath);
+        final ConnectionDriver makeConnectionDriver = connection_driver_factory.makeConnectionDriver(iPort, database_base_directory_paths[db_index], DATABASE_NAME_ROOT, USER_NAME, PASSWORD, connections_to_be_closed);
 
         return makeConnectionDriver;
     }
@@ -95,7 +102,7 @@ public class DiskTestManager extends TestManager {
     private void startupDatabaseProcesses() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
 
         db_processes = new Process[database_base_directory_paths.length];
-
+        databaseNames = new String[database_base_directory_paths.length];
         for (int i = 0; i < db_processes.length; i++) {
 
             final List<String> db_args = new ArrayList<String>();
@@ -109,6 +116,8 @@ public class DiskTestManager extends TestManager {
             db_args.add("-D" + DIAGNOSTIC_LEVEL.numericalValue());
 
             db_processes[i] = new ProcessManager().runJavaProcess(H2O.class, db_args);
+
+            databaseNames[i] = database_base_directory_paths[i] + "/" + DATABASE_NAME_ROOT;
 
             // TODO read the actual port used from the properties file.
         }

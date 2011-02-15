@@ -875,7 +875,9 @@ public class MultiQueryTransactionTests extends TestBase {
             validateResults(test2query.getPrimaryKey(), test2query.getSecondColumn(), sa.getResultSet());
         }
         finally {
-            mStmt.close();
+            if (mStmt != null) {
+                mStmt.close();
+            }
         }
     }
 

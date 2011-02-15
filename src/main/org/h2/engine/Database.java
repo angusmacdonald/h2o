@@ -377,22 +377,10 @@ public class Database implements DataHandler {
             /*
              * Get Settings for Database.
              */
-            final H2OPropertiesWrapper localSettings = H2OPropertiesWrapper.getWrapper(localMachineLocation);
-            try {
-                localSettings.loadProperties();
-            }
-            catch (final IOException e) {
-                try {
-                    localSettings.createNewFile();
-                    localSettings.loadProperties();
-                }
-                catch (final IOException e1) {
-                    ErrorHandling.exceptionError(e1, "Failed to create properties file for database.");
-                }
-            }
+            final H2OPropertiesWrapper localSettings = setUpLocalDatabaseProperties(localMachineLocation);
 
             setDiagnosticLevel(localMachineLocation);
-            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "H2O, Database '" + name + "'.");
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "H2O, Database '" + localMachineLocation.getURL() + "'.");
 
             try {
                 final H2OLocatorInterface locatorInterface = databaseRemote.getLocatorInterface();
@@ -400,6 +388,7 @@ public class Database implements DataHandler {
                 databaseSettings = new Settings(localSettings, locatorInterface.getDescriptor());
             }
             catch (final LocatorException e) {
+                e.printStackTrace();
                 throw new SQLException(e.getMessage());
             }
             catch (final StartupException e) {
@@ -471,6 +460,30 @@ public class Database implements DataHandler {
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Started database at " + getID());
         }
         running = true;
+    }
+
+    private H2OPropertiesWrapper setUpLocalDatabaseProperties(final DatabaseID localMachineLocation) {
+
+        final H2OPropertiesWrapper localSettings = H2OPropertiesWrapper.getWrapper(localMachineLocation);
+        try {
+            localSettings.loadProperties();
+            localSettings.setProperty(Settings.JDBC_PORT, localMachineLocation.getPort() + "");
+            localSettings.saveAndClose();
+            localSettings.loadProperties();
+        }
+        catch (final IOException e) {
+            try {
+                localSettings.createNewFile();
+                localSettings.loadProperties();
+                localSettings.setProperty(Settings.JDBC_PORT, localMachineLocation.getPort() + "");
+                localSettings.saveAndClose();
+                localSettings.loadProperties();
+            }
+            catch (final IOException e1) {
+                ErrorHandling.exceptionError(e1, "Failed to create properties file for database.");
+            }
+        }
+        return localSettings;
     }
 
     private void openDatabase(final int traceLevelFile, final int traceLevelSystemOut, final boolean closeAtVmShutdown, final ConnectionInfo ci, final DatabaseID localMachineLocation) throws SQLException {
