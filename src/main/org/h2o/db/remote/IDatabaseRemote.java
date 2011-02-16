@@ -106,4 +106,10 @@ public interface IDatabaseRemote {
      * @return
      */
     public int getChordPort();
+
+    /**
+     * Produces the key used to store information on the local database instance in the application registry.
+     * @return key to query/bind to the application registry.
+     */
+    public String getApplicationRegistryIDForLocalDatabase();
 }

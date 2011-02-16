@@ -505,7 +505,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
             for (final Entry<String, Integer> applicationRegistryMap : serverLocations.entrySet()) {
 
-                if (applicationRegistryMap.getKey().startsWith(REGISTRY_PREFIX) && !applicationRegistryMap.getKey().equals(REGISTRY_PREFIX + localMachineLocation.getID())) {
+                if (applicationRegistryMap.getKey().startsWith(REGISTRY_PREFIX) && !applicationRegistryMap.getKey().equals(getApplicationRegistryIDForLocalDatabase())) {
 
                     //If this is not the local machine being listed.
 
@@ -534,10 +534,41 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             ErrorHandling.exceptionError(e, "Failed to find the host specified: " + hostname);
         }
         catch (final RegistryUnavailableException e) {
-            ErrorHandling.exceptionError(e, "Couldn't find an active registry on this machine (the machine has probably failed): " + hostname);
+            ErrorHandling.errorNoEvent("Couldn't find an active registry on this machine (" + hostname + "). Restarting registry locally.");
+            recreateRegistryAndAddLocalInstance();
         }
 
         return null;
+    }
+
+    private void recreateRegistryAndAddLocalInstance() {
+
+        try {
+            final IRegistry registry = LocateRegistry.getRegistry(true);
+            registry.bind(getApplicationRegistryIDForLocalDatabase(), localMachineLocation.getRMIPort());
+
+            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Recreated application registry locally on " + localMachineLocation);
+        }
+        catch (final Exception e) {
+            ErrorHandling.exceptionError(e, "Error trying to recreate registry and adding the local database instance port.");
+        }
+    }
+
+    /**
+     * Produces the key used to store connection information (port of the database instance server) for the
+     * database given as a parameter.
+     * @param databaseID    Database whose key is to be created.
+     * @return Key to find this databases entry in the application registry.
+     */
+    public static String getApplicationRegistryID(final String databaseID) {
+
+        return REGISTRY_PREFIX + databaseID;
+    }
+
+    @Override
+    public String getApplicationRegistryIDForLocalDatabase() {
+
+        return REGISTRY_PREFIX + localMachineLocation.getID();
     }
 
     @Override
@@ -561,7 +592,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         try {
             final IRegistry registry = LocateRegistry.getRegistry(InetAddress.getByName(hostname));
 
-            final int port = registry.lookup(REGISTRY_PREFIX + databaseName);
+            final int port = registry.lookup(getApplicationRegistryID(databaseName));
 
             return DatabaseInstanceProxy.getProxy(new InetSocketAddress(hostname, port));
         }

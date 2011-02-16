@@ -938,7 +938,7 @@ public class Database implements DataHandler {
             int preferredDatabaseInstancePort = Integer.parseInt(databaseSettings.get("DATABASE_INSTANCE_SERVER_PORT"));
             preferredDatabaseInstancePort = H2ONetUtils.getInactiveTCPPort(preferredDatabaseInstancePort);
 
-            database_instance_server = new DatabaseInstanceServer(getLocalDatabaseInstance(), preferredDatabaseInstancePort, ChordRemote.REGISTRY_PREFIX + localMachineLocation.getID());
+            database_instance_server = new DatabaseInstanceServer(getLocalDatabaseInstance(), preferredDatabaseInstancePort, getRemoteInterface().getApplicationRegistryIDForLocalDatabase());
 
             try {
                 database_instance_server.start(true); // true means: allow registry entry for this database ID to be overwritten
