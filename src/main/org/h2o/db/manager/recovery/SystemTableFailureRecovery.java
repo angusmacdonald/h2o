@@ -143,6 +143,8 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
 
         final List<String> stLocations = getActiveSystemTableLocationsFromLocator();
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Instances holding System Table state: " + PrettyPrinter.toString(stLocations));
+
         boolean localMachineHoldsSystemTableState = false;
         for (final String location : stLocations) {
             final DatabaseID url = DatabaseID.parseURL(location);
@@ -257,7 +259,9 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
 
             try {
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempting to start System Table. Looking to connect to instance at " + url);
-                databaseInstance = lookForDatabaseInstanceAt(remoteInterface, url);
+
+                databaseInstance = DatabaseInstanceProxy.getProxy(url);
+                //todo, as a backup mechanism also do this: databaseInstance = lookForDatabaseInstanceAt(remoteInterface, url);
             }
             catch (final Exception e) {
                 // May be thrown if database isn't active.

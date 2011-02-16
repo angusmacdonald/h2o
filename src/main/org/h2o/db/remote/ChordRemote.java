@@ -1077,6 +1077,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
      */
     public void commitSystemTableCreation() {
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Committed system table creation on " + localMachineLocation);
+
         boolean successful = false;
 
         try {

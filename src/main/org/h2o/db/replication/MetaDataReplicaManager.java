@@ -25,7 +25,6 @@
 
 package org.h2o.db.replication;
 
-
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -215,7 +214,7 @@ public class MetaDataReplicaManager {
                 databaseInstances = systemTableRemote.getAvailableMachines(new CreateReplicaRequest(20, 100, 200));
             }
             catch (final Exception e) {
-                Diagnostic.trace(DiagnosticLevel.FULL, "error discovering available machines");
+                Diagnostic.trace(DiagnosticLevel.FULL, "Error trying to contact system table (for the purposes of discovering new instances on which to replicate data). This is not a fatal error. No recovery is attempted.");
                 return; // just return, the system will attempt to replicate later on.
             }
 
