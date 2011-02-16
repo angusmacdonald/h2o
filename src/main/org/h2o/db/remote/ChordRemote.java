@@ -54,6 +54,7 @@ import org.h2o.db.replication.MetaDataReplicaManager;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
 import org.h2o.locator.client.H2OLocatorInterface;
+import org.h2o.util.H2ONetUtils;
 import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.exceptions.StartupException;
@@ -638,6 +639,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         final DatabaseInstanceProxy remoteInstance = DatabaseInstanceProxy.getProxy(new InetSocketAddress(remoteHostname, remotePort));
 
         final int remoteChordPort = remoteInstance.getChordPort();
+
+        localPort = H2ONetUtils.getInactiveTCPPort(localPort);
 
         InetSocketAddress localChordAddress = new InetSocketAddress(localHostname, localPort);
         final InetSocketAddress knownHostAddress = new InetSocketAddress(remoteHostname, remoteChordPort);
