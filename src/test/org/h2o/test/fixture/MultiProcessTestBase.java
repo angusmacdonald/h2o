@@ -104,6 +104,8 @@ public class MultiProcessTestBase extends TestBase {
 
         killExistingProcessesIfNotOnWindows();
 
+        deleteDatabaseData();
+
         ls = new LocatorServer(29999, "junitLocator");
         ls.createNewLocatorFile();
 

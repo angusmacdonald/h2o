@@ -20,6 +20,7 @@ import java.util.Set;
 
 import org.h2.engine.Database;
 import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
+import org.h2o.db.DatabaseInstanceProxy;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
@@ -379,8 +380,8 @@ public final class InMemorySystemTable implements ISystemTable {
                     // Look for a remote reference.
                     try {
 
-                        dir = database.getRemoteInterface().getDatabaseInstanceAt(remoteDB.getKey());
-
+                        //dir = database.getRemoteInterface().getDatabaseInstanceAt(remoteDB.getKey()); //TODO Replace with method call to call database instance server directly...
+                        dir = DatabaseInstanceProxy.getProxy(remoteDB.getKey());
                         if (dir != null) {
                             active = true;
                         }

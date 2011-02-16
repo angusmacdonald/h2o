@@ -100,4 +100,10 @@ public interface IDatabaseRemote {
     public IDatabaseInstanceRemote getDatabaseInstanceAt(DatabaseID databaseURL) throws RPCException;
 
     public H2OLocatorInterface getLocatorInterface() throws LocatorException;
+
+    /**
+     * Get the port on which the local chord node is running.
+     * @return
+     */
+    public int getChordPort();
 }

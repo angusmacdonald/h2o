@@ -30,6 +30,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.h2.engine.Database;
+import org.h2o.db.DatabaseInstanceProxy;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.manager.SystemTable;
@@ -211,13 +212,16 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, db.getID() + ": Attempting to fix a broken System Table connection.");
 
-        final List<String> locatorLocations = getActiveSystemTableLocationsFromLocator();
+        final List<String> databaseIntanceLocationsFromLocator = getActiveSystemTableLocationsFromLocator();
 
         IDatabaseInstanceRemote databaseInstance = null;
 
-        for (final String locatorLocation : locatorLocations) {
+        for (final String possibleDatabaseIntanceLocation : databaseIntanceLocationsFromLocator) {
             try {
-                databaseInstance = lookForDatabaseInstanceAt(remoteInterface, DatabaseID.parseURL(locatorLocation));
+
+                //lookForDatabaseInstanceAt(remoteInterface, DatabaseID.parseURL(possibleDatabaseIntanceLocation));
+                final DatabaseID possibleURL = DatabaseID.parseURL(possibleDatabaseIntanceLocation);
+                databaseInstance = DatabaseInstanceProxy.getProxy(possibleURL);
 
                 final boolean isSystemTable = databaseInstance.isSystemTable();
 
@@ -227,12 +231,12 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
                 }
             }
             catch (final Exception e) {
-                Diagnostic.trace(DiagnosticLevel.FULL, "database not active: " + locatorLocation);
+                Diagnostic.trace(DiagnosticLevel.FULL, "database not active: " + possibleDatabaseIntanceLocation);
                 // May be thrown if database isn't active.
             }
         }
 
-        throw new SQLException(db.getID() + ": Couldn't find active System Table. System table replicas exist at: " + PrettyPrinter.toString(locatorLocations));
+        throw new SQLException(db.getID() + ": Couldn't find active System Table. System table replicas exist at: " + PrettyPrinter.toString(databaseIntanceLocationsFromLocator));
     }
 
     /**

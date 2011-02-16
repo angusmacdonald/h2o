@@ -66,7 +66,7 @@ public class DiskTestManager extends TestManager {
 
         final String propertiesFilePath = database_base_directory_paths[db_index] + File.separator + databaseName + ".properties";
 
-        final int iPort = H2O.getDatabasesJDBCPort(propertiesFilePath);
+        final int iPort = H2O.getDatabasesJDBCPort(propertiesFilePath, 10);
         final ConnectionDriver makeConnectionDriver = connection_driver_factory.makeConnectionDriver(iPort, database_base_directory_paths[db_index], DATABASE_NAME_ROOT, USER_NAME, PASSWORD, connections_to_be_closed);
 
         return makeConnectionDriver;
@@ -110,6 +110,7 @@ public class DiskTestManager extends TestManager {
             final int port = first_db_port + i;
 
             db_args.add("-n" + DATABASE_NAME_ROOT);
+            db_args.add("-i" + DATABASE_NAME_ROOT);
             db_args.add("-p" + port);
             db_args.add("-f" + database_base_directory_paths[i]);
             db_args.add("-d" + descriptor_file_path);

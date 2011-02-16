@@ -292,7 +292,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                         }
 
                         newSMLocation = localMachineLocation;
-                        newSMLocation.setRMIPort(portToUse);
 
                         systemTableRef.setSystemTableURL(newSMLocation);
                     }
@@ -569,6 +568,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             ErrorHandling.exceptionError(e, "Failed to find the host specified: " + hostname);
         }
         catch (final RegistryUnavailableException e) {
+            //TODO replace registry and re-register.
             ErrorHandling.exceptionError(e, "Couldn't find an active registry on this machine (the machine has probably failed): " + hostname);
         }
 
@@ -621,7 +621,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
      * @param remoteHostname
      *            The hostname of a known host in the existing Chord ring.
      * @param remotePort
-     *            The port on which a known host is listening.
+     *            The port on which a known host (database instance server) is listening.
      * @param databaseName
      *            The name of the database instance starting this Chord ring. This information is used purely for diagnostic output, so can
      *            be left null.
@@ -630,10 +630,17 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
      */
     private boolean joinChordRing(final String localHostname, int localPort, final String remoteHostname, final int remotePort, final String databaseName) throws RPCException {
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Trying to connect to existing Chord ring on " + remoteHostname + ":" + remotePort);
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Trying to connect to existing database on " + remoteHostname + ":" + remotePort);
+
+        /*
+         * Connect to the database running at this port. From this database get the address/port of its local chord node.
+         */
+        final DatabaseInstanceProxy remoteInstance = DatabaseInstanceProxy.getProxy(new InetSocketAddress(remoteHostname, remotePort));
+
+        final int remoteChordPort = remoteInstance.getChordPort();
 
         InetSocketAddress localChordAddress = new InetSocketAddress(localHostname, localPort);
-        final InetSocketAddress knownHostAddress = new InetSocketAddress(remoteHostname, remotePort);
+        final InetSocketAddress knownHostAddress = new InetSocketAddress(remoteHostname, remoteChordPort);
 
         boolean connected = false;
         int attempts = 0;
@@ -650,11 +657,11 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             }
             catch (final RemoteChordException e) { // database instance we're trying to connect to doesn't exist.
 
-                ErrorHandling.errorNoEvent("Failed to connect to chord node on + " + localHostname + ":" + localPort + " known host: " + remoteHostname + ":" + remotePort);
+                ErrorHandling.errorNoEvent("RCE: Failed to connect to chord node on + " + localHostname + ":" + localPort + " known host: " + remoteHostname + ":" + remoteChordPort);
                 return false;
             }
             catch (final Exception e) {
-                ErrorHandling.errorNoEvent("Failed to create new chord node on + " + localHostname + ":" + localPort + " known host: " + remoteHostname + ":" + remotePort);
+                ErrorHandling.errorNoEvent("E: Failed to create new chord node on + " + localHostname + ":" + localPort + " known host: " + remoteHostname + ":" + remoteChordPort);
                 connected = false;
             }
 
@@ -1098,5 +1105,20 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     public void setAsReadyToReplicateMetaData(final MetaDataReplicaManager metaDataReplicaManager) {
 
         this.metaDataReplicaManager = metaDataReplicaManager;
+    }
+
+    /**
+     * Set the port on which the local database instance server is being run on.
+     * @param databaseInstancePort Port number.
+     */
+    public void setDatabaseInstanceServerPort(final int databaseInstancePort) {
+
+        localMachineLocation.setRMIPort(databaseInstancePort);
+    }
+
+    @Override
+    public int getChordPort() {
+
+        return chordNode.getSelfReference().getCachedAddress().getPort();
     }
 }

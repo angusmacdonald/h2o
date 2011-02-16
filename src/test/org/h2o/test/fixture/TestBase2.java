@@ -68,7 +68,7 @@ public class TestBase2 {
     }
 
     @Before
-    public void setUp() throws SQLException, IOException {
+    public void setUp() throws SQLException, IOException, InterruptedException {
 
         Constants.IS_NON_SM_TEST = true;
 
@@ -105,6 +105,20 @@ public class TestBase2 {
     public void tearDown() throws SQLException, InterruptedException {
 
         Constants.IS_TEAR_DOWN = true;
+
+        try {
+            if (sa != null) {
+                sa.execute("SHUTDOWN");
+            }
+            if (sb != null) {
+                sb.execute("SHUTDOWN");
+            }
+        }
+        catch (final Exception e1) {
+
+            e1.printStackTrace();
+        }
+
         try {
             if (!sa.isClosed()) {
                 sa.close();
@@ -132,6 +146,9 @@ public class TestBase2 {
                         try {
                             db1.shutdown();
                         }
+                        catch (final Exception e) {
+                            //It has possibly already been shutdown.
+                        }
                         finally {
                             try {
                                 db1.deletePersistentState();
@@ -141,7 +158,7 @@ public class TestBase2 {
                                     db2.shutdown();
                                 }
                                 catch (final SQLException e) {
-
+                                    //It has possibly already been shutdown.
                                 }
                                 finally {
                                     try {

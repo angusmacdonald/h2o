@@ -250,4 +250,10 @@ public class DatabaseInstance implements IDatabaseInstanceRemote {
 
         return database.getDatabaseInstanceServer().getAddress();
     }
+
+    @Override
+    public int getChordPort() throws RPCException {
+
+        return database.getRemoteInterface().getChordPort();
+    }
 }

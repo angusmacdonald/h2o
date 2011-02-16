@@ -233,5 +233,14 @@ public class DatabaseInstanceServer extends ApplicationServer {
                 return new JSONInteger(instance.execute(p0, p1, p2));
             }
         });
+
+        handler_map.put("getChordPort", new IHandler() {
+
+            @Override
+            public JSONValue execute(final JSONArray args) throws Exception {
+
+                return new JSONInteger(instance.getChordPort());
+            }
+        });
     }
 }

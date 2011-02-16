@@ -49,7 +49,7 @@ public class FailureTests extends MultiProcessTestBase {
         sql += "INSERT INTO TEST VALUES(1, 'Hello');";
         sql += "INSERT INTO TEST VALUES(2, 'World');";
 
-        sleep(1000);
+        sleep(2000);
 
         /*
          * Create test table.
@@ -59,14 +59,14 @@ public class FailureTests extends MultiProcessTestBase {
         assertTestTableExists(2, 0);
         assertMetaDataExists(connections[0], 1);
 
-        sleep(2000);
+        sleep(4000);
 
         /*
          * Kill off the System Table process.
          */
         killDatabase(findSystemTableInstance());
 
-        sleep(2000); // if 4000, location will be fixed through handlemovedexception, if 8000 fixed through predecessorChange.
+        sleep(6000); // if 4000, location will be fixed through handlemovedexception, if 8000 fixed through predecessorChange.
 
         // createConnectionsToDatabases();
 

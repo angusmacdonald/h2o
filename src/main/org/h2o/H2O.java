@@ -89,7 +89,7 @@ public class H2O {
 
     private static final DiagnosticLevel DEFAULT_DIAGNOSTIC_LEVEL = DiagnosticLevel.FINAL;
 
-    private String databaseName;
+    private String databaseSystemName;
     private final int tcpPort = DEFAULT_TCP_PORT;
     private int webPort;
 
@@ -103,7 +103,7 @@ public class H2O {
     private DatabaseType databaseType;
 
     private String databaseInstanceIdentifier;
-    private String strDatabaseURL;
+
     private DatabaseID databaseID;
 
     // -------------------------------------------------------------------------------------------------------
@@ -113,7 +113,8 @@ public class H2O {
      * 
      * @param args
      *            <ul>
-     *            <li><em>-n<name></em>. The name of the database.</li>
+     *            <li><em>-i<name></em>. The name of the database instance (i.e. the name of the database instance that is being started, NOT of the whole database system).</li>
+     *            <li><em>-n<name></em>. The name of the database system (i.e. the name of the database in the descriptor file, the global system).</li>
      *            <li><em>-I<port></em>. The unique ID of this database. If none is specified a new database will be created with a new unique ID.</li>
      *            <li><em>-w<port></em>. Optional. Specifies that a web port should be opened and the web interface should be started.</li>
      *            <li><em>-d<descriptor></em>. Optional. Specifies the URL or local file path of the database descriptor file. If not specified the database will create a new descriptor file in the database directory.</li>
@@ -203,10 +204,10 @@ public class H2O {
      * @param databaseBaseDirectoryPath the directory in which database files are stored
      * @param databaseDescriptorLocation the location (file path or URL) of the database descriptor file
      */
-    private void init(final String databaseName, final String databaseInstanceIdentifier, final int webPort, final String databaseBaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
+    private void init(final String databaseSystemName, final String databaseInstanceIdentifier, final int webPort, final String databaseBaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
 
-        this.databaseName = databaseName;
-        this.databaseInstanceIdentifier = databaseName;
+        this.databaseSystemName = databaseSystemName;
+        this.databaseInstanceIdentifier = databaseInstanceIdentifier;
         this.webPort = webPort;
         this.databaseBaseDirectoryPath = databaseBaseDirectoryPath;
         this.databaseDescriptorLocation = databaseDescriptorLocation;
@@ -217,10 +218,10 @@ public class H2O {
         Diagnostic.setLevel(diagnosticLevel);
     }
 
-    private void init(final String databaseName, final String databaseInstanceIdentifier, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
+    private void init(final String databaseSystemName, final String databaseInstanceIdentifier, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
 
-        this.databaseName = databaseName;
-        this.databaseInstanceIdentifier = databaseName;
+        this.databaseSystemName = databaseSystemName;
+        this.databaseInstanceIdentifier = databaseInstanceIdentifier;
 
         this.databaseDescriptorLocation = databaseDescriptorLocation;
         this.diagnosticLevel = diagnosticLevel;
@@ -234,8 +235,8 @@ public class H2O {
 
         final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
 
-        final String databaseName = processDatabaseName(arguments.get("-n"));
-        final String databaseInstanceIdentifier = arguments.get("-i");
+        final String databaseSystemName = processDatabaseSystemName(arguments.get("-n"));
+        final String databaseInstanceIdentifier = processDatabaseInstanceName(arguments.get("-i"));
         final String databaseDirectoryPath = processDatabaseDirectoryPath(arguments.get("-f"));
 
         final String databaseDescriptorLocation = processDatabaseDescriptorLocation(arguments.get("-d"));
@@ -247,12 +248,12 @@ public class H2O {
         switch (databaseType) {
             case MEMORY: {
 
-                init(databaseName, databaseInstanceIdentifier, databaseDescriptorLocation, diagnosticLevel);
+                init(databaseSystemName, databaseInstanceIdentifier, databaseDescriptorLocation, diagnosticLevel);
                 break;
             }
             case DISK: {
 
-                init(databaseName, databaseInstanceIdentifier, webPort, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel);
+                init(databaseSystemName, databaseInstanceIdentifier, webPort, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel);
                 break;
             }
             default: {
@@ -276,7 +277,7 @@ public class H2O {
             // A new locator server should be started.
             final int locatorPort = tcpPort + 1;
 
-            locator = new H2OLocator(databaseName, locatorPort, true, databaseBaseDirectoryPath);
+            locator = new H2OLocator(databaseSystemName, locatorPort, true, databaseBaseDirectoryPath);
 
             databaseDescriptorLocation = locator.start();
         }
@@ -330,9 +331,14 @@ public class H2O {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private String processDatabaseName(final String arg) {
+    private String processDatabaseSystemName(final String arg) {
 
         return arg == null ? DEFAULT_DATABASE_NAME : arg;
+    }
+
+    private String processDatabaseInstanceName(final String arg) {
+
+        return arg == null ? generateNewDatabaseID() : arg;
     }
 
     private String processDatabaseDirectoryPath(final String arg) {
@@ -412,7 +418,7 @@ public class H2O {
      */
     private void initializeDatabase(final DatabaseID databaseID) throws SQLException, IOException {
 
-        initializeDatabaseProperties(databaseID, diagnosticLevel, databaseDescriptorLocation, databaseName);
+        initializeDatabaseProperties(databaseID, diagnosticLevel, databaseDescriptorLocation, databaseSystemName);
 
         // Create a connection so that the database starts up, but don't do anything with it here.
         connection = DriverManager.getConnection(databaseID.getURLandID(), PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);

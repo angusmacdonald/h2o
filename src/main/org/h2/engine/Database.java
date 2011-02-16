@@ -949,6 +949,8 @@ public class Database implements DataHandler {
                 ErrorHandling.hardExceptionError(e, "Couldn't start database instance server.");
             }
 
+            databaseRemote.setDatabaseInstanceServerPort(preferredDatabaseInstancePort);
+
             system_table_server = null;
             /*
              * Create Meta-Data Replication Manager. Must be executed after call to databaseRemote because of
@@ -1580,6 +1582,17 @@ public class Database implements DataHandler {
             metaDataReplicationThread.setRunning(false);
             running = false;
             removeLocalDatabaseInstance();
+
+            try {
+                table_manager_instance_server.stop();
+                if (system_table_server != null) {
+                    system_table_server.stop();
+                }
+                database_instance_server.stop();
+            }
+            catch (final Exception e) {
+                ErrorHandling.exceptionErrorNoEvent(e, "Failed to shutdown one of the H2O servers on database shutdown.");
+            }
         }
 
         if (userSessions.size() > 0) {
