@@ -346,8 +346,6 @@ public class Database implements DataHandler {
 
     public Database(final String name, final ConnectionInfo ci, final String cipher) throws SQLException {
 
-        Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.stachord");
-
         localSchema.add(Constants.H2O_SCHEMA);
         localSchema.add(Constants.SCHEMA_INFORMATION);
 
@@ -3252,6 +3250,8 @@ public class Database implements DataHandler {
             }
         }
 
+        Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.stachord");
+        Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.nds");
         Diagnostic.setTimestampFlag(true);
         Diagnostic.setTimestampFormat(new SimpleDateFormat("HH:mm:ss:SSS "));
         Diagnostic.setTimestampDelimiterFlag(false);

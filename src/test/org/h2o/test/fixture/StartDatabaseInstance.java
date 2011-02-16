@@ -25,86 +25,79 @@
 
 package org.h2o.test.fixture;
 
+import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Map;
 
-import org.h2.tools.Server;
-import org.h2o.db.manager.PersistentSystemTable;
+import org.h2o.H2O;
 
 import uk.ac.standrews.cs.nds.util.CommandLineArgs;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
 public class StartDatabaseInstance extends Thread {
 
-    private final String connectionString;
-
     private Connection connection;
 
     private boolean running = true;
 
-    private final boolean createConnectionInSeperateThread;
+    private final String databaseName;
 
-    private Server server;
+    private final String databaseInstanceIdentifier;
 
-    private String port;
+    private final String databaseDirectoryPath;
+
+    private final String databaseDescriptorLocation;
 
     public static void main(final String[] args) {
 
+        Diagnostic.setLevel(DiagnosticLevel.FULL);
+
         final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
 
-        final String databaseConnectionString = arguments.get("-l");
-        final String port = arguments.get("-p");
-        final StartDatabaseInstance instance = new StartDatabaseInstance(databaseConnectionString, port, true);
+        final String databaseName = arguments.get("-n");
+        final String databaseInstanceIdentifier = arguments.get("-i");
+        final String databaseDescriptorLocation = arguments.get("-d");
+        final String databaseDirectoryPath = arguments.get("-p");
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Database Name: " + databaseName);
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Instance Name: " + databaseInstanceIdentifier);
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Directory Path: " + databaseDirectoryPath);
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Descriptor Location: " + databaseDescriptorLocation);
+
+        final StartDatabaseInstance instance = new StartDatabaseInstance(databaseName, databaseInstanceIdentifier, databaseDirectoryPath, databaseDescriptorLocation);
         instance.run(); // this isn't being run in a separate thread when called from here.
     }
 
     /**
      * @param connectionString
      */
-    public StartDatabaseInstance(final String connectionString, final boolean createConnectionInSeperateThread) {
+    public StartDatabaseInstance(final String databaseName, final String databaseInstanceIdentifier, final String databaseDirectoryPath, final String databaseDescriptorLocation) {
 
-        if (!createConnectionInSeperateThread) {
-            try {
-                connection = DriverManager.getConnection(connectionString, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-            }
-            catch (final SQLException e) {
-                e.printStackTrace();
-            }
-        }
-
-        this.createConnectionInSeperateThread = createConnectionInSeperateThread;
-        this.connectionString = connectionString;
-    }
-
-    public StartDatabaseInstance(final String databaseConnectionString, final String port, final boolean b) {
-
-        this(databaseConnectionString, b);
-        this.port = port;
+        this.databaseDescriptorLocation = databaseDescriptorLocation;
+        this.databaseName = databaseName;
+        this.databaseInstanceIdentifier = databaseInstanceIdentifier;
+        this.databaseDirectoryPath = databaseDirectoryPath;
     }
 
     @Override
     public void run() {
 
-        if (createConnectionInSeperateThread) {
-            try {
-                server = Server.createTcpServer(new String[]{"-tcpPort", port, connectionString});
+        final H2O newDatabase = new H2O(databaseName, databaseInstanceIdentifier, databaseDirectoryPath, databaseDescriptorLocation, DiagnosticLevel.FULL);
 
-                server.start();
-            }
-            catch (final SQLException e1) {
-                e1.printStackTrace();
-            }
+        try {
 
-            try {
-                connection = DriverManager.getConnection(connectionString, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
-            }
-            catch (final SQLException e) {
-                e.printStackTrace();
-            }
+            newDatabase.startDatabase();
+        }
+        catch (final SQLException e) {
+            e.printStackTrace();
+        }
+        catch (final IOException e) {
+            e.printStackTrace();
         }
 
         while (isRunning()) {

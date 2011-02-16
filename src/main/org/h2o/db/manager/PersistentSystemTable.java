@@ -20,6 +20,7 @@ import org.h2.engine.Database;
 import org.h2.result.LocalResult;
 import org.h2.value.Value;
 import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
+import org.h2o.db.DatabaseInstanceProxy;
 import org.h2o.db.DefaultSettings;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
@@ -338,14 +339,9 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
                  */
                 IDatabaseInstanceRemote dir = null;
 
-                try {
-                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Finding database instance at : " + dbID);
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Finding database instance at : " + dbID);
 
-                    dir = remoteInterface.getDatabaseInstanceAt(dbID);
-                }
-                catch (final RPCException e) {
-                    // Will happen if its no longer active.
-                }
+                dir = DatabaseInstanceProxy.getProxy(dbID);
 
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Found database instance at : " + dbID);
 

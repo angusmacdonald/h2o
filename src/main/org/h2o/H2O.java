@@ -555,12 +555,12 @@ public class H2O {
      * which is passed in as a parameter to this method.
      * @param pathToDatabase the path to the database files (i.e. the folders it is contained in - for example path/to/database, which is relative
      *  to the current working directory.
-     *  @param databaseName the name of the database (e.g. databaseOne).
+     *  @param databaseInstanceName the name of the database (e.g. databaseOne).
      * @return The port on which the databases JDBC server is running.
      */
-    public static int getDatabasesJDBCPort(final String pathToDatabase, final String databaseName) {
+    public static int getDatabasesJDBCPort(final String pathToDatabase, final String databaseInstanceName) {
 
-        return getDatabasesJDBCPort(pathToDatabase, databaseName, 1);
+        return getDatabasesJDBCPort(pathToDatabase, databaseInstanceName, 1);
     }
 
     /**
@@ -569,12 +569,16 @@ public class H2O {
      * @param pathToDatabase the path to the database files (i.e. the folders it is contained in - for example path/to/database, which is relative
      *  to the current working directory.
      *  @param maxAttempts           The maximum number of attempts to get this information. If the properties file is not located
-     *  @param databaseName the name of the database (e.g. databaseOne).
+     *  @param databaseInstanceName the name of the database (e.g. databaseOne).
      * @return The port on which the databases JDBC server is running.
      */
-    public static int getDatabasesJDBCPort(final String pathToDatabase, final String databaseName, final int maxAttempts) {
+    public static int getDatabasesJDBCPort(String pathToDatabase, final String databaseInstanceName, final int maxAttempts) {
 
-        final String databasePathAndName = pathToDatabase + File.separator + databaseName;
+        if (pathToDatabase.endsWith("/") || pathToDatabase.endsWith("\\")) {
+            pathToDatabase = pathToDatabase.substring(0, pathToDatabase.length() - 1);
+        }
+
+        final String databasePathAndName = pathToDatabase + File.separator + databaseInstanceName;
         final String propertiesFilePath = pathToDatabase + File.separator + DatabaseURL.getPropertiesFileName(databasePathAndName) + ".properties";
 
         return getDatabasesJDBCPort(propertiesFilePath, maxAttempts);
@@ -603,33 +607,34 @@ public class H2O {
 
         final H2OPropertiesWrapper localSettings = H2OPropertiesWrapper.getWrapper(propertiesFilePath);
 
-        String port = "";
+        String port = null;
 
-        boolean found = false;
         int attempts = 0;
-        while (!found && attempts < maxAttempts) {
+        while (port == null && attempts < maxAttempts) {
+
             try {
                 localSettings.loadProperties();
 
                 port = localSettings.getProperty(Settings.JDBC_PORT);
+
                 localSettings.saveAndClose();
-                found = true;
             }
-            catch (final IOException e) {
+            catch (final Exception e) {
                 attempts++;
 
                 if (attempts < maxAttempts) {
                     try {
+                        System.err.println("sleeping...");
                         Thread.sleep(1000);
                     }
                     catch (final InterruptedException e1) {
                     }
                 }
-                else {
-                    throw new IllegalArgumentException("Couldn't access properties file at path '" + propertiesFilePath + "' after " + maxAttempts + " attempts.");
-                }
             }
         }
+
+        if (port == null) { throw new IllegalArgumentException("Couldn't access properties file at path '" + propertiesFilePath + "' after " + maxAttempts + " attempts."); }
+
         final int iPort = Integer.parseInt(port);
         return iPort;
     }

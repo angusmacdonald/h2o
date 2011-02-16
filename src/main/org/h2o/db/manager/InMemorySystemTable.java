@@ -121,8 +121,6 @@ public final class InMemorySystemTable implements ISystemTable {
     @Override
     public boolean addTableInformation(final ITableManagerRemote tableManager, final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> replicaLocations) throws RPCException {
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "New table successfully created: " + tableDetails);
-
         final TableInfo basicTableInfo = tableDetails.getGenericTableInfo();
 
         final TableManagerWrapper tableManagerWrapper = new TableManagerWrapper(basicTableInfo, tableManager, tableDetails.getDatabaseID());
@@ -148,6 +146,8 @@ public final class InMemorySystemTable implements ISystemTable {
         }
 
         tmReplicaLocations.put(basicTableInfo, replicas);
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "New table successfully created: " + tableDetails);
 
         return true;
     }

@@ -519,7 +519,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                     }
                     catch (final Exception e) {
 
-                        ErrorHandling.exceptionError(e, "Couldn't connect to database instance with ID: " + applicationRegistryMap.getKey() + " on server port " + applicationRegistryMap.getValue());
+                        ErrorHandling.errorNoEvent("Couldn't connect to database instance with ID: " + applicationRegistryMap.getKey() + " on server port " + applicationRegistryMap.getValue());
                         //Try again if the database is not active.
                     }
                 }
