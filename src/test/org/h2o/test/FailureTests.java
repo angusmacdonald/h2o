@@ -112,7 +112,7 @@ public class FailureTests extends MultiProcessTestBase {
          */
         killDatabase(findSystemTableInstance());
 
-        sleep(8000); // if 4000, location will be fixed through handlemovedexception, if 8000 fixed through predecessorChange.
+        sleep(14000); // if 4000, location will be fixed through handlemovedexception, if 8000 fixed through predecessorChange.
 
         // createConnectionsToDatabases();
 
@@ -137,7 +137,7 @@ public class FailureTests extends MultiProcessTestBase {
         sql += "INSERT INTO TEST VALUES(1, 'Hello');";
         sql += "INSERT INTO TEST VALUES(2, 'World');";
 
-        sleep(1000);
+        sleep(2000);
         /*
          * Create test table.
          */
@@ -146,7 +146,7 @@ public class FailureTests extends MultiProcessTestBase {
         assertTestTableExists(2, 0);
         assertMetaDataExists(connections[0], 1);
 
-        sleep(8000); // maintenance thread should have replicated table manager meta-data.
+        sleep(12000); // maintenance thread should have replicated table manager meta-data.
 
         assertTableManagerMetaDataExists(connections[0], 2);
     }
@@ -225,12 +225,12 @@ public class FailureTests extends MultiProcessTestBase {
         assertTestTableExists(2, 0);
         assertMetaDataExists(connections[0], 1);
 
-        sleep(2000);
+        sleep(4000);
 
         sql = "CREATE REPLICA TEST;";
         executeUpdateOnSecondMachine(sql);
 
-        sleep("Created replica of test.", 3000);
+        sleep("Created replica of test.", 5000);
 
         assertTestTableExistsLocally(connections[1], 2);
 
@@ -239,7 +239,7 @@ public class FailureTests extends MultiProcessTestBase {
          */
         killDatabase(findSystemTableInstance());
 
-        sleep("Killed off system table instance.", 4000);
+        sleep("Killed off system table instance.", 7000);
 
         assertTestTableExists(connections[1], 2, false);
     }
@@ -270,12 +270,12 @@ public class FailureTests extends MultiProcessTestBase {
         assertTestTableExists(2, 1);
         assertMetaDataExists(connections[0], 1);
 
-        sleep(2000);
+        sleep(4000);
 
         sql = "CREATE REPLICA TEST;";
         executeUpdateOnFirstMachine(sql);
 
-        sleep(3000);
+        sleep(5000);
 
         assertTestTableExistsLocally(connections[1], 2);
 
@@ -284,7 +284,7 @@ public class FailureTests extends MultiProcessTestBase {
          */
         killDatabase(fullDbName[1]);
 
-        sleep(4000);
+        sleep(8000);
 
         assertTestTableExistsLocally(connections[0], 2);
     }
@@ -306,7 +306,7 @@ public class FailureTests extends MultiProcessTestBase {
         sql += "INSERT INTO TEST VALUES(1, 'Hello');";
         sql += "INSERT INTO TEST VALUES(2, 'World');";
 
-        sleep(1000);
+        sleep(2000);
         /*
          * Create test table.
          */
@@ -315,12 +315,12 @@ public class FailureTests extends MultiProcessTestBase {
         assertTestTableExists(2, 1);
         assertMetaDataExists(connections[0], 1);
 
-        sleep(2000);
+        sleep(5000);
 
         sql = "CREATE REPLICA TEST;";
         executeUpdateOnFirstMachine(sql);
 
-        sleep(3000);
+        sleep(5000);
 
         assertTestTableExistsLocally(connections[1], 2);
 
@@ -329,7 +329,7 @@ public class FailureTests extends MultiProcessTestBase {
          */
         killDatabase(fullDbName[1]);
 
-        sleep(4000);
+        sleep(7000);
 
         assertTestTableExists(connections[2], 2, false);
     }
@@ -363,7 +363,7 @@ public class FailureTests extends MultiProcessTestBase {
         String create2 = "CREATE TABLE TEST2(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST2 VALUES(4, 'Meh'); INSERT INTO TEST2 VALUES(5, 'Heh');";
         String create3 = "CREATE TABLE TEST3(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST3 VALUES(4, 'Clouds'); INSERT INTO TEST3 VALUES(5, 'Rainbows');";
 
-        sleep(1000);
+        sleep(2000);
         /*
          * Create test table.
          */
@@ -375,7 +375,7 @@ public class FailureTests extends MultiProcessTestBase {
         assertTestTableExists(2, 0);
         assertMetaDataExists(connections[0], 3);
 
-        sleep(2000);
+        sleep(4000);
 
         create1 = "CREATE REPLICA TEST;";
         executeUpdateOnNthMachine(create1, 1);
@@ -385,7 +385,7 @@ public class FailureTests extends MultiProcessTestBase {
         executeUpdateOnNthMachine(create3, 0);
         executeUpdateOnNthMachine(create3, 1);
 
-        sleep("Wait for create replica commands to execute.", 10000);
+        sleep("Wait for create replica commands to execute.", 12000);
 
         assertTestTableExistsLocally(connections[1], 2);
         assertTest2TableExists(connections[1], 2);
