@@ -55,8 +55,8 @@ public class LockingTable implements ILockingTable, Serializable {
 
     private final LockLogger lockLogger;
 
-    // Set this to true to enable logging of lock operations.
-    private final static boolean DO_LOCK_LOGGING = true;
+    // Set this to true to enable logging of lock operations. ONLY USE THIS FOR DEBUGGING - IT WILL CRASH EVENTUALLY CRASH THE PROCESS IF USED ON ANY PROPER WORKLOAD DUE TO MEMORY OVERCONSUMPTION.
+    private final static boolean DO_LOCK_LOGGING = false;
 
     public LockingTable(final String schemaName, final String tableName) {
 
