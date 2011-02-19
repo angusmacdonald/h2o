@@ -45,11 +45,6 @@ public class DatabaseID implements Serializable {
     private static final long serialVersionUID = 3202062668933786677L;
 
     /**
-     * The name given to the database ID in H2O's properties files.
-     */
-    private static final String DATABASE_ID = "DATABASE_ID";
-
-    /**
      * The unique ID of the database.
      */
     private String databaseID = null;
