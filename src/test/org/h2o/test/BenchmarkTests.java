@@ -10,12 +10,16 @@ package org.h2o.test;
 
 import static org.junit.Assert.fail;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 
 import org.h2o.test.fixture.TestBase;
+import org.h2o.test.util.ReadBenchmarkQueriesFromFile;
 import org.junit.Test;
 
 /**
@@ -100,6 +104,41 @@ public class BenchmarkTests extends TestBase {
         finally {
             stt.close();
             mStmt.close();
+        }
+    }
+
+    /**
+     * Runs a set of queries from BenchmarkSQL tool, specified in the file 'testQueries/benchmarkSQL-1.txt'.
+     * @throws SQLException
+     * @throws IOException Error reading from the benchmark file.
+     * @throws FileNotFoundException Failed to read from the benchmark file.
+     */
+    @Test
+    public void testBenchmarkSQLQueries() throws SQLException, FileNotFoundException, IOException {
+
+        final ArrayList<String> createTableQueries = ReadBenchmarkQueriesFromFile.getSQLQueriesFromFile("testQueries/benchmarkSQL-createTables.txt");
+
+        executeQueries(createTableQueries);
+
+        final ArrayList<String> updateQueries = ReadBenchmarkQueriesFromFile.getSQLQueriesFromFile("testQueries/benchmarkSQL-1.txt");
+
+        executeQueries(updateQueries);
+
+    }
+
+    public void executeQueries(final ArrayList<String> queries) throws SQLException {
+
+        Statement stt = null;
+        try {
+            stt = ca.createStatement();
+
+            for (final String sql : queries) {
+
+                stt.execute(sql);
+            }
+        }
+        finally {
+            stt.close();
         }
     }
 

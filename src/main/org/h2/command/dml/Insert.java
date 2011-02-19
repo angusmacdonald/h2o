@@ -381,4 +381,21 @@ public class Insert extends Prepared {
          */
         return isRegularTable();
     }
+
+    @Override
+    public String getSQLIncludingParameters() {
+
+        if (isPreparedStatement()) {
+            try {
+                return adjustForPreparedStatement();
+            }
+            catch (final Exception e) {
+                e.printStackTrace();
+                return toString();
+            }
+        }
+        else {
+            return toString();
+        }
+    }
 }

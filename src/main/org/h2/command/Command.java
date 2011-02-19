@@ -365,4 +365,15 @@ public abstract class Command implements CommandInterface {
 
         return command.shouldBePropagated();
     }
+
+    /**
+     * Get the SQL string for the given query, including parameter values. This differs from
+     * {@link #getSQL()} because prepared statement queries show only question marks where parameters should be.
+     * This method replaces those question marks with the actual values used in the query.
+     * @return Query string for a single query.
+     */
+    public String getSQLIncludingParameters() {
+
+        return toString();
+    }
 }
