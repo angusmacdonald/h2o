@@ -51,7 +51,7 @@
         <javaElement handleIdentifier="=stachord/&lt;uk.ac.standrews.cs.stachord.test.recovery"/>
         <javaElement handleIdentifier="=h2o/src\/tools&lt;org.h2.dev.net"/>
         <file path="/nds/GPL.txt"/>
-        <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.p2p.impl"/>
+        <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.p2p.keys"/>
         <file path="/h2o/jar-build/databaseManifest-src"/>
         <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.eventModel"/>
         <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.eventModel.eventBus"/>

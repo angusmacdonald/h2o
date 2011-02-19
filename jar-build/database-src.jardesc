@@ -148,7 +148,7 @@
         <javaElement handleIdentifier="=stachordRMI/&lt;uk.ac.standrews.cs.stachordRMI.interfaces"/>
         <javaElement handleIdentifier="=h2o-working/src\/tools&lt;org.h2.dev.util"/>
         <javaElement handleIdentifier="=h2o-working/src\/main&lt;org.h2.util{ObjectArray.java"/>
-        <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.p2p.impl"/>
+        <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.p2p.keys"/>
         <javaElement handleIdentifier="=h2o-working/src\/main&lt;org.h2.util{AutoCloseInputStream.java"/>
         <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.eventModel.eventBus"/>
         <javaElement handleIdentifier="=nds/&lt;uk.ac.standrews.cs.nds.eventModel"/>
