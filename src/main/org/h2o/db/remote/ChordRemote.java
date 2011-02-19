@@ -906,7 +906,6 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
             final InetSocketAddress address = successor.getRemote().getAddress();
             final String hostname = address.getHostName();
-            final int port = address.getPort();
 
             final IDatabaseInstanceRemote successorInstance = getDatabaseInstanceAt(hostname);
 

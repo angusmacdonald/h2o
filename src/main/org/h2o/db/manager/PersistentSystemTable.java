@@ -28,7 +28,6 @@ import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
-import org.h2o.db.remote.IDatabaseRemote;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
 import org.h2o.util.exceptions.MovedException;
@@ -297,8 +296,6 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     public Map<TableInfo, TableManagerWrapper> getTableManagers() throws RPCException {
 
         final Map<TableInfo, TableManagerWrapper> tableManagers = new HashMap<TableInfo, TableManagerWrapper>();
-
-        final IDatabaseRemote remoteInterface = getDB().getRemoteInterface();
 
         /*
          * Parse the query resultset to find the primary location of every table.

@@ -58,7 +58,7 @@ public class TableManagerMonitor implements ITableManagerMonitor {
 
         if (numberOfWrites == 0 && numberOfReads == 0) { return 1; }
 
-        return numberOfReads / numberOfWrites;
+        return numberOfReads / (double) numberOfWrites;
     }
 
     @Override
