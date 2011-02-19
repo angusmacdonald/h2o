@@ -84,16 +84,6 @@ public final class InMemorySystemTable implements ISystemTable {
 
     private boolean started = false;
 
-    /**
-     * Maintained because RMI registry uses weak references so it's possible for otherwise unreferenced
-     * exposed objects to be garbage collected.
-     * 
-     * http://download.oracle.com/javase/6/docs/platform/rmi/spec/rmi-arch4.html
-     * 
-     * See http://stackoverflow.com/questions/645208/java-rmi-nosuchobjectexception-no-such-object-in-table/854097#854097.
-     */
-    public final static HashSet<ITableManagerRemote> tableManagerReferences = new HashSet<ITableManagerRemote>();
-
     public InMemorySystemTable(final Database database) throws Exception {
 
         this.database = database;
@@ -130,7 +120,6 @@ public final class InMemorySystemTable implements ISystemTable {
             return false; // this table already exists.
         }
 
-        tableManagerReferences.add(tableManager);
         tableManagers.put(basicTableInfo, tableManagerWrapper);
 
         primaryLocations.put(basicTableInfo, tableDetails.getDatabaseID());
@@ -609,10 +598,9 @@ public final class InMemorySystemTable implements ISystemTable {
             assert false;
         }
 
-        final TableManagerWrapper dmw = new TableManagerWrapper(tableInfo, stub, tableInfo.getDatabaseID());
+        final TableManagerWrapper tableManagerWrapper = new TableManagerWrapper(tableInfo, stub, tableInfo.getDatabaseID());
 
-        tableManagers.put(tableInfo.getGenericTableInfo(), dmw);
-        tableManagerReferences.add(stub);
+        tableManagers.put(tableInfo.getGenericTableInfo(), tableManagerWrapper);
     }
 
     @Override

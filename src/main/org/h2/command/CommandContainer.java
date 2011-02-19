@@ -150,6 +150,10 @@ public class CommandContainer extends Command {
 
             assert currentProxyManager != null;
 
+            if (Constants.LOG_INCOMING_UPDATES) {
+                currentProxyManager.addSQL(prepared.getSQL());
+            }
+
             doLock(); // This throws an SQLException if no lock is found.
 
             try {

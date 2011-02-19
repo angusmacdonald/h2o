@@ -487,6 +487,11 @@ public class Constants {
 
     public static final String REPLICATION_DELIMITER = "###";
 
+    /**
+     * Whether updates should be logged in a table proxy manager. THIS USES LARGE AMOUNTS OF MEMORY AND SHOULD ONLY BE USED IN DEBUGGING.
+     */
+    public static final boolean LOG_INCOMING_UPDATES = true;
+
     public static boolean IS_TEAR_DOWN = false;
 
     /**
@@ -496,6 +501,11 @@ public class Constants {
     public static boolean IS_NON_SM_TEST = false;
 
     public static boolean IS_TEST = false;
+
+    /**
+     * Set this to true to enable logging of lock operations. ONLY USE THIS FOR DEBUGGING - IT WILL CRASH EVENTUALLY CRASH THE PROCESS IF USED ON ANY PROPER WORKLOAD DUE TO MEMORY OVERCONSUMPTION.
+     */
+    public final static boolean DO_LOCK_LOGGING = false;
 
     private Constants() {
 

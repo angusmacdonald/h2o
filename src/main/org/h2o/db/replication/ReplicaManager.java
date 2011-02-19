@@ -334,8 +334,7 @@ public class ReplicaManager {
         for (final CommitResult cr : committedQueries) {
             try {
                 if (cr.getExpectedUpdateID() > updateID && cr.getTable() != null && tableInfo != null && cr.getTable().equals(tableInfo)) {
-                    updateID = cr.getUpdateID(); // XXX this used to be expected update ID, but was changed because the expected update ID
-                                                 // was often too high.
+                    updateID = cr.getUpdateID(); // XXX this used to be expected update ID, but was changed because the expected update ID was often too high.
                 }
             }
             catch (final Exception e) {
@@ -378,7 +377,7 @@ public class ReplicaManager {
 
         return primaryLocation;
     }
-    
+
     /**
      * @return
      */

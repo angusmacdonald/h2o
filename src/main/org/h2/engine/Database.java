@@ -372,6 +372,13 @@ public class Database implements DataHandler {
 
         if (!isManagementDB()) {
 
+            if (Constants.LOG_INCOMING_UPDATES) {
+                ErrorHandling.errorNoEvent("WARNING: LOGGING OF QUERIES IS ENABLED IN THE TABLEPROXYMANAGER. This uses massive amounts of memory and should only be used when debugging.");
+            }
+
+            if (Constants.DO_LOCK_LOGGING) {
+                ErrorHandling.errorNoEvent("WARNING: LOGGING OF LOCK REQUESTS IS ENABLED. This uses massive amounts of memory and should only be used when debugging.");
+            }
             /*
              * Get Settings for Database.
              */
