@@ -189,6 +189,7 @@ public class ReplicaManager {
 
         Diagnostic.trace(DiagnosticLevel.FULL, "commit: " + commit + " table info: " + tableInfo.getFullTableName());
 
+        if (!thisTableWasUpdated(committedQueries, tableInfo)) { return new HashSet<DatabaseInstanceWrapper>(); }
         //Replicas that are currently marked as active (this may be changed during this update).
         final HashMap<DatabaseInstanceWrapper, Integer> oldActiveReplicas = new HashMap<DatabaseInstanceWrapper, Integer>(activeReplicas);
 
@@ -283,7 +284,7 @@ public class ReplicaManager {
                          */
                         ErrorHandling.errorNoEvent("Replica will not commit because update IDs did not match. Expected: " + expectedUpdateID + "; Actual current: " + currentID);
 
-                        if (allReplicas.size() == 1) { throw new SQLException("Update IDs don't match. There is only one replica so this shouldn't happen (i.e. replication is synchronous). Expected: " + expectedUpdateID + "; Actual current: " + currentID); }
+                        if (allReplicas.size() == 1) { throw new SQLException("Update IDs don't match on table " + tableInfo + ". There is only one replica so this shouldn't happen (i.e. replication is synchronous). Expected: " + expectedUpdateID + "; Actual current: " + currentID); }
                     }
 
                 } // In many cases it won't contain this key, but another table (part of the same transaction) was on this machine.
@@ -307,6 +308,28 @@ public class ReplicaManager {
         else {
             return instancesUpdated;
         }
+    }
+
+    /**
+     * Checks whether any of this tables replicas were updated.
+     * @param committedQueries information on all the updates which occurred in this transaction.
+     * @param tableInfo the name of the table for which this replica manager is responsible.
+     * @return true if any of this tables replicas were involved in an update.
+     */
+    private boolean thisTableWasUpdated(final Collection<CommitResult> committedQueries, final TableInfo tableInfo) {
+
+        if (committedQueries == null) { return false; }
+
+        for (final CommitResult cr : committedQueries) {
+            try {
+                if (cr.getTable() != null && tableInfo != null && cr.getTable().equals(tableInfo)) { return true; }
+            }
+            catch (final Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return false;
     }
 
     /**
