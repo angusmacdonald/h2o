@@ -583,8 +583,9 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
      * @param committedQueries
      * @param asynchronousCommit
      * @param lockType
+     * @throws SQLException 
      */
-    private void updateActiveReplicaSet(final boolean commit, final Collection<CommitResult> committedQueries, final boolean asynchronousCommit, final LockType lockType) {
+    private void updateActiveReplicaSet(final boolean commit, final Collection<CommitResult> committedQueries, final boolean asynchronousCommit, final LockType lockType) throws SQLException {
 
         // Reads don't change the set of active replicas.
         if (lockType == LockType.WRITE || asynchronousCommit) { // LockType.WRITE == LockType.CREATE in the locking table.

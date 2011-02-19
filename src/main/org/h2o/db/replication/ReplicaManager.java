@@ -8,6 +8,7 @@
  */
 package org.h2o.db.replication;
 
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -182,8 +183,9 @@ public class ReplicaManager {
      *            being committed.
      * @return If this is the first part of the update, this returns the set of replicas that are now inactive. If it is the second part of
      *         the update this returns the replicas that are now active.
+     * @throws SQLException 
      */
-    public Set<DatabaseInstanceWrapper> completeUpdate(final boolean commit, final Collection<CommitResult> committedQueries, final TableInfo tableInfo, final boolean firstPartOfUpdate) {
+    public Set<DatabaseInstanceWrapper> completeUpdate(final boolean commit, final Collection<CommitResult> committedQueries, final TableInfo tableInfo, final boolean firstPartOfUpdate) throws SQLException {
 
         Diagnostic.trace(DiagnosticLevel.FULL, "commit: " + commit + " table info: " + tableInfo.getFullTableName());
 
@@ -280,6 +282,8 @@ public class ReplicaManager {
                          * The update ID of this replica does not match that which was expected. This replica will not commit.
                          */
                         ErrorHandling.errorNoEvent("Replica will not commit because update IDs did not match. Expected: " + expectedUpdateID + "; Actual current: " + currentID);
+
+                        if (allReplicas.size() == 1) { throw new SQLException("Update IDs don't match. There is only one replica so this shouldn't happen (i.e. replication is synchronous). Expected: " + expectedUpdateID + "; Actual current: " + currentID); }
                     }
 
                 } // In many cases it won't contain this key, but another table (part of the same transaction) was on this machine.

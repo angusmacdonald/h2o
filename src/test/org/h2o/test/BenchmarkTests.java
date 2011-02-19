@@ -114,16 +114,76 @@ public class BenchmarkTests extends TestBase {
      * @throws FileNotFoundException Failed to read from the benchmark file.
      */
     @Test
-    public void testBenchmarkSQLQueries() throws SQLException, FileNotFoundException, IOException {
+    public void benchmarkSQLQueriesBasic() throws SQLException, FileNotFoundException, IOException {
+
+        createBenchmarkSQLTables();
+
+        runBenchmarkCode("testQueries/benchmarkSQL-1.txt");
+
+    }
+
+    /**
+     * Runs a set of queries from BenchmarkSQL tool, specified in the file 'testQueries/benchmarkSQL-1.txt'.
+     * 
+     * Replicas of all tables exist on another machine as well.
+     * 
+     * @throws SQLException
+     * @throws IOException Error reading from the benchmark file.
+     * @throws FileNotFoundException Failed to read from the benchmark file.
+     */
+    @Test
+    public void benchmarkSQLQueriesBasicWithReplication() throws SQLException, FileNotFoundException, IOException {
+
+        createBenchmarkSQLTables();
+
+        createReplicaOnB("warehouse");
+        createReplicaOnB("district");
+        createReplicaOnB("customer");
+        createReplicaOnB("history");
+        createReplicaOnB("oorder");
+        createReplicaOnB("new_order");
+        createReplicaOnB("stock");
+        createReplicaOnB("item");
+
+        runBenchmarkCode("testQueries/benchmarkSQL-2.txt");
+
+    }
+
+    /**
+     * Runs a set of queries from BenchmarkSQL tool, specified in the file 'testQueries/benchmarkSQL-2.txt'.
+     * 
+     * More SQL statements are executed than with {@link #testBenchmarkSQLQueriesBasic()}
+     * @throws SQLException
+     * @throws IOException Error reading from the benchmark file.
+     * @throws FileNotFoundException Failed to read from the benchmark file.
+     */
+    @Test
+    public void benchmarkSQLQueriesMore() throws SQLException, FileNotFoundException, IOException {
+
+        createBenchmarkSQLTables();
+
+        runBenchmarkCode("testQueries/benchmarkSQL-2.txt");
+
+    }
+
+    /*
+     * 
+     * UTILITY FUNCTIONS
+     * 
+     */
+
+    public void runBenchmarkCode(final String fileName) throws FileNotFoundException, IOException, SQLException {
+
+        final ArrayList<String> updateQueries = ReadBenchmarkQueriesFromFile.getSQLQueriesFromFile(fileName);
+
+        executeQueries(updateQueries);
+    }
+
+    public void createBenchmarkSQLTables() throws FileNotFoundException, IOException, SQLException {
 
         final ArrayList<String> createTableQueries = ReadBenchmarkQueriesFromFile.getSQLQueriesFromFile("testQueries/benchmarkSQL-createTables.txt");
 
         executeQueries(createTableQueries);
-
-        final ArrayList<String> updateQueries = ReadBenchmarkQueriesFromFile.getSQLQueriesFromFile("testQueries/benchmarkSQL-1.txt");
-
-        executeQueries(updateQueries);
-
     }
 
     public void executeQueries(final ArrayList<String> queries) throws SQLException {

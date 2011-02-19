@@ -306,7 +306,7 @@ public class TestBase {
      *
      * @throws SQLException
      */
-    private void createReplicaOnB(final String tableName) throws SQLException {
+    protected void createReplicaOnB(final String tableName) throws SQLException {
 
         /*
          * Create replica on B.
