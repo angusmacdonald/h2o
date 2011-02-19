@@ -3,3 +3,5 @@ syntax: regexp
 ^config$
 syntax: regexp
 ^db_files$
+syntax: regexp
+^db_data$
