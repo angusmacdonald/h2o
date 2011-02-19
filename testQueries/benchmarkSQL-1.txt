@@ -1,56 +1,6 @@
 > SET AUTOCOMMIT FALSE
-> INSERT INTO NEW_ORDER (no_o_id, no_d_id, no_w_id) VALUES ( ?, ?, ?) {1: 3001, 2: 9, 3: 1};
-> UPDATE district SET d_next_o_id = d_next_o_id + 1  WHERE d_id = ? AND d_w_id = ? {1: 9, 2: 1};
-> INSERT INTO OORDER  (o_id, o_d_id, o_w_id, o_c_id, o_entry_d, o_ol_cnt, o_all_local) VALUES (?, ?, ?, ?, ?, ?, ?) {1: 3001, 2: 9, 3: 1, 4: 2034, 5: TIMESTAMP '2011-02-19 14:29:37.269', 6: 13, 7: 0};
-> SET AUTOCOMMIT FALSE
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3001, 2: 9, 3: 1, 4: 1, 5: 81439, 6: 1, 7: 6, 8: 568.6199951171875, 9: 'SNfXwReiZBftZGibfZueWli'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3001, 2: 9, 3: 1, 4: 2, 5: 59279, 6: 1, 7: 8, 8: 194.399993896484375, 9: 'ihhTWfLgYzXmXwINFVDrqBA'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3001, 2: 9, 3: 1, 4: 3, 5: 60771, 6: 1, 7: 2, 8: 135.6399993896484375, 9: 'bkZrGZZvwmrxhjTFifRkHlV'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3001, 2: 9, 3: 1, 4: 4, 5: 45867, 6: 1, 7: 7, 8: 277.410003662109375, 9: 'ZANsDPsgdGGlgSMSkCEsmmx'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3001, 2: 9, 3: 1, 4: 5, 5: 66387, 6: 1, 7: 7, 8: 293.579986572265625, 9: 'rBtKKMsmgDDtWwVPhravwcS'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3001, 2: 9, 3: 1, 4: 6, 5: 30430, 6: 1, 7: 7, 8: 106.81999969482421875, 9: 'dwXZZYyLyjvVYiCDAPaOlVa'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3001, 2: 9, 3: 1, 4: 7, 5: 12477, 6: 1, 7: 9, 8: 427.769989013671875, 9: 'KVFZbHauNbJzHfSqjAUUBTw'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3001, 2: 9, 3: 1, 4: 8, 5: 1892, 6: 1, 7: 2, 8: 142.7400054931640625, 9: 'owtfDwNHglelMJmzeCcZxlx'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3001, 2: 9, 3: 1, 4: 9, 5: 21235, 6: 1, 7: 7, 8: 200.2700042724609375, 9: 'OQqCTQHEfkWVcQQVzOlACcm'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3001, 2: 9, 3: 1, 4: 10, 5: 51941, 6: 1, 7: 5, 8: 479.550018310546875, 9: 'AytlHCrqAAcPbFlCGmYRSWd'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3001, 2: 9, 3: 1, 4: 11, 5: 6538, 6: 1, 7: 4, 8: 179.0399932861328125, 9: 'pBxwjdORLPzkftzsqGkPFfC'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3001, 2: 9, 3: 1, 4: 12, 5: 48199, 6: 1, 7: 7, 8: 60.130001068115234375, 9: 'PfgbdmPuTYffbBIurtlHcCC'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3001, 2: 9, 3: 1, 4: 13, 5: 32995, 6: 1, 7: 9, 8: 862.64996337890625, 9: 'EBdPckJpHHnEIUDFXcCWZFZ'};
-> COMMIT
-> SET AUTOCOMMIT FALSE
-> UPDATE stock SET s_quantity = ? , s_ytd = s_ytd + ?, s_remote_cnt = s_remote_cnt + ?  WHERE s_i_id = ? AND s_w_id = ? {1: 64, 2: 6, 3: 0, 4: 81439, 5: 1};
-> UPDATE stock SET s_quantity = ? , s_ytd = s_ytd + ?, s_remote_cnt = s_remote_cnt + ?  WHERE s_i_id = ? AND s_w_id = ? {1: 80, 2: 8, 3: 0, 4: 59279, 5: 1};
-> UPDATE stock SET s_quantity = ? , s_ytd = s_ytd + ?, s_remote_cnt = s_remote_cnt + ?  WHERE s_i_id = ? AND s_w_id = ? {1: 15, 2: 2, 3: 0, 4: 60771, 5: 1};
-> UPDATE stock SET s_quantity = ? , s_ytd = s_ytd + ?, s_remote_cnt = s_remote_cnt + ?  WHERE s_i_id = ? AND s_w_id = ? {1: 50, 2: 7, 3: 0, 4: 45867, 5: 1};
-> UPDATE stock SET s_quantity = ? , s_ytd = s_ytd + ?, s_remote_cnt = s_remote_cnt + ?  WHERE s_i_id = ? AND s_w_id = ? {1: 100, 2: 7, 3: 0, 4: 66387, 5: 1};
-> UPDATE stock SET s_quantity = ? , s_ytd = s_ytd + ?, s_remote_cnt = s_remote_cnt + ?  WHERE s_i_id = ? AND s_w_id = ? {1: 69, 2: 7, 3: 0, 4: 30430, 5: 1};
-> UPDATE stock SET s_quantity = ? , s_ytd = s_ytd + ?, s_remote_cnt = s_remote_cnt + ?  WHERE s_i_id = ? AND s_w_id = ? {1: 31, 2: 9, 3: 0, 4: 12477, 5: 1};
-> UPDATE stock SET s_quantity = ? , s_ytd = s_ytd + ?, s_remote_cnt = s_remote_cnt + ?  WHERE s_i_id = ? AND s_w_id = ? {1: 64, 2: 2, 3: 0, 4: 1892, 5: 1};
-> UPDATE stock SET s_quantity = ? , s_ytd = s_ytd + ?, s_remote_cnt = s_remote_cnt + ?  WHERE s_i_id = ? AND s_w_id = ? {1: 76, 2: 7, 3: 0, 4: 21235, 5: 1};
-> UPDATE stock SET s_quantity = ? , s_ytd = s_ytd + ?, s_remote_cnt = s_remote_cnt + ?  WHERE s_i_id = ? AND s_w_id = ? {1: 14, 2: 5, 3: 0, 4: 51941, 5: 1};
-> UPDATE stock SET s_quantity = ? , s_ytd = s_ytd + ?, s_remote_cnt = s_remote_cnt + ?  WHERE s_i_id = ? AND s_w_id = ? {1: 41, 2: 4, 3: 0, 4: 6538, 5: 1};
-> UPDATE stock SET s_quantity = ? , s_ytd = s_ytd + ?, s_remote_cnt = s_remote_cnt + ?  WHERE s_i_id = ? AND s_w_id = ? {1: 18, 2: 7, 3: 0, 4: 48199, 5: 1};
-> UPDATE stock SET s_quantity = ? , s_ytd = s_ytd + ?, s_remote_cnt = s_remote_cnt + ?  WHERE s_i_id = ? AND s_w_id = ? {1: 78, 2: 9, 3: 0, 4: 32995, 5: 1};
-> COMMIT
-> SET AUTOCOMMIT FALSE
-> COMMIT
-> ROLLBACK
-> INSERT INTO NEW_ORDER (no_o_id, no_d_id, no_w_id) VALUES ( ?, ?, ?) {1: 3002, 2: 9, 3: 1};
+
 > UPDATE district SET d_next_o_id = d_next_o_id + 1  WHERE d_id = ? AND d_w_id = ? {1: 9, 2: 1};
 > INSERT INTO OORDER  (o_id, o_d_id, o_w_id, o_c_id, o_entry_d, o_ol_cnt, o_all_local) VALUES (?, ?, ?, ?, ?, ?, ?) {1: 3002, 2: 9, 3: 1, 4: 1711, 5: TIMESTAMP '2011-02-19 14:29:37.339', 6: 14, 7: 1};
 > SET AUTOCOMMIT FALSE
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3002, 2: 9, 3: 1, 4: 1, 5: 95463, 6: 1, 7: 2, 8: 60.3600006103515625, 9: 'HxQpnmVzNHIBGHlteybyUNa'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3002, 2: 9, 3: 1, 4: 2, 5: 50091, 6: 1, 7: 2, 8: 78.12000274658203125, 9: 'ntSQvbHxaVMcEXyKumFsIId'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3002, 2: 9, 3: 1, 4: 3, 5: 4303, 6: 1, 7: 4, 8: 175.0399932861328125, 9: 'ffmalhCOLvVcqHbnWbjOQlx'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3002, 2: 9, 3: 1, 4: 4, 5: 27919, 6: 1, 7: 2, 8: 156.82000732421875, 9: 'gkupQepaRCCfFGOutNMhqhe'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3002, 2: 9, 3: 1, 4: 5, 5: 15283, 6: 1, 7: 8, 8: 560.719970703125, 9: 'BSnhWZDAxnLsGQcvKsWFcMS'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3002, 2: 9, 3: 1, 4: 6, 5: 77293, 6: 1, 7: 10, 8: 853.0999755859375, 9: 'xPnaEAFMnLEpDpeyiIKKvBo'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3002, 2: 9, 3: 1, 4: 7, 5: 71112, 6: 1, 7: 8, 8: 75.59999847412109375, 9: 'HczcGPTZceJndhTlwgXCWuK'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3002, 2: 9, 3: 1, 4: 8, 5: 31129, 6: 1, 7: 6, 8: 84.4199981689453125, 9: 'GoKSgcdEgywqghtbXLxkPXc'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3002, 2: 9, 3: 1, 4: 9, 5: 60810, 6: 1, 7: 3, 8: 274.79998779296875, 9: 'QHjZZQHhagshJBypNodhufq'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3002, 2: 9, 3: 1, 4: 10, 5: 10799, 6: 1, 7: 5, 8: 120.90000152587890625, 9: 'GeHRiltPJuZtRTpSoenIniB'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3002, 2: 9, 3: 1, 4: 11, 5: 9106, 6: 1, 7: 8, 8: 214.32000732421875, 9: 'ChFPSMisRVvJCFmvnGnREbX'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3002, 2: 9, 3: 1, 4: 12, 5: 78413, 6: 1, 7: 10, 8: 287.199981689453125, 9: 'WOksiKRNUGguZCFUuLZDUyt'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3002, 2: 9, 3: 1, 4: 13, 5: 75850, 6: 1, 7: 2, 8: 30.479999542236328125, 9: 'SZRObccBXTZquDgENBDBhix'};
-> INSERT INTO order_line (ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id,  ol_quantity, ol_amount, ol_dist_info) VALUES (?,?,?,?,?,?,?,?,?) {1: 3002, 2: 9, 3: 1, 4: 14, 5: 75860, 6: 1, 7: 7, 8: 94.01000213623046875, 9: 'AbTcPpkGajhSIdbQAExbTur'};
 > COMMIT
