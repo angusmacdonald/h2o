@@ -31,7 +31,7 @@ import org.h2o.test.fixture.ITestManager;
 import org.junit.Before;
 import org.junit.Test;
 
-import uk.ac.standrews.cs.nds.madface.UnknownPlatformException;
+import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
 

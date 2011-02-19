@@ -46,7 +46,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.madface.ProcessManager;
-import uk.ac.standrews.cs.nds.madface.UnknownPlatformException;
+import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;

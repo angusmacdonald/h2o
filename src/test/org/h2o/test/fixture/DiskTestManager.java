@@ -9,7 +9,7 @@ import java.util.concurrent.TimeoutException;
 import org.h2o.H2O;
 
 import uk.ac.standrews.cs.nds.madface.ProcessManager;
-import uk.ac.standrews.cs.nds.madface.UnknownPlatformException;
+import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
 
 import com.mindbright.ssh2.SSH2Exception;
 

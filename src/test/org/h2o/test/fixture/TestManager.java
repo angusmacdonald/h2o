@@ -41,7 +41,7 @@ import org.h2.engine.Constants;
 import org.h2o.H2OLocator;
 
 import uk.ac.standrews.cs.nds.madface.ProcessManager;
-import uk.ac.standrews.cs.nds.madface.UnknownPlatformException;
+import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
