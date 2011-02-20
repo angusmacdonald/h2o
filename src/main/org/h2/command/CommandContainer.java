@@ -109,6 +109,10 @@ public class CommandContainer extends Command {
 
         final TableProxyManager currentProxyManager = session.getProxyManagerForTransaction();
 
+        if (Constants.LOG_INCOMING_UPDATES) {
+            System.out.println("> > " + prepared.getSQLIncludingParameters().replace("\n", " "));
+        }
+
         try {
             final LocalResult result = prepared.query(maxrows);
             prepared.trace(startTime, result.getRowCount());
