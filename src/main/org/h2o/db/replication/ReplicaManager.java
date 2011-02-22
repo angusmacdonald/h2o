@@ -8,6 +8,7 @@
  */
 package org.h2o.db.replication;
 
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -182,11 +183,13 @@ public class ReplicaManager {
      *            being committed.
      * @return If this is the first part of the update, this returns the set of replicas that are now inactive. If it is the second part of
      *         the update this returns the replicas that are now active.
+     * @throws SQLException 
      */
-    public Set<DatabaseInstanceWrapper> completeUpdate(final boolean commit, final Collection<CommitResult> committedQueries, final TableInfo tableInfo, final boolean firstPartOfUpdate) {
+    public Set<DatabaseInstanceWrapper> completeUpdate(final boolean commit, final Collection<CommitResult> committedQueries, final TableInfo tableInfo, final boolean firstPartOfUpdate) throws SQLException {
 
         Diagnostic.trace(DiagnosticLevel.FULL, "commit: " + commit + " table info: " + tableInfo.getFullTableName());
 
+        if (!thisTableWasUpdated(committedQueries, tableInfo)) { return new HashSet<DatabaseInstanceWrapper>(); }
         //Replicas that are currently marked as active (this may be changed during this update).
         final HashMap<DatabaseInstanceWrapper, Integer> oldActiveReplicas = new HashMap<DatabaseInstanceWrapper, Integer>(activeReplicas);
 
@@ -280,6 +283,8 @@ public class ReplicaManager {
                          * The update ID of this replica does not match that which was expected. This replica will not commit.
                          */
                         ErrorHandling.errorNoEvent("Replica will not commit because update IDs did not match. Expected: " + expectedUpdateID + "; Actual current: " + currentID);
+
+                        if (allReplicas.size() == 1) { throw new SQLException("Update IDs don't match on table " + tableInfo + ". There is only one replica so this shouldn't happen (i.e. replication is synchronous). Expected: " + expectedUpdateID + "; Actual current: " + currentID); }
                     }
 
                 } // In many cases it won't contain this key, but another table (part of the same transaction) was on this machine.
@@ -303,6 +308,28 @@ public class ReplicaManager {
         else {
             return instancesUpdated;
         }
+    }
+
+    /**
+     * Checks whether any of this tables replicas were updated.
+     * @param committedQueries information on all the updates which occurred in this transaction.
+     * @param tableInfo the name of the table for which this replica manager is responsible.
+     * @return true if any of this tables replicas were involved in an update.
+     */
+    private boolean thisTableWasUpdated(final Collection<CommitResult> committedQueries, final TableInfo tableInfo) {
+
+        if (committedQueries == null) { return false; }
+
+        for (final CommitResult cr : committedQueries) {
+            try {
+                if (cr.getTable() != null && tableInfo != null && cr.getTable().equals(tableInfo)) { return true; }
+            }
+            catch (final Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -334,8 +361,7 @@ public class ReplicaManager {
         for (final CommitResult cr : committedQueries) {
             try {
                 if (cr.getExpectedUpdateID() > updateID && cr.getTable() != null && tableInfo != null && cr.getTable().equals(tableInfo)) {
-                    updateID = cr.getUpdateID(); // XXX this used to be expected update ID, but was changed because the expected update ID
-                                                 // was often too high.
+                    updateID = cr.getUpdateID(); // XXX this used to be expected update ID, but was changed because the expected update ID was often too high.
                 }
             }
             catch (final Exception e) {
@@ -378,7 +404,7 @@ public class ReplicaManager {
 
         return primaryLocation;
     }
-    
+
     /**
      * @return
      */

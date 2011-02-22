@@ -20,6 +20,7 @@ import org.h2.engine.Database;
 import org.h2.result.LocalResult;
 import org.h2.value.Value;
 import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
+import org.h2o.db.DatabaseInstanceProxy;
 import org.h2o.db.DefaultSettings;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
@@ -27,7 +28,6 @@ import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
-import org.h2o.db.remote.IDatabaseRemote;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
 import org.h2o.util.exceptions.MovedException;
@@ -256,7 +256,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
                 final String dbLocation = row[3].getString();
                 final int dbPort = row[4].getInt();
                 final int rmiPort = row[5].getInt();
-                final DatabaseID dbID = new DatabaseID(null, new DatabaseURL(connectionType, hostName, dbPort, dbLocation, false));
+                final DatabaseID dbID = new DatabaseID(new DatabaseURL(connectionType, hostName, dbPort, dbLocation, false));
                 dbID.setRMIPort(rmiPort);
                 databaseLocations.put(dbID, null);
             }
@@ -297,8 +297,6 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
         final Map<TableInfo, TableManagerWrapper> tableManagers = new HashMap<TableInfo, TableManagerWrapper>();
 
-        final IDatabaseRemote remoteInterface = getDB().getRemoteInterface();
-
         /*
          * Parse the query resultset to find the primary location of every table.
          */
@@ -330,7 +328,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
                 final String schemaName = row[5].getString();
                 final int chord_port = row[6].getInt();
 
-                final DatabaseID dbID = new DatabaseID(null, new DatabaseURL(connectionType, machineName, Integer.parseInt(connectionPort), dbLocation, false, chord_port));
+                final DatabaseID dbID = new DatabaseID(new DatabaseURL(connectionType, machineName, Integer.parseInt(connectionPort), dbLocation, false, chord_port));
                 final TableInfo ti = new TableInfo(tableName, schemaName);
 
                 /*
@@ -338,14 +336,9 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
                  */
                 IDatabaseInstanceRemote dir = null;
 
-                try {
-                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Finding database instance at : " + dbID);
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Finding database instance at : " + dbID);
 
-                    dir = remoteInterface.getDatabaseInstanceAt(dbID);
-                }
-                catch (final RPCException e) {
-                    // Will happen if its no longer active.
-                }
+                dir = DatabaseInstanceProxy.getProxy(dbID);
 
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Found database instance at : " + dbID);
 

@@ -208,7 +208,14 @@ public class Update extends Prepared {
             final Expression[] expr = expressions;
 
             final String[] values = new String[org.h2o.util.StringUtils.countNumberOfCharacters(sqlStatement, "?")]; //Will be used to store the values contained within { } brackets in the final statement.
-            final Column[] columns = table.getColumns();
+
+            Table localTableReference = table;
+
+            if (table == null) {
+                localTableReference = tableFilter.getTable();
+            }
+
+            final Column[] columns = localTableReference.getColumns();
 
             /*
              * 'Expressions' stores all of the expressions being set by this update. The expression will be null if nothing is being set.
@@ -337,4 +344,20 @@ public class Update extends Prepared {
         return !session.getDatabase().isManagementDB() && !internalQuery && !isLocal;
     }
 
+    @Override
+    public String getSQLIncludingParameters() {
+
+        if (isPreparedStatement()) {
+            try {
+                return adjustForPreparedStatement();
+            }
+            catch (final Exception e) {
+                e.printStackTrace();
+                return toString();
+            }
+        }
+        else {
+            return toString();
+        }
+    }
 }

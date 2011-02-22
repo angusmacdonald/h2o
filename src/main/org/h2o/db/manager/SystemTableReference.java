@@ -37,7 +37,6 @@ import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
-import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.manager.recovery.SystemTableAccessException;
 import org.h2o.db.manager.recovery.SystemTableFailureRecovery;
@@ -391,6 +390,7 @@ public class SystemTableReference implements ISystemTableReference {
                         throw new SQLException("Couldn't find locator servers.");
                     }
                     catch (final SystemTableAccessException e1) {
+                        e.printStackTrace();
                         ErrorHandling.errorNoEvent("Failed to create System Table.");
                         throw new SQLException("Failed to create System Table.");
                     }
@@ -399,6 +399,7 @@ public class SystemTableReference implements ISystemTableReference {
                     throw new SQLException("Couldn't find locator servers.");
                 }
                 catch (final SystemTableAccessException e) {
+                    e.printStackTrace();
                     throw new SQLException("Failed to create System Table.");
                 }
             }

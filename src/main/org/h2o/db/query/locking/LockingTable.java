@@ -29,6 +29,7 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.h2.engine.Constants;
 import org.h2.table.LockLogger;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -55,9 +56,6 @@ public class LockingTable implements ILockingTable, Serializable {
 
     private final LockLogger lockLogger;
 
-    // Set this to true to enable logging of lock operations.
-    private final static boolean DO_LOCK_LOGGING = true;
-
     public LockingTable(final String schemaName, final String tableName) {
 
         this.tableName = tableName;
@@ -66,7 +64,7 @@ public class LockingTable implements ILockingTable, Serializable {
         writeLockHolder = null;
         readLockHolders = new HashSet<LockRequest>();
 
-        lockLogger = LockLogger.getLogger(DO_LOCK_LOGGING, tableName);
+        lockLogger = LockLogger.getLogger(Constants.DO_LOCK_LOGGING, tableName);
     }
 
     @Override

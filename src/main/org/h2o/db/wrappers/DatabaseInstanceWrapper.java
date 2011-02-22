@@ -43,7 +43,7 @@ public class DatabaseInstanceWrapper implements Serializable, Comparable<Databas
 
     private static final long serialVersionUID = 9193285872031823819L;
 
-    private final DatabaseID databaseURL;
+    private final DatabaseID databaseID;
 
     private final IDatabaseInstanceRemote databaseInstance;
 
@@ -62,7 +62,7 @@ public class DatabaseInstanceWrapper implements Serializable, Comparable<Databas
     public DatabaseInstanceWrapper(final DatabaseID databaseURL, final IDatabaseInstanceRemote databaseInstance, final boolean active) {
 
         super();
-        this.databaseURL = databaseURL;
+        this.databaseID = databaseURL;
         this.databaseInstance = databaseInstance;
         this.active = active;
         availabilityInfo = new DatabaseInstanceProbability(0.5);
@@ -94,7 +94,7 @@ public class DatabaseInstanceWrapper implements Serializable, Comparable<Databas
 
     public DatabaseID getURL() {
 
-        return databaseURL;
+        return databaseID;
     }
 
     @Override
@@ -102,7 +102,7 @@ public class DatabaseInstanceWrapper implements Serializable, Comparable<Databas
 
         final int prime = 31;
         int result = 1;
-        result = prime * result + (databaseURL == null ? 0 : databaseURL.hashCode());
+        result = prime * result + (databaseID == null ? 0 : databaseID.hashCode());
         return result;
     }
 
@@ -113,10 +113,10 @@ public class DatabaseInstanceWrapper implements Serializable, Comparable<Databas
         if (obj == null) { return false; }
         if (getClass() != obj.getClass()) { return false; }
         final DatabaseInstanceWrapper other = (DatabaseInstanceWrapper) obj;
-        if (databaseURL == null) {
-            if (other.databaseURL != null) { return false; }
+        if (databaseID == null) {
+            if (other.databaseID != null) { return false; }
         }
-        else if (!databaseURL.equals(other.databaseURL)) { return false; }
+        else if (!databaseID.equals(other.databaseID)) { return false; }
         return true;
     }
 
@@ -139,6 +139,6 @@ public class DatabaseInstanceWrapper implements Serializable, Comparable<Databas
     @Override
     public String toString() {
 
-        return "DatabaseInstanceWrapper [databaseURL=" + databaseURL + "]";
+        return "DatabaseInstanceWrapper [databaseURL=" + databaseID + "]";
     }
 }

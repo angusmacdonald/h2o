@@ -180,6 +180,7 @@ public class TransactionCommand extends Prepared {
                 log.setDisabled(false);
                 log.checkpoint();
                 session.close();
+                db.close(false);
                 break;
             }
             default:

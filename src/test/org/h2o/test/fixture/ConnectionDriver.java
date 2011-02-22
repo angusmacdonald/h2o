@@ -10,6 +10,8 @@ import java.util.Set;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
 
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
+
 public abstract class ConnectionDriver {
 
     protected Connection connection;
@@ -17,14 +19,14 @@ public abstract class ConnectionDriver {
 
     public ConnectionDriver(final int db_port, final String database_base_directory_path, final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
 
-        final DatabaseID jdbcURL = new DatabaseID(null, new DatabaseURL(db_port, database_base_directory_path, database_name));
+        final DatabaseID jdbcURL = new DatabaseID(new DatabaseURL(db_port, database_base_directory_path, database_name));
 
         init(jdbcURL, username, password, connections_to_be_closed);
     }
 
     public ConnectionDriver(final String database_name, final String username, final String password, final Set<Connection> connections_to_be_closed) {
 
-        final DatabaseID jdbcURL = new DatabaseID(null, new DatabaseURL(database_name));
+        final DatabaseID jdbcURL = new DatabaseID(new DatabaseURL(database_name));
 
         init(jdbcURL, username, password, connections_to_be_closed);
     }
@@ -42,7 +44,7 @@ public abstract class ConnectionDriver {
             }
 
             catch (final Exception e) {
-
+                ErrorHandling.exceptionError(e, "Error connecting to database at: " + jdbcURL.getURL());
                 // Wait and retry.
                 sleep(2000);
             }

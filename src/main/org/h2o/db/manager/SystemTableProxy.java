@@ -25,6 +25,7 @@ import uk.ac.standrews.cs.nds.rpc.Proxy;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.rpc.json.JSONArray;
 import uk.ac.standrews.cs.nds.rpc.json.JSONObject;
+import uk.ac.standrews.cs.nds.rpc.json.JSONValue;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
@@ -313,12 +314,20 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
         try {
             final JSONArray params = new JSONArray();
             params.put(marshaller.serializeDatabaseID(databaseURL));
-            return marshaller.deserializeIDatabaseInstanceRemote((String) makeCall("getDatabaseInstance", params).getValue());
+            final JSONValue returnValue = makeCall("getDatabaseInstance", params);
+
+            if (returnValue.equals(JSONObject.NULL)) {
+                return null;
+            }
+            else {
+                return marshaller.deserializeIDatabaseInstanceRemote((String) returnValue.getValue());
+            }
         }
         catch (final MovedException e) {
             throw e;
         }
         catch (final Exception e) {
+            e.printStackTrace();
             dealWithException(e);
             return null; //not reached
         }

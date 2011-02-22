@@ -346,8 +346,6 @@ public class Database implements DataHandler {
 
     public Database(final String name, final ConnectionInfo ci, final String cipher) throws SQLException {
 
-        Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.stachord");
-
         localSchema.add(Constants.H2O_SCHEMA);
         localSchema.add(Constants.SCHEMA_INFORMATION);
 
@@ -374,25 +372,20 @@ public class Database implements DataHandler {
 
         if (!isManagementDB()) {
 
+            if (Constants.LOG_INCOMING_UPDATES) {
+                ErrorHandling.errorNoEvent("WARNING: LOGGING OF QUERIES IS ENABLED IN THE TABLEPROXYMANAGER. This uses massive amounts of memory and should only be used when debugging.");
+            }
+
+            if (Constants.DO_LOCK_LOGGING) {
+                ErrorHandling.errorNoEvent("WARNING: LOGGING OF LOCK REQUESTS IS ENABLED. This uses massive amounts of memory and should only be used when debugging.");
+            }
             /*
              * Get Settings for Database.
              */
-            final H2OPropertiesWrapper localSettings = H2OPropertiesWrapper.getWrapper(localMachineLocation);
-            try {
-                localSettings.loadProperties();
-            }
-            catch (final IOException e) {
-                try {
-                    localSettings.createNewFile();
-                    localSettings.loadProperties();
-                }
-                catch (final IOException e1) {
-                    ErrorHandling.exceptionError(e1, "Failed to create properties file for database.");
-                }
-            }
+            final H2OPropertiesWrapper localSettings = setUpLocalDatabaseProperties(localMachineLocation);
 
             setDiagnosticLevel(localMachineLocation);
-            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "H2O, Database '" + name + "'.");
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "H2O, Database '" + localMachineLocation.getURL() + "'.");
 
             try {
                 final H2OLocatorInterface locatorInterface = databaseRemote.getLocatorInterface();
@@ -400,6 +393,7 @@ public class Database implements DataHandler {
                 databaseSettings = new Settings(localSettings, locatorInterface.getDescriptor());
             }
             catch (final LocatorException e) {
+                e.printStackTrace();
                 throw new SQLException(e.getMessage());
             }
             catch (final StartupException e) {
@@ -471,6 +465,30 @@ public class Database implements DataHandler {
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Started database at " + getID());
         }
         running = true;
+    }
+
+    private H2OPropertiesWrapper setUpLocalDatabaseProperties(final DatabaseID localMachineLocation) {
+
+        final H2OPropertiesWrapper localSettings = H2OPropertiesWrapper.getWrapper(localMachineLocation);
+        try {
+            localSettings.loadProperties();
+            localSettings.setProperty(Settings.JDBC_PORT, localMachineLocation.getPort() + "");
+            localSettings.saveAndClose();
+            localSettings.loadProperties();
+        }
+        catch (final IOException e) {
+            try {
+                localSettings.createNewFile();
+                localSettings.loadProperties();
+                localSettings.setProperty(Settings.JDBC_PORT, localMachineLocation.getPort() + "");
+                localSettings.saveAndClose();
+                localSettings.loadProperties();
+            }
+            catch (final IOException e1) {
+                ErrorHandling.exceptionError(e1, "Failed to create properties file for database.");
+            }
+        }
+        return localSettings;
     }
 
     private void openDatabase(final int traceLevelFile, final int traceLevelSystemOut, final boolean closeAtVmShutdown, final ConnectionInfo ci, final DatabaseID localMachineLocation) throws SQLException {
@@ -927,7 +945,7 @@ public class Database implements DataHandler {
             int preferredDatabaseInstancePort = Integer.parseInt(databaseSettings.get("DATABASE_INSTANCE_SERVER_PORT"));
             preferredDatabaseInstancePort = H2ONetUtils.getInactiveTCPPort(preferredDatabaseInstancePort);
 
-            database_instance_server = new DatabaseInstanceServer(getLocalDatabaseInstance(), preferredDatabaseInstancePort, ChordRemote.REGISTRY_PREFIX + localMachineLocation.getID());
+            database_instance_server = new DatabaseInstanceServer(getLocalDatabaseInstance(), preferredDatabaseInstancePort, getRemoteInterface().getApplicationRegistryIDForLocalDatabase());
 
             try {
                 database_instance_server.start(true); // true means: allow registry entry for this database ID to be overwritten
@@ -935,6 +953,8 @@ public class Database implements DataHandler {
             catch (final Exception e) {
                 ErrorHandling.hardExceptionError(e, "Couldn't start database instance server.");
             }
+
+            databaseRemote.setDatabaseInstanceServerPort(preferredDatabaseInstancePort);
 
             system_table_server = null;
             /*
@@ -1064,17 +1084,7 @@ public class Database implements DataHandler {
                 ErrorHandling.hardError(e.getMessage());
             }
 
-            int preferredSystemTablePort = Integer.parseInt(databaseSettings.get("SYSTEM_TABLE_SERVER_PORT"));
-            preferredSystemTablePort = H2ONetUtils.getInactiveTCPPort(preferredSystemTablePort);
-
-            system_table_server = new SystemTableServer(systemTable, preferredSystemTablePort); // added if we become a system table.
-
-            try {
-                system_table_server.start();
-            }
-            catch (final Exception e) {
-                ErrorHandling.hardExceptionError(e, "Couldn't start system table instance server.");
-            }
+            startSystemTableServer(systemTable);
 
             systemTableRef.setSystemTable(systemTable);
 
@@ -1084,6 +1094,21 @@ public class Database implements DataHandler {
         else {
             // Not a System Table - Get a reference to the System Table.
             systemTableRef.findSystemTable();
+        }
+    }
+
+    public void startSystemTableServer(final ISystemTableMigratable newSystemTable) {
+
+        int preferredSystemTablePort = Integer.parseInt(databaseSettings.get("SYSTEM_TABLE_SERVER_PORT"));
+        preferredSystemTablePort = H2ONetUtils.getInactiveTCPPort(preferredSystemTablePort);
+
+        system_table_server = new SystemTableServer(newSystemTable, preferredSystemTablePort); // added if we become a system table.
+
+        try {
+            system_table_server.start();
+        }
+        catch (final Exception e) {
+            ErrorHandling.hardExceptionError(e, "Couldn't start system table instance server.");
         }
     }
 
@@ -1562,6 +1587,17 @@ public class Database implements DataHandler {
             metaDataReplicationThread.setRunning(false);
             running = false;
             removeLocalDatabaseInstance();
+
+            try {
+                table_manager_instance_server.stop();
+                if (system_table_server != null) {
+                    system_table_server.stop();
+                }
+                database_instance_server.stop();
+            }
+            catch (final Exception e) {
+                ErrorHandling.exceptionErrorNoEvent(e, "Failed to shutdown one of the H2O servers on database shutdown.");
+            }
         }
 
         if (userSessions.size() > 0) {
@@ -3221,6 +3257,8 @@ public class Database implements DataHandler {
             }
         }
 
+        Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.stachord");
+        Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.nds");
         Diagnostic.setTimestampFlag(true);
         Diagnostic.setTimestampFormat(new SimpleDateFormat("HH:mm:ss:SSS "));
         Diagnostic.setTimestampDelimiterFlag(false);

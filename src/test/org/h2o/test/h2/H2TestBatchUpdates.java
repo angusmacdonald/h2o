@@ -75,7 +75,7 @@ public class H2TestBatchUpdates extends H2OTestBase {
         connection = makeConnectionDriver().getConnection();
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testExecuteCall() throws SQLException {
 
         Diagnostic.trace();
@@ -119,7 +119,7 @@ public class H2TestBatchUpdates extends H2OTestBase {
         return (int) f;
     }
 
-    @Test
+    @Test(timeout = 60000)
     public void testException() throws SQLException {
 
         Diagnostic.trace();

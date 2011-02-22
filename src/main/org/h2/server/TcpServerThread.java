@@ -248,10 +248,6 @@ public class TcpServerThread implements Runnable {
 
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Incoming Query:: " + sql);
 
-                if (sql.contains("DELETE FROM new_order WHERE no_d_id = ? AND no_w_id = ? AND no_o_id = ?")) {
-                    System.out.println("testTime");
-                }
-
                 final int old = session.getModificationId();
                 final Command command = session.prepareLocal(sql);
                 final boolean readonly = command.isReadOnly();

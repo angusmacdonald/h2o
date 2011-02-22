@@ -109,6 +109,10 @@ public class CommandContainer extends Command {
 
         final TableProxyManager currentProxyManager = session.getProxyManagerForTransaction();
 
+        if (Constants.LOG_INCOMING_UPDATES) {
+            System.out.println("> > " + prepared.getSQLIncludingParameters().replace("\n", " "));
+        }
+
         try {
             final LocalResult result = prepared.query(maxrows);
             prepared.trace(startTime, result.getRowCount());
@@ -150,6 +154,11 @@ public class CommandContainer extends Command {
 
             assert currentProxyManager != null;
 
+            if (Constants.LOG_INCOMING_UPDATES) {
+                currentProxyManager.addSQL(prepared.getSQLIncludingParameters());
+                System.out.println("> " + prepared.getSQLIncludingParameters().replace("\n", " "));
+            }
+
             doLock(); // This throws an SQLException if no lock is found.
 
             try {
@@ -178,6 +187,9 @@ public class CommandContainer extends Command {
             // This is a transaction command. No need to commit such a query.
 
             try {
+                if (Constants.LOG_INCOMING_UPDATES) {
+                    System.out.println("> " + prepared.getSQLIncludingParameters());
+                }
 
                 /*
                  * If this is a rollback and there is a proxy manager, release locks on all affected table managers first. The commit

@@ -213,4 +213,20 @@ public class Delete extends Prepared {
         return isRegularTable();
     }
 
+    @Override
+    public String getSQLIncludingParameters() {
+
+        if (isPreparedStatement()) {
+            try {
+                return adjustForPreparedStatement();
+            }
+            catch (final Exception e) {
+                return toString();
+            }
+        }
+        else {
+            return toString();
+        }
+    }
+
 }

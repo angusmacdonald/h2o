@@ -583,8 +583,9 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
      * @param committedQueries
      * @param asynchronousCommit
      * @param lockType
+     * @throws SQLException 
      */
-    private void updateActiveReplicaSet(final boolean commit, final Collection<CommitResult> committedQueries, final boolean asynchronousCommit, final LockType lockType) {
+    private void updateActiveReplicaSet(final boolean commit, final Collection<CommitResult> committedQueries, final boolean asynchronousCommit, final LockType lockType) throws SQLException {
 
         // Reads don't change the set of active replicas.
         if (lockType == LockType.WRITE || asynchronousCommit) { // LockType.WRITE == LockType.CREATE in the locking table.
@@ -619,7 +620,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
                 while (rs.next()) {
 
-                    final DatabaseID dbID = new DatabaseID(null, new DatabaseURL(rs.currentRow()[0].getString(), rs.currentRow()[1].getString(), rs.currentRow()[3].getInt(), rs.currentRow()[2].getString(), false, rs.currentRow()[4].getInt()));
+                    final DatabaseID dbID = new DatabaseID(new DatabaseURL(rs.currentRow()[0].getString(), rs.currentRow()[1].getString(), rs.currentRow()[3].getInt(), rs.currentRow()[2].getString(), false, rs.currentRow()[4].getInt()));
 
                     Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "\tLocation: " + dbID + "; tableID = " + rs.currentRow()[5].getString() + "; connectionID = " + rs.currentRow()[6].getString());
                 }
@@ -798,7 +799,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
         final List<DatabaseInstanceWrapper> replicaLocations = new LinkedList<DatabaseInstanceWrapper>();
         while (rs.next()) {
 
-            final DatabaseID dbID = new DatabaseID(null, new DatabaseURL(rs.currentRow()[0].getString(), rs.currentRow()[1].getString(), rs.currentRow()[3].getInt(), rs.currentRow()[2].getString(), false, rs.currentRow()[4].getInt()));
+            final DatabaseID dbID = new DatabaseID(new DatabaseURL(rs.currentRow()[0].getString(), rs.currentRow()[1].getString(), rs.currentRow()[3].getInt(), rs.currentRow()[2].getString(), false, rs.currentRow()[4].getInt()));
 
             // Don't include the URL of the old instance unless it is still running.
             final DatabaseInstanceWrapper replicaLocation = getDatabaseInstance(dbID);

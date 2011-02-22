@@ -17,7 +17,7 @@ import java.sql.Statement;
 
 import org.h2.engine.Constants;
 import org.h2o.locator.server.LocatorServer;
-import org.h2o.test.fixture.StartDatabaseInstance;
+import org.h2o.test.fixture.StartDatabaseInstanceOld;
 import org.h2o.test.fixture.TestBase;
 import org.junit.After;
 import org.junit.Before;
@@ -36,7 +36,7 @@ public class ChordTestsFailing extends TestBase {
 
     private Statement[] sas;
 
-    private StartDatabaseInstance[] dts;
+    private StartDatabaseInstanceOld[] dts;
 
     private LocatorServer ls;
 
@@ -66,15 +66,15 @@ public class ChordTestsFailing extends TestBase {
         ls.createNewLocatorFile();
         ls.start();
 
-        dts = new StartDatabaseInstance[dbs.length + 1];
-        dts[0] = new StartDatabaseInstance("jdbc:h2:sm:mem:one", false);
+        dts = new StartDatabaseInstanceOld[dbs.length + 1];
+        dts[0] = new StartDatabaseInstanceOld("jdbc:h2:sm:mem:one", false);
         dts[0].start();
 
         Thread.sleep(5000);
 
         for (int i = 1; i < dts.length; i++) {
 
-            dts[i] = new StartDatabaseInstance("jdbc:h2:mem:" + dbs[i - 1], false);
+            dts[i] = new StartDatabaseInstanceOld("jdbc:h2:mem:" + dbs[i - 1], false);
             dts[i].start();
 
             Thread.sleep(5000);
@@ -99,7 +99,7 @@ public class ChordTestsFailing extends TestBase {
 
         Constants.IS_TEAR_DOWN = true;
 
-        for (final StartDatabaseInstance dt : dts) {
+        for (final StartDatabaseInstanceOld dt : dts) {
             dt.setRunning(false);
         }
 

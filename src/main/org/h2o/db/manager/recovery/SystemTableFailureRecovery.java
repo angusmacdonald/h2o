@@ -30,6 +30,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.h2.engine.Database;
+import org.h2o.db.DatabaseInstanceProxy;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.manager.SystemTable;
@@ -142,6 +143,8 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
 
         final List<String> stLocations = getActiveSystemTableLocationsFromLocator();
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Instances holding System Table state: " + PrettyPrinter.toString(stLocations));
+
         boolean localMachineHoldsSystemTableState = false;
         for (final String location : stLocations) {
             final DatabaseID url = DatabaseID.parseURL(location);
@@ -211,13 +214,16 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, db.getID() + ": Attempting to fix a broken System Table connection.");
 
-        final List<String> locatorLocations = getActiveSystemTableLocationsFromLocator();
+        final List<String> databaseIntanceLocationsFromLocator = getActiveSystemTableLocationsFromLocator();
 
         IDatabaseInstanceRemote databaseInstance = null;
 
-        for (final String locatorLocation : locatorLocations) {
+        for (final String possibleDatabaseIntanceLocation : databaseIntanceLocationsFromLocator) {
             try {
-                databaseInstance = lookForDatabaseInstanceAt(remoteInterface, DatabaseID.parseURL(locatorLocation));
+
+                //lookForDatabaseInstanceAt(remoteInterface, DatabaseID.parseURL(possibleDatabaseIntanceLocation));
+                final DatabaseID possibleURL = DatabaseID.parseURL(possibleDatabaseIntanceLocation);
+                databaseInstance = DatabaseInstanceProxy.getProxy(possibleURL);
 
                 final boolean isSystemTable = databaseInstance.isSystemTable();
 
@@ -227,12 +233,12 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
                 }
             }
             catch (final Exception e) {
-                Diagnostic.trace(DiagnosticLevel.FULL, "database not active: " + locatorLocation);
+                Diagnostic.trace(DiagnosticLevel.FULL, "database not active: " + possibleDatabaseIntanceLocation);
                 // May be thrown if database isn't active.
             }
         }
 
-        throw new SQLException(db.getID() + ": Couldn't find active System Table. System table replicas exist at: " + PrettyPrinter.toString(locatorLocations));
+        throw new SQLException(db.getID() + ": Couldn't find active System Table. System table replicas exist at: " + PrettyPrinter.toString(databaseIntanceLocationsFromLocator));
     }
 
     /**
@@ -253,7 +259,9 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
 
             try {
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempting to start System Table. Looking to connect to instance at " + url);
-                databaseInstance = lookForDatabaseInstanceAt(remoteInterface, url);
+
+                databaseInstance = DatabaseInstanceProxy.getProxy(url);
+                //todo, as a backup mechanism also do this: databaseInstance = lookForDatabaseInstanceAt(remoteInterface, url);
             }
             catch (final Exception e) {
                 // May be thrown if database isn't active.
@@ -328,6 +336,8 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
             ErrorHandling.exceptionError(e, "Failed to create new in-memory System Table.");
             throw new SystemTableAccessException("Failed to create new in-memory System Table.");
         }
+
+        db.startSystemTableServer(newSystemTable);
 
         /*
          * Stop the old, remote, manager from accepting any more requests.
@@ -440,6 +450,9 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         try {
             Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Creating new System Table instance");
             newSystemTable = new SystemTable(db, false); // false - don't overwrite saved persisted state.
+
+            db.startSystemTableServer(newSystemTable);
+
         }
         catch (final Exception e) {
             ErrorHandling.exceptionError(e, "Failed to create new in-memory System Table.");

@@ -8,7 +8,6 @@
  */
 package org.h2o.db.interfaces;
 
-
 import java.sql.SQLException;
 
 import org.h2o.db.id.DatabaseID;
@@ -138,4 +137,11 @@ public interface IDatabaseInstanceRemote extends IH2ORemote, TwoPhaseCommit {
      * @return
      */
     ISystemTableMigratable getSystemTable() throws RPCException;
+
+    /**
+     * Get the port on which this database instances chord port is running.
+     * @return
+     * @throws RPCException
+     */
+    public int getChordPort() throws RPCException;
 }

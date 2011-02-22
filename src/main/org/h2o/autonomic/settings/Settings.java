@@ -43,6 +43,8 @@ public class Settings {
      */
     public static final Set<String> reservedTableNames = new HashSet<String>();
 
+    public static final String JDBC_PORT = "JDBC_PORT";
+
     static {
         reservedTableNames.add("SYSTEM_RANGE");
         reservedTableNames.add("TABLE");

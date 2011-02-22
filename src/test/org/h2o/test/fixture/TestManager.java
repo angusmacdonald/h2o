@@ -104,7 +104,7 @@ public abstract class TestManager implements ITestManager {
     protected static final String PASSWORD = "";
 
     // The diagnostic level set for both test and database processes. 0 is FULL, 6 is NONE.
-    protected static final DiagnosticLevel DIAGNOSTIC_LEVEL = DiagnosticLevel.NONE;
+    protected static final DiagnosticLevel DIAGNOSTIC_LEVEL = DiagnosticLevel.FULL;
 
     // -------------------------------------------------------------------------------------------------------
 

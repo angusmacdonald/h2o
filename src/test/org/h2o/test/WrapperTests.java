@@ -51,7 +51,7 @@ public class WrapperTests {
 
     private static final String databaseName = "TestDB";
 
-    private static final String databasePort = "7474";
+    private static int databasePort = 0;
 
     @Before
     public void setUp() {
@@ -88,7 +88,8 @@ public class WrapperTests {
 
             Thread.sleep(1000);
 
-            startDatabaseInSeparateProcess(databasePort);
+            startDatabaseInSeparateProcess();
+            databasePort = H2O.getDatabasesJDBCPort(defaultLocation, databaseName, 10);
 
             /*
              * Make application connection to the database.
@@ -187,7 +188,7 @@ public class WrapperTests {
      * @throws UnknownPlatformException
      * @throws IOException
      */
-    private void startDatabaseInSeparateProcess(final String databasePort) throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
+    private void startDatabaseInSeparateProcess() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
 
         /*
          * Start the database instance.
@@ -195,30 +196,29 @@ public class WrapperTests {
         final List<String> databaseArgs = new LinkedList<String>();
 
         databaseArgs.add("-n" + databaseName);
-        databaseArgs.add("-p" + databasePort);
         databaseArgs.add("-d'" + defaultLocation + File.separator + databaseName + ".h2od'");
         databaseArgs.add("-f'" + defaultLocation + "'");
 
         databaseProcess = new ProcessManager().runJavaProcess(H2O.class, databaseArgs);
     }
 
-    private String extractDatabaseLocation(final String databasePort, final String databaseName, String defaultLocation) {
+    private String extractDatabaseLocation(final int databasePort, final String databaseName, String defaultLocation) {
 
         if (defaultLocation != null) {
             if (!defaultLocation.endsWith("/") && !defaultLocation.endsWith("\\")) { // add a trailing slash if it isn't already there.
                 defaultLocation = defaultLocation + "/";
             }
         }
-        final String databaseLocation = (defaultLocation != null ? defaultLocation + "/" : "") + databaseName + databasePort;
+        final String databaseLocation = (defaultLocation != null ? defaultLocation : "") + databaseName;
         return databaseLocation;
     }
 
-    private static String createDatabaseURL(final String port, final String hostname, final String databaseLocation) {
+    private static String createDatabaseURL(final int port, final String hostname, final String databaseLocation) {
 
         return "jdbc:h2:tcp://" + hostname + ":" + port + "/" + databaseLocation;
     }
 
-    private void deleteDatabase(final String databasePort) {
+    private void deleteDatabase(final int databasePort) {
 
         try {
             DeleteDbFiles.execute(defaultLocation, databaseName + databasePort, true);

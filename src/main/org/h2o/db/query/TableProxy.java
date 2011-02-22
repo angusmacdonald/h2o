@@ -269,8 +269,8 @@ public class TableProxy implements Serializable {
 
         if (tableManager == null) {
             Diagnostic.trace(DiagnosticLevel.FULL, "Table Manager proxy was null when requesting table.");
-            db.getSystemTableReference();
-            throw new SQLException("Table Manager not found for table.");
+
+            throw new SQLException("Table Manager not found for table " + tableName);
         }
 
         return getTableProxyAndLock(tableManager, tableName, lockRequest, lockType, db, false);
@@ -290,7 +290,7 @@ public class TableProxy implements Serializable {
 
         return allReplicas;
     }
-   
+
     @Override
     public String toString() {
 

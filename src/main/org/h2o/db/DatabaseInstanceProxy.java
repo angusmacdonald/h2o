@@ -49,6 +49,16 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
         return proxy;
     }
 
+    public static DatabaseInstanceProxy getProxy(final DatabaseID databaseID) {
+
+        return DatabaseInstanceProxy.getProxy(new InetSocketAddress(databaseID.getHostname(), databaseID.getRMIPort()));
+    }
+
+    public static DatabaseInstanceProxy getProxy(final String hostname, final int port) {
+
+        return DatabaseInstanceProxy.getProxy(new InetSocketAddress(hostname, port));
+    }
+
     // -------------------------------------------------------------------------------------------------------
 
     @Override
@@ -276,6 +286,18 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
         catch (final Exception e) {
             dealWithException(e);
             return null; // final not reached
+        }
+    }
+
+    @Override
+    public int getChordPort() throws RPCException {
+
+        try {
+            return (Integer) makeCall("getChordPort").getValue();
+        }
+        catch (final Exception e) {
+            dealWithException(e);
+            return -1;
         }
     }
 }

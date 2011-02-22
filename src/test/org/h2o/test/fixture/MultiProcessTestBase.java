@@ -19,6 +19,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.h2.engine.Constants;
 import org.h2.tools.DeleteDbFiles;
+import org.h2o.H2O;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.manager.PersistentSystemTable;
@@ -45,6 +46,8 @@ import com.mindbright.ssh2.SSH2Exception;
 public class MultiProcessTestBase extends TestBase {
 
     private static final String BASEDIR = "db_data/multiprocesstests/";
+
+    private static final String DATABASE_NAME = "testDB";
 
     private LocatorServer ls;
 
@@ -103,6 +106,8 @@ public class MultiProcessTestBase extends TestBase {
     public void setUp() throws Exception {
 
         killExistingProcessesIfNotOnWindows();
+
+        deleteDatabaseData();
 
         ls = new LocatorServer(29999, "junitLocator");
         ls.createNewLocatorFile();
@@ -242,7 +247,7 @@ public class MultiProcessTestBase extends TestBase {
          */
         final List<String> parsedLocations = new LinkedList<String>();
         for (final String l : locations) {
-            parsedLocations.add(DatabaseURL.parseURL(l).getURL());
+            parsedLocations.add(DatabaseURL.parseURL(l).getName());
         }
 
         return parsedLocations;
@@ -294,7 +299,7 @@ public class MultiProcessTestBase extends TestBase {
 
         final List<String> nonSystemTableInstances = new LinkedList<String>();
 
-        for (final String instance : fullDbName) {
+        for (final String instance : dbs) {
 
             if (!systemTableInstances.contains(instance)) {
                 nonSystemTableInstances.add(instance);
@@ -556,9 +561,10 @@ public class MultiProcessTestBase extends TestBase {
      */
     private void startDatabases(final boolean guaranteeOneIsSystemTable) throws InterruptedException {
 
+        //        final String databaseInstanceName, final String databaseDirectoryPath, final String databaseDescriptorLocation, final String databaseName
+
         for (int i = 0; i < dbs.length; i++) {
-            final int port = 9080 + i;
-            startDatabase(fullDbName[i], port);
+            startDatabaseAndObtainJDBCURL(i);
 
             if (guaranteeOneIsSystemTable && i == 0) {
                 sleep(1000);
@@ -566,17 +572,18 @@ public class MultiProcessTestBase extends TestBase {
         }
     }
 
-    /**
-     * Start all of the databases specified.
-     *
-     * @param databasesToStart
-     *            The databases that will be started by this method.
-     */
-    protected void startDatabases(final List<String> databasesToStart) {
+    private void startDatabaseAndObtainJDBCURL(final int i) {
 
-        for (final String instance : databasesToStart) {
-            startDatabase(instance);
-        }
+        startDatabase(dbs[i], BASEDIR, AllTests.TEST_DESCRIPTOR_FILE, DATABASE_NAME);
+        final int port = H2O.getDatabasesJDBCPort(BASEDIR, dbs[i], 20);
+        fullDbName[i] = "jdbc:h2:sm:tcp://localhost:" + port + "/" + BASEDIR + dbs[i];
+    }
+
+    protected void startDatabase(final int i) {
+
+        startDatabase(dbs[i], BASEDIR, AllTests.TEST_DESCRIPTOR_FILE, DATABASE_NAME);
+        final int port = H2O.getDatabasesJDBCPort(BASEDIR, dbs[i], 5);
+        fullDbName[i] = "jdbc:h2:tcp://localhost:" + port + "/" + BASEDIR + dbs[i];
     }
 
     /**
@@ -587,16 +594,17 @@ public class MultiProcessTestBase extends TestBase {
      * @param port
      *            Port the database will run on.
      */
-    private void startDatabase(final String connectionString, final int port) {
-
-        final String connectionArgument = "-l\"" + connectionString + "\"";
+    private void startDatabase(final String databaseInstanceName, final String databaseDirectoryPath, final String databaseDescriptorLocation, final String databaseName) {
 
         final List<String> args = new LinkedList<String>();
-        args.add(connectionArgument);
-        args.add("-p" + port);
+
+        args.add("-n" + databaseName);
+        args.add("-i" + databaseInstanceName);
+        args.add("-p" + databaseDirectoryPath);
+        args.add("-d" + databaseDescriptorLocation);
 
         try {
-            processes.put(connectionString, new ProcessManager().runJavaProcess(StartDatabaseInstance.class, args));
+            processes.put(databaseInstanceName, new ProcessManager().runJavaProcess(StartDatabaseInstance.class, args));
         }
         catch (final IOException e) {
             ErrorHandling.error("Failed to create new database process.");
@@ -610,34 +618,6 @@ public class MultiProcessTestBase extends TestBase {
         catch (final TimeoutException e) {
             ErrorHandling.error("Failed to create new database process.");
         }
-    }
-
-    /**
-     * Start the specified database. As the port is not specified as a parameter the connection string must be parsed to find it.
-     *
-     * @param connectionString
-     *            Database which is about to be started.
-     */
-    private void startDatabase(final String connectionString) {
-
-        // jdbc:h2:sm:tcp://localhost:9091/db_data/multiprocesstests/thirteen
-
-        String port = connectionString.substring(connectionString.indexOf("tcp://") + "tcp://".length());
-        port = port.substring(port.indexOf(":") + ";".length());
-        port = port.substring(0, port.indexOf("/"));
-
-        startDatabase(connectionString, Integer.parseInt(port));
-    }
-
-    protected void startDatabase(final int i) {
-
-        // jdbc:h2:sm:tcp://localhost:9091/db_data/multiprocesstests/thirteen
-        final String connectionString = fullDbName[i];
-        String port = connectionString.substring(connectionString.indexOf("tcp://") + "tcp://".length());
-        port = port.substring(port.indexOf(":") + ";".length());
-        port = port.substring(0, port.indexOf("/"));
-
-        startDatabase(connectionString, Integer.parseInt(port));
     }
 
     /**
@@ -663,7 +643,7 @@ public class MultiProcessTestBase extends TestBase {
      *            Database URL of the database which this method connects to.
      * @return The newly created connection.
      */
-    protected Connection createConnectionToDatabase(final String connectionString) {
+    public static Connection createConnectionToDatabase(final String connectionString) {
 
         try {
             return DriverManager.getConnection(connectionString, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
@@ -699,7 +679,7 @@ public class MultiProcessTestBase extends TestBase {
 
     protected void killDatabase(final int i) {
 
-        killDatabase(fullDbName[i]);
+        killDatabase(dbs[i]);
     }
 
 }

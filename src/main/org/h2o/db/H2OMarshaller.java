@@ -191,11 +191,10 @@ public class H2OMarshaller extends Marshaller {
         if (object == JSONObject.NULL) { return null; }
 
         try {
-            final String database_id = object.getString(DATABASE_ID);
             final String database_url = object.getString(DATABASE_URL);
             final DatabaseURL url = DatabaseURL.parseURL(database_url);
 
-            return new DatabaseID(database_id, url);
+            return new DatabaseID(url);
         }
         catch (final Exception e) {
             throw new DeserializationException(e);

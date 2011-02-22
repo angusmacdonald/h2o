@@ -429,5 +429,15 @@ public class SystemTableServer extends ApplicationServer {
                 return new JSONBoolean(system_table.checkTableManagerAccessibility());
             }
         });
+
+        handler_map.put("getAddress", new IHandler() {
+
+            @Override
+            public JSONValue execute(final JSONArray args) throws Exception {
+
+                return marshaller.serializeInetSocketAddress(system_table.getAddress());
+
+            }
+        });
     }
 }

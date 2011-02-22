@@ -44,7 +44,7 @@ public class LocatorState {
 
     int updateCount = 1;
 
-    public final static int LOCK_TIMEOUT = 3000;
+    public final static int LOCK_TIMEOUT = 10000;
 
     private long lockCreationTime = 0l;
 

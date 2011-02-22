@@ -26,18 +26,13 @@ public class H2LockManager {
     private final Trace traceLock;
     private final LockLogger lockLogger;
 
-    // Set this to true to enable logging of lock operations.
-    private final static boolean DO_LOCK_LOGGING = false;
-
-    // -------------------------------------------------------------------------------------------------------
-
     public H2LockManager(final TableData tableData, final Database database) {
 
         this.tableData = tableData;
         this.database = database;
         traceLock = database.getTrace(Trace.LOCK);
 
-        lockLogger = LockLogger.getLogger(DO_LOCK_LOGGING, tableData.getName());
+        lockLogger = LockLogger.getLogger(Constants.DO_LOCK_LOGGING, tableData.getName());
     }
 
     // -------------------------------------------------------------------------------------------------------

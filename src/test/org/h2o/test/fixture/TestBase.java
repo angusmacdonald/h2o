@@ -306,7 +306,7 @@ public class TestBase {
      *
      * @throws SQLException
      */
-    private void createReplicaOnB(final String tableName) throws SQLException {
+    protected void createReplicaOnB(final String tableName) throws SQLException {
 
         /*
          * Create replica on B.
@@ -314,5 +314,53 @@ public class TestBase {
         sb.execute("CREATE REPLICA " + tableName + ";");
 
         assertEquals(0, sb.getUpdateCount());
+    }
+
+    /**
+     * Creates lots of insert statements for testing.
+     */
+    protected static TestQuery createInsertsForTestTable(final int iterations) {
+
+        final int[] pKey = new int[iterations + ROWS_IN_DATABASE];
+        final String[] secondCol = new String[iterations + ROWS_IN_DATABASE];
+
+        pKey[0] = 1;
+        pKey[1] = 2;
+        secondCol[0] = "Hello";
+        secondCol[1] = "World";
+
+        return createMultipleInsertStatements("TEST", pKey, secondCol, ROWS_IN_DATABASE + 1);
+    }
+
+    /**
+     * Creates lots of insert statements for testing with the stated table.
+     * 
+     * @param tableName
+     *            Name of the table where values are being inserted.
+     * @param pKey
+     *            Array of primary key values in the table. This is a parameter in case the calling method wants to add some custom values
+     *            initially.
+     * @param secondCol
+     *            Array of values for the second column in the table. This is a parameter in case the calling method wants to add some
+     *            custom values initially.
+     * @return The query to be executed and the expected results from this execution.
+     */
+    protected static TestQuery createMultipleInsertStatements(final String tableName, final int[] pKey, final String[] secondCol, final int startPoint) {
+
+        final StringBuilder query = new StringBuilder();
+
+        for (int i = startPoint; i < pKey.length; i++) {
+            pKey[i - 1] = i;
+            secondCol[i - 1] = "helloNumber" + i;
+
+            query.append("INSERT INTO ");
+            query.append(tableName);
+            query.append(" VALUES(");
+            query.append(pKey[i - 1]);
+            query.append(", '");
+            query.append(secondCol[i - 1]);
+            query.append("');\n");
+        }
+        return new TestQuery(query.toString(), tableName, pKey, secondCol);
     }
 }

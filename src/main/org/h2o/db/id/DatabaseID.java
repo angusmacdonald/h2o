@@ -45,11 +45,6 @@ public class DatabaseID implements Serializable {
     private static final long serialVersionUID = 3202062668933786677L;
 
     /**
-     * The name given to the database ID in H2O's properties files.
-     */
-    private static final String DATABASE_ID = "DATABASE_ID";
-
-    /**
      * The unique ID of the database.
      */
     private String databaseID = null;
@@ -59,27 +54,16 @@ public class DatabaseID implements Serializable {
      */
     private DatabaseURL databaseURL = null;
 
-    public DatabaseID(final String databaseID, final DatabaseURL databaseURL) {
-
-        assert databaseID != null : "The database ID should never be null.";
-
-        this.databaseID = databaseID;
-        this.databaseURL = databaseURL;
-    }
-
-    public DatabaseID(final String databaseID, final String databaseURL) {
-
-        assert databaseID != null : "The database ID should never be null.";
-
-        this.databaseID = databaseID;
-        this.databaseURL = DatabaseURL.parseURL(databaseURL);
-    }
-
     public DatabaseID(final DatabaseURL databaseURL) {
 
         this.databaseURL = databaseURL;
 
-        databaseID = databaseURL.getName();
+        databaseID = databaseURL.sanitizedLocation();
+    }
+
+    public DatabaseID(final String strDatabaseURL) {
+
+        this(DatabaseURL.parseURL(strDatabaseURL));
 
     }
 
@@ -87,7 +71,7 @@ public class DatabaseID implements Serializable {
 
         final DatabaseURL databaseURL = DatabaseURL.parseURL(url);
 
-        return new DatabaseID(databaseURL.getName(), databaseURL);
+        return new DatabaseID(databaseURL);
     }
 
     public String getID() {

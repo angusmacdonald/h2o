@@ -111,7 +111,7 @@ public class MemoryTestManager extends TestManager {
         for (int i = 0; i < number_of_databases; i++) {
 
             db_names[i] = DATABASE_NAME_ROOT + System.currentTimeMillis();
-            final DatabaseID url = new DatabaseID(null, new DatabaseURL("mem", NetUtils.getLocalAddress(), 0, db_names[i], false));
+            final DatabaseID url = new DatabaseID(new DatabaseURL("mem", NetUtils.getLocalAddress(), 0, db_names[i], false));
 
             H2O.initializeDatabaseProperties(url, DIAGNOSTIC_LEVEL, descriptor_file_path, db_names[i]);
         }

@@ -1,0 +1,6 @@
+> SET AUTOCOMMIT FALSE
+
+> UPDATE district SET d_next_o_id = d_next_o_id + 1  WHERE d_id = ? AND d_w_id = ? {1: 9, 2: 1};
+> INSERT INTO OORDER  (o_id, o_d_id, o_w_id, o_c_id, o_entry_d, o_ol_cnt, o_all_local) VALUES (?, ?, ?, ?, ?, ?, ?) {1: 3002, 2: 9, 3: 1, 4: 1711, 5: TIMESTAMP '2011-02-19 14:29:37.339', 6: 14, 7: 1};
+> SET AUTOCOMMIT FALSE
+> COMMIT

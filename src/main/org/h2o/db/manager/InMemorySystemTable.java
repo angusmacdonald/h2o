@@ -20,6 +20,7 @@ import java.util.Set;
 
 import org.h2.engine.Database;
 import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
+import org.h2o.db.DatabaseInstanceProxy;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
@@ -83,16 +84,6 @@ public final class InMemorySystemTable implements ISystemTable {
 
     private boolean started = false;
 
-    /**
-     * Maintained because RMI registry uses weak references so it's possible for otherwise unreferenced
-     * exposed objects to be garbage collected.
-     * 
-     * http://download.oracle.com/javase/6/docs/platform/rmi/spec/rmi-arch4.html
-     * 
-     * See http://stackoverflow.com/questions/645208/java-rmi-nosuchobjectexception-no-such-object-in-table/854097#854097.
-     */
-    public final static HashSet<ITableManagerRemote> tableManagerReferences = new HashSet<ITableManagerRemote>();
-
     public InMemorySystemTable(final Database database) throws Exception {
 
         this.database = database;
@@ -120,8 +111,6 @@ public final class InMemorySystemTable implements ISystemTable {
     @Override
     public boolean addTableInformation(final ITableManagerRemote tableManager, final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> replicaLocations) throws RPCException {
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "New table successfully created: " + tableDetails);
-
         final TableInfo basicTableInfo = tableDetails.getGenericTableInfo();
 
         final TableManagerWrapper tableManagerWrapper = new TableManagerWrapper(basicTableInfo, tableManager, tableDetails.getDatabaseID());
@@ -131,7 +120,6 @@ public final class InMemorySystemTable implements ISystemTable {
             return false; // this table already exists.
         }
 
-        tableManagerReferences.add(tableManager);
         tableManagers.put(basicTableInfo, tableManagerWrapper);
 
         primaryLocations.put(basicTableInfo, tableDetails.getDatabaseID());
@@ -147,6 +135,8 @@ public final class InMemorySystemTable implements ISystemTable {
         }
 
         tmReplicaLocations.put(basicTableInfo, replicas);
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "New table successfully created: " + tableDetails);
 
         return true;
     }
@@ -379,8 +369,8 @@ public final class InMemorySystemTable implements ISystemTable {
                     // Look for a remote reference.
                     try {
 
-                        dir = database.getRemoteInterface().getDatabaseInstanceAt(remoteDB.getKey());
-
+                        //dir = database.getRemoteInterface().getDatabaseInstanceAt(remoteDB.getKey()); //TODO Replace with method call to call database instance server directly...
+                        dir = DatabaseInstanceProxy.getProxy(remoteDB.getKey());
                         if (dir != null) {
                             active = true;
                         }
@@ -608,10 +598,9 @@ public final class InMemorySystemTable implements ISystemTable {
             assert false;
         }
 
-        final TableManagerWrapper dmw = new TableManagerWrapper(tableInfo, stub, tableInfo.getDatabaseID());
+        final TableManagerWrapper tableManagerWrapper = new TableManagerWrapper(tableInfo, stub, tableInfo.getDatabaseID());
 
-        tableManagers.put(tableInfo.getGenericTableInfo(), dmw);
-        tableManagerReferences.add(stub);
+        tableManagers.put(tableInfo.getGenericTableInfo(), tableManagerWrapper);
     }
 
     @Override

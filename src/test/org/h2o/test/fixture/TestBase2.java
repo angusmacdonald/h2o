@@ -22,7 +22,6 @@ import java.sql.Statement;
 
 import org.h2.engine.Constants;
 import org.h2.tools.DeleteDbFiles;
-import org.h2.util.NetUtils;
 import org.h2o.H2O;
 import org.h2o.H2OLocator;
 import org.h2o.db.manager.PersistentSystemTable;
@@ -69,13 +68,12 @@ public class TestBase2 {
     }
 
     @Before
-    public void setUp() throws SQLException, IOException {
+    public void setUp() throws SQLException, IOException, InterruptedException {
 
-        final String jdbcURL1 = URL_PREFIX + NetUtils.getLocalAddress() + ":" + TCP_PORT1 + "/" + DATABASE_LOCATION1 + "/" + DATABASE_NAME + TCP_PORT1;
-        final String jdbcURL2 = URL_PREFIX + NetUtils.getLocalAddress() + ":" + TCP_PORT2 + "/" + DATABASE_LOCATION2 + "/" + DATABASE_NAME + TCP_PORT2;
+        Constants.IS_NON_SM_TEST = true;
 
-        DeleteDbFiles.execute(DATABASE_LOCATION1, DATABASE_NAME + TCP_PORT1, true);
-        DeleteDbFiles.execute(DATABASE_LOCATION2, DATABASE_NAME + TCP_PORT2, true);
+        DeleteDbFiles.execute(DATABASE_LOCATION1, DATABASE_NAME, false);
+        DeleteDbFiles.execute(DATABASE_LOCATION2, DATABASE_NAME, false);
 
         locator = new H2OLocator(DATABASE_NAME, 5999, true, DATABASE_LOCATION1);
         final String descriptorFilePath = locator.start();
@@ -107,6 +105,20 @@ public class TestBase2 {
     public void tearDown() throws SQLException, InterruptedException {
 
         Constants.IS_TEAR_DOWN = true;
+
+        try {
+            if (sa != null) {
+                sa.execute("SHUTDOWN");
+            }
+            if (sb != null) {
+                sb.execute("SHUTDOWN");
+            }
+        }
+        catch (final Exception e1) {
+
+            e1.printStackTrace();
+        }
+
         try {
             if (!sa.isClosed()) {
                 sa.close();
@@ -134,6 +146,9 @@ public class TestBase2 {
                         try {
                             db1.shutdown();
                         }
+                        catch (final Exception e) {
+                            //It has possibly already been shutdown.
+                        }
                         finally {
                             try {
                                 db1.deletePersistentState();
@@ -143,7 +158,7 @@ public class TestBase2 {
                                     db2.shutdown();
                                 }
                                 catch (final SQLException e) {
-
+                                    //It has possibly already been shutdown.
                                 }
                                 finally {
                                     try {
@@ -159,6 +174,9 @@ public class TestBase2 {
                 }
             }
         }
+
+        Constants.IS_NON_SM_TEST = false;
+
     }
 
     /**
