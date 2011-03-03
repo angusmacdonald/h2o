@@ -623,7 +623,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
          * Create a new Chord Ring.
          */
         try {
-            chordNode = ChordNodeFactory.createNode(localChordAddress);
+            chordNode = new ChordNodeFactory().createNode(localChordAddress);
         }
         catch (final Exception e) {
             e.printStackTrace();
@@ -681,11 +681,13 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
         final int maxNumberOfAttempts = Integer.parseInt(databaseSettings.get("ATTEMPTS_AFTER_BIND_EXCEPTIONS"));
 
+        final ChordNodeFactory factory = new ChordNodeFactory();
+
         while (!connected && attempts < maxNumberOfAttempts) { // only have multiple attempts if there is a bind exception.
 
             try {
-                chordNode = ChordNodeFactory.createNode(localChordAddress);
-                chordNode.join(ChordNodeFactory.bindToNode(knownHostAddress));
+                chordNode = factory.createNode(localChordAddress);
+                chordNode.join(factory.bindToNode(knownHostAddress));
 
                 Diagnostic.trace("Created chord node on: " + localChordAddress);
             }
