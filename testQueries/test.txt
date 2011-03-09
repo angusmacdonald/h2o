@@ -1,1 +1,0 @@
-> INSERT INTO NEW_ORDER (no_o_id, no_d_id, no_w_id) VALUES ( ?, ?, ?) {1: 3001, 2: 9, 3: 1};

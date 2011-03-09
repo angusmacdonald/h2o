@@ -947,6 +947,8 @@ public class Database implements DataHandler {
 
             database_instance_server = new DatabaseInstanceServer(getLocalDatabaseInstance(), preferredDatabaseInstancePort, getRemoteInterface().getApplicationRegistryIDForLocalDatabase());
 
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, getID() + ": Database instance server started on port " + preferredDatabaseInstancePort);
+
             try {
                 database_instance_server.start(true); // true means: allow registry entry for this database ID to be overwritten
             }

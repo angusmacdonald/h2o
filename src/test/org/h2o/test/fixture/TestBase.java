@@ -108,29 +108,39 @@ public class TestBase {
     @After
     public void tearDown() throws SQLException, InterruptedException {
 
-        if (sa != null) {
-            sa.execute("DROP ALL OBJECTS");
+        try {
+            if (sa != null) {
+                sa.execute("DROP ALL OBJECTS");
+                sa.execute("SHUTDOWN");
+                if (!sa.isClosed()) {
+                    sa.close();
+                }
 
-            if (!sa.isClosed()) {
-                sa.close();
-            }
-
-            if (!ca.isClosed()) {
-                ca.close();
+                if (!ca.isClosed()) {
+                    ca.close();
+                }
             }
         }
+        catch (final Exception e) {
+            System.err.println("Error tearing down database: " + e.getMessage());
+        }
 
-        if (sb != null) {
-            sb.execute("DROP ALL OBJECTS");
+        try {
+            if (sb != null) {
+                sb.execute("DROP ALL OBJECTS");
+                sb.execute("SHUTDOWN");
+                if (!sb.isClosed()) {
+                    sb.close();
+                }
 
-            if (!sb.isClosed()) {
-                sb.close();
+                if (!cb.isClosed()) {
+                    cb.close();
+                }
+
             }
-
-            if (!cb.isClosed()) {
-                cb.close();
-            }
-
+        }
+        catch (final Exception e) {
+            System.err.println("Error tearing down database: " + e.getMessage());
         }
 
         closeDatabaseCompletely();
@@ -140,6 +150,7 @@ public class TestBase {
         sa = null;
         sb = null;
 
+        ls.deletePersistedState();
         ls.setRunning(false);
         while (!ls.isFinished()) {
             Thread.sleep(SHUTDOWN_CHECK_DELAY);

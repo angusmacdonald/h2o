@@ -168,8 +168,6 @@ public class BenchmarkTests extends TestBase {
 
     /**
      * Executes an entire run-through of benchmarkSQL.
-     * 
-     * More SQL statements are executed than with {@link #testBenchmarkSQLQueriesBasic()}
      * @throws SQLException
      * @throws IOException Error reading from the benchmark file.
      * @throws FileNotFoundException Failed to read from the benchmark file.
@@ -178,6 +176,30 @@ public class BenchmarkTests extends TestBase {
     public void benchmarkSQLQueriesFull() throws SQLException, FileNotFoundException, IOException {
 
         createBenchmarkSQLTables();
+
+        runBenchmarkCode("testQueries/benchmarkSQL-full.txt");
+
+    }
+
+    /**
+     * Executes an entire run-through of benchmarkSQL, with multiple replicas for each table.
+     * @throws SQLException
+     * @throws IOException Error reading from the benchmark file.
+     * @throws FileNotFoundException Failed to read from the benchmark file.
+     */
+    @Test
+    public void benchmarkSQLQueriesFullTwoReplicas() throws SQLException, FileNotFoundException, IOException {
+
+        createBenchmarkSQLTables();
+
+        createReplicaOnB("warehouse");
+        createReplicaOnB("district");
+        createReplicaOnB("customer");
+        createReplicaOnB("history");
+        createReplicaOnB("oorder");
+        createReplicaOnB("new_order");
+        createReplicaOnB("stock");
+        createReplicaOnB("item");
 
         runBenchmarkCode("testQueries/benchmarkSQL-full.txt");
 

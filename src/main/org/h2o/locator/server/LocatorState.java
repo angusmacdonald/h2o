@@ -315,4 +315,11 @@ public class LocatorState {
         return locatorFile.getAbsolutePath();
     }
 
+    public void delete() {
+
+        final boolean successful = locatorFile.delete();
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Deleted Locator server state (successful: " + successful + "). This should only be done to destroy tests.");
+    }
+
 }

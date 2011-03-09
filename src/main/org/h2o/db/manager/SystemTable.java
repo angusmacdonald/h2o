@@ -84,7 +84,7 @@ public class SystemTable implements ISystemTableMigratable {
         }
         catch (final SQLException e) {
             e.printStackTrace();
-            return -1;
+            throw new RPCException(e.getMessage());
         }
     }
 

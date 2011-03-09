@@ -617,7 +617,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     private boolean startChordRing(final String hostname, final int port, final DatabaseID databaseURL) {
 
         final InetSocketAddress localChordAddress = new InetSocketAddress(hostname, port);
-        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Deploying new Chord ring on " + hostname + ":" + port);
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, localMachineLocation + ": Deploying new Chord ring on " + localChordAddress);
 
         /*
          * Create a new Chord Ring.
@@ -689,7 +689,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                 chordNode = factory.createNode(localChordAddress);
                 chordNode.join(factory.bindToNode(knownHostAddress));
 
-                Diagnostic.trace("Created chord node on: " + localChordAddress);
+                Diagnostic.trace(localMachineLocation + ": Created chord node on: " + localChordAddress + ". Known host: " + knownHostAddress);
             }
             catch (final RemoteChordException e) { // database instance we're trying to connect to doesn't exist.
 

@@ -149,4 +149,13 @@ public class LocatorServer extends Thread {
 
         this.finished = finished;
     }
+
+    /**
+     * Delete the current state of the locator server (i.e. the list of all instances with System Table state). This should only ever be
+     * done when testing to reset the database's state.
+     */
+    public void deletePersistedState() {
+
+        locatorState.delete();
+    }
 }
