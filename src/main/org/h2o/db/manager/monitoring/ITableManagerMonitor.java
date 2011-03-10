@@ -28,8 +28,15 @@ public interface ITableManagerMonitor {
 
     /**
      * Get the percentage of all lock requests that come each database instance.
-     * @return  The percentage of all lock requests monitored that come from each database instance.
+     * @return  The percentage of all lock requests monitored that come from each database instance. A call to .getFirst()
+     * on this set will return the instance that saw the fewest queries.
      */
     public SortedSet<LockRequestPercentagesPerInstance> getPercentageOfLockRequestsFromInstances();
+
+    /**
+     * Returns the number of queries that have been observed to produce this monitoring data.
+     * @return Number of queries that have passed through monitoring.
+     */
+    public int getSampleSize();
 
 }

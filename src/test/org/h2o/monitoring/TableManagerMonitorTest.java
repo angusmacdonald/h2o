@@ -119,23 +119,23 @@ public class TableManagerMonitorTest {
     @Test
     public void testPercentages() {
 
-        insertQueries(1, LockType.READ, lockRequestFromOne);
+        insertQueries(4, LockType.READ, lockRequestFromOne);
         insertQueries(1, LockType.READ, lockRequestFromOneSecondSession);
-        insertQueries(1, LockType.READ, lockRequestFromTwo);
+        insertQueries(2, LockType.READ, lockRequestFromTwo);
         insertQueries(1, LockType.READ, lockRequestFromThree);
 
         final SortedSet<LockRequestPercentagesPerInstance> percentages = monitor.getPercentageOfLockRequestsFromInstances();
 
-        LockRequestPercentagesPerInstance first = percentages.first();
+        LockRequestPercentagesPerInstance firstByRequest = percentages.last();
 
-        assertEquals(dbWrapperOne, first.getInstance());
-        assertEquals(.5, first.getPercentageOfRequests(), 0);
+        assertEquals(dbWrapperOne, firstByRequest.getInstance());
+        assertEquals(.625, firstByRequest.getPercentageOfRequests(), 0);
 
-        percentages.remove(first);
-        first = percentages.first();
+        percentages.remove(firstByRequest);
+        firstByRequest = percentages.last();
 
-        assertEquals(dbWrapperTwo, first.getInstance());
-        assertEquals(.25, first.getPercentageOfRequests(), 0);
+        assertEquals(dbWrapperTwo, firstByRequest.getInstance());
+        assertEquals(.25, firstByRequest.getPercentageOfRequests(), 0);
     }
 
     /*

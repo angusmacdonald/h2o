@@ -47,12 +47,15 @@ import org.h2.result.LocalResult;
 import org.h2o.autonomic.decision.ranker.metric.CreateTableRequest;
 import org.h2o.autonomic.framework.AutonomicAction;
 import org.h2o.autonomic.framework.IAutonomicController;
+import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTableMigratable;
+import org.h2o.db.manager.monitoring.ITableManagerMonitor;
+import org.h2o.db.manager.monitoring.TableManagerMonitor;
 import org.h2o.db.query.TableProxy;
 import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.query.locking.ILockingTable;
@@ -169,6 +172,8 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
     private final TableInfo tableInfo;
 
+    private final ITableManagerMonitor queryMonitor;
+
     /**
      * True if the table has already been created and this new instance is being created as part of a Table
      * Manager migration or recreation. False if this is being created as part of a CREATE TABLE operation.
@@ -216,6 +221,8 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
         location = database.getChordInterface().getLocalChordReference();
 
         relationReplicationFactor = Integer.parseInt(database.getDatabaseSettings().get("RELATION_REPLICATION_FACTOR"));
+
+        queryMonitor = new TableManagerMonitor();
 
         getDB().getTableManagerServer().exportObject(this);
     }
@@ -391,6 +398,10 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
             currentUpdateID = 0;
             isDrop = true;
             lockTypeRequested = LockType.WRITE;
+        }
+
+        if (Settings.QUERY_MONITORING_ENABLED) {
+            queryMonitor.addQueryInformation(lockRequest, lockTypeRequested); //Query Monitoring.
         }
 
         final LockType lockGranted = lockingTable.requestLock(lockTypeRequested, lockRequest);

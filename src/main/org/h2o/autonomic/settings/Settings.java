@@ -45,6 +45,17 @@ public class Settings {
 
     public static final String JDBC_PORT = "JDBC_PORT";
 
+    /**
+     * Whether to monitor the types of queries being made to the Table Manager, and the location these queries are
+     * coming from.
+     */
+    public static final boolean QUERY_MONITORING_ENABLED = true; //TODO make into setting in properties file.
+
+    /**
+     * The maximum number of samples that a Table Manager may take while query monitoring before monitoring data must be trimmed.
+     */
+    public static final int MAX_NUMBER_OF_TABLE_MANAGER_SAMPLES = 1000;
+
     static {
         reservedTableNames.add("SYSTEM_RANGE");
         reservedTableNames.add("TABLE");

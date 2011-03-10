@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
@@ -34,6 +35,10 @@ public class TableManagerMonitor implements ITableManagerMonitor {
     @Override
     public void addQueryInformation(final LockRequest requestingUser, final LockType typeOfQuery) {
 
+        if (maxNumberOfSamplesBeenReached()) {
+            trimSamples();
+        }
+
         PerUserQueryMonitoringData monitoringData = perUserData.get(requestingUser);
 
         if (monitoringData == null) {
@@ -49,6 +54,26 @@ public class TableManagerMonitor implements ITableManagerMonitor {
         else if (typeOfQuery == LockType.READ) {
             numberOfReads++;
         }
+    }
+
+    /**
+     * Reduce the number of samples held by the Table Manager to clear some space/reduce the memory overhead of monitoring.
+     */
+    private void trimSamples() {
+
+        // TODO Don't be so drastic here -- find a way of summarising existing information, rather than deleting it all.
+        perUserData.clear();
+    }
+
+    /**
+     * Checks whether there are too many samples (taking up too much space), by checking the number of samples against
+     * the system-wide limit, specified in {@link Settings#MAX_NUMBER_OF_TABLE_MANAGER_SAMPLES}
+     * @return
+     */
+    private boolean maxNumberOfSamplesBeenReached() {
+
+        return getSampleSize() >= Settings.MAX_NUMBER_OF_TABLE_MANAGER_SAMPLES;
+
     }
 
     @Override
@@ -105,5 +130,11 @@ public class TableManagerMonitor implements ITableManagerMonitor {
         }
 
         return percentages;
+    }
+
+    @Override
+    public int getSampleSize() {
+
+        return numberOfReads + numberOfWrites;
     }
 }
