@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.SortedSet;
 
 import org.h2.engine.Database;
 import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
@@ -22,6 +23,9 @@ import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.interfaces.ISystemTableMigratable;
+import org.h2o.db.manager.monitoring.systemtable.IMachineRanking;
+import org.h2o.db.manager.monitoring.systemtable.InstanceMonitor;
+import org.h2o.db.manager.monitoring.systemtable.InstanceResourceSummary;
 import org.h2o.db.manager.util.SystemTableMigrationState;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
@@ -46,6 +50,8 @@ public class SystemTable implements ISystemTableMigratable {
      * on disk.
      */
     private final ISystemTable persisted;
+
+    private final IMachineRanking monitoring = new InstanceMonitor();
 
     /**
      * Fields related to the migration functionality of the System Table.
@@ -351,5 +357,17 @@ public class SystemTable implements ISystemTableMigratable {
     public InetSocketAddress getAddress() throws RPCException {
 
         return database.getSystemTableServer().getAddress();
+    }
+
+    @Override
+    public void addMonitoringSummary(final InstanceResourceSummary summary) {
+
+        monitoring.addMonitoringSummary(summary);
+    }
+
+    @Override
+    public SortedSet<InstanceResourceSummary> getRankedListOfInstances() {
+
+        return monitoring.getRankedListOfInstances();
     }
 }

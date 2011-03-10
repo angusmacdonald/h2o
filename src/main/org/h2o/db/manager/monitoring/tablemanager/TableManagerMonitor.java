@@ -1,4 +1,4 @@
-package org.h2o.db.manager.monitoring;
+package org.h2o.db.manager.monitoring.tablemanager;
 
 import java.util.HashMap;
 import java.util.Map;

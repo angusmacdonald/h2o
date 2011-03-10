@@ -5,8 +5,8 @@ import static org.junit.Assert.assertEquals;
 import java.util.SortedSet;
 
 import org.h2o.db.id.DatabaseID;
-import org.h2o.db.manager.monitoring.LockRequestPercentagesPerInstance;
-import org.h2o.db.manager.monitoring.TableManagerMonitor;
+import org.h2o.db.manager.monitoring.tablemanager.LockRequestPercentagesPerInstance;
+import org.h2o.db.manager.monitoring.tablemanager.TableManagerMonitor;
 import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;

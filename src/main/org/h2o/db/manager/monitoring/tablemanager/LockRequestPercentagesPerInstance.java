@@ -1,4 +1,4 @@
-package org.h2o.db.manager.monitoring;
+package org.h2o.db.manager.monitoring.tablemanager;
 
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;

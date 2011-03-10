@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.SortedSet;
 
 import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
 import org.h2o.db.H2OMarshaller;
@@ -15,6 +16,7 @@ import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.interfaces.ISystemTableMigratable;
+import org.h2o.db.manager.monitoring.systemtable.InstanceResourceSummary;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
 import org.h2o.util.exceptions.MigrationException;
@@ -591,5 +593,19 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
             dealWithException(e);
             return null; // not reached
         }
+    }
+
+    @Override
+    public void addMonitoringSummary(final InstanceResourceSummary summary) {
+
+        // TODO JSON Auto-generated method stub
+
+    }
+
+    @Override
+    public SortedSet<InstanceResourceSummary> getRankedListOfInstances() {
+
+        // TODO JSON Auto-generated method stub
+        return null;
     }
 }
