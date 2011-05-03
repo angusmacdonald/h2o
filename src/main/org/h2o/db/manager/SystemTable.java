@@ -16,7 +16,7 @@ import java.util.Set;
 import java.util.SortedSet;
 
 import org.h2.engine.Database;
-import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
+import org.h2o.autonomic.decision.ranker.metric.Metric;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
@@ -51,7 +51,7 @@ public class SystemTable implements ISystemTableMigratable {
      */
     private final ISystemTable persisted;
 
-    private final IMachineRanking monitoring = new InstanceMonitor();
+    private final IMachineRanking monitoring = new InstanceMonitor(Metric.getDefaultSystemTableMetric());
 
     /**
      * Fields related to the migration functionality of the System Table.
@@ -210,7 +210,7 @@ public class SystemTable implements ISystemTableMigratable {
     }
 
     @Override
-    public Queue<DatabaseInstanceWrapper> getAvailableMachines(final ActionRequest typeOfRequest) throws RPCException, MovedException {
+    public Queue<DatabaseInstanceWrapper> getAvailableMachines(final Metric typeOfRequest) throws RPCException, MovedException {
 
         preMethodTest();
         return inMemory.getAvailableMachines(typeOfRequest);

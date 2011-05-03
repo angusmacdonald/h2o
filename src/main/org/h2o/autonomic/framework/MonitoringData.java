@@ -8,6 +8,7 @@
  */
 package org.h2o.autonomic.framework;
 
+
 /**
  * Instances of monitoring data store data describing the current state of some aspect of the database system.
  * 
@@ -27,7 +28,7 @@ public interface MonitoringData {
      * 
      * @return
      */
-    public String getAspectBeingMonitored();
+    public ResourceType getAspectBeingMonitored();
 
     /**
      * The results of the monitoring.

@@ -1,6 +1,6 @@
 package org.h2o.autonomic.decision.ranker.metric;
 
-public class CreateReplicaRequest extends ActionRequest {
+public class CreateReplicaRequest extends Metric {
 
     /**
      * 

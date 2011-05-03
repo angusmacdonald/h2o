@@ -11,7 +11,7 @@ package org.h2o.autonomic.decision;
 
 import java.util.Queue;
 
-import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
+import org.h2o.autonomic.decision.ranker.metric.Metric;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
 
@@ -27,5 +27,5 @@ public interface IReplicaChoice {
      * @throws MovedException
      * @throws RPCException
      */
-    public Queue<DatabaseInstanceWrapper> getAvailableMachines(ActionRequest typeOfRequest) throws RPCException, MovedException;
+    public Queue<DatabaseInstanceWrapper> getAvailableMachines(Metric typeOfRequest) throws RPCException, MovedException;
 }

@@ -1,6 +1,6 @@
 package org.h2o.autonomic.decision.ranker.metric;
 
-public class ProcessMigrationRequest extends ActionRequest {
+public class ProcessMigrationRequest extends Metric {
 
     /**
      * 

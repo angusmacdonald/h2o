@@ -19,7 +19,7 @@ import java.util.Queue;
 import java.util.Set;
 
 import org.h2.engine.Database;
-import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
+import org.h2o.autonomic.decision.ranker.metric.Metric;
 import org.h2o.db.DatabaseInstanceProxy;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
@@ -667,7 +667,7 @@ public final class InMemorySystemTable implements ISystemTable {
     }
 
     @Override
-    public Queue<DatabaseInstanceWrapper> getAvailableMachines(final ActionRequest typeOfRequest) {
+    public Queue<DatabaseInstanceWrapper> getAvailableMachines(final Metric typeOfRequest) {
 
         final Queue<DatabaseInstanceWrapper> sortedMachines = new PriorityQueue<DatabaseInstanceWrapper>();
 

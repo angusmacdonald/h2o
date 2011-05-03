@@ -3,7 +3,7 @@ package org.h2o.db.manager;
 import java.net.UnknownHostException;
 import java.util.Set;
 
-import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
+import org.h2o.autonomic.decision.ranker.metric.Metric;
 import org.h2o.db.H2OMarshaller;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
@@ -287,7 +287,7 @@ public class SystemTableServer extends ApplicationServer {
             @Override
             public JSONValue execute(final JSONArray args) throws Exception {
 
-                final ActionRequest p0 = marshaller.deserializeActionRequest(args.getJSONObject(0));
+                final Metric p0 = marshaller.deserializeActionRequest(args.getJSONObject(0));
                 return marshaller.serializeQueueDatabaseInstanceWrapper(system_table.getAvailableMachines(p0));
             }
         });

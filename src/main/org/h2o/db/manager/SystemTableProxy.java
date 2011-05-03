@@ -8,7 +8,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.SortedSet;
 
-import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
+import org.h2o.autonomic.decision.ranker.metric.Metric;
 import org.h2o.db.H2OMarshaller;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
@@ -483,7 +483,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     }
 
     @Override
-    public Queue<DatabaseInstanceWrapper> getAvailableMachines(final ActionRequest typeOfRequest) throws RPCException, MovedException {
+    public Queue<DatabaseInstanceWrapper> getAvailableMachines(final Metric typeOfRequest) throws RPCException, MovedException {
 
         try {
             final JSONArray params = new JSONArray();

@@ -11,7 +11,7 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 
-import org.h2o.autonomic.decision.ranker.metric.ActionRequest;
+import org.h2o.autonomic.decision.ranker.metric.Metric;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
@@ -351,23 +351,24 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeActionRequest(final ActionRequest source) {
+    public JSONValue serializeActionRequest(final Metric source) {
 
+        //TODO fix.
         if (source == null) { return JSONObject.NULL; }
 
         final JSONObject object = new JSONObject();
 
-        object.put(EXPECTED_TIME_TO_COMPLETION, source.expectedTimeToCompletion);
-        object.put(IMMEDIATE_DISK_SPACE, source.immediateDiskSpace);
-        object.put(CPU, source.cpu);
-        object.put(MEMORY, source.memory);
-        object.put(NETWORK, source.network);
-        object.put(DISK, source.disk);
+        //        object.put(EXPECTED_TIME_TO_COMPLETION, source.expectedTimeToCompletion);
+        //        object.put(IMMEDIATE_DISK_SPACE, source.immediateDiskSpace);
+        //        object.put(CPU, source.cpu);
+        //        object.put(MEMORY, source.memory);
+        //        object.put(NETWORK, source.network);
+        //        object.put(DISK, source.disk);
 
         return object;
     }
 
-    public ActionRequest deserializeActionRequest(final JSONObject object) throws DeserializationException {
+    public Metric deserializeActionRequest(final JSONObject object) throws DeserializationException {
 
         if (object == JSONObject.NULL) { return null; }
 
@@ -379,7 +380,7 @@ public class H2OMarshaller extends Marshaller {
             final double network = object.getDouble(NETWORK);
             final double disk = object.getDouble(DISK);
 
-            return new ActionRequest(expectedTimeToCompletion, immediateDiskSpace, cpu, memory, network, disk);
+            return new Metric(expectedTimeToCompletion, immediateDiskSpace, cpu, memory, network, disk);
         }
         catch (final Exception e) {
             throw new DeserializationException(e);

@@ -5,6 +5,8 @@ import java.util.List;
 import org.h2o.autonomic.framework.MonitoringData;
 import org.h2o.db.id.DatabaseID;
 
+import uk.ac.standrews.cs.numonic.appinterface.ResourceType;
+
 /**
  * Value class giving a summary of the available resources on a specific database instance.
  *
@@ -73,6 +75,22 @@ public class InstanceResourceSummary {
     public List<MonitoringData> getSamples() {
 
         return samples;
+    }
+
+    /**
+     * Get the MonitoringData object for a specific resource.
+     * 
+     * <p>This just performs a linear search; it's not expected that the set of samples will be larger than 10 or 20 elements.
+     * @param resource The resource being searched for.
+     * @return Returns null if nothing was found.
+     */
+    public MonitoringData get(final ResourceType resource) {
+
+        for (final MonitoringData sample : samples) {
+            if (sample.getAspectBeingMonitored().equals(resource)) { return sample; }
+        }
+
+        return null; //nothing was found for this resource type.
     }
 
     /*
