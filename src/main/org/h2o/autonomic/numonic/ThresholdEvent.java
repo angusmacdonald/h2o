@@ -1,6 +1,7 @@
-ackage org.h2o.autonomic.numonic;
+package org.h2o.autonomic.numonic;
 
 import uk.ac.standrews.cs.numonic.appinterface.ResourceType;
+import uk.ac.standrews.cs.numonic.appinterface.threshold.IThresholdSubscriber;
 
 /**
  * Value class containing the details of a particular threshold that has been breached. Sent from NUMONIC to any registered
