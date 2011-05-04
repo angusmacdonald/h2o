@@ -1,11 +1,9 @@
-package org.h2o.autonomic;
+package org.h2o.autonomic.numonic;
 
+import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Observable;
 
-import uk.ac.standrews.cs.nds.events.Event;
-import uk.ac.standrews.cs.nds.events.IEvent;
 import uk.ac.standrews.cs.numonic.data.FileSystemData;
 import uk.ac.standrews.cs.numonic.data.LatencyAndBandwidthData;
 import uk.ac.standrews.cs.numonic.data.MachineUtilisationData;
@@ -13,6 +11,7 @@ import uk.ac.standrews.cs.numonic.data.NetworkData;
 import uk.ac.standrews.cs.numonic.data.ProcessData;
 import uk.ac.standrews.cs.numonic.data.SystemInfoData;
 import uk.ac.standrews.cs.numonic.distribution.DistributionCollector;
+import uk.ac.standrews.cs.numonic.main.Numonic;
 import uk.ac.standrews.cs.numonic.reporting.IReporting;
 import uk.ac.standrews.cs.numonic.sort.data.DistributionData;
 import uk.ac.standrews.cs.numonic.summary.MultipleSummary;
@@ -22,97 +21,117 @@ import uk.ac.standrews.cs.numonic.summary.SingleSummary;
  * Reporting class for H2O. Events are reported here by Numonic and the H2O instance which started Numonic
  * is an observer of this class. When the H2O instance receives an event notfication it is able to query
  * the public methods of this class to get monitoring data.
+ * 
+ * <p>To start monitoring on numonic, create a new instance of this class and call the {@link #start()} method.
  *
  * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
  */
-public class H2OConnection extends Observable implements IReporting {
+public class NumonicReporter implements IReporting {
 
-    IEvent NEW_RESOURCE_DATA_AVAILABLE = new Event("NEW_RESOURCE_DATA_AVAILABLE"); //monitoring of physical machine resources.
-    IEvent NEW_NETWORK_DATA_AVAILABLE = new Event("NEW_NETWORK_DATA_AVAILABLE"); //monitoring of bandwidth/latency to other instances.
-    IEvent SYSTEM_EVENT_UPDATE = new Event("SYSTEM_EVENT_UPDATE"); //system events include: machines restarting, ip change, numonic startup.
+    Numonic numonic = null;
 
-    //TODO temporary local storage of distribution data.
+    ThresholdChecker thresholdChecker;
 
-    private void notifyObservers(final String eventType) {
+    public NumonicReporter(final String numonicPropertiesFile, final Threshold... thresholds) {
 
-        setChanged();
-        notifyObservers(eventType);
+        /*
+         * Create Numonic instance and set up reporting class.
+         */
+        try {
+
+            numonic = new Numonic(numonicPropertiesFile);
+
+            numonic.setReporter(this);
+        }
+        catch (final UnknownHostException e) {
+            e.printStackTrace();
+        }
+
+        thresholdChecker = new ThresholdChecker(thresholds);
+    }
+
+    /**
+     * Start numonic's monitoring activities.
+     */
+    public void start() {
+
+        numonic.start();
     }
 
     @Override
     public void reportDistributionData(final DistributionCollector<?> machineProbability) throws Exception {
 
-        // TODO Auto-generated method stub
+        // System.out.println(machineProbability);
 
     }
 
     @Override
     public void reportFileSystemData(final DistributionCollector<FileSystemData> fileSystemSummary) throws Exception {
 
-        // TODO Auto-generated method stub
+        //  System.out.println(fileSystemSummary);
 
     }
 
     @Override
     public void reportFileSystemData(final MultipleSummary<FileSystemData> fileSystemSummary) throws Exception {
 
-        // TODO Auto-generated method stub
+        // System.out.println(fileSystemSummary);
 
     }
 
     @Override
     public void reportMachineUtilData(final SingleSummary<MachineUtilisationData> summary) throws Exception {
 
-        // TODO Auto-generated method stub
+        thresholdChecker.analyseNewMonitoringData(summary);
 
     }
 
     @Override
     public void reportNetworkData(final SingleSummary<NetworkData> summary) throws Exception {
 
-        // TODO Auto-generated method stub
+        // System.out.println(summary);
 
     }
 
     @Override
     public void reportAllNetworkData(final MultipleSummary<NetworkData> allNetworkSummary) throws Exception {
 
-        // TODO Auto-generated method stub
+        // System.out.println(allNetworkSummary);
 
     }
 
     @Override
     public void reportProcessData(final SingleSummary<ProcessData> summary) throws Exception {
 
-        // TODO Auto-generated method stub
+        // System.out.println(summary);
 
     }
 
     @Override
     public void reportAllProcessData(final MultipleSummary<ProcessData> summaries) throws Exception {
 
-        // TODO Auto-generated method stub
+        //System.out.println(summaries);
 
     }
 
     @Override
     public void reportSystemInfo(final SystemInfoData data) throws Exception {
 
-        // TODO Auto-generated method stub
+        //System.out.println(data);
 
     }
 
     @Override
     public void reportLatencyAndBandwidthData(final LatencyAndBandwidthData data) throws Exception {
 
-        // TODO Auto-generated method stub
+        //System.out.println(data);
 
     }
 
     @Override
     public void reportEventData(final List<uk.ac.standrews.cs.numonic.event.Event> events) throws Exception {
 
-        // TODO Auto-generated method stub
+        //System.out.println(PrettyPrinter.toString(events));
 
     }
 

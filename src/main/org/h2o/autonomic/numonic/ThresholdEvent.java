@@ -1,4 +1,4 @@
-package org.h2o.autonomic;
+ackage org.h2o.autonomic.numonic;
 
 import uk.ac.standrews.cs.numonic.appinterface.ResourceType;
 
