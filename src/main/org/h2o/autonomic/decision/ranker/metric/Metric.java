@@ -31,8 +31,9 @@ public class Metric implements Serializable {
         requestInformation.put(EnumResourceRequest.EXPECTED_TIME_TO_COMPLETE, expectedTimeToCompletion);
         requestInformation.put(EnumResourceRequest.DISK_SPACE_NEEDED, immediateDiskSpace);
 
-        importanceOfResources.put(ResourceType.CPU_IDLE, cpu);
-        importanceOfResources.put(ResourceType.MEMORY_FREE, memory);
+        //TODO fix.
+        //        importanceOfResources.put(ResourceType.CPU_UTIL, cpu);
+        //        importanceOfResources.put(ResourceType.MEMORY_UTIL, memory);
         //        importanceOfResources.put(ResourceType.NETWORK_UTIL, network);
         //        importanceOfResources.put(ResourceType.DISK_UTIL, disk);
     }

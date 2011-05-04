@@ -21,6 +21,7 @@
 	    <pathelement location="src/main" />
 	    <pathelement location="src/test" />
 	    <pathelement location="${lib-stachord}" />
+	    <pathelement location="${lib-numonic}" />
 	    <pathelement location="${lib-json}" />
 	    <pathelement location="${lib-junit}" />
 	    <pathelement location="${lib-mindterm}" />
@@ -67,6 +68,8 @@
 
 		    <zipfileset src="${lib-nds}"/>
 		    <zipfileset src="${lib-stachord}"/>
+		    <zipfileset src="${lib-numonic}"/>
+
 		</jar>
 	</target>
 
