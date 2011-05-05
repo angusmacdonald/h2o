@@ -36,6 +36,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Queue;
 import java.util.Set;
 
@@ -45,8 +47,6 @@ import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.result.LocalResult;
 import org.h2o.autonomic.decision.ranker.metric.CreateTableRequest;
-import org.h2o.autonomic.framework.AutonomicAction;
-import org.h2o.autonomic.framework.IAutonomicController;
 import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
@@ -88,7 +88,7 @@ import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class TableManager extends PersistentManager implements ITableManagerRemote, IAutonomicController {
+public class TableManager extends PersistentManager implements ITableManagerRemote, java.rmi.Remote, Observer {
 
     private static final long serialVersionUID = 3347740231310946286L;
 
@@ -225,6 +225,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
         queryMonitor = new TableManagerMonitor();
 
         getDB().getTableManagerServer().exportObject(this);
+        getDB().getNumonic().addObserver(this);
     }
 
     public static String getMetaTableName(final String databaseName, final String tablePostfix) {
@@ -759,17 +760,6 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
         return getDB().getID();
     }
 
-    /*******************************************************
-     * Methods implementing the AutonomicController interface.
-     ***********************************************************/
-
-    @Override
-    public boolean changeSetting(final AutonomicAction action) throws RPCException {
-
-        // TODO Auto-generated method stub
-        return false;
-    }
-
     @Override
     public void shutdown(final boolean shutdown) throws RPCException, MovedException {
 
@@ -927,5 +917,12 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
     public InetSocketAddress getAddress() throws RPCException {
 
         return getDB().getTableManagerServer().getAddress();
+    }
+
+    @Override
+    public void update(final Observable o, final Object arg) {
+
+        // TODO Auto-generated method stub
+
     }
 }
