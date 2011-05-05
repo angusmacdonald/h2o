@@ -238,4 +238,9 @@ public class H2OPropertiesWrapper {
 
         return properties.keySet();
     }
+
+    public String getLocation() {
+
+        return new File(propertiesFileLocation).getAbsolutePath();
+    }
 }

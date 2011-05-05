@@ -1,20 +1,22 @@
 package org.h2o.monitoring;
 
+import java.io.IOException;
+
 import org.h2o.autonomic.numonic.NumonicReporter;
 import org.h2o.autonomic.numonic.Threshold;
-
-import uk.ac.standrews.cs.numonic.appinterface.ResourceType;
+import org.h2o.autonomic.numonic.ThresholdChecker;
 
 public class ExternalNumonicTest {
 
     /**
      * @param args
+     * @throws IOException 
      */
-    public static void main(final String[] args) {
+    public static void main(final String[] args) throws IOException {
 
-        final Threshold testThreshold = new Threshold(ResourceType.CPU_USER, 0.5d, true);
+        final Threshold[] thresholds = ThresholdChecker.getThresholds("thresholds.properties");
 
-        final NumonicReporter reporter = new NumonicReporter("numonic.properties", testThreshold);
+        final NumonicReporter reporter = new NumonicReporter("numonic.properties", thresholds);
 
         reporter.start();
     }

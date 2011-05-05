@@ -37,4 +37,11 @@ public class Threshold {
      * Whether the threshold is breached by utilization going above {@link #value} or below it. True for the breach occuring above the value; otherwise false.
      */
     public boolean above;
+
+    @Override
+    public String toString() {
+
+        return "Threshold [resourceName=" + resourceName + ", value=" + value + ", above=" + above + "]";
+    }
+
 }
