@@ -3,17 +3,20 @@ package org.h2o.autonomic.numonic;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
 import java.util.Set;
 
 import org.h2o.util.H2OPropertiesWrapper;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.numonic.appinterface.ResourceType;
 import uk.ac.standrews.cs.numonic.appinterface.threshold.MeasurementType;
 import uk.ac.standrews.cs.numonic.data.Data;
 import uk.ac.standrews.cs.numonic.summary.SingleSummary;
 
-public class ThresholdChecker {
+public class ThresholdChecker extends Observable {
 
     /**
      * Thresholds to monitor.
@@ -40,15 +43,17 @@ public class ThresholdChecker {
                 final double monitoredValue = averageOfMonitoringData.getDouble(threshold.resourceName);
 
                 if (threshold.above && monitoredValue > threshold.value) {
-                    System.out.println("Threshold Exceeded: " + monitoredValue + " > " + threshold.value);
-                    //do something.
+                    Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Threshold for '" + threshold.resourceName + "' has been crossed: " + monitoredValue + " > " + threshold.value);
+
+                    setChanged();
+                    notifyObservers(threshold);
                 }
                 else if (!threshold.above && monitoredValue < threshold.value) {
-                    System.out.println("Threshold Breached: " + monitoredValue + " < " + threshold.value);
-                    //do something.
-                }
-                else {
-                    System.out.println("Threshold (" + threshold.value + ") not exceeded (" + monitoredValue + ")");
+                    Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Threshold for '" + threshold.resourceName + "' has been crossed: " + monitoredValue + " < " + threshold.value);
+
+                    setChanged();
+                    notifyObservers(threshold);
+
                 }
             }
             catch (final NoSuchFieldException e) {

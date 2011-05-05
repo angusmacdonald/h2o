@@ -26,13 +26,15 @@ import uk.ac.standrews.cs.numonic.summary.SingleSummary;
  *
  * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
  */
-public class NumonicReporter implements IReporting {
+public class NumonicReporter extends Thread implements IReporting {
 
     Numonic numonic = null;
 
-    ThresholdChecker thresholdChecker;
+    private final ThresholdChecker thresholdChecker;
 
     public NumonicReporter(final String numonicPropertiesFile, final Threshold... thresholds) {
+
+        setName("numonic-reporting-thread");
 
         /*
          * Create Numonic instance and set up reporting class.
@@ -53,7 +55,8 @@ public class NumonicReporter implements IReporting {
     /**
      * Start numonic's monitoring activities.
      */
-    public void start() {
+    @Override
+    public void run() {
 
         numonic.start();
     }
@@ -154,6 +157,15 @@ public class NumonicReporter implements IReporting {
 
         // TODO Auto-generated method stub
         return null;
+    }
+
+    /**
+     * Get a reference to the instance responsible for monitoring thresholds.
+     * @return the thresholdChecker instance.
+     */
+    public ThresholdChecker getThresholdChecker() {
+
+        return thresholdChecker;
     }
 
 }
