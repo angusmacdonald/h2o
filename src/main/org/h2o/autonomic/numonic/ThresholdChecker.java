@@ -74,6 +74,10 @@ public class ThresholdChecker extends Observable {
 
         final List<Threshold> parsedThresholds = new ArrayList<Threshold>();
 
+        /*
+         * Loop through every resource listed in the thresholds property file and generate threshold objects for each one that 
+         * a threshold is specified for.
+         */
         for (final Object resourceName : resourceNames) { //for every property of the format: 'cpu_user_total = 0.5d, true'
 
             final String value = thresholdProperties.getProperty((String) resourceName);
@@ -81,8 +85,6 @@ public class ThresholdChecker extends Observable {
             if (value.equals("ignore")) {
                 continue;
             }
-
-            System.out.println(resourceName + ": " + value);
 
             final String[] thresholdInfo = value.split(",");
 

@@ -91,6 +91,8 @@ import org.h2.value.CompareMode;
 import org.h2.value.Value;
 import org.h2.value.ValueInt;
 import org.h2.value.ValueLob;
+import org.h2o.autonomic.numonic.INumonic;
+import org.h2o.autonomic.numonic.NumonicReporter;
 import org.h2o.autonomic.settings.Settings;
 import org.h2o.autonomic.settings.TestingSettings;
 import org.h2o.db.DatabaseInstanceServer;
@@ -344,6 +346,8 @@ public class Database implements DataHandler {
 
     private SystemTableServer system_table_server;
 
+    private INumonic numonic;
+
     public Database(final String name, final ConnectionInfo ci, final String cipher) throws SQLException {
 
         localSchema.add(Constants.H2O_SCHEMA);
@@ -464,6 +468,14 @@ public class Database implements DataHandler {
             }
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Started database at " + getID());
         }
+
+        try {
+            numonic = new NumonicReporter(databaseSettings.get("NUMONIC_MONITORING_FILE_LOCATION"), databaseSettings.get("NUMONIC_THRESHOLDS_FILE_LOCATION"));
+        }
+        catch (final IOException e) {
+            ErrorHandling.exceptionError(e, "Failed to start numonic monitoring class on database '" + getID() + "'.");
+        }
+
         running = true;
     }
 
@@ -3286,6 +3298,11 @@ public class Database implements DataHandler {
     public DatabaseInstanceServer getDatabaseInstanceServer() {
 
         return database_instance_server;
+    }
+
+    public INumonic getNumonic() {
+
+        return numonic;
     }
 
 }

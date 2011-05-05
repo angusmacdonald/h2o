@@ -201,6 +201,17 @@ public class Settings {
          */
         defaults.setProperty("DATABASE_INSTANCE_SERVER_PORT", "62100");
 
+        /*
+         * The location of the numonic configuration file, which specifies what the database's numonic instance will monitor.
+         */
+        defaults.setProperty("NUMONIC_MONITORING_FILE_LOCATION", "default_numonic_settings.properties");
+
+        /*
+         * The location of the numonic thresholds file, which specifies what thresholds the database will monitor (and alert observer components
+         * when they are exceeded).
+         */
+        defaults.setProperty("NUMONIC_THRESHOLDS_FILE_LOCATION", "default_numonic_thresholds.properties");
+
         return defaults;
     }
 

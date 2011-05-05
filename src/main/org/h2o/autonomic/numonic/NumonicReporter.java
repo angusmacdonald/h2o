@@ -1,8 +1,10 @@
 package org.h2o.autonomic.numonic;
 
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Observer;
 
 import uk.ac.standrews.cs.numonic.data.FileSystemData;
 import uk.ac.standrews.cs.numonic.data.LatencyAndBandwidthData;
@@ -26,7 +28,7 @@ import uk.ac.standrews.cs.numonic.summary.SingleSummary;
  *
  * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
  */
-public class NumonicReporter extends Thread implements IReporting {
+public class NumonicReporter extends Thread implements IReporting, INumonic {
 
     Numonic numonic = null;
 
@@ -50,6 +52,11 @@ public class NumonicReporter extends Thread implements IReporting {
         }
 
         thresholdChecker = new ThresholdChecker(thresholds);
+    }
+
+    public NumonicReporter(final String numonicPropertiesFile, final String thresholdPropertiesFile) throws IOException {
+
+        this(numonicPropertiesFile, ThresholdChecker.getThresholds(thresholdPropertiesFile));
     }
 
     /**
@@ -159,13 +166,13 @@ public class NumonicReporter extends Thread implements IReporting {
         return null;
     }
 
-    /**
-     * Get a reference to the instance responsible for monitoring thresholds.
-     * @return the thresholdChecker instance.
+    /* (non-Javadoc)
+     * @see org.h2o.autonomic.numonic.INumonic#addObserver(java.util.Observer)
      */
-    public ThresholdChecker getThresholdChecker() {
+    @Override
+    public void addObserver(final Observer observer) {
 
-        return thresholdChecker;
+        thresholdChecker.addObserver(observer);
     }
 
 }
