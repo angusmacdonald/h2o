@@ -351,7 +351,7 @@ public class Database implements DataHandler, Observer {
 
     private SystemTableServer system_table_server;
 
-    private INumonic numonic;
+    private final INumonic numonic;
 
     public Database(final String name, final ConnectionInfo ci, final String cipher) throws SQLException {
 
@@ -474,15 +474,10 @@ public class Database implements DataHandler, Observer {
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Started database at " + getID());
         }
 
-        try {
-            numonic = new NumonicReporter(databaseSettings.get("NUMONIC_MONITORING_FILE_LOCATION"), databaseSettings.get("NUMONIC_THRESHOLDS_FILE_LOCATION"));
+        numonic = new NumonicReporter(databaseSettings.get("NUMONIC_MONITORING_FILE_LOCATION"), databaseSettings.get("NUMONIC_THRESHOLDS_FILE_LOCATION"));
 
-            if (Boolean.parseBoolean(databaseSettings.get("NUMONIC_MONITORING_ENABLED"))) {
-                numonic.start();
-            }
-        }
-        catch (final IOException e) {
-            ErrorHandling.exceptionError(e, "Failed to start numonic monitoring class on database '" + getID() + "'.");
+        if (Boolean.parseBoolean(databaseSettings.get("NUMONIC_MONITORING_ENABLED"))) {
+            numonic.start();
         }
 
         running = true;
