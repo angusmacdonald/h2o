@@ -8,6 +8,9 @@ import org.h2o.autonomic.numonic.NumonicReporter;
 import org.h2o.autonomic.numonic.Threshold;
 import org.h2o.autonomic.numonic.ThresholdChecker;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+
 public class ExternalNumonicTest implements Observer {
 
     /**
@@ -16,15 +19,16 @@ public class ExternalNumonicTest implements Observer {
      */
     public static void main(final String[] args) throws IOException {
 
+        Diagnostic.setLevel(DiagnosticLevel.FULL);
         final ExternalNumonicTest test = new ExternalNumonicTest();
         test.start();
     }
 
     public void start() throws IOException {
 
-        final Threshold[] thresholds = ThresholdChecker.getThresholds("thresholds.properties");
+        final Threshold[] thresholds = ThresholdChecker.getThresholds("default_numonic_thresholds.properties");
 
-        final NumonicReporter reporter = new NumonicReporter("numonic.properties", thresholds);
+        final NumonicReporter reporter = new NumonicReporter("default_numonic_settings.properties", "C:\\", thresholds);
 
         reporter.addObserver(this);
 

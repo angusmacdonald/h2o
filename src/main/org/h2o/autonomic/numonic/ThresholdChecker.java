@@ -55,9 +55,14 @@ public class ThresholdChecker extends Observable {
                     notifyObservers(threshold);
 
                 }
+                else {
+                    Diagnostic.traceNoEvent(DiagnosticLevel.INIT, ": " + monitoredValue + " < " + threshold.value);
+
+                }
             }
             catch (final NoSuchFieldException e) {
-                ErrorHandling.exceptionErrorNoEvent(e, "Error reading threshold information. The field for one of the resources being monitored could not be found.");
+                //Will occur.
+                //XXX find more effective way of doing this if it is too inefficient to throw an exception each time.
             }
         }
 
@@ -81,6 +86,8 @@ public class ThresholdChecker extends Observable {
         for (final Object resourceName : resourceNames) { //for every property of the format: 'cpu_user_total = 0.5d, true'
 
             final String value = thresholdProperties.getProperty((String) resourceName);
+
+            System.out.println(resourceName);
 
             if (value.equals("ignore")) {
                 continue;
@@ -111,6 +118,17 @@ public class ThresholdChecker extends Observable {
         final H2OPropertiesWrapper propertiesFile = H2OPropertiesWrapper.getWrapper(thresholdPropertiesLocation);
         propertiesFile.loadProperties();
         return getThresholds(propertiesFile);
+    }
+
+    /**
+     * Takes a threshold that is typed as object and casts it to Threshold. Called by observer classes from
+     * their update method.
+     * @param arg typed as Object, but is in fact Threshold.
+     * @return
+     */
+    public static Threshold getThresholdObject(final Object arg) {
+
+        return (Threshold) arg;
     }
 
 }

@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -93,6 +95,8 @@ import org.h2.value.ValueInt;
 import org.h2.value.ValueLob;
 import org.h2o.autonomic.numonic.INumonic;
 import org.h2o.autonomic.numonic.NumonicReporter;
+import org.h2o.autonomic.numonic.Threshold;
+import org.h2o.autonomic.numonic.ThresholdChecker;
 import org.h2o.autonomic.settings.Settings;
 import org.h2o.autonomic.settings.TestingSettings;
 import org.h2o.db.DatabaseInstanceServer;
@@ -132,6 +136,7 @@ import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.numonic.appinterface.ResourceType;
 
 /**
  * There is one database object per open database.
@@ -140,7 +145,7 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  *
  * @since 2004-04-15 22:49
  */
-public class Database implements DataHandler {
+public class Database implements DataHandler, Observer {
 
     private static int initialPowerOffCount;
 
@@ -3307,6 +3312,18 @@ public class Database implements DataHandler {
     public INumonic getNumonic() {
 
         return numonic;
+    }
+
+    @Override
+    public void update(final Observable o, final Object arg) {
+
+        final Threshold threshold = ThresholdChecker.getThresholdObject(arg);
+
+        if (threshold.resourceName == ResourceType.CPU_USER && threshold.above) {
+            //CPU utilization has been exceeded.
+
+            //Act on this.
+        }
     }
 
 }

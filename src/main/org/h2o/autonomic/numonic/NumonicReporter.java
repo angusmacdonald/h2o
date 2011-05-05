@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Observer;
 
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 import uk.ac.standrews.cs.numonic.data.FileSystemData;
 import uk.ac.standrews.cs.numonic.data.LatencyAndBandwidthData;
 import uk.ac.standrews.cs.numonic.data.MachineUtilisationData;
@@ -34,7 +35,18 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
 
     private final ThresholdChecker thresholdChecker;
 
-    public NumonicReporter(final String numonicPropertiesFile, final Threshold... thresholds) {
+    /**
+     * The name of the file system the database is running on. For example, "C:\" on windows.
+     */
+    private final String fileSystem;
+
+    /**
+     * 
+     * @param numonicPropertiesFileName Path to the configuration file needed to start numonic. The default file is called default_numonic_configuration.properties.
+     * @param fileSystem    The name of the file system the database is running on. For example, "C:\" on windows.
+     * @param thresholds    Array of thresholds that the system must check for.
+     */
+    public NumonicReporter(final String numonicPropertiesFileName, final String fileSystem, final Threshold... thresholds) {
 
         setName("numonic-reporting-thread");
 
@@ -43,7 +55,7 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
          */
         try {
 
-            numonic = new Numonic(numonicPropertiesFile);
+            numonic = new Numonic(numonicPropertiesFileName);
 
             numonic.setReporter(this);
         }
@@ -51,12 +63,14 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
             e.printStackTrace();
         }
 
+        this.fileSystem = fileSystem;
+
         thresholdChecker = new ThresholdChecker(thresholds);
     }
 
-    public NumonicReporter(final String numonicPropertiesFile, final String thresholdPropertiesFile) throws IOException {
+    public NumonicReporter(final String numonicPropertiesFile, final String fileSystem, final String thresholdPropertiesFile) throws IOException {
 
-        this(numonicPropertiesFile, ThresholdChecker.getThresholds(thresholdPropertiesFile));
+        this(numonicPropertiesFile, fileSystem, ThresholdChecker.getThresholds(thresholdPropertiesFile));
     }
 
     /**
@@ -78,14 +92,24 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
     @Override
     public void reportFileSystemData(final DistributionCollector<FileSystemData> fileSystemSummary) throws Exception {
 
-        //  System.out.println(fileSystemSummary);
+        //System.out.println(fileSystemSummary);
 
     }
 
     @Override
     public void reportFileSystemData(final MultipleSummary<FileSystemData> fileSystemSummary) throws Exception {
 
-        // System.out.println(fileSystemSummary);
+        /*
+         * Only check for thresholds on the file system being used by the database system, and not any others.
+         */
+
+        for (final SingleSummary<FileSystemData> specificFsSummary : fileSystemSummary.getSummaries()) {
+            if (specificFsSummary.getMax().file_system_location.equalsIgnoreCase(fileSystem)) {
+                thresholdChecker.analyseNewMonitoringData(specificFsSummary);
+                break;
+            }
+
+        }
 
     }
 
@@ -141,7 +165,7 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
     @Override
     public void reportEventData(final List<uk.ac.standrews.cs.numonic.event.Event> events) throws Exception {
 
-        //System.out.println(PrettyPrinter.toString(events));
+        System.out.println(PrettyPrinter.toString(events));
 
     }
 
