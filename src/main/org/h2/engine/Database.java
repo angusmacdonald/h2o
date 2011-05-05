@@ -471,6 +471,10 @@ public class Database implements DataHandler {
 
         try {
             numonic = new NumonicReporter(databaseSettings.get("NUMONIC_MONITORING_FILE_LOCATION"), databaseSettings.get("NUMONIC_THRESHOLDS_FILE_LOCATION"));
+
+            if (Boolean.parseBoolean(databaseSettings.get("NUMONIC_MONITORING_ENABLED"))) {
+                numonic.start();
+            }
         }
         catch (final IOException e) {
             ErrorHandling.exceptionError(e, "Failed to start numonic monitoring class on database '" + getID() + "'.");

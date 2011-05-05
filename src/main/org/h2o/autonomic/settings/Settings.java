@@ -212,6 +212,11 @@ public class Settings {
          */
         defaults.setProperty("NUMONIC_THRESHOLDS_FILE_LOCATION", "default_numonic_thresholds.properties");
 
+        /*
+         * Whether numonic should be started with this database instance.
+         */
+        defaults.setProperty("NUMONIC_MONITORING_ENABLED", "true");
+
         return defaults;
     }
 
