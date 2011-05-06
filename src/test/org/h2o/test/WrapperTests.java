@@ -32,6 +32,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.madface.HostDescriptor;
+import uk.ac.standrews.cs.nds.madface.JavaProcessDescriptor;
 import uk.ac.standrews.cs.nds.madface.PlatformDescriptor;
 import uk.ac.standrews.cs.nds.madface.ProcessManager;
 import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
@@ -84,7 +85,7 @@ public class WrapperTests {
             locatorArgs.add("-d");
             locatorArgs.add("-f'" + defaultLocation + "'");
 
-            locatorProcess = new ProcessManager().runJavaProcess(H2OLocator.class, locatorArgs);
+            locatorProcess = new ProcessManager().runProcess(new JavaProcessDescriptor().classToBeInvoked(H2OLocator.class).args(locatorArgs));
 
             Thread.sleep(1000);
 
@@ -131,6 +132,9 @@ public class WrapperTests {
                 ErrorHandling.error("unexpected exception on local host");
             }
             catch (final TimeoutException e) {
+                ErrorHandling.error("unexpected exception on local host");
+            }
+            catch (final UnknownPlatformException e) {
                 ErrorHandling.error("unexpected exception on local host");
             }
         }
@@ -199,7 +203,7 @@ public class WrapperTests {
         databaseArgs.add("-d'" + defaultLocation + File.separator + databaseName + ".h2od'");
         databaseArgs.add("-f'" + defaultLocation + "'");
 
-        databaseProcess = new ProcessManager().runJavaProcess(H2O.class, databaseArgs);
+        databaseProcess = new ProcessManager().runProcess(new JavaProcessDescriptor().classToBeInvoked(H2O.class).args(databaseArgs));
     }
 
     private String extractDatabaseLocation(final int databasePort, final String databaseName, String defaultLocation) {

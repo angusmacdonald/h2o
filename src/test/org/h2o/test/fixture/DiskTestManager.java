@@ -10,6 +10,7 @@ import java.util.concurrent.TimeoutException;
 import org.h2o.H2O;
 import org.h2o.db.id.DatabaseURL;
 
+import uk.ac.standrews.cs.nds.madface.JavaProcessDescriptor;
 import uk.ac.standrews.cs.nds.madface.ProcessManager;
 import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
 
@@ -116,7 +117,7 @@ public class DiskTestManager extends TestManager {
             db_args.add("-d" + descriptor_file_path);
             db_args.add("-D" + DIAGNOSTIC_LEVEL.numericalValue());
 
-            db_processes[i] = new ProcessManager().runJavaProcess(H2O.class, db_args);
+            db_processes[i] = new ProcessManager().runProcess(new JavaProcessDescriptor().classToBeInvoked(H2O.class).args(db_args));
 
             databaseNames[i] = database_base_directory_paths[i] + "/" + DATABASE_NAME_ROOT;
 

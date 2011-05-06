@@ -45,6 +45,7 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.madface.JavaProcessDescriptor;
 import uk.ac.standrews.cs.nds.madface.ProcessManager;
 import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -824,7 +825,7 @@ public class LocatorDatabaseTests extends TestBase {
         args.add("-p" + port);
 
         try {
-            processes.put(connectionString, new ProcessManager().runJavaProcess(StartDatabaseInstance.class, args));
+            processes.put(connectionString, new ProcessManager().runProcess(new JavaProcessDescriptor().classToBeInvoked(StartDatabaseInstance.class).args(args)));
         }
         catch (final IOException e) {
             ErrorHandling.error("Failed to create new database process.");

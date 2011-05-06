@@ -34,6 +34,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import uk.ac.standrews.cs.nds.madface.HostDescriptor;
+import uk.ac.standrews.cs.nds.madface.JavaProcessDescriptor;
 import uk.ac.standrews.cs.nds.madface.PlatformDescriptor;
 import uk.ac.standrews.cs.nds.madface.ProcessManager;
 import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
@@ -154,12 +155,12 @@ public class MultiProcessTestBase extends TestBase {
             catch (final TimeoutException e) {
                 ErrorHandling.error("unexpected exception on local host");
             }
+            catch (final UnknownPlatformException e) {
+                ErrorHandling.error("unexpected exception on local host");
+            }
         }
     }
 
-    /**
-     * @throws java.lang.Exception
-     */
     @Override
     @After
     public void tearDown() {
@@ -604,7 +605,7 @@ public class MultiProcessTestBase extends TestBase {
         args.add("-d" + databaseDescriptorLocation);
 
         try {
-            processes.put(databaseInstanceName, new ProcessManager().runJavaProcess(StartDatabaseInstance.class, args));
+            processes.put(databaseInstanceName, new ProcessManager().runProcess(new JavaProcessDescriptor().classToBeInvoked(StartDatabaseInstance.class).args(args)));
         }
         catch (final IOException e) {
             ErrorHandling.error("Failed to create new database process.");
