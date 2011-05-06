@@ -5,8 +5,8 @@ import java.util.Observable;
 import java.util.Observer;
 
 import org.h2o.autonomic.numonic.NumonicReporter;
-import org.h2o.autonomic.numonic.Threshold;
-import org.h2o.autonomic.numonic.ThresholdChecker;
+import org.h2o.autonomic.numonic.threshold.Threshold;
+import org.h2o.autonomic.numonic.threshold.ThresholdChecker;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -28,7 +28,7 @@ public class ExternalNumonicTest implements Observer {
 
         final Threshold[] thresholds = ThresholdChecker.getThresholds("default_numonic_thresholds.properties");
 
-        final NumonicReporter reporter = new NumonicReporter("default_numonic_settings.properties", "C:\\", thresholds);
+        final NumonicReporter reporter = new NumonicReporter("default_numonic_settings.properties", "C:\\", null, null, thresholds);
 
         reporter.addObserver(this);
 

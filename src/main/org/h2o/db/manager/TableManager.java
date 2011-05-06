@@ -47,8 +47,8 @@ import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.result.LocalResult;
 import org.h2o.autonomic.decision.ranker.metric.CreateTableRequest;
-import org.h2o.autonomic.numonic.Threshold;
-import org.h2o.autonomic.numonic.ThresholdChecker;
+import org.h2o.autonomic.numonic.threshold.Threshold;
+import org.h2o.autonomic.numonic.threshold.ThresholdChecker;
 import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
@@ -77,7 +77,7 @@ import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
-import uk.ac.standrews.cs.numonic.appinterface.ResourceType;
+import uk.ac.standrews.cs.numonic.data.ResourceType;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 /**

@@ -1,6 +1,6 @@
-package org.h2o.autonomic.numonic;
+package org.h2o.autonomic.numonic.threshold;
 
-import uk.ac.standrews.cs.numonic.appinterface.ResourceType;
+import uk.ac.standrews.cs.numonic.data.ResourceType;
 
 /**
  * Represents a threshold that NUMONIC should be checking for. An instance of this class

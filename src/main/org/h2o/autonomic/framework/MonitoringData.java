@@ -8,7 +8,7 @@
  */
 package org.h2o.autonomic.framework;
 
-import uk.ac.standrews.cs.numonic.appinterface.ResourceType;
+import uk.ac.standrews.cs.numonic.data.ResourceType;
 
 /**
  * Instances of monitoring data store data describing the current state of some aspect of the database system.

@@ -25,6 +25,7 @@
 
 package org.h2.engine;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -95,8 +96,8 @@ import org.h2.value.ValueInt;
 import org.h2.value.ValueLob;
 import org.h2o.autonomic.numonic.INumonic;
 import org.h2o.autonomic.numonic.NumonicReporter;
-import org.h2o.autonomic.numonic.Threshold;
-import org.h2o.autonomic.numonic.ThresholdChecker;
+import org.h2o.autonomic.numonic.threshold.Threshold;
+import org.h2o.autonomic.numonic.threshold.ThresholdChecker;
 import org.h2o.autonomic.settings.Settings;
 import org.h2o.autonomic.settings.TestingSettings;
 import org.h2o.db.DatabaseInstanceServer;
@@ -136,7 +137,7 @@ import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
-import uk.ac.standrews.cs.numonic.appinterface.ResourceType;
+import uk.ac.standrews.cs.numonic.data.ResourceType;
 
 /**
  * There is one database object per open database.
@@ -351,7 +352,7 @@ public class Database implements DataHandler, Observer {
 
     private SystemTableServer system_table_server;
 
-    private final INumonic numonic;
+    private INumonic numonic = null;
 
     public Database(final String name, final ConnectionInfo ci, final String cipher) throws SQLException {
 
@@ -472,15 +473,32 @@ public class Database implements DataHandler, Observer {
                 metaDataReplicationThread.start();
             }
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Started database at " + getID());
-        }
 
-        numonic = new NumonicReporter(databaseSettings.get("NUMONIC_MONITORING_FILE_LOCATION"), databaseSettings.get("NUMONIC_THRESHOLDS_FILE_LOCATION"));
+            try {
+                final String fileSystemName = getFileSystemName(databaseName);
+                numonic = new NumonicReporter(databaseSettings.get("NUMONIC_MONITORING_FILE_LOCATION"), fileSystemName, getID(), systemTableRef, databaseSettings.get("NUMONIC_THRESHOLDS_FILE_LOCATION"));
 
-        if (Boolean.parseBoolean(databaseSettings.get("NUMONIC_MONITORING_ENABLED"))) {
-            numonic.start();
+                if (Boolean.parseBoolean(databaseSettings.get("NUMONIC_MONITORING_ENABLED"))) {
+                    numonic.start();
+                }
+            }
+            catch (final IOException e) {
+                ErrorHandling.exceptionError(e, "Failed to start numonic reporter for H2O.");
+            }
         }
 
         running = true;
+    }
+
+    /**
+     * Get the name of the filesystem that this database is storing data on (e.g. "C:\" or "/");
+     * @param databaseName
+     * @return
+     */
+    private String getFileSystemName(final String databaseName) {
+
+        final String nameBeforeSlash = databaseName.substring(0, databaseName.indexOf(File.separator));
+        return nameBeforeSlash + File.separator;
     }
 
     private H2OPropertiesWrapper setUpLocalDatabaseProperties(final DatabaseID localMachineLocation) {

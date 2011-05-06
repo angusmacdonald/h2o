@@ -5,7 +5,7 @@ import java.util.List;
 import org.h2o.autonomic.framework.MonitoringData;
 import org.h2o.db.id.DatabaseID;
 
-import uk.ac.standrews.cs.numonic.appinterface.ResourceType;
+import uk.ac.standrews.cs.numonic.data.ResourceType;
 
 /**
  * Value class giving a summary of the available resources on a specific database instance.

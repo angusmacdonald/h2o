@@ -11,7 +11,7 @@ import org.h2o.autonomic.decision.ranker.metric.Metric;
 import org.h2o.autonomic.decision.ranker.metric.MetricEvaluatior;
 import org.h2o.autonomic.framework.MonitoringData;
 
-import uk.ac.standrews.cs.numonic.appinterface.ResourceType;
+import uk.ac.standrews.cs.numonic.data.ResourceType;
 
 public class InstanceMonitor implements IMachineRanking {
 

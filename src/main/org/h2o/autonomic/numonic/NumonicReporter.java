@@ -6,6 +6,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Observer;
 
+import org.h2o.autonomic.numonic.ranking.ResourceRanker;
+import org.h2o.autonomic.numonic.threshold.Threshold;
+import org.h2o.autonomic.numonic.threshold.ThresholdChecker;
+import org.h2o.db.id.DatabaseID;
+import org.h2o.db.manager.interfaces.ISystemTableReference;
+
 import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 import uk.ac.standrews.cs.numonic.data.FileSystemData;
 import uk.ac.standrews.cs.numonic.data.LatencyAndBandwidthData;
@@ -33,7 +39,15 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
 
     Numonic numonic = null;
 
+    /**
+     * Checks incoming monitoring data to see whether it has broken any thresholds.
+     */
     private final ThresholdChecker thresholdChecker;
+
+    /**
+     * Collects monitoring data and sends it to the System Table when enough has been collected.
+     */
+    private final ResourceRanker resourceRanker;
 
     /**
      * The name of the file system the database is running on. For example, "C:\" on windows.
@@ -44,9 +58,11 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
      * 
      * @param numonicPropertiesFileName Path to the configuration file needed to start numonic. The default file is called default_numonic_configuration.properties.
      * @param fileSystem    The name of the file system the database is running on. For example, "C:\" on windows.
+     * @param localDatabaseID ID of the local database instance. Used to identify where data has come from when it is sent remotely.
+     * @param systemTable Reference to the System Table wrapper class. Used to send data to the system table when enough has been collected.
      * @param thresholds    Array of thresholds that the system must check for.
      */
-    public NumonicReporter(final String numonicPropertiesFileName, final String fileSystem, final Threshold... thresholds) {
+    public NumonicReporter(final String numonicPropertiesFileName, final String fileSystem, final DatabaseID localDatabaseID, final ISystemTableReference systemTable, final Threshold... thresholds) {
 
         setName("numonic-reporting-thread");
 
@@ -66,11 +82,12 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
         this.fileSystem = fileSystem;
 
         thresholdChecker = new ThresholdChecker(thresholds);
+        resourceRanker = new ResourceRanker(localDatabaseID, systemTable);
     }
 
-    public NumonicReporter(final String numonicPropertiesFile, final String fileSystem, final String thresholdPropertiesFile) throws IOException {
+    public NumonicReporter(final String numonicPropertiesFile, final String fileSystem, final DatabaseID localDatabaseID, final ISystemTableReference systemTable, final String thresholdPropertiesFile) throws IOException {
 
-        this(numonicPropertiesFile, fileSystem, ThresholdChecker.getThresholds(thresholdPropertiesFile));
+        this(numonicPropertiesFile, fileSystem, localDatabaseID, systemTable, ThresholdChecker.getThresholds(thresholdPropertiesFile));
     }
 
     /**
@@ -106,6 +123,7 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
         for (final SingleSummary<FileSystemData> specificFsSummary : fileSystemSummary.getSummaries()) {
             if (specificFsSummary.getMax().file_system_location.equalsIgnoreCase(fileSystem)) {
                 thresholdChecker.analyseNewMonitoringData(specificFsSummary);
+                resourceRanker.collateRankingData(specificFsSummary);
                 break;
             }
 
@@ -117,7 +135,7 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
     public void reportMachineUtilData(final SingleSummary<MachineUtilisationData> summary) throws Exception {
 
         thresholdChecker.analyseNewMonitoringData(summary);
-
+        resourceRanker.collateRankingData(summary);
     }
 
     @Override

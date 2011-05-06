@@ -1,4 +1,4 @@
-package org.h2o.autonomic.numonic;
+package org.h2o.autonomic.numonic.threshold;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -11,9 +11,9 @@ import org.h2o.util.H2OPropertiesWrapper;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
-import uk.ac.standrews.cs.numonic.appinterface.ResourceType;
-import uk.ac.standrews.cs.numonic.appinterface.threshold.MeasurementType;
 import uk.ac.standrews.cs.numonic.data.Data;
+import uk.ac.standrews.cs.numonic.data.ResourceType;
+import uk.ac.standrews.cs.numonic.summary.MeasurementType;
 import uk.ac.standrews.cs.numonic.summary.SingleSummary;
 
 public class ThresholdChecker extends Observable {
@@ -53,10 +53,6 @@ public class ThresholdChecker extends Observable {
 
                     setChanged();
                     notifyObservers(threshold);
-
-                }
-                else {
-                    Diagnostic.traceNoEvent(DiagnosticLevel.INIT, ": " + monitoredValue + " < " + threshold.value);
 
                 }
             }
