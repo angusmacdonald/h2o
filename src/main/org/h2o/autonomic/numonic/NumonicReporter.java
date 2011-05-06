@@ -167,10 +167,9 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
     }
 
     @Override
-    public void reportSystemInfo(final SystemInfoData data) throws Exception {
+    public void reportSystemInfo(final SystemInfoData staticSysInfoData) throws Exception {
 
-        //System.out.println(data);
-
+        resourceRanker.setStaticSystemInfo(staticSysInfoData);
     }
 
     @Override

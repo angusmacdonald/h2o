@@ -11,6 +11,7 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.numonic.data.Data;
 import uk.ac.standrews.cs.numonic.data.FileSystemData;
 import uk.ac.standrews.cs.numonic.data.MachineUtilisationData;
+import uk.ac.standrews.cs.numonic.data.SystemInfoData;
 import uk.ac.standrews.cs.numonic.summary.SingleSummary;
 
 /**
@@ -60,6 +61,11 @@ public class LocalMonitoringDataCollector {
     private int measurements_before_summary = 0;
 
     /**
+     * Static information on the capacity of this machine.
+     */
+    private SystemInfoData staticSysInfoData;
+
+    /**
      * @param localDatabaseID How this set of data will be identified when it is sent to the System Table.
      * @param systemTable Where data will be sent.
      */
@@ -84,8 +90,12 @@ public class LocalMonitoringDataCollector {
             fsData = (FileSystemData) summary.getAverage();
         }
 
+        if (staticSysInfoData == null) {
+            ErrorHandling.error("No static system info has been received from Numonic.");
+        }
+
         if (machineUtilData != null && fsData != null) {
-            sendDataToSystemTable(measurements_before_summary, machineUtilData, fsData);
+            sendDataToSystemTable(measurements_before_summary, staticSysInfoData, machineUtilData, fsData);
 
             machineUtilData = null;
             fsData = null;
@@ -99,11 +109,11 @@ public class LocalMonitoringDataCollector {
      * @param machineUtilData
      * @param fsData
      */
-    private void sendDataToSystemTable(final int measurements_before_summary, final MachineUtilisationData machineUtilData, final FileSystemData fsData) {
+    private void sendDataToSystemTable(final int measurements_before_summary, final SystemInfoData staticSysInfoData, final MachineUtilisationData machineUtilData, final FileSystemData fsData) {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Sending monitoring data from " + localDatabaseID + " to the System Table.");
 
-        final MachineMonitoringData monitoringData = new MachineMonitoringData(localDatabaseID, machineUtilData, fsData, measurements_before_summary);
+        final MachineMonitoringData monitoringData = new MachineMonitoringData(localDatabaseID, staticSysInfoData, machineUtilData, fsData, measurements_before_summary);
 
         try {
             systemTable.getSystemTable().addMonitoringSummary(monitoringData);
@@ -115,6 +125,12 @@ public class LocalMonitoringDataCollector {
             ErrorHandling.exceptionError(e, "Failed to send monitoring results to the System Table.");
             //TODO send to new location.
         }
+    }
+
+    public void setStaticSystemInfo(final SystemInfoData staticSysInfoData) {
+
+        this.staticSysInfoData = staticSysInfoData;
+
     }
 
 }

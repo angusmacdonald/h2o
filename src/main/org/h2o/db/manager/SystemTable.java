@@ -364,7 +364,7 @@ public class SystemTable implements ISystemTableMigratable {
     @Override
     public void addMonitoringSummary(final MachineMonitoringData summary) {
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Monitoring data received on System Table: " + summary);
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Monitoring data received on System Table: " + summary);
 
     }
 

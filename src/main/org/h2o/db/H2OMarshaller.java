@@ -40,6 +40,7 @@ import uk.ac.standrews.cs.nds.rpc.json.JSONValue;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.numonic.data.FileSystemData;
 import uk.ac.standrews.cs.numonic.data.MachineUtilisationData;
+import uk.ac.standrews.cs.numonic.data.SystemInfoData;
 import uk.ac.standrews.cs.stachord.impl.ChordRemoteMarshaller;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
@@ -102,6 +103,21 @@ public class H2OMarshaller extends Marshaller {
     private static final String FS_BYTES_READ = "fs_bytes_read";
     private static final String FS_DISK_WRITES = "fs_disk_writes";
     private static final String FS_BYTES_WRITTEN = "fs_bytes_written";
+    private static final String SYSTEM_INFO_DATA = "systInfoData";
+    private static final String OS_NAME = "osName";
+    private static final String OS_VERSION = "os_version";
+    private static final String HOSTNAME = "hostname";
+    private static final String PRIMARY_IP = "primary_ip";
+    private static final String DEFAULT_GATEWAY = "default_gateway";
+    private static final String CPU_VENDOR = "cpu_vendor";
+    private static final String CPU_MODEL = "cpu_model";
+    private static final String NUMBER_OF_CORES = "number_of_cores";
+    private static final String NUMBER_OF_CPUS = "number_of_cpus";
+    private static final String CPU_CLOCK_SPEED = "cpu_clock_speed";
+    private static final String CPU_CACHE_SIZE = "cpu_cache_size";
+    private static final String MEMORY_TOTAL = "memory_total";
+    private static final String SWAP_TOTAL = "swap_total";
+    private static final String MACHINE_ID = "machine_id";
 
     private final ChordRemoteMarshaller chord_marshaller;
 
@@ -1093,10 +1109,12 @@ public class H2OMarshaller extends Marshaller {
         try {
             final DatabaseID databaseID = deserializeDatabaseID(object.getJSONObject(DATABASE_ID));
             final MachineUtilisationData machineUtilData = deserializeMachineUtilizationData(object.getJSONObject(MACHINE_UTILIZATION_DATA));
+            final SystemInfoData sysInfoData = deserializeSystemInfoData(object.getJSONObject(SYSTEM_INFO_DATA));
+
             final FileSystemData fsData = deserializeFileSystemData(object.getJSONObject(FS_DATA));
             final int measurements_before_summary = object.getInt(MEASUREMENTS_BEFORE_SUMMARY);
 
-            return new MachineMonitoringData(databaseID, machineUtilData, fsData, measurements_before_summary);
+            return new MachineMonitoringData(databaseID, sysInfoData, machineUtilData, fsData, measurements_before_summary);
         }
         catch (final Exception e) {
             throw new DeserializationException(e);
@@ -1110,6 +1128,7 @@ public class H2OMarshaller extends Marshaller {
         final JSONObject object = new JSONObject();
 
         object.put(DATABASE_ID, serializeDatabaseID(source.getDatabaseID()));
+        object.put(SYSTEM_INFO_DATA, serializeSystemInfoData(source.getSystemInfoData()));
         object.put(MACHINE_UTILIZATION_DATA, serializeMachineUtilizationData(source.getMachineUtilData()));
         object.put(FS_DATA, serializeFileSystemData(source.getFsData()));
         object.put(MEASUREMENTS_BEFORE_SUMMARY, source.getMeasurementsBeforeSummary());
@@ -1232,6 +1251,69 @@ public class H2OMarshaller extends Marshaller {
             fsd.fs_bytes_read = fs_bytes_read;
             fsd.fs_disk_writes = fs_disk_writes;
             fsd.fs_bytes_written = fs_bytes_written;
+
+            return fsd;
+        }
+        catch (final Exception e) {
+            throw new DeserializationException(e);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------------------
+
+    private JSONValue serializeSystemInfoData(final SystemInfoData source) {
+
+        if (source == null) { return JSONObject.NULL; }
+
+        final JSONObject object = new JSONObject();
+        object.put(MACHINE_ID, source.machine_id);
+        object.put(OS_NAME, source.os_name);
+        object.put(OS_VERSION, source.os_version);
+        object.put(HOSTNAME, source.hostname);
+        object.put(PRIMARY_IP, source.primary_ip);
+        object.put(DEFAULT_GATEWAY, source.default_gateway);
+        object.put(CPU_VENDOR, source.cpu_vendor);
+        object.put(CPU_MODEL, source.cpu_model);
+        object.put(NUMBER_OF_CORES, source.number_of_cores);
+        object.put(NUMBER_OF_CPUS, source.number_of_cpus);
+        object.put(CPU_CLOCK_SPEED, source.cpu_clock_speed);
+        object.put(CPU_CACHE_SIZE, source.cpu_cache_size);
+        object.put(MEMORY_TOTAL, source.memory_total);
+        object.put(SWAP_TOTAL, source.swap_total);
+
+        return object;
+    }
+
+    private SystemInfoData deserializeSystemInfoData(final JSONObject object) throws DeserializationException {
+
+        if (object == JSONObject.NULL) { return null; }
+
+        try {
+
+            final String machine_id = object.getString(MACHINE_ID);
+
+            // OS Info.
+            final String os_name = object.getString(OS_NAME);
+            final String os_version = object.getString(OS_VERSION);
+
+            // Network Info.
+            final String hostname = object.getString(HOSTNAME);
+            final String primary_ip = object.getString(PRIMARY_IP);
+            final String default_gateway = object.getString(DEFAULT_GATEWAY);
+
+            // CPU Info.
+            final String cpu_vendor = object.getString(CPU_VENDOR);
+            final String cpu_model = object.getString(CPU_MODEL);
+            final int number_of_cores = object.getInt(NUMBER_OF_CORES);
+            final int number_of_cpus = object.getInt(NUMBER_OF_CPUS);
+            final int cpu_clock_speed = object.getInt(CPU_CLOCK_SPEED);
+            final long cpu_cache_size = object.getLong(CPU_CACHE_SIZE);
+
+            // Memory Info.
+            final long memory_total = object.getLong(MEMORY_TOTAL);
+            final long swap_total = object.getLong(SWAP_TOTAL);
+
+            final SystemInfoData fsd = new SystemInfoData(machine_id, os_name, os_version, hostname, primary_ip, default_gateway, cpu_vendor, cpu_model, number_of_cores, number_of_cpus, cpu_clock_speed, cpu_cache_size, memory_total, swap_total);
 
             return fsd;
         }
