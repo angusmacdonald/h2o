@@ -12,6 +12,7 @@ import java.util.Queue;
 import java.util.Set;
 
 import org.h2o.autonomic.decision.ranker.metric.Metric;
+import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
@@ -37,6 +38,8 @@ import uk.ac.standrews.cs.nds.rpc.json.JSONObject;
 import uk.ac.standrews.cs.nds.rpc.json.JSONString;
 import uk.ac.standrews.cs.nds.rpc.json.JSONValue;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.numonic.data.FileSystemData;
+import uk.ac.standrews.cs.numonic.data.MachineUtilisationData;
 import uk.ac.standrews.cs.stachord.impl.ChordRemoteMarshaller;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
@@ -76,6 +79,29 @@ public class H2OMarshaller extends Marshaller {
     private static final String VALUES = "values";
     private static final String WRAPPER = "wrapper";
     private static final String TABLE_MANAGER_ADDRESS = "tableManagerAddress";
+    private static final String MACHINE_UTILIZATION_DATA = "machineUtilData";
+    private static final String FS_DATA = "fsData";
+    private static final String MEASUREMENTS_BEFORE_SUMMARY = "measurements_before_summary";
+    private static final String CPU_USER = "cpu_user_total";
+    private static final String CPU_SYS = "cpu_sys_total";
+    private static final String CPU_IDLE = "cpu_idle_total";
+    private static final String CPU_WAIT = "cpu_wait_total";
+    private static final String CPU_NICE = "cpu_nice_total";
+    private static final String MEMORY_USED = "memory_used";
+    private static final String MEMORY_FREE = "memory_free";
+    private static final String SWAP_USED = "swap_used";
+    private static final String SWAP_FREE = "swap_free";
+    private static final String FS_LOCATION = "file_system_location";
+    private static final String FS_NAME = "file_system_name";
+    private static final String FS_TYPE = "file_system_type";
+    private static final String FS_SPACE_USED = "fs_space_used";
+    private static final String FS_SPACE_FREE = "fs_space_free";
+    private static final String FS_SIZE = "fs_size";
+    private static final String FS_NUMBER_OF_FILES = "fs_number_of_files";
+    private static final String FS_DISK_READS = "fs_disk_reads";
+    private static final String FS_BYTES_READ = "fs_bytes_read";
+    private static final String FS_DISK_WRITES = "fs_disk_writes";
+    private static final String FS_BYTES_WRITTEN = "fs_bytes_written";
 
     private final ChordRemoteMarshaller chord_marshaller;
 
@@ -1052,6 +1078,162 @@ public class H2OMarshaller extends Marshaller {
             final TableInfo tableName = deserializeTableInfo(object.getJSONObject(TABLE_NAME));
 
             return new CommitResult(commit, wrapper, updateID, expectedUpdateID, tableName);
+        }
+        catch (final Exception e) {
+            throw new DeserializationException(e);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------------------
+
+    public MachineMonitoringData deserializeMachineMonitoringData(final JSONObject object) throws DeserializationException {
+
+        if (object == JSONObject.NULL) { return null; }
+
+        try {
+            final DatabaseID databaseID = deserializeDatabaseID(object.getJSONObject(DATABASE_ID));
+            final MachineUtilisationData machineUtilData = deserializeMachineUtilizationData(object.getJSONObject(MACHINE_UTILIZATION_DATA));
+            final FileSystemData fsData = deserializeFileSystemData(object.getJSONObject(FS_DATA));
+            final int measurements_before_summary = object.getInt(MEASUREMENTS_BEFORE_SUMMARY);
+
+            return new MachineMonitoringData(databaseID, machineUtilData, fsData, measurements_before_summary);
+        }
+        catch (final Exception e) {
+            throw new DeserializationException(e);
+        }
+    }
+
+    public JSONValue serializeMachineMonitoringData(final MachineMonitoringData source) {
+
+        if (source == null) { return JSONObject.NULL; }
+
+        final JSONObject object = new JSONObject();
+
+        object.put(DATABASE_ID, serializeDatabaseID(source.getDatabaseID()));
+        object.put(MACHINE_UTILIZATION_DATA, serializeMachineUtilizationData(source.getMachineUtilData()));
+        object.put(FS_DATA, serializeFileSystemData(source.getFsData()));
+        object.put(MEASUREMENTS_BEFORE_SUMMARY, source.getMeasurementsBeforeSummary());
+
+        return object;
+    }
+
+    // -------------------------------------------------------------------------------------------------------
+
+    private JSONValue serializeMachineUtilizationData(final MachineUtilisationData source) {
+
+        if (source == null) { return JSONObject.NULL; }
+
+        final JSONObject object = new JSONObject();
+
+        object.put(CPU_USER, source.getCpuUserTotal());
+        object.put(CPU_SYS, source.getCpuSysTotal());
+        object.put(CPU_IDLE, source.getCpuIdleTotal());
+        object.put(CPU_WAIT, source.getCpuWaitTotal());
+        object.put(CPU_NICE, source.getCpuNiceTotal());
+
+        object.put(MEMORY_USED, source.getMemoryUsed());
+        object.put(MEMORY_FREE, source.getMemoryFree());
+        object.put(SWAP_USED, source.getSwapUsed());
+        object.put(SWAP_FREE, source.getSwapFree());
+
+        return object;
+    }
+
+    private MachineUtilisationData deserializeMachineUtilizationData(final JSONObject object) throws DeserializationException {
+
+        if (object == JSONObject.NULL) { return null; }
+
+        try {
+            final double cpu_user_total = object.getDouble(CPU_USER);
+            final double cpu_sys_total = object.getDouble(CPU_SYS);
+            final double cpu_idle_total = object.getDouble(CPU_IDLE);
+            final double cpu_wait_total = object.getDouble(CPU_WAIT);
+            final double cpu_nice_total = object.getDouble(CPU_NICE);
+
+            final long memory_used = object.getLong(MEMORY_USED);
+            final long memory_free = object.getLong(MEMORY_FREE);
+            final long swap_used = object.getLong(SWAP_USED);
+            final long swap_free = object.getLong(SWAP_FREE);
+
+            final MachineUtilisationData mud = new MachineUtilisationData();
+
+            mud.cpu_user_total = cpu_user_total;
+            mud.cpu_sys_total = cpu_sys_total;
+            mud.cpu_idle_total = cpu_idle_total;
+            mud.cpu_idle_total = cpu_wait_total;
+            mud.cpu_nice_total = cpu_nice_total;
+
+            mud.memory_used = memory_used;
+            mud.memory_free = memory_free;
+            mud.swap_used = swap_used;
+            mud.swap_free = swap_free;
+
+            return mud;
+        }
+        catch (final Exception e) {
+            throw new DeserializationException(e);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------------------
+
+    private JSONValue serializeFileSystemData(final FileSystemData source) {
+
+        if (source == null) { return JSONObject.NULL; }
+
+        final JSONObject object = new JSONObject();
+
+        object.put(FS_LOCATION, source.getFileSystemLocation());
+        object.put(FS_TYPE, source.getFileSystemType());
+        object.put(FS_NAME, source.getFileSystemName());
+        object.put(FS_SPACE_USED, source.getSpaceUsed());
+        object.put(FS_SPACE_FREE, source.getSpaceFree());
+
+        object.put(FS_SIZE, source.getSize());
+        object.put(FS_NUMBER_OF_FILES, source.getNumberOfFiles());
+        object.put(FS_DISK_READS, source.getNumberOfDiskReads());
+        object.put(FS_BYTES_READ, source.getBytesRead());
+        object.put(FS_DISK_WRITES, source.getNumberOfDiskWrites());
+        object.put(FS_BYTES_WRITTEN, source.getBytesWritten());
+
+        return object;
+    }
+
+    private FileSystemData deserializeFileSystemData(final JSONObject object) throws DeserializationException {
+
+        if (object == JSONObject.NULL) { return null; }
+
+        try {
+
+            final String file_system_location = object.getString(FS_LOCATION);
+            final String file_system_type = object.getString(FS_TYPE);
+            final String file_system_name = object.getString(FS_NAME);
+
+            final long fs_space_used = object.getLong(FS_SPACE_USED);
+            final long fs_space_free = object.getLong(FS_SPACE_FREE);
+            final long fs_size = object.getLong(FS_SIZE);
+            final long fs_number_of_files = object.getLong(FS_NUMBER_OF_FILES);
+            final long fs_disk_reads = object.getLong(FS_DISK_READS);
+            final long fs_bytes_read = object.getLong(FS_BYTES_READ);
+            final long fs_disk_writes = object.getLong(FS_DISK_WRITES);
+            final long fs_bytes_written = object.getLong(FS_BYTES_WRITTEN);
+
+            final FileSystemData fsd = new FileSystemData();
+
+            fsd.file_system_location = file_system_location;
+            fsd.file_system_type = file_system_type;
+            fsd.file_system_name = file_system_name;
+
+            fsd.fs_space_used = fs_space_used;
+            fsd.fs_space_free = fs_space_free;
+            fsd.fs_size = fs_size;
+            fsd.fs_number_of_files = fs_number_of_files;
+            fsd.fs_disk_reads = fs_disk_reads;
+            fsd.fs_bytes_read = fs_bytes_read;
+            fsd.fs_disk_writes = fs_disk_writes;
+            fsd.fs_bytes_written = fs_bytes_written;
+
+            return fsd;
         }
         catch (final Exception e) {
             throw new DeserializationException(e);

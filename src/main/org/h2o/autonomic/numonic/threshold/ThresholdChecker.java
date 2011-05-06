@@ -83,8 +83,6 @@ public class ThresholdChecker extends Observable {
 
             final String value = thresholdProperties.getProperty((String) resourceName);
 
-            System.out.println(resourceName);
-
             if (value.equals("ignore")) {
                 continue;
             }

@@ -17,6 +17,7 @@ import java.util.SortedSet;
 
 import org.h2.engine.Database;
 import org.h2o.autonomic.decision.ranker.metric.Metric;
+import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
@@ -25,7 +26,6 @@ import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.manager.monitoring.systemtable.IMachineRanking;
 import org.h2o.db.manager.monitoring.systemtable.InstanceMonitor;
-import org.h2o.db.manager.monitoring.systemtable.InstanceResourceSummary;
 import org.h2o.db.manager.util.SystemTableMigrationState;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
@@ -33,6 +33,8 @@ import org.h2o.util.exceptions.MigrationException;
 import org.h2o.util.exceptions.MovedException;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 /**
@@ -360,14 +362,17 @@ public class SystemTable implements ISystemTableMigratable {
     }
 
     @Override
-    public void addMonitoringSummary(final InstanceResourceSummary summary) {
+    public void addMonitoringSummary(final MachineMonitoringData summary) {
 
-        monitoring.addMonitoringSummary(summary);
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Monitoring data received on System Table: " + summary);
+
     }
 
     @Override
-    public SortedSet<InstanceResourceSummary> getRankedListOfInstances() {
+    public SortedSet<MachineMonitoringData> getRankedListOfInstances() {
 
-        return monitoring.getRankedListOfInstances();
+        // TODO Auto-generated method stub
+        return null;
     }
+
 }

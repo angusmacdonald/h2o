@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Observer;
 
-import org.h2o.autonomic.numonic.ranking.ResourceRanker;
+import org.h2o.autonomic.numonic.ranking.LocalMonitoringDataCollector;
 import org.h2o.autonomic.numonic.threshold.Threshold;
 import org.h2o.autonomic.numonic.threshold.ThresholdChecker;
 import org.h2o.db.id.DatabaseID;
@@ -47,7 +47,7 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
     /**
      * Collects monitoring data and sends it to the System Table when enough has been collected.
      */
-    private final ResourceRanker resourceRanker;
+    private final LocalMonitoringDataCollector resourceRanker;
 
     /**
      * The name of the file system the database is running on. For example, "C:\" on windows.
@@ -82,7 +82,7 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
         this.fileSystem = fileSystem;
 
         thresholdChecker = new ThresholdChecker(thresholds);
-        resourceRanker = new ResourceRanker(localDatabaseID, systemTable);
+        resourceRanker = new LocalMonitoringDataCollector(localDatabaseID, systemTable);
     }
 
     public NumonicReporter(final String numonicPropertiesFile, final String fileSystem, final DatabaseID localDatabaseID, final ISystemTableReference systemTable, final String thresholdPropertiesFile) throws IOException {

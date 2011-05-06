@@ -4,6 +4,7 @@ import java.net.UnknownHostException;
 import java.util.Set;
 
 import org.h2o.autonomic.decision.ranker.metric.Metric;
+import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.db.H2OMarshaller;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
@@ -437,6 +438,17 @@ public class SystemTableServer extends ApplicationServer {
 
                 return marshaller.serializeInetSocketAddress(system_table.getAddress());
 
+            }
+        });
+
+        handler_map.put("addMonitoringSummary", new IHandler() {
+
+            @Override
+            public JSONValue execute(final JSONArray args) throws Exception {
+
+                final MachineMonitoringData p0 = marshaller.deserializeMachineMonitoringData(args.getJSONObject(0));
+                system_table.addMonitoringSummary(p0);
+                return null;
             }
         });
     }

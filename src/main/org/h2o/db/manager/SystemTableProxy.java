@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.SortedSet;
 
 import org.h2o.autonomic.decision.ranker.metric.Metric;
+import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.db.H2OMarshaller;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
@@ -16,7 +17,6 @@ import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.interfaces.ISystemTableMigratable;
-import org.h2o.db.manager.monitoring.systemtable.InstanceResourceSummary;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
 import org.h2o.util.exceptions.MigrationException;
@@ -596,16 +596,26 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     }
 
     @Override
-    public void addMonitoringSummary(final InstanceResourceSummary summary) {
+    public void addMonitoringSummary(final MachineMonitoringData summary) throws RPCException, MovedException {
 
-        // TODO JSON Auto-generated method stub
-
+        try {
+            final JSONArray params = new JSONArray();
+            params.put(marshaller.serializeMachineMonitoringData(summary));
+            makeCall("addMonitoringSummary", params);
+        }
+        catch (final MovedException e) {
+            throw e;
+        }
+        catch (final Exception e) {
+            dealWithException(e);
+        }
     }
 
     @Override
-    public SortedSet<InstanceResourceSummary> getRankedListOfInstances() {
+    public SortedSet<MachineMonitoringData> getRankedListOfInstances() {
 
-        // TODO JSON Auto-generated method stub
+        // TODO Auto-generated method stub
         return null;
     }
+
 }
