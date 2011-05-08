@@ -34,7 +34,6 @@ import uk.ac.standrews.cs.nds.JSONstream.rpc.JSONReader;
 import uk.ac.standrews.cs.nds.rpc.DeserializationException;
 import uk.ac.standrews.cs.nds.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
-import uk.ac.standrews.cs.nds.rpc.json.JSONArray;
 import uk.ac.standrews.cs.nds.rpc.json.JSONObject;
 import uk.ac.standrews.cs.nds.rpc.json.JSONString;
 import uk.ac.standrews.cs.nds.rpc.json.JSONValue;
@@ -141,19 +140,25 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeITableManagerRemote(final ITableManagerRemote source, final JSONWriter writer) {
+    public void serializeITableManagerRemote(final ITableManagerRemote source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONObject.NULL; }
+        if (source == null) {
+            writer.value(null);
+        }
+        else {
+            try {
 
-        final JSONReader reader = new JSONObject();
-        try {
-            object.put(TABLE_NAME, source.getTableInfo().getFullTableName());
-            object.put(TABLE_MANAGER_ADDRESS, serializeInetSocketAddress(source.getAddress(), writer));
+                writer.object();
+                writer.key(TABLE_NAME);
+                writer.value(source.getTableInfo().getFullTableName());
+                writer.key(TABLE_MANAGER_ADDRESS);
+                writer.value(serializeInetSocketAddress(source.getAddress(), writer));
+                writer.endObject();
+            }
+            catch (final RPCException e) {
+                ErrorHandling.exceptionError(e, "Failed when serializing ITableManagerRemote instance.");
+            }
         }
-        catch (final RPCException e) {
-            ErrorHandling.exceptionError(e, "Failed when serializing ITableManagerRemote instance.");
-        }
-        return object;
 
     }
 
@@ -223,16 +228,22 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeDatabaseID(final DatabaseID source, final JSONWriter writer) {
+    public void serializeDatabaseID(final DatabaseID source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONObject.NULL; }
+        if (source == null) {
+            writer.value(null);
 
-        final JSONReader reader = new JSONObject();
+        }
+        else {
+            writer.object();
 
-        object.put(DATABASE_ID, source.getID());
-        object.put(DATABASE_URL, source.getURLwithRMIPort());
+            writer.key(DATABASE_ID);
+            writer.value(source.getID());
+            writer.key(DATABASE_URL);
+            writer.value(source.getURLwithRMIPort());
 
-        return object;
+            writer.endObject();
+        }
     }
 
     public DatabaseID deserializeDatabaseID(final JSONReader reader) throws DeserializationException {
@@ -255,20 +266,28 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeTableInfo(final TableInfo source, final JSONWriter writer) {
+    public void serializeTableInfo(final TableInfo source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONObject.NULL; }
+        if (source == null) {
+            writer.value(null);
+        }
+        else {
 
-        final JSONReader reader = new JSONObject();
-
-        object.put(TABLE_NAME, source.getTableName());
-        object.put(SCHEMA_NAME, source.getSchemaName());
-        object.put(MODIFICATION_ID, source.getModificationID());
-        object.put(TABLE_SET, source.getTableSet());
-        object.put(TABLE_TYPE, source.getTableType());
-        object.put(DATABASE_LOCATION, serializeDatabaseID(source.getDatabaseID(), writer));
-
-        return object;
+            writer.object();
+            writer.key(TABLE_NAME);
+            writer.value(source.getTableName());
+            writer.key(SCHEMA_NAME);
+            writer.value(source.getSchemaName());
+            writer.key(MODIFICATION_ID);
+            writer.value(source.getModificationID());
+            writer.key(TABLE_SET);
+            writer.value(source.getTableSet());
+            writer.key(TABLE_TYPE);
+            writer.value(source.getTableType());
+            writer.key(DATABASE_LOCATION);
+            serializeDatabaseID(source.getDatabaseID(), writer);
+            writer.endObject();
+        }
     }
 
     public TableInfo deserializeTableInfo(final JSONReader reader) throws DeserializationException {
@@ -321,16 +340,21 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeLockRequest(final LockRequest source, final JSONWriter writer) {
+    public void serializeLockRequest(final LockRequest source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONObject.NULL; }
+        if (source == null) {
+            writer.value(null);
+        }
+        else {
 
-        final JSONReader reader = new JSONObject();
+            writer.object();
 
-        object.put(DATABASE_MAKING_REQUEST, serializeDatabaseInstanceWrapper(source.getRequestLocation(), writer));
-        object.put(SESSION_ID, source.getSessionID());
-
-        return object;
+            writer.key(DATABASE_MAKING_REQUEST);
+            serializeDatabaseInstanceWrapper(source.getRequestLocation(), writer);
+            writer.key(SESSION_ID);
+            writer.value(source.getSessionID());
+            writer.endObject();
+        }
     }
 
     public LockRequest deserializeLockRequest(final JSONReader reader) throws DeserializationException {
@@ -355,17 +379,23 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeReplicaManager(final ReplicaManager source, final JSONWriter writer) {
+    public void serializeReplicaManager(final ReplicaManager source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONObject.NULL; }
+        if (source == null) {
+            writer.value(null);
+        }
+        else {
 
-        final JSONReader reader = new JSONObject();
+            writer.object();
 
-        object.put(ALL_REPLICAS, serializeMapDatabaseInstanceWrapperInteger(source.getActiveReplicas(), writer));
-        object.put(ACTIVE_REPLICAS, serializeMapDatabaseInstanceWrapperInteger(source.getAllReplicas(), writer));
-        object.put(PRIMARY_LOCATION, serializeDatabaseInstanceWrapper(source.getPrimaryLocation(), writer));
-
-        return object;
+            writer.key(ALL_REPLICAS);
+            serializeMapDatabaseInstanceWrapperInteger(source.getActiveReplicas(), writer);
+            writer.key(ACTIVE_REPLICAS);
+            serializeMapDatabaseInstanceWrapperInteger(source.getAllReplicas(), writer);
+            writer.key(PRIMARY_LOCATION);
+            serializeDatabaseInstanceWrapper(source.getPrimaryLocation(), writer);
+            writer.endObject();
+        }
     }
 
     public ReplicaManager deserializeReplicaManager(final JSONReader reader) throws DeserializationException {
@@ -397,17 +427,23 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeDatabaseInstanceWrapper(final DatabaseInstanceWrapper source, final JSONWriter writer) {
+    public void serializeDatabaseInstanceWrapper(final DatabaseInstanceWrapper source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONObject.NULL; }
+        if (source == null) {
+            writer.value(null);
+        }
+        else {
 
-        final JSONReader reader = new JSONObject();
+            writer.object();
 
-        object.put(DATABASE_URL, serializeDatabaseID(source.getURL(), writer));
-        object.put(DATABASE_INSTANCE, serializeIDatabaseInstanceRemote(source.getDatabaseInstance(), writer));
-        object.put(ACTIVE, source.getActive());
-
-        return object;
+            writer.key(DATABASE_URL);
+            serializeDatabaseID(source.getURL(), writer);
+            writer.key(DATABASE_INSTANCE);
+            writer.value(serializeIDatabaseInstanceRemote(source.getDatabaseInstance(), writer));
+            writer.key(ACTIVE);
+            writer.value(source.getActive());
+            writer.endObject();
+        }
     }
 
     public DatabaseInstanceWrapper deserializeDatabaseInstanceWrapper(final JSONReader reader) throws DeserializationException {
@@ -437,17 +473,23 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeTableManagerWrapper(final TableManagerWrapper source, final JSONWriter writer) {
+    public void serializeTableManagerWrapper(final TableManagerWrapper source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONObject.NULL; }
+        if (source == null) {
+            writer.value(null);
+        }
+        else {
 
-        final JSONReader reader = new JSONObject();
+            writer.object();
 
-        object.put(TABLE_INFO, serializeTableInfo(source.getTableInfo(), writer));
-        object.put(TABLE_MANAGER, serializeITableManagerRemote(source.getTableManager(), writer));
-        object.put(TABLE_MANAGER_URL, serializeDatabaseID(source.getURL(), writer));
-
-        return object;
+            writer.key(TABLE_INFO);
+            serializeTableInfo(source.getTableInfo(), writer);
+            writer.key(TABLE_MANAGER);
+            serializeITableManagerRemote(source.getTableManager(), writer);
+            writer.key(TABLE_MANAGER_URL);
+            serializeDatabaseID(source.getURL(), writer);
+            writer.endObject();
+        }
     }
 
     public TableManagerWrapper deserializeTableManagerWrapper(final JSONReader reader) throws DeserializationException {
@@ -475,21 +517,31 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeTableProxy(final TableProxy source, final JSONWriter writer) {
+    public void serializeTableProxy(final TableProxy source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONObject.NULL; }
+        if (source == null) {
+            writer.value(null);
+        }
+        else {
 
-        final JSONReader reader = new JSONObject();
+            writer.object();
 
-        object.put(LOCK_GRANTED, serializeLockType(source.getLockGranted(), writer));
-        object.put(LOCK_REQUESTED, serializeLockType(source.getLockRequested(), writer));
-        object.put(TABLE_NAME, serializeTableInfo(source.getTableName(), writer));
-        object.put(ALL_REPLICAS, serializeMapDatabaseInstanceWrapperInteger(source.getAllReplicas(), writer));
-        object.put(TABLE_MANAGER, serializeITableManagerRemote(source.getTableManager(), writer));
-        object.put(REQUESTING_DATABASE, serializeLockRequest(source.getRequestingDatabase(), writer));
-        object.put(UPDATE_ID, source.getUpdateID());
-
-        return object;
+            writer.key(LOCK_GRANTED);
+            serializeLockType(source.getLockGranted(), writer);
+            writer.key(LOCK_REQUESTED);
+            serializeLockType(source.getLockRequested(), writer);
+            writer.key(TABLE_NAME);
+            serializeTableInfo(source.getTableName(), writer);
+            writer.key(ALL_REPLICAS);
+            serializeMapDatabaseInstanceWrapperInteger(source.getAllReplicas(), writer);
+            writer.key(TABLE_MANAGER);
+            serializeITableManagerRemote(source.getTableManager(), writer);
+            writer.key(REQUESTING_DATABASE);
+            serializeLockRequest(source.getRequestingDatabase(), writer);
+            writer.key(UPDATE_ID);
+            writer.value(source.getUpdateID());
+            writer.endObject();
+        }
     }
 
     public TableProxy deserializeTableProxy(final JSONReader reader) throws DeserializationException {
@@ -523,15 +575,20 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeCollectionDatabaseInstanceWrapper(final Collection<DatabaseInstanceWrapper> source, final JSONWriter writer) {
+    public void serializeCollectionDatabaseInstanceWrapper(final Collection<DatabaseInstanceWrapper> source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONArray.NULL; }
-
-        final JSONReader reader = new JSONArray();
-        for (final DatabaseInstanceWrapper instance : source) {
-            array.put(serializeDatabaseInstanceWrapper(instance, writer));
+        if (source == null) {
+            writer.value(null);
         }
-        return array;
+        else {
+
+            writer.array();
+            for (final DatabaseInstanceWrapper instance : source) {
+                serializeDatabaseInstanceWrapper(instance, writer);
+            }
+            writer.endArray();
+        }
+
     }
 
     public Set<DatabaseInstanceWrapper> deserializeSetDatabaseInstanceWrapper(final JSONReader reader) throws DeserializationException {
@@ -575,26 +632,32 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeMapDatabaseIDDatabaseInstanceWrapper(final Map<DatabaseID, DatabaseInstanceWrapper> source, final JSONWriter writer) {
+    public void serializeMapDatabaseIDDatabaseInstanceWrapper(final Map<DatabaseID, DatabaseInstanceWrapper> source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONObject.NULL; }
+        if (source == null) {
+            writer.value(null);
+        }
+        else {
 
-        final JSONReader reader = new JSONObject();
+            writer.object();
 
-        object.put(KEYS, serializeSetDatabaseID(source.keySet(), writer));
-        object.put(VALUES, serializeCollectionDatabaseInstanceWrapper(source.values(), writer));
-
-        return object;
+            writer.key(KEYS);
+            serializeSetDatabaseID(source.keySet(), writer);
+            writer.key(VALUES);
+            serializeCollectionDatabaseInstanceWrapper(source.values(), writer);
+            writer.endObject();
+        }
     }
 
     public Map<DatabaseID, DatabaseInstanceWrapper> deserializeMapDatabaseIDDatabaseInstanceWrapper(final JSONReader reader) throws DeserializationException {
 
-        if (reader.checkNull()) { return null; }
-        reader.object();
-
         try {
-            final Set<DatabaseID> keys = deserializeSetDatabaseID(object.getJSONArray(KEYS));
-            final Collection<DatabaseInstanceWrapper> values = deserializeCollectionDatabaseInstanceWrapper(object.getJSONArray(VALUES));
+            if (reader.checkNull()) { return null; }
+            reader.object();
+            reader.key(KEYS);
+            final Set<DatabaseID> keys = deserializeSetDatabaseID(reader);
+            reader.key(VALUES);
+            final Collection<DatabaseInstanceWrapper> values = deserializeCollectionDatabaseInstanceWrapper(reader);
 
             final HashMap<DatabaseID, DatabaseInstanceWrapper> result = new HashMap<DatabaseID, DatabaseInstanceWrapper>();
 
@@ -607,6 +670,7 @@ public class H2OMarshaller extends Marshaller {
                 result.put(arg0, arg1);
             }
 
+            reader.endObject();
             return result;
         }
         catch (final Exception e) {
@@ -616,16 +680,21 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeMapTableInfoTableManagerWrapper(final Map<TableInfo, TableManagerWrapper> source, final JSONWriter writer) {
+    public void serializeMapTableInfoTableManagerWrapper(final Map<TableInfo, TableManagerWrapper> source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONObject.NULL; }
+        if (source == null) {
+            writer.value(null);
+        }
+        else {
 
-        final JSONReader reader = new JSONObject();
+            writer.object();
 
-        object.put(KEYS, serializeSetTableInfo(source.keySet(), writer));
-        object.put(VALUES, serializeCollectionTableManagerWrapper(source.values(), writer));
-
-        return object;
+            writer.key(KEYS);
+            serializeSetTableInfo(source.keySet(), writer);
+            writer.key(VALUES);
+            serializeCollectionTableManagerWrapper(source.values(), writer);
+            writer.endObject();
+        }
     }
 
     public Map<TableInfo, TableManagerWrapper> deserializeMapTableInfoTableManagerWrapper(final JSONReader reader) throws DeserializationException {
@@ -665,15 +734,19 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private JSONValue serializeCollectionTableManagerWrapper(final Collection<TableManagerWrapper> source, final JSONWriter writer) {
+    private void serializeCollectionTableManagerWrapper(final Collection<TableManagerWrapper> source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONArray.NULL; }
-
-        final JSONReader reader = new JSONArray();
-        for (final TableManagerWrapper instance : source) {
-            array.put(serializeTableManagerWrapper(instance, writer));
+        if (source == null) {
+            writer.value(null);
         }
-        return array;
+        else {
+
+            writer.array();
+            for (final TableManagerWrapper instance : source) {
+                serializeTableManagerWrapper(instance, writer);
+            }
+            writer.endArray();
+        }
     }
 
     public Set<TableManagerWrapper> deserializeSetTableManagerWrapper(final JSONReader reader) throws DeserializationException {
@@ -699,16 +772,21 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeMapTableInfoSetDatabaseID(final Map<TableInfo, Set<DatabaseID>> source, final JSONWriter writer) {
+    public void serializeMapTableInfoSetDatabaseID(final Map<TableInfo, Set<DatabaseID>> source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONObject.NULL; }
+        if (source == null) {
+            writer.value(null);
+        }
+        else {
 
-        final JSONReader reader = new JSONObject();
+            writer.object();
 
-        object.put(KEYS, serializeSetTableInfo(source.keySet(), writer));
-        object.put(VALUES, serializeCollectionSetDatabaseID(source.values(), writer));
-
-        return object;
+            writer.key(KEYS);
+            serializeSetTableInfo(source.keySet(), writer);
+            writer.key(VALUES);
+            serializeCollectionSetDatabaseID(source.values(), writer);
+            writer.endObject();
+        }
     }
 
     public Map<TableInfo, Set<DatabaseID>> deserializeMapTableInfoSetDatabaseID(final JSONReader reader) throws DeserializationException {
@@ -746,15 +824,19 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeSetTableManagerWrapper(final Set<TableManagerWrapper> source, final JSONWriter writer) {
+    public void serializeSetTableManagerWrapper(final Set<TableManagerWrapper> source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONArray.NULL; }
-
-        final JSONReader reader = new JSONArray();
-        for (final TableManagerWrapper instance : source) {
-            array.put(serializeTableManagerWrapper(instance, writer));
+        if (source == null) {
+            writer.value(null);
         }
-        return array;
+        else {
+
+            writer.array();
+            for (final TableManagerWrapper instance : source) {
+                serializeTableManagerWrapper(instance, writer);
+            }
+            writer.endArray();
+        }
     }
 
     public Collection<TableManagerWrapper> deserializeCollectionTableManagerWrapper(final JSONReader reader) throws DeserializationException {
@@ -778,16 +860,21 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeMapTableInfoDatabaseID(final Map<TableInfo, DatabaseID> source, final JSONWriter writer) {
+    public void serializeMapTableInfoDatabaseID(final Map<TableInfo, DatabaseID> source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONObject.NULL; }
+        if (source == null) {
+            writer.value(null);
+        }
+        else {
 
-        final JSONReader reader = new JSONObject();
+            writer.object();
 
-        object.put(KEYS, serializeSetTableInfo(source.keySet(), writer));
-        object.put(VALUES, serializeCollectionDatabaseID(source.values(), writer));
-
-        return object;
+            writer.key(KEYS);
+            serializeSetTableInfo(source.keySet(), writer);
+            writer.key(VALUES);
+            serializeCollectionDatabaseID(source.values(), writer);
+            writer.endObject();
+        }
     }
 
     public Map<TableInfo, DatabaseID> deserializeMapTableInfoDatabaseID(final JSONReader reader) throws DeserializationException {
@@ -826,15 +913,19 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeCollectionCommitResult(final Collection<CommitResult> source, final JSONWriter writer) {
+    public void serializeCollectionCommitResult(final Collection<CommitResult> source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONArray.NULL; }
-
-        final JSONReader reader = new JSONArray();
-        for (final CommitResult instance : source) {
-            array.put(serializeCommitResult(instance, writer));
+        if (source == null) {
+            writer.value(null);
         }
-        return array;
+        else {
+
+            writer.array();
+            for (final CommitResult instance : source) {
+                serializeCommitResult(instance, writer);
+            }
+            writer.endArray();
+        }
     }
 
     public Set<CommitResult> deserializeCollectionCommitResult(final JSONReader reader) throws DeserializationException {
@@ -857,15 +948,19 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeSetString(final Set<String> source, final JSONWriter writer) {
+    public void serializeSetString(final Set<String> source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONArray.NULL; }
-
-        final JSONReader reader = new JSONArray();
-        for (final String s : source) {
-            array.put(s);
+        if (source == null) {
+            writer.value(null);
         }
-        return array;
+        else {
+
+            writer.array();
+            for (final String s : source) {
+                writer.value(s);
+            }
+            writer.endArray();
+        }
     }
 
     public Set<String> deserializeSetString(final JSONReader reader) throws DeserializationException {
@@ -890,15 +985,19 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeQueueDatabaseInstanceWrapper(final Queue<DatabaseInstanceWrapper> source, final JSONWriter writer) {
+    public void serializeQueueDatabaseInstanceWrapper(final Queue<DatabaseInstanceWrapper> source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONArray.NULL; }
-
-        final JSONReader reader = new JSONArray();
-        for (final DatabaseInstanceWrapper instance : source) {
-            array.put(serializeDatabaseInstanceWrapper(instance, writer));
+        if (source == null) {
+            writer.value(null);
         }
-        return array;
+        else {
+
+            writer.array();
+            for (final DatabaseInstanceWrapper instance : source) {
+                serializeDatabaseInstanceWrapper(instance, writer);
+            }
+            writer.endArray();
+        }
     }
 
     public Queue<DatabaseInstanceWrapper> deserializeQueueDatabaseInstanceWrapper(final JSONReader reader) throws DeserializationException {
@@ -924,16 +1023,21 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeMapDatabaseInstanceWrapperInteger(final Map<DatabaseInstanceWrapper, Integer> source, final JSONWriter writer) {
+    public void serializeMapDatabaseInstanceWrapperInteger(final Map<DatabaseInstanceWrapper, Integer> source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONObject.NULL; }
+        if (source == null) {
+            writer.value(null);
+        }
+        else {
 
-        final JSONReader reader = new JSONObject();
+            writer.object();
 
-        object.put(KEYS, serializeCollectionDatabaseInstanceWrapper(source.keySet(), writer));
-        object.put(VALUES, serializeCollectionInteger(source.values(), writer));
-
-        return object;
+            writer.key(KEYS);
+            serializeCollectionDatabaseInstanceWrapper(source.keySet(), writer);
+            writer.key(VALUES);
+            serializeCollectionInteger(source.values(), writer);
+            writer.endObject();
+        }
     }
 
     public Map<DatabaseInstanceWrapper, Integer> deserializeMapDatabaseInstanceWrapperInteger(final JSONReader reader) throws DeserializationException {
@@ -969,15 +1073,19 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private JSONValue serializeCollectionInteger(final Collection<Integer> source, final JSONWriter writer) {
+    private void serializeCollectionInteger(final Collection<Integer> source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONArray.NULL; }
-
-        final JSONReader reader = new JSONArray();
-        for (final Integer instance : source) {
-            array.put(instance);
+        if (source == null) {
+            writer.value(null);
         }
-        return array;
+        else {
+
+            writer.array();
+            for (final Integer instance : source) {
+                writer.value(instance);
+            }
+            writer.endArray();
+        }
     }
 
     private Collection<Integer> deserializeCollectionInteger(final JSONReader reader) throws DeserializationException {
@@ -1000,15 +1108,19 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private JSONValue serializeSetDatabaseID(final Set<DatabaseID> source, final JSONWriter writer) {
+    private void serializeSetDatabaseID(final Set<DatabaseID> source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONArray.NULL; }
-
-        final JSONReader reader = new JSONArray();
-        for (final DatabaseID instance : source) {
-            array.put(serializeDatabaseID(instance, writer));
+        if (source == null) {
+            writer.value(null);
         }
-        return array;
+        else {
+
+            writer.array();
+            for (final DatabaseID instance : source) {
+                serializeDatabaseID(instance, writer);
+            }
+            writer.endArray();
+        }
     }
 
     private Set<DatabaseID> deserializeSetDatabaseID(final JSONReader reader) throws DeserializationException {
@@ -1032,15 +1144,19 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private JSONValue serializeSetTableInfo(final Set<TableInfo> source, final JSONWriter writer) {
+    private void serializeSetTableInfo(final Set<TableInfo> source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONArray.NULL; }
-
-        final JSONReader reader = new JSONArray();
-        for (final TableInfo instance : source) {
-            array.put(serializeTableInfo(instance, writer));
+        if (source == null) {
+            writer.value(null);
         }
-        return array;
+        else {
+
+            writer.array();
+            for (final TableInfo instance : source) {
+                serializeTableInfo(instance, writer);
+            }
+            writer.endArray();
+        }
     }
 
     private Set<TableInfo> deserializeSetTableInfo(final JSONReader reader) throws DeserializationException {
@@ -1064,15 +1180,19 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private JSONValue serializeCollectionSetDatabaseID(final Collection<Set<DatabaseID>> source, final JSONWriter writer) {
+    private void serializeCollectionSetDatabaseID(final Collection<Set<DatabaseID>> source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONArray.NULL; }
-
-        final JSONReader reader = new JSONArray();
-        for (final Set<DatabaseID> instance : source) {
-            array.put(serializeSetDatabaseID(instance, writer));
+        if (source == null) {
+            writer.value(null);
         }
-        return array;
+        else {
+
+            writer.array();
+            for (final Set<DatabaseID> instance : source) {
+                serializeSetDatabaseID(instance, writer);
+            }
+            writer.endArray();
+        }
     }
 
     private Set<Set<DatabaseID>> deserializeSetSetDatabaseID(final JSONReader reader) throws DeserializationException {
@@ -1116,15 +1236,20 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private JSONValue serializeCollectionDatabaseID(final Collection<DatabaseID> source, final JSONWriter writer) {
+    private void serializeCollectionDatabaseID(final Collection<DatabaseID> source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONArray.NULL; }
-
-        final JSONReader reader = new JSONArray();
-        for (final DatabaseID instance : source) {
-            array.put(serializeDatabaseID(instance, writer));
+        if (source == null) {
+            writer.value(null);
         }
-        return array;
+        else {
+
+            writer.array();
+            for (final DatabaseID instance : source) {
+                serializeDatabaseID(instance, writer);
+            }
+            writer.endArray();
+        }
+
     }
 
     private Collection<DatabaseID> deserializeCollectionDatabaseID(final JSONReader reader) throws DeserializationException {
@@ -1134,7 +1259,7 @@ public class H2OMarshaller extends Marshaller {
             if (reader.checkNull()) { return null; }
             reader.array();
 
-            final Collection<DatabaseID> result = new ArrayList<DatabaseID>(array.length());
+            final Collection<DatabaseID> result = new ArrayList<DatabaseID>();
             while (!reader.have(JSONReader.ENDARRAY)) {
                 result.add(deserializeDatabaseID(reader));
             }
@@ -1148,19 +1273,27 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private JSONValue serializeCommitResult(final CommitResult source, final JSONWriter writer) {
+    private void serializeCommitResult(final CommitResult source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONObject.NULL; }
+        if (source == null) {
+            writer.value(null);
+        }
+        else {
 
-        final JSONReader reader = new JSONObject();
+            writer.object();
 
-        object.put(COMMIT, source.isCommit());
-        object.put(WRAPPER, serializeDatabaseInstanceWrapper(source.getDatabaseInstanceWrapper(), writer));
-        object.put(UPDATE_ID, source.getUpdateID());
-        object.put(EXPECTED_UPDATE_ID, source.getExpectedUpdateID());
-        object.put(TABLE_NAME, serializeTableInfo(source.getTable(), writer));
-
-        return object;
+            writer.key(COMMIT);
+            writer.value(source.isCommit());
+            writer.key(WRAPPER);
+            serializeDatabaseInstanceWrapper(source.getDatabaseInstanceWrapper(), writer);
+            writer.key(UPDATE_ID);
+            writer.value(source.getUpdateID());
+            writer.key(EXPECTED_UPDATE_ID);
+            writer.value(source.getExpectedUpdateID());
+            writer.key(TABLE_NAME);
+            serializeTableInfo(source.getTable(), writer);
+            writer.endObject();
+        }
     }
 
     private CommitResult deserializeCommitResult(final JSONReader reader) throws DeserializationException {
@@ -1220,41 +1353,61 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    public JSONValue serializeMachineMonitoringData(final MachineMonitoringData source, final JSONWriter writer) {
+    public void serializeMachineMonitoringData(final MachineMonitoringData source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONObject.NULL; }
+        if (source == null) {
+            writer.value(null);
+        }
+        else {
 
-        final JSONReader reader = new JSONObject();
+            writer.object();
 
-        object.put(DATABASE_ID, serializeDatabaseID(source.getDatabaseID(), writer));
-        object.put(SYSTEM_INFO_DATA, serializeSystemInfoData(source.getSystemInfoData(), writer));
-        object.put(MACHINE_UTILIZATION_DATA, serializeMachineUtilizationData(source.getMachineUtilData(), writer));
-        object.put(FS_DATA, serializeFileSystemData(source.getFsData(), writer));
-        object.put(MEASUREMENTS_BEFORE_SUMMARY, source.getMeasurementsBeforeSummary());
-
-        return object;
+            writer.key(DATABASE_ID);
+            serializeDatabaseID(source.getDatabaseID(), writer);
+            writer.key(SYSTEM_INFO_DATA);
+            serializeSystemInfoData(source.getSystemInfoData(), writer);
+            writer.key(MACHINE_UTILIZATION_DATA);
+            serializeMachineUtilizationData(source.getMachineUtilData(), writer);
+            writer.key(FS_DATA);
+            serializeFileSystemData(source.getFsData(), writer);
+            writer.key(MEASUREMENTS_BEFORE_SUMMARY);
+            writer.value(source.getMeasurementsBeforeSummary());
+            writer.endObject();
+        }
     }
 
     // -------------------------------------------------------------------------------------------------------
 
-    private JSONValue serializeMachineUtilizationData(final MachineUtilisationData source, final JSONWriter writer) {
+    private void serializeMachineUtilizationData(final MachineUtilisationData source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONObject.NULL; }
+        if (source == null) {
+            writer.value(null);
+        }
+        else {
 
-        final JSONReader reader = new JSONObject();
+            writer.object();
 
-        object.put(CPU_USER, source.getCpuUserTotal());
-        object.put(CPU_SYS, source.getCpuSysTotal());
-        object.put(CPU_IDLE, source.getCpuIdleTotal());
-        object.put(CPU_WAIT, source.getCpuWaitTotal());
-        object.put(CPU_NICE, source.getCpuNiceTotal());
+            writer.key(CPU_USER);
+            writer.value(source.getCpuUserTotal());
+            writer.key(CPU_SYS);
+            writer.value(source.getCpuSysTotal());
+            writer.key(CPU_IDLE);
+            writer.value(source.getCpuIdleTotal());
+            writer.key(CPU_WAIT);
+            writer.value(source.getCpuWaitTotal());
+            writer.key(CPU_NICE);
+            writer.value(source.getCpuNiceTotal());
 
-        object.put(MEMORY_USED, source.getMemoryUsed());
-        object.put(MEMORY_FREE, source.getMemoryFree());
-        object.put(SWAP_USED, source.getSwapUsed());
-        object.put(SWAP_FREE, source.getSwapFree());
-
-        return object;
+            writer.key(MEMORY_USED);
+            writer.value(source.getMemoryUsed());
+            writer.key(MEMORY_FREE);
+            writer.value(source.getMemoryFree());
+            writer.key(SWAP_USED);
+            writer.value(source.getSwapUsed());
+            writer.key(SWAP_FREE);
+            writer.value(source.getSwapFree());
+            writer.endObject();
+        }
     }
 
     private MachineUtilisationData deserializeMachineUtilizationData(final JSONReader reader) throws DeserializationException {
@@ -1308,26 +1461,40 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private JSONValue serializeFileSystemData(final FileSystemData source, final JSONWriter writer) {
+    private void serializeFileSystemData(final FileSystemData source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONObject.NULL; }
+        if (source == null) {
+            writer.value(null);
+        }
+        else {
 
-        final JSONReader reader = new JSONObject();
+            writer.object();
 
-        object.put(FS_LOCATION, source.getFileSystemLocation());
-        object.put(FS_TYPE, source.getFileSystemType());
-        object.put(FS_NAME, source.getFileSystemName());
-        object.put(FS_SPACE_USED, source.getSpaceUsed());
-        object.put(FS_SPACE_FREE, source.getSpaceFree());
+            writer.key(FS_LOCATION);
+            writer.value(source.getFileSystemLocation());
+            writer.key(FS_TYPE);
+            writer.value(source.getFileSystemType());
+            writer.key(FS_NAME);
+            writer.value(source.getFileSystemName());
+            writer.key(FS_SPACE_USED);
+            writer.value(source.getSpaceUsed());
+            writer.key(FS_SPACE_FREE);
+            writer.value(source.getSpaceFree());
 
-        object.put(FS_SIZE, source.getSize());
-        object.put(FS_NUMBER_OF_FILES, source.getNumberOfFiles());
-        object.put(FS_DISK_READS, source.getNumberOfDiskReads());
-        object.put(FS_BYTES_READ, source.getBytesRead());
-        object.put(FS_DISK_WRITES, source.getNumberOfDiskWrites());
-        object.put(FS_BYTES_WRITTEN, source.getBytesWritten());
-
-        return object;
+            writer.key(FS_SIZE);
+            writer.value(source.getSize());
+            writer.key(FS_NUMBER_OF_FILES);
+            writer.value(source.getNumberOfFiles());
+            writer.key(FS_DISK_READS);
+            writer.value(source.getNumberOfDiskReads());
+            writer.key(FS_BYTES_READ);
+            writer.value(source.getBytesRead());
+            writer.key(FS_DISK_WRITES);
+            writer.value(source.getNumberOfDiskWrites());
+            writer.key(FS_BYTES_WRITTEN);
+            writer.value(source.getBytesWritten());
+            writer.endObject();
+        }
     }
 
     private FileSystemData deserializeFileSystemData(final JSONReader reader) throws DeserializationException {
@@ -1387,27 +1554,44 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private JSONValue serializeSystemInfoData(final SystemInfoData source, final JSONWriter writer) {
+    private void serializeSystemInfoData(final SystemInfoData source, final JSONWriter writer) throws JSONException {
 
-        if (source == null) { return JSONObject.NULL; }
+        if (source == null) {
+            writer.value(null);
+        }
+        else {
 
-        final JSONReader reader = new JSONObject();
-        object.put(MACHINE_ID, source.machine_id);
-        object.put(OS_NAME, source.os_name);
-        object.put(OS_VERSION, source.os_version);
-        object.put(HOSTNAME, source.hostname);
-        object.put(PRIMARY_IP, source.primary_ip);
-        object.put(DEFAULT_GATEWAY, source.default_gateway);
-        object.put(CPU_VENDOR, source.cpu_vendor);
-        object.put(CPU_MODEL, source.cpu_model);
-        object.put(NUMBER_OF_CORES, source.number_of_cores);
-        object.put(NUMBER_OF_CPUS, source.number_of_cpus);
-        object.put(CPU_CLOCK_SPEED, source.cpu_clock_speed);
-        object.put(CPU_CACHE_SIZE, source.cpu_cache_size);
-        object.put(MEMORY_TOTAL, source.memory_total);
-        object.put(SWAP_TOTAL, source.swap_total);
-
-        return object;
+            writer.object();
+            writer.key(MACHINE_ID);
+            writer.value(source.machine_id);
+            writer.key(OS_NAME);
+            writer.value(source.os_name);
+            writer.key(OS_VERSION);
+            writer.value(source.os_version);
+            writer.key(HOSTNAME);
+            writer.value(source.hostname);
+            writer.key(PRIMARY_IP);
+            writer.value(source.primary_ip);
+            writer.key(DEFAULT_GATEWAY);
+            writer.value(source.default_gateway);
+            writer.key(CPU_VENDOR);
+            writer.value(source.cpu_vendor);
+            writer.key(CPU_MODEL);
+            writer.value(source.cpu_model);
+            writer.key(NUMBER_OF_CORES);
+            writer.value(source.number_of_cores);
+            writer.key(NUMBER_OF_CPUS);
+            writer.value(source.number_of_cpus);
+            writer.key(CPU_CLOCK_SPEED);
+            writer.value(source.cpu_clock_speed);
+            writer.key(CPU_CACHE_SIZE);
+            writer.value(source.cpu_cache_size);
+            writer.key(MEMORY_TOTAL);
+            writer.value(source.memory_total);
+            writer.key(SWAP_TOTAL);
+            writer.value(source.swap_total);
+            writer.endObject();
+        }
     }
 
     private SystemInfoData deserializeSystemInfoData(final JSONReader reader) throws DeserializationException {
