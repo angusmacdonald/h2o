@@ -11,7 +11,6 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 
-import org.h2o.autonomic.decision.ranker.metric.Metric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
@@ -29,7 +28,9 @@ import org.h2o.db.replication.ReplicaManager;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
 import org.json.JSONException;
+import org.json.JSONWriter;
 
+import uk.ac.standrews.cs.nds.JSONstream.rpc.JSONReader;
 import uk.ac.standrews.cs.nds.rpc.DeserializationException;
 import uk.ac.standrews.cs.nds.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
@@ -128,26 +129,26 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeChordRemoteReference(final IChordRemoteReference source) {
+    public JSONValue serializeChordRemoteReference(final IChordRemoteReference source, final JSONWriter writer) {
 
         return chord_marshaller.serializeChordRemoteReference(source);
     }
 
-    public IChordRemoteReference deserializeChordRemoteReference(final JSONObject object) throws DeserializationException {
+    public IChordRemoteReference deserializeChordRemoteReference(final JSONReader reader) throws DeserializationException {
 
-        return chord_marshaller.deserializeChordRemoteReference(object);
+        return chord_marshaller.deserializeChordRemoteReference(reader);
     }
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeITableManagerRemote(final ITableManagerRemote source) {
+    public JSONValue serializeITableManagerRemote(final ITableManagerRemote source, final JSONWriter writer) {
 
         if (source == null) { return JSONObject.NULL; }
 
-        final JSONObject object = new JSONObject();
+        final JSONReader reader = new JSONObject();
         try {
             object.put(TABLE_NAME, source.getTableInfo().getFullTableName());
-            object.put(TABLE_MANAGER_ADDRESS, serializeInetSocketAddress(source.getAddress()));
+            object.put(TABLE_MANAGER_ADDRESS, serializeInetSocketAddress(source.getAddress(), writer));
         }
         catch (final RPCException e) {
             ErrorHandling.exceptionError(e, "Failed when serializing ITableManagerRemote instance.");
@@ -156,13 +157,19 @@ public class H2OMarshaller extends Marshaller {
 
     }
 
-    public ITableManagerRemote deserializeITableManagerRemote(final JSONObject object) throws DeserializationException {
-
-        if (object == JSONObject.NULL) { return null; }
+    public ITableManagerRemote deserializeITableManagerRemote(final JSONReader reader) throws DeserializationException {
 
         try {
-            final String tableName = object.getString(TABLE_NAME);
-            final InetSocketAddress socketAddress = deserializeInetSocketAddress(object.getString(TABLE_MANAGER_ADDRESS));
+
+            if (reader.checkNull()) { return null; }
+            reader.object();
+
+            reader.key(TABLE_NAME);
+            final String tableName = reader.stringValue();
+            reader.key(TABLE_MANAGER_ADDRESS);
+            final InetSocketAddress socketAddress = deserializeInetSocketAddress(reader.stringValue());
+
+            reader.endObject();
 
             return TableManagerProxy.getProxy(socketAddress, tableName);
         }
@@ -176,10 +183,10 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeISystemTableMigratable(final ISystemTableMigratable source) {
+    public JSONValue serializeISystemTableMigratable(final ISystemTableMigratable source, final JSONWriter writer) {
 
         try {
-            return serializeInetSocketAddress(source.getAddress());
+            return serializeInetSocketAddress(source.getAddress(), writer);
         }
         catch (final RPCException e) {
             ErrorHandling.exceptionError(e, "Unexpected RPCException.");
@@ -196,10 +203,10 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeIDatabaseInstanceRemote(final IDatabaseInstanceRemote source) {
+    public JSONValue serializeIDatabaseInstanceRemote(final IDatabaseInstanceRemote source, final JSONWriter writer) {
 
         try {
-            return serializeInetSocketAddress(source.getAddress());
+            return serializeInetSocketAddress(source.getAddress(), writer);
         }
         catch (final RPCException e) {
             ErrorHandling.exceptionError(e, "Unexpected RPCException.");
@@ -216,11 +223,11 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeDatabaseID(final DatabaseID source) {
+    public JSONValue serializeDatabaseID(final DatabaseID source, final JSONWriter writer) {
 
         if (source == null) { return JSONObject.NULL; }
 
-        final JSONObject object = new JSONObject();
+        final JSONReader reader = new JSONObject();
 
         object.put(DATABASE_ID, source.getID());
         object.put(DATABASE_URL, source.getURLwithRMIPort());
@@ -228,13 +235,16 @@ public class H2OMarshaller extends Marshaller {
         return object;
     }
 
-    public DatabaseID deserializeDatabaseID(final JSONObject object) throws DeserializationException {
-
-        if (object == JSONObject.NULL) { return null; }
+    public DatabaseID deserializeDatabaseID(final JSONReader reader) throws DeserializationException {
 
         try {
-            final String database_url = object.getString(DATABASE_URL);
-            final DatabaseURL url = DatabaseURL.parseURL(database_url);
+            if (reader.checkNull()) { return null; }
+            reader.object();
+
+            reader.key(DATABASE_URL);
+            final DatabaseURL url = DatabaseURL.parseURL(reader.stringValue());
+
+            reader.endObject();
 
             return new DatabaseID(url);
         }
@@ -245,35 +255,44 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeTableInfo(final TableInfo source) {
+    public JSONValue serializeTableInfo(final TableInfo source, final JSONWriter writer) {
 
         if (source == null) { return JSONObject.NULL; }
 
-        final JSONObject object = new JSONObject();
+        final JSONReader reader = new JSONObject();
 
         object.put(TABLE_NAME, source.getTableName());
         object.put(SCHEMA_NAME, source.getSchemaName());
         object.put(MODIFICATION_ID, source.getModificationID());
         object.put(TABLE_SET, source.getTableSet());
         object.put(TABLE_TYPE, source.getTableType());
-        object.put(DATABASE_LOCATION, serializeDatabaseID(source.getDatabaseID()));
+        object.put(DATABASE_LOCATION, serializeDatabaseID(source.getDatabaseID(), writer));
 
         return object;
     }
 
-    public TableInfo deserializeTableInfo(final JSONObject object) throws DeserializationException {
-
-        if (object == JSONObject.NULL) { return null; }
+    public TableInfo deserializeTableInfo(final JSONReader reader) throws DeserializationException {
 
         try {
-            final String tableName = object.getString(TABLE_NAME);
-            final String schemaName = object.getString(SCHEMA_NAME);
-            final long modificationID = object.getLong(MODIFICATION_ID);
-            final int tableSet = object.getInt(TABLE_SET);
-            final String tableType = object.getString(TABLE_TYPE);
-            final JSONObject location = object.getJSONObject(DATABASE_LOCATION);
 
-            final DatabaseID dbLocation = deserializeDatabaseID(location);
+            if (reader.checkNull()) { return null; }
+            reader.object();
+            reader.key(TABLE_NAME);
+
+            final String tableName = reader.stringValue();
+            reader.key(SCHEMA_NAME);
+            final String schemaName = reader.stringValue();
+            reader.key(MODIFICATION_ID);
+            final long modificationID = reader.longValue();
+            reader.key(TABLE_SET);
+            final int tableSet = reader.intValue();
+            reader.key(TABLE_TYPE);
+            final String tableType = reader.stringValue();
+            reader.key(DATABASE_LOCATION);
+
+            final DatabaseID dbLocation = deserializeDatabaseID(reader);
+
+            reader.endObject();
 
             return new TableInfo(tableName, schemaName, modificationID, tableSet, tableType, dbLocation);
         }
@@ -285,7 +304,7 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeLockType(final LockType source) {
+    public JSONValue serializeLockType(final LockType source, final JSONWriter writer) {
 
         return new JSONString(source.toString());
     }
@@ -302,25 +321,30 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeLockRequest(final LockRequest source) {
+    public JSONValue serializeLockRequest(final LockRequest source, final JSONWriter writer) {
 
         if (source == null) { return JSONObject.NULL; }
 
-        final JSONObject object = new JSONObject();
+        final JSONReader reader = new JSONObject();
 
-        object.put(DATABASE_MAKING_REQUEST, serializeDatabaseInstanceWrapper(source.getRequestLocation()));
+        object.put(DATABASE_MAKING_REQUEST, serializeDatabaseInstanceWrapper(source.getRequestLocation(), writer));
         object.put(SESSION_ID, source.getSessionID());
 
         return object;
     }
 
-    public LockRequest deserializeLockRequest(final JSONObject object) throws DeserializationException {
-
-        if (object == JSONObject.NULL) { return null; }
+    public LockRequest deserializeLockRequest(final JSONReader reader) throws DeserializationException {
 
         try {
-            final DatabaseInstanceWrapper databaseMakingRequest = deserializeDatabaseInstanceWrapper(object.getJSONObject(DATABASE_MAKING_REQUEST));
-            final int sessionID = object.getInt(SESSION_ID);
+            if (reader.checkNull()) { return null; }
+            reader.object();
+            reader.key(DATABASE_MAKING_REQUEST);
+            final DatabaseInstanceWrapper databaseMakingRequest = deserializeDatabaseInstanceWrapper(reader);
+
+            reader.key(SESSION_ID);
+            final int sessionID = reader.intValue();
+
+            reader.endObject();
 
             return new LockRequest(databaseMakingRequest, sessionID);
         }
@@ -331,27 +355,38 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeReplicaManager(final ReplicaManager source) {
+    public JSONValue serializeReplicaManager(final ReplicaManager source, final JSONWriter writer) {
 
         if (source == null) { return JSONObject.NULL; }
 
-        final JSONObject object = new JSONObject();
+        final JSONReader reader = new JSONObject();
 
-        object.put(ALL_REPLICAS, serializeMapDatabaseInstanceWrapperInteger(source.getActiveReplicas()));
-        object.put(ACTIVE_REPLICAS, serializeMapDatabaseInstanceWrapperInteger(source.getAllReplicas()));
-        object.put(PRIMARY_LOCATION, serializeDatabaseInstanceWrapper(source.getPrimaryLocation()));
+        object.put(ALL_REPLICAS, serializeMapDatabaseInstanceWrapperInteger(source.getActiveReplicas(), writer));
+        object.put(ACTIVE_REPLICAS, serializeMapDatabaseInstanceWrapperInteger(source.getAllReplicas(), writer));
+        object.put(PRIMARY_LOCATION, serializeDatabaseInstanceWrapper(source.getPrimaryLocation(), writer));
 
         return object;
     }
 
-    public ReplicaManager deserializeReplicaManager(final JSONObject object) throws DeserializationException {
-
-        if (object == JSONObject.NULL) { return null; }
+    public ReplicaManager deserializeReplicaManager(final JSONReader reader) throws DeserializationException {
 
         try {
-            final Map<DatabaseInstanceWrapper, Integer> allReplicas = deserializeMapDatabaseInstanceWrapperInteger(object.getJSONObject(ALL_REPLICAS));
-            final Map<DatabaseInstanceWrapper, Integer> activeReplicas = deserializeMapDatabaseInstanceWrapperInteger(object.getJSONObject(ACTIVE_REPLICAS));
-            final DatabaseInstanceWrapper primaryLocation = deserializeDatabaseInstanceWrapper(object.getJSONObject(PRIMARY_LOCATION));
+
+            if (reader.checkNull()) { return null; }
+            reader.object();
+            reader.key(ALL_REPLICAS);
+
+            final Map<DatabaseInstanceWrapper, Integer> allReplicas = deserializeMapDatabaseInstanceWrapperInteger(reader);
+
+            reader.key(ACTIVE_REPLICAS);
+
+            final Map<DatabaseInstanceWrapper, Integer> activeReplicas = deserializeMapDatabaseInstanceWrapperInteger(reader);
+
+            reader.key(PRIMARY_LOCATION);
+
+            final DatabaseInstanceWrapper primaryLocation = deserializeDatabaseInstanceWrapper(reader);
+
+            reader.endObject();
 
             return new ReplicaManager(allReplicas, activeReplicas, primaryLocation);
         }
@@ -362,27 +397,36 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeDatabaseInstanceWrapper(final DatabaseInstanceWrapper source) {
+    public JSONValue serializeDatabaseInstanceWrapper(final DatabaseInstanceWrapper source, final JSONWriter writer) {
 
         if (source == null) { return JSONObject.NULL; }
 
-        final JSONObject object = new JSONObject();
+        final JSONReader reader = new JSONObject();
 
-        object.put(DATABASE_URL, serializeDatabaseID(source.getURL()));
-        object.put(DATABASE_INSTANCE, serializeIDatabaseInstanceRemote(source.getDatabaseInstance()));
+        object.put(DATABASE_URL, serializeDatabaseID(source.getURL(), writer));
+        object.put(DATABASE_INSTANCE, serializeIDatabaseInstanceRemote(source.getDatabaseInstance(), writer));
         object.put(ACTIVE, source.getActive());
 
         return object;
     }
 
-    public DatabaseInstanceWrapper deserializeDatabaseInstanceWrapper(final JSONObject object) throws DeserializationException {
-
-        if (object == JSONObject.NULL) { return null; }
+    public DatabaseInstanceWrapper deserializeDatabaseInstanceWrapper(final JSONReader reader) throws DeserializationException {
 
         try {
-            final DatabaseID databaseURL = deserializeDatabaseID(object.getJSONObject(DATABASE_URL));
-            final IDatabaseInstanceRemote databaseInstance = deserializeIDatabaseInstanceRemote(object.getString(DATABASE_INSTANCE));
-            final boolean active = object.getBoolean(ACTIVE);
+
+            if (reader.checkNull()) { return null; }
+            reader.object();
+
+            reader.key(DATABASE_URL);
+            final DatabaseID databaseURL = deserializeDatabaseID(reader);
+
+            reader.key(DATABASE_INSTANCE);
+            final IDatabaseInstanceRemote databaseInstance = deserializeIDatabaseInstanceRemote(reader.stringValue());
+
+            reader.key(ACTIVE);
+            final boolean active = reader.booleanValue();
+
+            reader.endObject();
 
             return new DatabaseInstanceWrapper(databaseURL, databaseInstance, active);
         }
@@ -393,65 +437,34 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeActionRequest(final Metric source) {
+    public JSONValue serializeTableManagerWrapper(final TableManagerWrapper source, final JSONWriter writer) {
 
-        //TODO fix.
         if (source == null) { return JSONObject.NULL; }
 
-        final JSONObject object = new JSONObject();
+        final JSONReader reader = new JSONObject();
 
-        //        object.put(EXPECTED_TIME_TO_COMPLETION, source.expectedTimeToCompletion);
-        //        object.put(IMMEDIATE_DISK_SPACE, source.immediateDiskSpace);
-        //        object.put(CPU, source.cpu);
-        //        object.put(MEMORY, source.memory);
-        //        object.put(NETWORK, source.network);
-        //        object.put(DISK, source.disk);
+        object.put(TABLE_INFO, serializeTableInfo(source.getTableInfo(), writer));
+        object.put(TABLE_MANAGER, serializeITableManagerRemote(source.getTableManager(), writer));
+        object.put(TABLE_MANAGER_URL, serializeDatabaseID(source.getURL(), writer));
 
         return object;
     }
 
-    public Metric deserializeActionRequest(final JSONObject object) throws DeserializationException {
-
-        if (object == JSONObject.NULL) { return null; }
+    public TableManagerWrapper deserializeTableManagerWrapper(final JSONReader reader) throws DeserializationException {
 
         try {
-            final long expectedTimeToCompletion = object.getLong(EXPECTED_TIME_TO_COMPLETION);
-            final long immediateDiskSpace = object.getLong(IMMEDIATE_DISK_SPACE);
-            final double cpu = object.getDouble(IMMEDIATE_DISK_SPACE);
-            final double memory = object.getDouble(MEMORY);
-            final double network = object.getDouble(NETWORK);
-            final double disk = object.getDouble(DISK);
+            if (reader.checkNull()) { return null; }
+            reader.object();
 
-            return new Metric(expectedTimeToCompletion, immediateDiskSpace, cpu, memory, network, disk);
-        }
-        catch (final Exception e) {
-            throw new DeserializationException(e);
-        }
-    }
+            reader.key(TABLE_MANAGER);
+            final ITableManagerRemote tableManager = deserializeITableManagerRemote(reader);
+            reader.key(TABLE_MANAGER_URL);
+            final DatabaseID tableManagerURL = deserializeDatabaseID(reader);
 
-    // -------------------------------------------------------------------------------------------------------
+            reader.key(TABLE_INFO);
+            final TableInfo tableInfo = deserializeTableInfo(reader);
 
-    public JSONValue serializeTableManagerWrapper(final TableManagerWrapper source) {
-
-        if (source == null) { return JSONObject.NULL; }
-
-        final JSONObject object = new JSONObject();
-
-        object.put(TABLE_INFO, serializeTableInfo(source.getTableInfo()));
-        object.put(TABLE_MANAGER, serializeITableManagerRemote(source.getTableManager()));
-        object.put(TABLE_MANAGER_URL, serializeDatabaseID(source.getURL()));
-
-        return object;
-    }
-
-    public TableManagerWrapper deserializeTableManagerWrapper(final JSONObject object) throws DeserializationException {
-
-        if (object == JSONObject.NULL) { return null; }
-
-        try {
-            final ITableManagerRemote tableManager = deserializeITableManagerRemote(object.getJSONObject(TABLE_MANAGER));
-            final DatabaseID tableManagerURL = deserializeDatabaseID(object.getJSONObject(TABLE_MANAGER_URL));
-            final TableInfo tableInfo = deserializeTableInfo(object.getJSONObject(TABLE_INFO));
+            reader.endObject();
 
             return new TableManagerWrapper(tableInfo, tableManager, tableManagerURL);
         }
@@ -462,36 +475,44 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeTableProxy(final TableProxy source) {
+    public JSONValue serializeTableProxy(final TableProxy source, final JSONWriter writer) {
 
         if (source == null) { return JSONObject.NULL; }
 
-        final JSONObject object = new JSONObject();
+        final JSONReader reader = new JSONObject();
 
-        object.put(LOCK_GRANTED, serializeLockType(source.getLockGranted()));
-        object.put(LOCK_REQUESTED, serializeLockType(source.getLockRequested()));
-        object.put(TABLE_NAME, serializeTableInfo(source.getTableName()));
-        object.put(ALL_REPLICAS, serializeMapDatabaseInstanceWrapperInteger(source.getAllReplicas()));
-        object.put(TABLE_MANAGER, serializeITableManagerRemote(source.getTableManager()));
-        object.put(REQUESTING_DATABASE, serializeLockRequest(source.getRequestingDatabase()));
+        object.put(LOCK_GRANTED, serializeLockType(source.getLockGranted(), writer));
+        object.put(LOCK_REQUESTED, serializeLockType(source.getLockRequested(), writer));
+        object.put(TABLE_NAME, serializeTableInfo(source.getTableName(), writer));
+        object.put(ALL_REPLICAS, serializeMapDatabaseInstanceWrapperInteger(source.getAllReplicas(), writer));
+        object.put(TABLE_MANAGER, serializeITableManagerRemote(source.getTableManager(), writer));
+        object.put(REQUESTING_DATABASE, serializeLockRequest(source.getRequestingDatabase(), writer));
         object.put(UPDATE_ID, source.getUpdateID());
 
         return object;
     }
 
-    public TableProxy deserializeTableProxy(final JSONObject object) throws DeserializationException {
-
-        if (object == JSONObject.NULL) { return null; }
+    public TableProxy deserializeTableProxy(final JSONReader reader) throws DeserializationException {
 
         try {
+            if (reader.checkNull()) { return null; }
+            reader.object();
+            reader.key(LOCK_GRANTED);
+            final LockType lockGranted = deserializeLockType(reader.stringValue());
+            reader.key(LOCK_REQUESTED);
+            final LockType lockRequested = deserializeLockType(reader.stringValue());
+            reader.key(TABLE_NAME);
+            final TableInfo tableName = deserializeTableInfo(reader);
+            reader.key(ALL_REPLICAS);
+            final Map<DatabaseInstanceWrapper, Integer> allReplicas = deserializeMapDatabaseInstanceWrapperInteger(reader);
+            reader.key(TABLE_MANAGER);
+            final ITableManagerRemote tableManager = deserializeITableManagerRemote(reader);
+            reader.key(REQUESTING_DATABASE);
+            final LockRequest requestingDatabase = deserializeLockRequest(reader);
+            reader.key(UPDATE_ID);
+            final int updateID = reader.intValue();
 
-            final LockType lockGranted = deserializeLockType(object.getString(LOCK_GRANTED));
-            final LockType lockRequested = deserializeLockType(object.getString(LOCK_REQUESTED));
-            final TableInfo tableName = deserializeTableInfo(object.getJSONObject(TABLE_NAME));
-            final Map<DatabaseInstanceWrapper, Integer> allReplicas = deserializeMapDatabaseInstanceWrapperInteger(object.getJSONObject(ALL_REPLICAS));
-            final ITableManagerRemote tableManager = deserializeITableManagerRemote(object.getJSONObject(TABLE_MANAGER));
-            final LockRequest requestingDatabase = deserializeLockRequest(object.getJSONObject(REQUESTING_DATABASE));
-            final int updateID = object.getInt(UPDATE_ID);
+            reader.endObject();
 
             return new TableProxy(lockGranted, tableName, allReplicas, tableManager, requestingDatabase, updateID, lockRequested);
         }
@@ -502,27 +523,30 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeCollectionDatabaseInstanceWrapper(final Collection<DatabaseInstanceWrapper> source) {
+    public JSONValue serializeCollectionDatabaseInstanceWrapper(final Collection<DatabaseInstanceWrapper> source, final JSONWriter writer) {
 
         if (source == null) { return JSONArray.NULL; }
 
-        final JSONArray array = new JSONArray();
+        final JSONReader reader = new JSONArray();
         for (final DatabaseInstanceWrapper instance : source) {
-            array.put(serializeDatabaseInstanceWrapper(instance));
+            array.put(serializeDatabaseInstanceWrapper(instance, writer));
         }
         return array;
     }
 
-    public Set<DatabaseInstanceWrapper> deserializeSetDatabaseInstanceWrapper(final JSONArray array) throws DeserializationException {
-
-        if (array == JSONArray.NULL) { return null; }
+    public Set<DatabaseInstanceWrapper> deserializeSetDatabaseInstanceWrapper(final JSONReader reader) throws DeserializationException {
 
         try {
+
+            if (reader.checkNull()) { return null; }
+
+            reader.array();
             final Set<DatabaseInstanceWrapper> result = new HashSet<DatabaseInstanceWrapper>();
-            for (int i = 0; i < array.length(); i++) {
-                result.add(deserializeDatabaseInstanceWrapper(array.getJSONObject(i)));
+            while (!reader.have(JSONReader.ENDARRAY)) {
+                result.add(deserializeDatabaseInstanceWrapper(reader));
             }
 
+            reader.endArray();
             return result;
         }
         catch (final Exception e) {
@@ -530,14 +554,16 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    public Collection<DatabaseInstanceWrapper> deserializeCollectionDatabaseInstanceWrapper(final JSONArray array) throws DeserializationException {
-
-        if (array == JSONArray.NULL) { return null; }
+    public Collection<DatabaseInstanceWrapper> deserializeCollectionDatabaseInstanceWrapper(final JSONReader reader) throws DeserializationException {
 
         try {
-            final Collection<DatabaseInstanceWrapper> result = new ArrayList<DatabaseInstanceWrapper>(array.length());
-            for (int i = 0; i < array.length(); i++) {
-                result.add(deserializeDatabaseInstanceWrapper(array.getJSONObject(i)));
+            if (reader.checkNull()) { return null; }
+
+            reader.array();
+
+            final Collection<DatabaseInstanceWrapper> result = new ArrayList<DatabaseInstanceWrapper>();
+            while (!reader.have(JSONReader.ENDARRAY)) {
+                result.add(deserializeDatabaseInstanceWrapper(reader));
             }
 
             return result;
@@ -549,21 +575,22 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeMapDatabaseIDDatabaseInstanceWrapper(final Map<DatabaseID, DatabaseInstanceWrapper> source) {
+    public JSONValue serializeMapDatabaseIDDatabaseInstanceWrapper(final Map<DatabaseID, DatabaseInstanceWrapper> source, final JSONWriter writer) {
 
         if (source == null) { return JSONObject.NULL; }
 
-        final JSONObject object = new JSONObject();
+        final JSONReader reader = new JSONObject();
 
-        object.put(KEYS, serializeSetDatabaseID(source.keySet()));
-        object.put(VALUES, serializeCollectionDatabaseInstanceWrapper(source.values()));
+        object.put(KEYS, serializeSetDatabaseID(source.keySet(), writer));
+        object.put(VALUES, serializeCollectionDatabaseInstanceWrapper(source.values(), writer));
 
         return object;
     }
 
-    public Map<DatabaseID, DatabaseInstanceWrapper> deserializeMapDatabaseIDDatabaseInstanceWrapper(final JSONObject object) throws DeserializationException {
+    public Map<DatabaseID, DatabaseInstanceWrapper> deserializeMapDatabaseIDDatabaseInstanceWrapper(final JSONReader reader) throws DeserializationException {
 
-        if (object == JSONObject.NULL) { return null; }
+        if (reader.checkNull()) { return null; }
+        reader.object();
 
         try {
             final Set<DatabaseID> keys = deserializeSetDatabaseID(object.getJSONArray(KEYS));
@@ -589,25 +616,32 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeMapTableInfoTableManagerWrapper(final Map<TableInfo, TableManagerWrapper> source) {
+    public JSONValue serializeMapTableInfoTableManagerWrapper(final Map<TableInfo, TableManagerWrapper> source, final JSONWriter writer) {
 
         if (source == null) { return JSONObject.NULL; }
 
-        final JSONObject object = new JSONObject();
+        final JSONReader reader = new JSONObject();
 
-        object.put(KEYS, serializeSetTableInfo(source.keySet()));
-        object.put(VALUES, serializeCollectionTableManagerWrapper(source.values()));
+        object.put(KEYS, serializeSetTableInfo(source.keySet(), writer));
+        object.put(VALUES, serializeCollectionTableManagerWrapper(source.values(), writer));
 
         return object;
     }
 
-    public Map<TableInfo, TableManagerWrapper> deserializeMapTableInfoTableManagerWrapper(final JSONObject object) throws DeserializationException {
-
-        if (object == JSONObject.NULL) { return null; }
+    public Map<TableInfo, TableManagerWrapper> deserializeMapTableInfoTableManagerWrapper(final JSONReader reader) throws DeserializationException {
 
         try {
-            final Set<TableInfo> keys = deserializeSetTableInfo(object.getJSONArray(KEYS));
-            final Collection<TableManagerWrapper> values = deserializeCollectionTableManagerWrapper(object.getJSONArray(VALUES));
+
+            if (reader.checkNull()) { return null; }
+            reader.object();
+
+            reader.key(KEYS);
+
+            final Set<TableInfo> keys = deserializeSetTableInfo(reader);
+
+            reader.key(VALUES);
+
+            final Collection<TableManagerWrapper> values = deserializeCollectionTableManagerWrapper(reader);
 
             final HashMap<TableInfo, TableManagerWrapper> result = new HashMap<TableInfo, TableManagerWrapper>();
 
@@ -620,6 +654,8 @@ public class H2OMarshaller extends Marshaller {
                 result.put(arg0, arg1);
             }
 
+            reader.endObject();
+
             return result;
         }
         catch (final Exception e) {
@@ -629,26 +665,30 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private JSONValue serializeCollectionTableManagerWrapper(final Collection<TableManagerWrapper> source) {
+    private JSONValue serializeCollectionTableManagerWrapper(final Collection<TableManagerWrapper> source, final JSONWriter writer) {
 
         if (source == null) { return JSONArray.NULL; }
 
-        final JSONArray array = new JSONArray();
+        final JSONReader reader = new JSONArray();
         for (final TableManagerWrapper instance : source) {
-            array.put(serializeTableManagerWrapper(instance));
+            array.put(serializeTableManagerWrapper(instance, writer));
         }
         return array;
     }
 
-    public Set<TableManagerWrapper> deserializeSetTableManagerWrapper(final JSONArray array) throws DeserializationException {
-
-        if (array == JSONArray.NULL) { return null; }
+    public Set<TableManagerWrapper> deserializeSetTableManagerWrapper(final JSONReader reader) throws DeserializationException {
 
         try {
+
+            if (reader.checkNull()) { return null; }
+            reader.array();
+
             final Set<TableManagerWrapper> result = new HashSet<TableManagerWrapper>();
-            for (int i = 0; i < array.length(); i++) {
-                result.add(deserializeTableManagerWrapper(array.getJSONObject(i)));
+            while (!reader.have(JSONReader.ENDARRAY)) {
+                result.add(deserializeTableManagerWrapper(reader));
             }
+
+            reader.endArray();
 
             return result;
         }
@@ -659,25 +699,31 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeMapTableInfoSetDatabaseID(final Map<TableInfo, Set<DatabaseID>> source) {
+    public JSONValue serializeMapTableInfoSetDatabaseID(final Map<TableInfo, Set<DatabaseID>> source, final JSONWriter writer) {
 
         if (source == null) { return JSONObject.NULL; }
 
-        final JSONObject object = new JSONObject();
+        final JSONReader reader = new JSONObject();
 
-        object.put(KEYS, serializeSetTableInfo(source.keySet()));
-        object.put(VALUES, serializeCollectionSetDatabaseID(source.values()));
+        object.put(KEYS, serializeSetTableInfo(source.keySet(), writer));
+        object.put(VALUES, serializeCollectionSetDatabaseID(source.values(), writer));
 
         return object;
     }
 
-    public Map<TableInfo, Set<DatabaseID>> deserializeMapTableInfoSetDatabaseID(final JSONObject object) throws DeserializationException {
-
-        if (object == JSONObject.NULL) { return null; }
+    public Map<TableInfo, Set<DatabaseID>> deserializeMapTableInfoSetDatabaseID(final JSONReader reader) throws DeserializationException {
 
         try {
-            final Set<TableInfo> keys = deserializeSetTableInfo(object.getJSONArray(KEYS));
-            final Collection<Set<DatabaseID>> values = deserializeCollectionSetDatabaseID(object.getJSONArray(VALUES));
+
+            if (reader.checkNull()) { return null; }
+            reader.object();
+
+            reader.key(KEYS);
+
+            final Set<TableInfo> keys = deserializeSetTableInfo(reader);
+
+            reader.key(VALUES);
+            final Collection<Set<DatabaseID>> values = deserializeCollectionSetDatabaseID(reader);
 
             final HashMap<TableInfo, Set<DatabaseID>> result = new HashMap<TableInfo, Set<DatabaseID>>();
 
@@ -690,6 +736,7 @@ public class H2OMarshaller extends Marshaller {
                 result.put(arg0, arg1);
             }
 
+            reader.endObject();
             return result;
         }
         catch (final Exception e) {
@@ -699,25 +746,27 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeSetTableManagerWrapper(final Set<TableManagerWrapper> source) {
+    public JSONValue serializeSetTableManagerWrapper(final Set<TableManagerWrapper> source, final JSONWriter writer) {
 
         if (source == null) { return JSONArray.NULL; }
 
-        final JSONArray array = new JSONArray();
+        final JSONReader reader = new JSONArray();
         for (final TableManagerWrapper instance : source) {
-            array.put(serializeTableManagerWrapper(instance));
+            array.put(serializeTableManagerWrapper(instance, writer));
         }
         return array;
     }
 
-    public Collection<TableManagerWrapper> deserializeCollectionTableManagerWrapper(final JSONArray array) throws DeserializationException {
-
-        if (array == JSONArray.NULL) { return null; }
+    public Collection<TableManagerWrapper> deserializeCollectionTableManagerWrapper(final JSONReader reader) throws DeserializationException {
 
         try {
-            final Collection<TableManagerWrapper> result = new ArrayList<TableManagerWrapper>(array.length());
-            for (int i = 0; i < array.length(); i++) {
-                result.add(deserializeTableManagerWrapper(array.getJSONObject(i)));
+
+            if (reader.checkNull()) { return null; }
+            reader.array();
+
+            final Collection<TableManagerWrapper> result = new ArrayList<TableManagerWrapper>();
+            while (!reader.have(JSONReader.ENDARRAY)) {
+                result.add(deserializeTableManagerWrapper(reader));
             }
 
             return result;
@@ -729,25 +778,31 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeMapTableInfoDatabaseID(final Map<TableInfo, DatabaseID> source) {
+    public JSONValue serializeMapTableInfoDatabaseID(final Map<TableInfo, DatabaseID> source, final JSONWriter writer) {
 
         if (source == null) { return JSONObject.NULL; }
 
-        final JSONObject object = new JSONObject();
+        final JSONReader reader = new JSONObject();
 
-        object.put(KEYS, serializeSetTableInfo(source.keySet()));
-        object.put(VALUES, serializeCollectionDatabaseID(source.values()));
+        object.put(KEYS, serializeSetTableInfo(source.keySet(), writer));
+        object.put(VALUES, serializeCollectionDatabaseID(source.values(), writer));
 
         return object;
     }
 
-    public Map<TableInfo, DatabaseID> deserializeMapTableInfoDatabaseID(final JSONObject object) throws DeserializationException {
-
-        if (object == null) { return null; }
+    public Map<TableInfo, DatabaseID> deserializeMapTableInfoDatabaseID(final JSONReader reader) throws DeserializationException {
 
         try {
-            final Set<TableInfo> keys = deserializeSetTableInfo(object.getJSONArray(KEYS));
-            final Collection<DatabaseID> values = deserializeCollectionDatabaseID(object.getJSONArray(VALUES));
+
+            if (reader.checkNull()) { return null; }
+            reader.object();
+
+            reader.key(KEYS);
+
+            final Set<TableInfo> keys = deserializeSetTableInfo(reader);
+
+            reader.key(VALUES);
+            final Collection<DatabaseID> values = deserializeCollectionDatabaseID(reader);
 
             final HashMap<TableInfo, DatabaseID> result = new HashMap<TableInfo, DatabaseID>();
 
@@ -760,6 +815,8 @@ public class H2OMarshaller extends Marshaller {
                 result.put(arg0, arg1);
             }
 
+            reader.endObject();
+
             return result;
         }
         catch (final Exception e) {
@@ -769,27 +826,28 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeCollectionCommitResult(final Collection<CommitResult> source) {
+    public JSONValue serializeCollectionCommitResult(final Collection<CommitResult> source, final JSONWriter writer) {
 
         if (source == null) { return JSONArray.NULL; }
 
-        final JSONArray array = new JSONArray();
+        final JSONReader reader = new JSONArray();
         for (final CommitResult instance : source) {
-            array.put(serializeCommitResult(instance));
+            array.put(serializeCommitResult(instance, writer));
         }
         return array;
     }
 
-    public Set<CommitResult> deserializeCollectionCommitResult(final JSONArray array) throws DeserializationException {
-
-        if (array == JSONArray.NULL) { return null; }
+    public Set<CommitResult> deserializeCollectionCommitResult(final JSONReader reader) throws DeserializationException {
 
         try {
-            final Set<CommitResult> result = new HashSet<CommitResult>();
-            for (int i = 0; i < array.length(); i++) {
-                result.add(deserializeCommitResult(array.getJSONObject(i)));
-            }
+            if (reader.checkNull()) { return null; }
+            reader.array();
 
+            final Set<CommitResult> result = new HashSet<CommitResult>();
+            while (!reader.have(JSONReader.ENDARRAY)) {
+                result.add(deserializeCommitResult(reader));
+            }
+            reader.endArray();
             return result;
         }
         catch (final Exception e) {
@@ -799,27 +857,30 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeSetString(final Set<String> source) {
+    public JSONValue serializeSetString(final Set<String> source, final JSONWriter writer) {
 
         if (source == null) { return JSONArray.NULL; }
 
-        final JSONArray array = new JSONArray();
+        final JSONReader reader = new JSONArray();
         for (final String s : source) {
             array.put(s);
         }
         return array;
     }
 
-    public Set<String> deserializeSetString(final JSONArray array) throws DeserializationException {
-
-        if (array == JSONArray.NULL) { return null; }
+    public Set<String> deserializeSetString(final JSONReader reader) throws DeserializationException {
 
         try {
+
+            if (reader.checkNull()) { return null; }
+            reader.array();
+
             final Set<String> result = new HashSet<String>();
-            for (int i = 0; i < array.length(); i++) {
-                result.add(array.getString(i));
+            while (!reader.have(JSONReader.ENDARRAY)) {
+                result.add(reader.stringValue());
             }
 
+            reader.endArray();
             return result;
         }
         catch (final Exception e) {
@@ -829,27 +890,30 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeQueueDatabaseInstanceWrapper(final Queue<DatabaseInstanceWrapper> source) {
+    public JSONValue serializeQueueDatabaseInstanceWrapper(final Queue<DatabaseInstanceWrapper> source, final JSONWriter writer) {
 
         if (source == null) { return JSONArray.NULL; }
 
-        final JSONArray array = new JSONArray();
+        final JSONReader reader = new JSONArray();
         for (final DatabaseInstanceWrapper instance : source) {
-            array.put(serializeDatabaseInstanceWrapper(instance));
+            array.put(serializeDatabaseInstanceWrapper(instance, writer));
         }
         return array;
     }
 
-    public Queue<DatabaseInstanceWrapper> deserializeQueueDatabaseInstanceWrapper(final JSONArray array) throws DeserializationException {
-
-        if (array == JSONArray.NULL) { return null; }
+    public Queue<DatabaseInstanceWrapper> deserializeQueueDatabaseInstanceWrapper(final JSONReader reader) throws DeserializationException {
 
         try {
+
+            if (reader.checkNull()) { return null; }
+            reader.array();
+
             final Queue<DatabaseInstanceWrapper> result = new PriorityQueue<DatabaseInstanceWrapper>();
-            for (int i = 0; i < array.length(); i++) {
-                result.add(deserializeDatabaseInstanceWrapper(array.getJSONObject(i)));
+            while (!reader.have(JSONReader.ENDARRAY)) {
+                result.add(deserializeDatabaseInstanceWrapper(reader));
             }
 
+            reader.endArray();
             return result;
         }
         catch (final Exception e) {
@@ -860,25 +924,30 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeMapDatabaseInstanceWrapperInteger(final Map<DatabaseInstanceWrapper, Integer> source) {
+    public JSONValue serializeMapDatabaseInstanceWrapperInteger(final Map<DatabaseInstanceWrapper, Integer> source, final JSONWriter writer) {
 
         if (source == null) { return JSONObject.NULL; }
 
-        final JSONObject object = new JSONObject();
+        final JSONReader reader = new JSONObject();
 
-        object.put(KEYS, serializeCollectionDatabaseInstanceWrapper(source.keySet()));
-        object.put(VALUES, serializeCollectionInteger(source.values()));
+        object.put(KEYS, serializeCollectionDatabaseInstanceWrapper(source.keySet(), writer));
+        object.put(VALUES, serializeCollectionInteger(source.values(), writer));
 
         return object;
     }
 
-    public Map<DatabaseInstanceWrapper, Integer> deserializeMapDatabaseInstanceWrapperInteger(final JSONObject object) throws DeserializationException {
-
-        if (object == JSONObject.NULL) { return null; }
+    public Map<DatabaseInstanceWrapper, Integer> deserializeMapDatabaseInstanceWrapperInteger(final JSONReader reader) throws DeserializationException {
 
         try {
-            final Set<DatabaseInstanceWrapper> keys = deserializeSetDatabaseInstanceWrapper(object.getJSONArray(KEYS));
-            final Collection<Integer> values = deserializeCollectionInteger(object.getJSONArray(VALUES));
+
+            if (reader.checkNull()) { return null; }
+            reader.object();
+
+            reader.key(KEYS);
+            final Set<DatabaseInstanceWrapper> keys = deserializeSetDatabaseInstanceWrapper(reader);
+
+            reader.key(VALUES);
+            final Collection<Integer> values = deserializeCollectionInteger(reader);
 
             final HashMap<DatabaseInstanceWrapper, Integer> result = new HashMap<DatabaseInstanceWrapper, Integer>();
 
@@ -890,7 +959,7 @@ public class H2OMarshaller extends Marshaller {
                 final Integer arg1 = it2.next();
                 result.put(arg0, arg1);
             }
-
+            reader.endObject();
             return result;
         }
         catch (final Exception e) {
@@ -900,27 +969,28 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private JSONValue serializeCollectionInteger(final Collection<Integer> source) {
+    private JSONValue serializeCollectionInteger(final Collection<Integer> source, final JSONWriter writer) {
 
         if (source == null) { return JSONArray.NULL; }
 
-        final JSONArray array = new JSONArray();
+        final JSONReader reader = new JSONArray();
         for (final Integer instance : source) {
             array.put(instance);
         }
         return array;
     }
 
-    private Collection<Integer> deserializeCollectionInteger(final JSONArray array) throws DeserializationException {
-
-        if (array == JSONArray.NULL) { return null; }
+    private Collection<Integer> deserializeCollectionInteger(final JSONReader reader) throws DeserializationException {
 
         try {
-            final Collection<Integer> result = new ArrayList<Integer>(array.length());
-            for (int i = 0; i < array.length(); i++) {
-                result.add(array.getInt(i));
-            }
 
+            if (reader.checkNull()) { return null; }
+            reader.array();
+            final Collection<Integer> result = new ArrayList<Integer>();
+            while (!reader.have(JSONReader.ENDARRAY)) {
+                result.add(reader.intValue());
+            }
+            reader.endArray();
             return result;
         }
         catch (final Exception e) {
@@ -930,27 +1000,29 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private JSONValue serializeSetDatabaseID(final Set<DatabaseID> source) {
+    private JSONValue serializeSetDatabaseID(final Set<DatabaseID> source, final JSONWriter writer) {
 
         if (source == null) { return JSONArray.NULL; }
 
-        final JSONArray array = new JSONArray();
+        final JSONReader reader = new JSONArray();
         for (final DatabaseID instance : source) {
-            array.put(serializeDatabaseID(instance));
+            array.put(serializeDatabaseID(instance, writer));
         }
         return array;
     }
 
-    private Set<DatabaseID> deserializeSetDatabaseID(final JSONArray array) throws DeserializationException {
-
-        if (array == JSONArray.NULL) { return null; }
+    private Set<DatabaseID> deserializeSetDatabaseID(final JSONReader reader) throws DeserializationException {
 
         try {
+
+            if (reader.checkNull()) { return null; }
+            reader.array();
+
             final Set<DatabaseID> result = new HashSet<DatabaseID>();
-            for (int i = 0; i < array.length(); i++) {
-                result.add(deserializeDatabaseID(array.getJSONObject(i)));
+            while (!reader.have(JSONReader.ENDARRAY)) {
+                result.add(deserializeDatabaseID(reader));
             }
-
+            reader.endArray();
             return result;
         }
         catch (final Exception e) {
@@ -960,27 +1032,29 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private JSONValue serializeSetTableInfo(final Set<TableInfo> source) {
+    private JSONValue serializeSetTableInfo(final Set<TableInfo> source, final JSONWriter writer) {
 
         if (source == null) { return JSONArray.NULL; }
 
-        final JSONArray array = new JSONArray();
+        final JSONReader reader = new JSONArray();
         for (final TableInfo instance : source) {
-            array.put(serializeTableInfo(instance));
+            array.put(serializeTableInfo(instance, writer));
         }
         return array;
     }
 
-    private Set<TableInfo> deserializeSetTableInfo(final JSONArray array) throws DeserializationException {
-
-        if (array == JSONArray.NULL) { return null; }
+    private Set<TableInfo> deserializeSetTableInfo(final JSONReader reader) throws DeserializationException {
 
         try {
+
+            if (reader.checkNull()) { return null; }
+            reader.array();
+
             final Set<TableInfo> result = new HashSet<TableInfo>();
-            for (int i = 0; i < array.length(); i++) {
-                result.add(deserializeTableInfo(array.getJSONObject(i)));
+            while (!reader.have(JSONReader.ENDARRAY)) {
+                result.add(deserializeTableInfo(reader));
             }
-
+            reader.endArray();
             return result;
         }
         catch (final Exception e) {
@@ -990,27 +1064,29 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private JSONValue serializeCollectionSetDatabaseID(final Collection<Set<DatabaseID>> source) {
+    private JSONValue serializeCollectionSetDatabaseID(final Collection<Set<DatabaseID>> source, final JSONWriter writer) {
 
         if (source == null) { return JSONArray.NULL; }
 
-        final JSONArray array = new JSONArray();
+        final JSONReader reader = new JSONArray();
         for (final Set<DatabaseID> instance : source) {
-            array.put(serializeSetDatabaseID(instance));
+            array.put(serializeSetDatabaseID(instance, writer));
         }
         return array;
     }
 
-    private Set<Set<DatabaseID>> deserializeSetSetDatabaseID(final JSONArray array) throws DeserializationException {
-
-        if (array == JSONArray.NULL) { return null; }
+    private Set<Set<DatabaseID>> deserializeSetSetDatabaseID(final JSONReader reader) throws DeserializationException {
 
         try {
-            final HashSet<Set<DatabaseID>> result = new HashSet<Set<DatabaseID>>();
-            for (int i = 0; i < array.length(); i++) {
-                result.add(deserializeSetDatabaseID(array.getJSONArray(i)));
-            }
 
+            if (reader.checkNull()) { return null; }
+            reader.array();
+
+            final HashSet<Set<DatabaseID>> result = new HashSet<Set<DatabaseID>>();
+            while (!reader.have(JSONReader.ENDARRAY)) {
+                result.add(deserializeSetDatabaseID(reader));
+            }
+            reader.endArray();
             return result;
         }
         catch (final Exception e) {
@@ -1018,16 +1094,19 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    private Collection<Set<DatabaseID>> deserializeCollectionSetDatabaseID(final JSONArray array) throws DeserializationException {
-
-        if (array == JSONArray.NULL) { return null; }
+    private Collection<Set<DatabaseID>> deserializeCollectionSetDatabaseID(final JSONReader reader) throws DeserializationException {
 
         try {
-            final Collection<Set<DatabaseID>> result = new ArrayList<Set<DatabaseID>>(array.length());
-            for (int i = 0; i < array.length(); i++) {
-                result.add(deserializeSetDatabaseID(array.getJSONArray(i)));
+
+            if (reader.checkNull()) { return null; }
+            reader.array();
+
+            final Collection<Set<DatabaseID>> result = new ArrayList<Set<DatabaseID>>();
+            while (!reader.have(JSONReader.ENDARRAY)) {
+                result.add(deserializeSetDatabaseID(reader));
             }
 
+            reader.endArray();
             return result;
         }
         catch (final Exception e) {
@@ -1037,27 +1116,29 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private JSONValue serializeCollectionDatabaseID(final Collection<DatabaseID> source) {
+    private JSONValue serializeCollectionDatabaseID(final Collection<DatabaseID> source, final JSONWriter writer) {
 
         if (source == null) { return JSONArray.NULL; }
 
-        final JSONArray array = new JSONArray();
+        final JSONReader reader = new JSONArray();
         for (final DatabaseID instance : source) {
-            array.put(serializeDatabaseID(instance));
+            array.put(serializeDatabaseID(instance, writer));
         }
         return array;
     }
 
-    private Collection<DatabaseID> deserializeCollectionDatabaseID(final JSONArray array) throws DeserializationException {
-
-        if (array == JSONArray.NULL) { return null; }
+    private Collection<DatabaseID> deserializeCollectionDatabaseID(final JSONReader reader) throws DeserializationException {
 
         try {
-            final Collection<DatabaseID> result = new ArrayList<DatabaseID>(array.length());
-            for (int i = 0; i < array.length(); i++) {
-                result.add(deserializeDatabaseID(array.getJSONObject(i)));
-            }
 
+            if (reader.checkNull()) { return null; }
+            reader.array();
+
+            final Collection<DatabaseID> result = new ArrayList<DatabaseID>(array.length());
+            while (!reader.have(JSONReader.ENDARRAY)) {
+                result.add(deserializeDatabaseID(reader));
+            }
+            reader.endArray();
             return result;
         }
         catch (final Exception e) {
@@ -1067,32 +1148,41 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private JSONValue serializeCommitResult(final CommitResult source) {
+    private JSONValue serializeCommitResult(final CommitResult source, final JSONWriter writer) {
 
         if (source == null) { return JSONObject.NULL; }
 
-        final JSONObject object = new JSONObject();
+        final JSONReader reader = new JSONObject();
 
         object.put(COMMIT, source.isCommit());
-        object.put(WRAPPER, serializeDatabaseInstanceWrapper(source.getDatabaseInstanceWrapper()));
+        object.put(WRAPPER, serializeDatabaseInstanceWrapper(source.getDatabaseInstanceWrapper(), writer));
         object.put(UPDATE_ID, source.getUpdateID());
         object.put(EXPECTED_UPDATE_ID, source.getExpectedUpdateID());
-        object.put(TABLE_NAME, serializeTableInfo(source.getTable()));
+        object.put(TABLE_NAME, serializeTableInfo(source.getTable(), writer));
 
         return object;
     }
 
-    private CommitResult deserializeCommitResult(final JSONObject object) throws DeserializationException {
-
-        if (object == JSONObject.NULL) { return null; }
+    private CommitResult deserializeCommitResult(final JSONReader reader) throws DeserializationException {
 
         try {
-            final boolean commit = object.getBoolean(COMMIT);
-            final DatabaseInstanceWrapper wrapper = deserializeDatabaseInstanceWrapper(object.getJSONObject(WRAPPER));
-            final int updateID = object.getInt(UPDATE_ID);
-            final int expectedUpdateID = object.getInt(EXPECTED_UPDATE_ID);
-            final TableInfo tableName = deserializeTableInfo(object.getJSONObject(TABLE_NAME));
 
+            if (reader.checkNull()) { return null; }
+            reader.object();
+
+            reader.key(COMMIT);
+
+            final boolean commit = reader.booleanValue();
+            reader.key(WRAPPER);
+            final DatabaseInstanceWrapper wrapper = deserializeDatabaseInstanceWrapper(reader);
+            reader.key(UPDATE_ID);
+            final int updateID = reader.intValue();
+            reader.key(EXPECTED_UPDATE_ID);
+            final int expectedUpdateID = reader.intValue();
+            reader.key(TABLE_NAME);
+            final TableInfo tableName = deserializeTableInfo(reader);
+
+            reader.endObject();
             return new CommitResult(commit, wrapper, updateID, expectedUpdateID, tableName);
         }
         catch (final Exception e) {
@@ -1102,17 +1192,26 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public MachineMonitoringData deserializeMachineMonitoringData(final JSONObject object) throws DeserializationException {
-
-        if (object == JSONObject.NULL) { return null; }
+    public MachineMonitoringData deserializeMachineMonitoringData(final JSONReader reader) throws DeserializationException {
 
         try {
-            final DatabaseID databaseID = deserializeDatabaseID(object.getJSONObject(DATABASE_ID));
-            final MachineUtilisationData machineUtilData = deserializeMachineUtilizationData(object.getJSONObject(MACHINE_UTILIZATION_DATA));
-            final SystemInfoData sysInfoData = deserializeSystemInfoData(object.getJSONObject(SYSTEM_INFO_DATA));
 
-            final FileSystemData fsData = deserializeFileSystemData(object.getJSONObject(FS_DATA));
-            final int measurements_before_summary = object.getInt(MEASUREMENTS_BEFORE_SUMMARY);
+            if (reader.checkNull()) { return null; }
+            reader.object();
+
+            reader.key(DATABASE_ID);
+
+            final DatabaseID databaseID = deserializeDatabaseID(reader);
+            reader.key(DATABASE_ID);
+            final MachineUtilisationData machineUtilData = deserializeMachineUtilizationData(reader);
+            reader.key(DATABASE_ID);
+            final SystemInfoData sysInfoData = deserializeSystemInfoData(reader);
+
+            reader.key(DATABASE_ID);
+            final FileSystemData fsData = deserializeFileSystemData(reader);
+            reader.key(DATABASE_ID);
+            final int measurements_before_summary = reader.intValue();
+            reader.endObject();
 
             return new MachineMonitoringData(databaseID, sysInfoData, machineUtilData, fsData, measurements_before_summary);
         }
@@ -1121,16 +1220,16 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    public JSONValue serializeMachineMonitoringData(final MachineMonitoringData source) {
+    public JSONValue serializeMachineMonitoringData(final MachineMonitoringData source, final JSONWriter writer) {
 
         if (source == null) { return JSONObject.NULL; }
 
-        final JSONObject object = new JSONObject();
+        final JSONReader reader = new JSONObject();
 
-        object.put(DATABASE_ID, serializeDatabaseID(source.getDatabaseID()));
-        object.put(SYSTEM_INFO_DATA, serializeSystemInfoData(source.getSystemInfoData()));
-        object.put(MACHINE_UTILIZATION_DATA, serializeMachineUtilizationData(source.getMachineUtilData()));
-        object.put(FS_DATA, serializeFileSystemData(source.getFsData()));
+        object.put(DATABASE_ID, serializeDatabaseID(source.getDatabaseID(), writer));
+        object.put(SYSTEM_INFO_DATA, serializeSystemInfoData(source.getSystemInfoData(), writer));
+        object.put(MACHINE_UTILIZATION_DATA, serializeMachineUtilizationData(source.getMachineUtilData(), writer));
+        object.put(FS_DATA, serializeFileSystemData(source.getFsData(), writer));
         object.put(MEASUREMENTS_BEFORE_SUMMARY, source.getMeasurementsBeforeSummary());
 
         return object;
@@ -1138,11 +1237,11 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private JSONValue serializeMachineUtilizationData(final MachineUtilisationData source) {
+    private JSONValue serializeMachineUtilizationData(final MachineUtilisationData source, final JSONWriter writer) {
 
         if (source == null) { return JSONObject.NULL; }
 
-        final JSONObject object = new JSONObject();
+        final JSONReader reader = new JSONObject();
 
         object.put(CPU_USER, source.getCpuUserTotal());
         object.put(CPU_SYS, source.getCpuSysTotal());
@@ -1158,21 +1257,34 @@ public class H2OMarshaller extends Marshaller {
         return object;
     }
 
-    private MachineUtilisationData deserializeMachineUtilizationData(final JSONObject object) throws DeserializationException {
-
-        if (object == JSONObject.NULL) { return null; }
+    private MachineUtilisationData deserializeMachineUtilizationData(final JSONReader reader) throws DeserializationException {
 
         try {
-            final double cpu_user_total = object.getDouble(CPU_USER);
-            final double cpu_sys_total = object.getDouble(CPU_SYS);
-            final double cpu_idle_total = object.getDouble(CPU_IDLE);
-            final double cpu_wait_total = object.getDouble(CPU_WAIT);
-            final double cpu_nice_total = object.getDouble(CPU_NICE);
 
-            final long memory_used = object.getLong(MEMORY_USED);
-            final long memory_free = object.getLong(MEMORY_FREE);
-            final long swap_used = object.getLong(SWAP_USED);
-            final long swap_free = object.getLong(SWAP_FREE);
+            if (reader.checkNull()) { return null; }
+            reader.object();
+
+            reader.key(CPU_USER);
+            final double cpu_user_total = reader.doubleValue();
+            reader.key(CPU_SYS);
+            final double cpu_sys_total = reader.doubleValue();
+            reader.key(CPU_IDLE);
+            final double cpu_idle_total = reader.doubleValue();
+            reader.key(CPU_WAIT);
+            final double cpu_wait_total = reader.doubleValue();
+            reader.key(CPU_NICE);
+            final double cpu_nice_total = reader.doubleValue();
+
+            reader.key(MEMORY_USED);
+            final long memory_used = reader.longValue();
+            reader.key(MEMORY_FREE);
+            final long memory_free = reader.longValue();
+            reader.key(SWAP_USED);
+            final long swap_used = reader.longValue();
+            reader.key(SWAP_FREE);
+            final long swap_free = reader.longValue();
+
+            reader.endObject();
 
             final MachineUtilisationData mud = new MachineUtilisationData();
 
@@ -1196,11 +1308,11 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private JSONValue serializeFileSystemData(final FileSystemData source) {
+    private JSONValue serializeFileSystemData(final FileSystemData source, final JSONWriter writer) {
 
         if (source == null) { return JSONObject.NULL; }
 
-        final JSONObject object = new JSONObject();
+        final JSONReader reader = new JSONObject();
 
         object.put(FS_LOCATION, source.getFileSystemLocation());
         object.put(FS_TYPE, source.getFileSystemType());
@@ -1218,24 +1330,38 @@ public class H2OMarshaller extends Marshaller {
         return object;
     }
 
-    private FileSystemData deserializeFileSystemData(final JSONObject object) throws DeserializationException {
-
-        if (object == JSONObject.NULL) { return null; }
+    private FileSystemData deserializeFileSystemData(final JSONReader reader) throws DeserializationException {
 
         try {
 
-            final String file_system_location = object.getString(FS_LOCATION);
-            final String file_system_type = object.getString(FS_TYPE);
-            final String file_system_name = object.getString(FS_NAME);
+            if (reader.checkNull()) { return null; }
+            reader.object();
 
-            final long fs_space_used = object.getLong(FS_SPACE_USED);
-            final long fs_space_free = object.getLong(FS_SPACE_FREE);
-            final long fs_size = object.getLong(FS_SIZE);
-            final long fs_number_of_files = object.getLong(FS_NUMBER_OF_FILES);
-            final long fs_disk_reads = object.getLong(FS_DISK_READS);
-            final long fs_bytes_read = object.getLong(FS_BYTES_READ);
-            final long fs_disk_writes = object.getLong(FS_DISK_WRITES);
-            final long fs_bytes_written = object.getLong(FS_BYTES_WRITTEN);
+            reader.key(FS_LOCATION);
+            final String file_system_location = reader.stringValue();
+            reader.key(FS_TYPE);
+            final String file_system_type = reader.stringValue();
+            reader.key(FS_NAME);
+            final String file_system_name = reader.stringValue();
+
+            reader.key(FS_SPACE_USED);
+            final long fs_space_used = reader.longValue();
+            reader.key(FS_SPACE_FREE);
+            final long fs_space_free = reader.longValue();
+            reader.key(FS_SIZE);
+            final long fs_size = reader.longValue();
+            reader.key(FS_NUMBER_OF_FILES);
+            final long fs_number_of_files = reader.longValue();
+            reader.key(FS_DISK_READS);
+            final long fs_disk_reads = reader.longValue();
+            reader.key(FS_BYTES_READ);
+            final long fs_bytes_read = reader.longValue();
+            reader.key(FS_DISK_WRITES);
+            final long fs_disk_writes = reader.longValue();
+            reader.key(FS_BYTES_WRITTEN);
+            final long fs_bytes_written = reader.longValue();
+
+            reader.endObject();
 
             final FileSystemData fsd = new FileSystemData();
 
@@ -1261,11 +1387,11 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private JSONValue serializeSystemInfoData(final SystemInfoData source) {
+    private JSONValue serializeSystemInfoData(final SystemInfoData source, final JSONWriter writer) {
 
         if (source == null) { return JSONObject.NULL; }
 
-        final JSONObject object = new JSONObject();
+        final JSONReader reader = new JSONObject();
         object.put(MACHINE_ID, source.machine_id);
         object.put(OS_NAME, source.os_name);
         object.put(OS_VERSION, source.os_version);
@@ -1284,34 +1410,51 @@ public class H2OMarshaller extends Marshaller {
         return object;
     }
 
-    private SystemInfoData deserializeSystemInfoData(final JSONObject object) throws DeserializationException {
-
-        if (object == JSONObject.NULL) { return null; }
+    private SystemInfoData deserializeSystemInfoData(final JSONReader reader) throws DeserializationException {
 
         try {
 
-            final String machine_id = object.getString(MACHINE_ID);
+            if (reader.checkNull()) { return null; }
+            reader.object();
+
+            reader.key(MACHINE_ID);
+            final String machine_id = reader.stringValue();
 
             // OS Info.
-            final String os_name = object.getString(OS_NAME);
-            final String os_version = object.getString(OS_VERSION);
+            reader.key(OS_NAME);
+            final String os_name = reader.stringValue();
+            reader.key(OS_VERSION);
+            final String os_version = reader.stringValue();
 
             // Network Info.
-            final String hostname = object.getString(HOSTNAME);
-            final String primary_ip = object.getString(PRIMARY_IP);
-            final String default_gateway = object.getString(DEFAULT_GATEWAY);
+            reader.key(HOSTNAME);
+            final String hostname = reader.stringValue();
+            reader.key(PRIMARY_IP);
+            final String primary_ip = reader.stringValue();
+            reader.key(DEFAULT_GATEWAY);
+            final String default_gateway = reader.stringValue();
 
             // CPU Info.
-            final String cpu_vendor = object.getString(CPU_VENDOR);
-            final String cpu_model = object.getString(CPU_MODEL);
-            final int number_of_cores = object.getInt(NUMBER_OF_CORES);
-            final int number_of_cpus = object.getInt(NUMBER_OF_CPUS);
-            final int cpu_clock_speed = object.getInt(CPU_CLOCK_SPEED);
-            final long cpu_cache_size = object.getLong(CPU_CACHE_SIZE);
+            reader.key(CPU_VENDOR);
+            final String cpu_vendor = reader.stringValue();
+            reader.key(CPU_MODEL);
+            final String cpu_model = reader.stringValue();
+            reader.key(NUMBER_OF_CORES);
+            final int number_of_cores = reader.intValue();
+            reader.key(NUMBER_OF_CPUS);
+            final int number_of_cpus = reader.intValue();
+            reader.key(CPU_CLOCK_SPEED);
+            final int cpu_clock_speed = reader.intValue();
+            reader.key(CPU_CACHE_SIZE);
+            final long cpu_cache_size = reader.longValue();
 
             // Memory Info.
-            final long memory_total = object.getLong(MEMORY_TOTAL);
-            final long swap_total = object.getLong(SWAP_TOTAL);
+            reader.key(MEMORY_TOTAL);
+            final long memory_total = reader.longValue();
+            reader.key(SWAP_TOTAL);
+            final long swap_total = reader.longValue();
+
+            reader.endObject();
 
             final SystemInfoData fsd = new SystemInfoData(machine_id, os_name, os_version, hostname, primary_ip, default_gateway, cpu_vendor, cpu_model, number_of_cores, number_of_cpus, cpu_clock_speed, cpu_cache_size, memory_total, swap_total);
 
