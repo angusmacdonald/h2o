@@ -9,16 +9,13 @@ import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.query.locking.LockRequest;
 import org.h2o.db.query.locking.LockType;
+import org.json.JSONWriter;
 
-import uk.ac.standrews.cs.nds.rpc.ApplicationServer;
-import uk.ac.standrews.cs.nds.rpc.IHandler;
-import uk.ac.standrews.cs.nds.rpc.Marshaller;
-import uk.ac.standrews.cs.nds.rpc.json.JSONArray;
+import uk.ac.standrews.cs.nds.JSONstream.rpc.ApplicationServer;
+import uk.ac.standrews.cs.nds.JSONstream.rpc.IHandler;
+import uk.ac.standrews.cs.nds.JSONstream.rpc.JSONReader;
+import uk.ac.standrews.cs.nds.JSONstream.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.rpc.json.JSONBoolean;
-import uk.ac.standrews.cs.nds.rpc.json.JSONInteger;
-import uk.ac.standrews.cs.nds.rpc.json.JSONObject;
-import uk.ac.standrews.cs.nds.rpc.json.JSONString;
-import uk.ac.standrews.cs.nds.rpc.json.JSONValue;
 
 public class TableManagerServer extends ApplicationServer {
 
@@ -64,11 +61,11 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("getTableProxy", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                final LockType p0 = marshaller.deserializeLockType(args.getString(0));
-                final LockRequest p1 = marshaller.deserializeLockRequest(args.getJSONObject(1));
-                return marshaller.serializeTableProxy(table_manager.getTableProxy(p0, p1));
+                final LockType p0 = marshaller.deserializeLockType(args.stringValue());
+                final LockRequest p1 = marshaller.deserializeLockRequest(args);
+                marshaller.serializeTableProxy(table_manager.getTableProxy(p0, p1), writer);
             }
         });
 
@@ -77,11 +74,11 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("addTableInformation", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                final DatabaseID p0 = marshaller.deserializeDatabaseID(args.getJSONObject(0));
-                final TableInfo p1 = marshaller.deserializeTableInfo(args.getJSONObject(1));
-                return new JSONBoolean(table_manager.addTableInformation(p0, p1));
+                final DatabaseID p0 = marshaller.deserializeDatabaseID(args);
+                final TableInfo p1 = marshaller.deserializeTableInfo(args);
+                writer.value(table_manager.addTableInformation(p0, p1));
             }
         });
 
@@ -90,11 +87,10 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("addReplicaInformation", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                final TableInfo p0 = marshaller.deserializeTableInfo(args.getJSONObject(0));
+                final TableInfo p0 = marshaller.deserializeTableInfo(args);
                 table_manager.addReplicaInformation(p0);
-                return JSONObject.NULL;
             }
         });
 
@@ -103,11 +99,11 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("removeReplicaInformation", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                final TableInfo p0 = marshaller.deserializeTableInfo(args.getJSONObject(0));
+                final TableInfo p0 = marshaller.deserializeTableInfo(args);
                 table_manager.removeReplicaInformation(p0);
-                return JSONObject.NULL;
+                writer.value("");
             }
         });
 
@@ -116,9 +112,9 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("removeTableInformation", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                return new JSONBoolean(table_manager.removeTableInformation());
+                writer.value(table_manager.removeTableInformation());
             }
         });
 
@@ -127,9 +123,9 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("getLocation", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                return marshaller.serializeDatabaseID(table_manager.getLocation());
+                marshaller.serializeDatabaseID(table_manager.getLocation(), writer);
             }
         });
 
@@ -138,14 +134,14 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("releaseLockAndUpdateReplicaState", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                final boolean p0 = args.getBoolean(0);
-                final LockRequest p1 = marshaller.deserializeLockRequest(args.getJSONObject(1));
-                final Collection<CommitResult> p2 = marshaller.deserializeCollectionCommitResult(args.getJSONArray(2));
-                final boolean p3 = args.getBoolean(3);
+                final boolean p0 = args.booleanValue();
+                final LockRequest p1 = marshaller.deserializeLockRequest(args);
+                final Collection<CommitResult> p2 = marshaller.deserializeCollectionCommitResult(args);
+                final boolean p3 = args.booleanValue();
                 table_manager.releaseLockAndUpdateReplicaState(p0, p1, p2, p3);
-                return JSONObject.NULL;
+                writer.value("");
             }
         });
 
@@ -154,11 +150,11 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("remove", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                final boolean p0 = args.getBoolean(0);
+                final boolean p0 = args.booleanValue();
                 table_manager.remove(p0);
-                return JSONObject.NULL;
+                writer.value("");
             }
         });
 
@@ -167,9 +163,9 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("getSchemaName", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                return new JSONString(table_manager.getSchemaName());
+                writer.value(table_manager.getSchemaName());
             }
         });
 
@@ -178,9 +174,9 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("getTableName", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                return new JSONString(table_manager.getTableName());
+                writer.value(table_manager.getTableName());
             }
         });
 
@@ -189,9 +185,9 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("getTableSet", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                return new JSONInteger(table_manager.getTableSet());
+                writer.value(table_manager.getTableSet());
             }
         });
 
@@ -200,11 +196,11 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("buildTableManagerState", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                final ITableManagerRemote p0 = marshaller.deserializeITableManagerRemote(args.getJSONObject(0));
+                final ITableManagerRemote p0 = marshaller.deserializeITableManagerRemote(args);
                 table_manager.buildTableManagerState(p0);
-                return JSONObject.NULL;
+                writer.value("");
             }
         });
 
@@ -213,9 +209,9 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("getDatabaseURL", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                return marshaller.serializeDatabaseID(table_manager.getDatabaseURL());
+                marshaller.serializeDatabaseID(table_manager.getDatabaseURL(), writer);
             }
         });
 
@@ -224,11 +220,11 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("recreateReplicaManagerState", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                final String p0 = args.getString(0);
+                final String p0 = args.stringValue();
                 table_manager.recreateReplicaManagerState(p0);
-                return JSONObject.NULL;
+                writer.value("");
             }
         });
 
@@ -237,9 +233,9 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("getNumberofReplicas", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                return new JSONInteger(table_manager.getNumberofReplicas());
+                writer.value(table_manager.getNumberofReplicas());
             }
         });
 
@@ -248,11 +244,11 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("persistToCompleteStartup", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                final TableInfo p0 = marshaller.deserializeTableInfo(args.getJSONObject(0));
+                final TableInfo p0 = marshaller.deserializeTableInfo(args);
                 table_manager.persistToCompleteStartup(p0);
-                return JSONObject.NULL;
+                writer.value("");
             }
         });
 
@@ -261,9 +257,9 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("getActiveReplicas", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                return marshaller.serializeMapDatabaseInstanceWrapperInteger(table_manager.getActiveReplicas());
+                marshaller.serializeMapDatabaseInstanceWrapperInteger(table_manager.getActiveReplicas(), writer);
             }
         });
 
@@ -272,9 +268,9 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("getAllReplicas", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                return marshaller.serializeMapDatabaseInstanceWrapperInteger(table_manager.getAllReplicas());
+                marshaller.serializeMapDatabaseInstanceWrapperInteger(table_manager.getAllReplicas(), writer);
             }
         });
 
@@ -283,20 +279,20 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("getTableInfo", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                return marshaller.serializeTableInfo(table_manager.getTableInfo());
+                marshaller.serializeTableInfo(table_manager.getTableInfo(), writer);
             }
         });
 
         handler_map.put("prepareForMigration", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                final String p0 = args.getString(0);
+                final String p0 = args.stringValue();
                 table_manager.prepareForMigration(p0);
-                return JSONObject.NULL;
+                writer.value("");
 
             }
         });
@@ -304,10 +300,10 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("completeMigration", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
                 table_manager.completeMigration();
-                return JSONObject.NULL;
+                writer.value("");
 
             }
         });
@@ -315,9 +311,9 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("getDatabaseLocation", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                return marshaller.serializeDatabaseInstanceWrapper(table_manager.getDatabaseLocation());
+                marshaller.serializeDatabaseInstanceWrapper(table_manager.getDatabaseLocation(), writer);
 
             }
         });
@@ -325,9 +321,9 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("getAddress", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                return marshaller.serializeInetSocketAddress(table_manager.getAddress());
+                marshaller.serializeInetSocketAddress(table_manager.getAddress(), writer);
 
             }
         });
@@ -335,10 +331,10 @@ public class TableManagerServer extends ApplicationServer {
         handler_map.put("checkConnection", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
                 table_manager.checkConnection();
-                return JSONObject.NULL;
+                writer.value("");
 
             }
         });

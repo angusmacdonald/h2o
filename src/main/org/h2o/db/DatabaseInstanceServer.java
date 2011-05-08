@@ -6,16 +6,12 @@ import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.manager.interfaces.ISystemTableMigratable;
+import org.json.JSONWriter;
 
-import uk.ac.standrews.cs.nds.rpc.ApplicationServer;
-import uk.ac.standrews.cs.nds.rpc.IHandler;
-import uk.ac.standrews.cs.nds.rpc.Marshaller;
-import uk.ac.standrews.cs.nds.rpc.json.JSONArray;
-import uk.ac.standrews.cs.nds.rpc.json.JSONBoolean;
-import uk.ac.standrews.cs.nds.rpc.json.JSONInteger;
-import uk.ac.standrews.cs.nds.rpc.json.JSONObject;
-import uk.ac.standrews.cs.nds.rpc.json.JSONString;
-import uk.ac.standrews.cs.nds.rpc.json.JSONValue;
+import uk.ac.standrews.cs.nds.JSONstream.rpc.ApplicationServer;
+import uk.ac.standrews.cs.nds.JSONstream.rpc.IHandler;
+import uk.ac.standrews.cs.nds.JSONstream.rpc.JSONReader;
+import uk.ac.standrews.cs.nds.JSONstream.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.NetworkUtil;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
@@ -69,9 +65,9 @@ public class DatabaseInstanceServer extends ApplicationServer {
         handler_map.put("getConnectionString", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                return new JSONString(instance.getConnectionString());
+                response.value(instance.getConnectionString());
             }
         });
 
@@ -80,18 +76,18 @@ public class DatabaseInstanceServer extends ApplicationServer {
         handler_map.put("getURL", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                return marshaller.serializeDatabaseID(instance.getURL());
+                marshaller.serializeDatabaseID(instance.getURL(), response);
             }
         });
 
         handler_map.put("isAlive", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                return new JSONBoolean(instance.isAlive());
+                response.value(instance.isAlive());
             }
         });
 
@@ -100,9 +96,9 @@ public class DatabaseInstanceServer extends ApplicationServer {
         handler_map.put("getSystemTableURL", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                return marshaller.serializeDatabaseID(instance.getSystemTableURL());
+                marshaller.serializeDatabaseID(instance.getSystemTableURL(), response);
             }
         });
 
@@ -111,11 +107,11 @@ public class DatabaseInstanceServer extends ApplicationServer {
         handler_map.put("executeUpdate", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final String p0 = args.getString(0);
-                final boolean p1 = args.getBoolean(1);
-                return new JSONInteger(instance.executeUpdate(p0, p1));
+                final String p0 = args.stringValue();
+                final boolean p1 = args.booleanValue();
+                response.value(instance.executeUpdate(p0, p1));
             }
         });
 
@@ -124,12 +120,12 @@ public class DatabaseInstanceServer extends ApplicationServer {
         handler_map.put("setSystemTableLocation", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final IChordRemoteReference p0 = marshaller.deserializeChordRemoteReference(args.getJSONObject(0));
-                final DatabaseID p1 = marshaller.deserializeDatabaseID(args.getJSONObject(1));
+                final IChordRemoteReference p0 = marshaller.deserializeChordRemoteReference(args);
+                final DatabaseID p1 = marshaller.deserializeDatabaseID(args);
                 instance.setSystemTableLocation(p0, p1);
-                return null;
+                response.value("");
             }
         });
 
@@ -138,11 +134,11 @@ public class DatabaseInstanceServer extends ApplicationServer {
         handler_map.put("findTableManagerReference", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final TableInfo p0 = marshaller.deserializeTableInfo(args.getJSONObject(0));
-                final boolean p1 = args.getBoolean(1);
-                return marshaller.serializeITableManagerRemote(instance.findTableManagerReference(p0, p1));
+                final TableInfo p0 = marshaller.deserializeTableInfo(args);
+                final boolean p1 = args.booleanValue();
+                marshaller.serializeITableManagerRemote(instance.findTableManagerReference(p0, p1), response);
             }
         });
 
@@ -151,11 +147,11 @@ public class DatabaseInstanceServer extends ApplicationServer {
         handler_map.put("setAlive", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final boolean p0 = args.getBoolean(0);
+                final boolean p0 = args.booleanValue();
                 instance.setAlive(p0);
-                return null;
+                response.value("");
             }
         });
 
@@ -164,9 +160,9 @@ public class DatabaseInstanceServer extends ApplicationServer {
         handler_map.put("recreateSystemTable", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                return marshaller.serializeISystemTableMigratable(instance.recreateSystemTable());
+                marshaller.serializeISystemTableMigratable(instance.recreateSystemTable(), response);
             }
         });
 
@@ -175,11 +171,11 @@ public class DatabaseInstanceServer extends ApplicationServer {
         handler_map.put("recreateTableManager", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final TableInfo p0 = marshaller.deserializeTableInfo(args.getJSONObject(0));
-                final DatabaseID p1 = marshaller.deserializeDatabaseID(args.getJSONObject(1));
-                return new JSONBoolean(instance.recreateTableManager(p0, p1));
+                final TableInfo p0 = marshaller.deserializeTableInfo(args);
+                final DatabaseID p1 = marshaller.deserializeDatabaseID(args);
+                response.value(instance.recreateTableManager(p0, p1));
             }
         });
 
@@ -188,9 +184,9 @@ public class DatabaseInstanceServer extends ApplicationServer {
         handler_map.put("isSystemTable", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                return new JSONBoolean(instance.isSystemTable());
+                response.value(instance.isSystemTable());
             }
         });
 
@@ -199,14 +195,14 @@ public class DatabaseInstanceServer extends ApplicationServer {
         handler_map.put("getSystemTable", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
                 final ISystemTableMigratable systemTable = instance.getSystemTable();
                 if (systemTable != null) {
-                    return marshaller.serializeISystemTableMigratable(systemTable);
+                    marshaller.serializeISystemTableMigratable(systemTable, response);
                 }
                 else {
-                    return JSONObject.NULL;
+                    response.value(null);
                 }
             }
         });
@@ -214,9 +210,9 @@ public class DatabaseInstanceServer extends ApplicationServer {
         handler_map.put("getAddress", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                return marshaller.serializeInetSocketAddress(instance.getAddress());
+                marshaller.serializeInetSocketAddress(instance.getAddress(), response);
             }
         });
 
@@ -225,21 +221,21 @@ public class DatabaseInstanceServer extends ApplicationServer {
         handler_map.put("execute", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final String p0 = args.getString(0);
-                final String p1 = args.getString(1);
-                final boolean p2 = args.getBoolean(2);
-                return new JSONInteger(instance.execute(p0, p1, p2));
+                final String p0 = args.stringValue();
+                final String p1 = args.stringValue();
+                final boolean p2 = args.booleanValue();
+                response.value(instance.execute(p0, p1, p2));
             }
         });
 
         handler_map.put("getChordPort", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                return new JSONInteger(instance.getChordPort());
+                response.value(instance.getChordPort());
             }
         });
     }

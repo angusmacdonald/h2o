@@ -3,7 +3,6 @@ package org.h2o.db.manager;
 import java.net.UnknownHostException;
 import java.util.Set;
 
-import org.h2o.autonomic.decision.ranker.metric.Metric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.db.H2OMarshaller;
 import org.h2o.db.id.DatabaseID;
@@ -12,14 +11,12 @@ import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
+import org.json.JSONWriter;
 
-import uk.ac.standrews.cs.nds.rpc.ApplicationServer;
-import uk.ac.standrews.cs.nds.rpc.IHandler;
-import uk.ac.standrews.cs.nds.rpc.Marshaller;
-import uk.ac.standrews.cs.nds.rpc.json.JSONArray;
-import uk.ac.standrews.cs.nds.rpc.json.JSONBoolean;
-import uk.ac.standrews.cs.nds.rpc.json.JSONInteger;
-import uk.ac.standrews.cs.nds.rpc.json.JSONValue;
+import uk.ac.standrews.cs.nds.JSONstream.rpc.ApplicationServer;
+import uk.ac.standrews.cs.nds.JSONstream.rpc.IHandler;
+import uk.ac.standrews.cs.nds.JSONstream.rpc.JSONReader;
+import uk.ac.standrews.cs.nds.JSONstream.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.NetworkUtil;
 
@@ -77,11 +74,11 @@ public class SystemTableServer extends ApplicationServer {
             // public void prepareForMigration(String newLocation) throws RPCException, MigrationException, MovedException;
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final String p0 = args.getString(0);
+                final String p0 = args.stringValue();
                 system_table.prepareForMigration(p0);
-                return null;
+                response.value("");
             }
 
         });
@@ -91,10 +88,10 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("checkConnection", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
                 system_table.checkConnection();
-                return null;
+                response.value("");
             }
         });
 
@@ -103,10 +100,10 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("completeMigration", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
                 system_table.completeMigration();
-                return null;
+                response.value("");
             }
         });
 
@@ -115,11 +112,11 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("shutdown", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final boolean p0 = args.getBoolean(0);
+                final boolean p0 = args.booleanValue();
                 system_table.shutdown(p0);
-                return null;
+                response.value("");
             }
         });
 
@@ -130,9 +127,9 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("getChordReference", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                return marshaller.serializeChordRemoteReference(system_table.getChordReference());
+                marshaller.serializeChordRemoteReference(system_table.getChordReference(), response);
             }
         });
 
@@ -141,10 +138,10 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("lookup", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final TableInfo p0 = marshaller.deserializeTableInfo(args.getJSONObject(0));
-                return marshaller.serializeTableManagerWrapper(system_table.lookup(p0));
+                final TableInfo p0 = marshaller.deserializeTableInfo(args);
+                marshaller.serializeTableManagerWrapper(system_table.lookup(p0), response);
             }
         });
 
@@ -153,10 +150,10 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("exists", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final TableInfo p0 = marshaller.deserializeTableInfo(args.getJSONObject(0));
-                return new JSONBoolean(system_table.exists(p0));
+                final TableInfo p0 = marshaller.deserializeTableInfo(args);
+                response.value(system_table.exists(p0));
             }
         });
 
@@ -165,12 +162,12 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("addTableInformation", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final ITableManagerRemote p0 = marshaller.deserializeITableManagerRemote(args.getJSONObject(0));
-                final TableInfo p1 = marshaller.deserializeTableInfo(args.getJSONObject(1));
-                final Set<DatabaseInstanceWrapper> p2 = marshaller.deserializeSetDatabaseInstanceWrapper(args.getJSONArray(2));
-                return new JSONBoolean(system_table.addTableInformation(p0, p1, p2));
+                final ITableManagerRemote p0 = marshaller.deserializeITableManagerRemote(args);
+                final TableInfo p1 = marshaller.deserializeTableInfo(args);
+                final Set<DatabaseInstanceWrapper> p2 = marshaller.deserializeSetDatabaseInstanceWrapper(args);
+                response.value(system_table.addTableInformation(p0, p1, p2));
             }
         });
 
@@ -179,10 +176,10 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("removeTableInformation", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final TableInfo p0 = marshaller.deserializeTableInfo(args.getJSONObject(0));
-                return new JSONBoolean(system_table.removeTableInformation(p0));
+                final TableInfo p0 = marshaller.deserializeTableInfo(args);
+                response.value(system_table.removeTableInformation(p0));
             }
         });
 
@@ -191,11 +188,11 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("addConnectionInformation", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final DatabaseID p0 = marshaller.deserializeDatabaseID(args.getJSONObject(0));
-                final DatabaseInstanceWrapper p1 = marshaller.deserializeDatabaseInstanceWrapper(args.getJSONObject(1));
-                return new JSONInteger(system_table.addConnectionInformation(p0, p1));
+                final DatabaseID p0 = marshaller.deserializeDatabaseID(args);
+                final DatabaseInstanceWrapper p1 = marshaller.deserializeDatabaseInstanceWrapper(args);
+                response.value(system_table.addConnectionInformation(p0, p1));
             }
         });
 
@@ -204,9 +201,9 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("getNewTableSetNumber", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                return new JSONInteger(system_table.getNewTableSetNumber());
+                response.value(system_table.getNewTableSetNumber());
             }
         });
 
@@ -215,9 +212,9 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("getAllTablesInSchema", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                return marshaller.serializeSetString(system_table.getAllTablesInSchema(args.getString(0)));
+                marshaller.serializeSetString(system_table.getAllTablesInSchema(args.stringValue()), response);
             }
         });
 
@@ -226,12 +223,12 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("recreateSystemTable", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final ISystemTableMigratable p0 = marshaller.deserializeISystemTableMigratable(args.getString(0));
+                final ISystemTableMigratable p0 = marshaller.deserializeISystemTableMigratable(args);
                 system_table.recreateSystemTable(p0);
+                response.value("");
 
-                return null;
             }
         });
 
@@ -240,11 +237,10 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("recreateInMemorySystemTableFromLocalPersistedState", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
                 system_table.recreateInMemorySystemTableFromLocalPersistedState();
 
-                return null;
             }
         });
 
@@ -253,9 +249,9 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("getConnectionInformation", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                return marshaller.serializeMapDatabaseIDDatabaseInstanceWrapper(system_table.getConnectionInformation());
+                marshaller.serializeMapDatabaseIDDatabaseInstanceWrapper(system_table.getConnectionInformation(), response);
             }
         });
 
@@ -264,9 +260,9 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("getTableManagers", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                return marshaller.serializeMapTableInfoTableManagerWrapper(system_table.getTableManagers());
+                marshaller.serializeMapTableInfoTableManagerWrapper(system_table.getTableManagers(), response);
             }
         });
 
@@ -275,33 +271,34 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("getReplicaLocations", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                return marshaller.serializeMapTableInfoSetDatabaseID(system_table.getReplicaLocations());
+                marshaller.serializeMapTableInfoSetDatabaseID(system_table.getReplicaLocations(), response);
             }
         });
 
         // public Queue<DatabaseInstanceWrapper> getAvailableMachines(ActionRequest typeOfRequest) throws RPCException, MovedException;
 
-        handler_map.put("getAvailableMachines", new IHandler() {
-
-            @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
-
-                final Metric p0 = marshaller.deserializeActionRequest(args.getJSONObject(0));
-                return marshaller.serializeQueueDatabaseInstanceWrapper(system_table.getAvailableMachines(p0));
-            }
-        });
+        //        handler_map.put("getAvailableMachines", new IHandler() {
+        //
+        //            @Override
+        //            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
+        //
+        //                final Metric p0 = marshaller.deserializeActionRequest(args);
+        //                marshaller.serializeQueueDatabaseInstanceWrapper(system_table.getAvailableMachines(p0), response);
+        //            }
+        //        });
 
         //      public void removeAllTableInformation() throws RPCException, MovedException;
 
         handler_map.put("removeAllTableInformation", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
                 system_table.removeAllTableInformation();
-                return null;
+                response.value("");
+
             }
         });
 
@@ -310,10 +307,10 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("getDatabaseInstance", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final DatabaseID p0 = marshaller.deserializeDatabaseID(args.getJSONObject(0));
-                return marshaller.serializeIDatabaseInstanceRemote(system_table.getDatabaseInstance(p0));
+                final DatabaseID p0 = marshaller.deserializeDatabaseID(args);
+                marshaller.serializeIDatabaseInstanceRemote(system_table.getDatabaseInstance(p0), response);
             }
         });
 
@@ -322,9 +319,9 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("getDatabaseInstances", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                return marshaller.serializeCollectionDatabaseInstanceWrapper(system_table.getDatabaseInstances());
+                marshaller.serializeCollectionDatabaseInstanceWrapper(system_table.getDatabaseInstances(), response);
             }
         });
 
@@ -333,11 +330,12 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("removeConnectionInformation", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final IDatabaseInstanceRemote p0 = marshaller.deserializeIDatabaseInstanceRemote(args.getString(0));
+                final IDatabaseInstanceRemote p0 = marshaller.deserializeIDatabaseInstanceRemote(args);
                 system_table.removeConnectionInformation(p0);
-                return null;
+                response.value("");
+
             }
         });
 
@@ -346,10 +344,10 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("getLocalDatabaseInstances", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final DatabaseID p0 = marshaller.deserializeDatabaseID(args.getJSONObject(0));
-                return marshaller.serializeSetTableManagerWrapper(system_table.getLocalDatabaseInstances(p0));
+                final DatabaseID p0 = marshaller.deserializeDatabaseID(args);
+                marshaller.serializeSetTableManagerWrapper(system_table.getLocalDatabaseInstances(p0), response);
             }
         });
 
@@ -358,12 +356,13 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("changeTableManagerLocation", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final ITableManagerRemote p0 = marshaller.deserializeITableManagerRemote(args.getJSONObject(0));
-                final TableInfo p1 = marshaller.deserializeTableInfo(args.getJSONObject(1));
+                final ITableManagerRemote p0 = marshaller.deserializeITableManagerRemote(args);
+                final TableInfo p1 = marshaller.deserializeTableInfo(args);
                 system_table.changeTableManagerLocation(p0, p1);
-                return null;
+                response.value("");
+
             }
         });
 
@@ -372,14 +371,15 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("addTableManagerStateReplica", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final TableInfo p0 = marshaller.deserializeTableInfo(args.getJSONObject(0));
-                final DatabaseID p1 = marshaller.deserializeDatabaseID(args.getJSONObject(1));
-                final DatabaseID p2 = marshaller.deserializeDatabaseID(args.getJSONObject(2));
-                final boolean p3 = args.getBoolean(3);
+                final TableInfo p0 = marshaller.deserializeTableInfo(args);
+                final DatabaseID p1 = marshaller.deserializeDatabaseID(args);
+                final DatabaseID p2 = marshaller.deserializeDatabaseID(args);
+                final boolean p3 = args.booleanValue();
                 system_table.addTableManagerStateReplica(p0, p1, p2, p3);
-                return null;
+                response.value("");
+
             }
         });
 
@@ -388,9 +388,9 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("getPrimaryLocations", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                return marshaller.serializeMapTableInfoDatabaseID(system_table.getPrimaryLocations());
+                marshaller.serializeMapTableInfoDatabaseID(system_table.getPrimaryLocations(), response);
             }
         });
 
@@ -399,12 +399,12 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("removeTableManagerStateReplica", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final TableInfo p0 = marshaller.deserializeTableInfo(args.getJSONObject(0));
-                final DatabaseID p1 = marshaller.deserializeDatabaseID(args.getJSONObject(1));
+                final TableInfo p0 = marshaller.deserializeTableInfo(args);
+                final DatabaseID p1 = marshaller.deserializeDatabaseID(args);
                 system_table.removeTableManagerStateReplica(p0, p1);
-                return null;
+
             }
         });
 
@@ -413,10 +413,10 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("recreateTableManager", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final TableInfo p0 = marshaller.deserializeTableInfo(args.getJSONObject(0));
-                return marshaller.serializeITableManagerRemote(system_table.recreateTableManager(p0));
+                final TableInfo p0 = marshaller.deserializeTableInfo(args);
+                response.value(system_table.recreateTableManager(p0));
             }
         });
 
@@ -425,18 +425,18 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("checkTableManagerAccessibility", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                return new JSONBoolean(system_table.checkTableManagerAccessibility());
+                response.value(system_table.checkTableManagerAccessibility());
             }
         });
 
         handler_map.put("getAddress", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                return marshaller.serializeInetSocketAddress(system_table.getAddress());
+                marshaller.serializeInetSocketAddress(system_table.getAddress(), response);
 
             }
         });
@@ -444,11 +444,12 @@ public class SystemTableServer extends ApplicationServer {
         handler_map.put("addMonitoringSummary", new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                final MachineMonitoringData p0 = marshaller.deserializeMachineMonitoringData(args.getJSONObject(0));
+                final MachineMonitoringData p0 = marshaller.deserializeMachineMonitoringData(args);
                 system_table.addMonitoringSummary(p0);
-                return null;
+                response.value("");
+
             }
         });
     }

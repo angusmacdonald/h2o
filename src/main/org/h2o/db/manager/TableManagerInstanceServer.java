@@ -7,13 +7,13 @@ import java.util.Map;
 import org.h2o.db.H2OMarshaller;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.json.JSONException;
+import org.json.JSONWriter;
 
-import uk.ac.standrews.cs.nds.rpc.ApplicationServer;
-import uk.ac.standrews.cs.nds.rpc.IHandler;
-import uk.ac.standrews.cs.nds.rpc.Marshaller;
+import uk.ac.standrews.cs.nds.JSONstream.rpc.ApplicationServer;
+import uk.ac.standrews.cs.nds.JSONstream.rpc.IHandler;
+import uk.ac.standrews.cs.nds.JSONstream.rpc.JSONReader;
+import uk.ac.standrews.cs.nds.JSONstream.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
-import uk.ac.standrews.cs.nds.rpc.json.JSONArray;
-import uk.ac.standrews.cs.nds.rpc.json.JSONValue;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -96,19 +96,16 @@ public class TableManagerInstanceServer extends ApplicationServer {
         return new IHandler() {
 
             @Override
-            public JSONValue execute(final JSONArray args) throws Exception {
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                if (args.length() == 0) { throw new JSONException("Could not find table manager. No table name given."); }
-
-                final String table_name = args.getString(0);
-                args.remove(0); // remove the table name from the parameter list
+                final String table_name = args.stringValue();
                 final TableManagerServer object_server = table_manager_instances.get(table_name);
 
                 if (object_server == null) { throw new JSONException("Could not find table manager for table : " + table_name); }
 
                 if (object_server.getHandler(method_name) == null) { throw new JSONException("Could not find the method '" + method_name + "' in this table manager."); }
 
-                return object_server.getHandler(method_name).execute(args);
+                object_server.getHandler(method_name).execute(args, writer);
             }
         };
     }

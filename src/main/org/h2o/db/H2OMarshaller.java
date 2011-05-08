@@ -30,11 +30,10 @@ import org.h2o.db.wrappers.TableManagerWrapper;
 import org.json.JSONException;
 import org.json.JSONWriter;
 
+import uk.ac.standrews.cs.nds.JSONstream.rpc.DeserializationException;
 import uk.ac.standrews.cs.nds.JSONstream.rpc.JSONReader;
-import uk.ac.standrews.cs.nds.rpc.DeserializationException;
-import uk.ac.standrews.cs.nds.rpc.Marshaller;
+import uk.ac.standrews.cs.nds.JSONstream.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
-import uk.ac.standrews.cs.nds.rpc.json.JSONObject;
 import uk.ac.standrews.cs.nds.rpc.json.JSONString;
 import uk.ac.standrews.cs.nds.rpc.json.JSONValue;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -152,7 +151,7 @@ public class H2OMarshaller extends Marshaller {
                 writer.key(TABLE_NAME);
                 writer.value(source.getTableInfo().getFullTableName());
                 writer.key(TABLE_MANAGER_ADDRESS);
-                writer.value(serializeInetSocketAddress(source.getAddress(), writer));
+                serializeInetSocketAddress(source.getAddress(), writer);
                 writer.endObject();
             }
             catch (final RPCException e) {
@@ -162,7 +161,7 @@ public class H2OMarshaller extends Marshaller {
 
     }
 
-    public ITableManagerRemote deserializeITableManagerRemote(final JSONReader reader) throws DeserializationException {
+    public ITableManagerRemote deserializeITableManagerRemote(final JSONReader reader) throws DeserializationException, uk.ac.standrews.cs.nds.rpc.DeserializationException {
 
         try {
 
@@ -172,7 +171,7 @@ public class H2OMarshaller extends Marshaller {
             reader.key(TABLE_NAME);
             final String tableName = reader.stringValue();
             reader.key(TABLE_MANAGER_ADDRESS);
-            final InetSocketAddress socketAddress = deserializeInetSocketAddress(reader.stringValue());
+            final InetSocketAddress socketAddress = deserializeInetSocketAddress(reader);
 
             reader.endObject();
 
@@ -188,40 +187,38 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeISystemTableMigratable(final ISystemTableMigratable source, final JSONWriter writer) {
+    public void serializeISystemTableMigratable(final ISystemTableMigratable source, final JSONWriter writer) throws JSONException {
 
         try {
-            return serializeInetSocketAddress(source.getAddress(), writer);
+            serializeInetSocketAddress(source.getAddress(), writer);
         }
         catch (final RPCException e) {
             ErrorHandling.exceptionError(e, "Unexpected RPCException.");
-            return JSONObject.NULL;
         }
     }
 
-    public ISystemTableMigratable deserializeISystemTableMigratable(final String address_string) throws DeserializationException {
+    public ISystemTableMigratable deserializeISystemTableMigratable(final JSONReader reader) throws DeserializationException, uk.ac.standrews.cs.nds.rpc.DeserializationException {
 
-        final InetSocketAddress address = deserializeInetSocketAddress(address_string);
+        final InetSocketAddress address = deserializeInetSocketAddress(reader);
 
         return SystemTableProxy.getProxy(address);
     }
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeIDatabaseInstanceRemote(final IDatabaseInstanceRemote source, final JSONWriter writer) {
+    public void serializeIDatabaseInstanceRemote(final IDatabaseInstanceRemote source, final JSONWriter writer) throws JSONException {
 
         try {
-            return serializeInetSocketAddress(source.getAddress(), writer);
+            serializeInetSocketAddress(source.getAddress(), writer);
         }
         catch (final RPCException e) {
             ErrorHandling.exceptionError(e, "Unexpected RPCException.");
-            return JSONObject.NULL;
         }
     }
 
-    public IDatabaseInstanceRemote deserializeIDatabaseInstanceRemote(final String address_string) throws DeserializationException {
+    public IDatabaseInstanceRemote deserializeIDatabaseInstanceRemote(final JSONReader reader) throws DeserializationException, uk.ac.standrews.cs.nds.rpc.DeserializationException {
 
-        final InetSocketAddress address = deserializeInetSocketAddress(address_string);
+        final InetSocketAddress address = deserializeInetSocketAddress(reader);
 
         return DatabaseInstanceProxy.getProxy(address);
     }
@@ -439,7 +436,7 @@ public class H2OMarshaller extends Marshaller {
             writer.key(DATABASE_URL);
             serializeDatabaseID(source.getURL(), writer);
             writer.key(DATABASE_INSTANCE);
-            writer.value(serializeIDatabaseInstanceRemote(source.getDatabaseInstance(), writer));
+            serializeIDatabaseInstanceRemote(source.getDatabaseInstance(), writer);
             writer.key(ACTIVE);
             writer.value(source.getActive());
             writer.endObject();
@@ -457,7 +454,7 @@ public class H2OMarshaller extends Marshaller {
             final DatabaseID databaseURL = deserializeDatabaseID(reader);
 
             reader.key(DATABASE_INSTANCE);
-            final IDatabaseInstanceRemote databaseInstance = deserializeIDatabaseInstanceRemote(reader.stringValue());
+            final IDatabaseInstanceRemote databaseInstance = deserializeIDatabaseInstanceRemote(reader);
 
             reader.key(ACTIVE);
             final boolean active = reader.booleanValue();
