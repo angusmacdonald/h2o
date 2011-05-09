@@ -24,6 +24,7 @@
  ***************************************************************************/
 package org.h2o.db.manager;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -49,6 +50,8 @@ import uk.ac.standrews.cs.nds.JSONstream.rpc.IStreamPair;
 import uk.ac.standrews.cs.nds.JSONstream.rpc.JSONReader;
 import uk.ac.standrews.cs.nds.JSONstream.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.JSONstream.rpc.Proxy;
+import uk.ac.standrews.cs.nds.JSONstream.rpc.StreamPair;
+import uk.ac.standrews.cs.nds.JSONstream.rpc.StreamPool;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
@@ -90,6 +93,17 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     public Marshaller getMarshaller() {
 
         return marshaller;
+    }
+
+    @Override
+    /*
+     * Overridden to prevent the 'crossing the streams' problem.
+     */
+    protected IStreamPair setupStreams() throws IOException {
+
+        final IStreamPair stream_pair = new StreamPair(StreamPool.makeSocket(node_address));
+        handleStreamPairChange(stream_pair);
+        return stream_pair;
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -226,10 +240,12 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
 
         try {
             final IStreamPair streams = startCall("getTableProxy");
+
             final JSONWriter jw = streams.getJSONwriter();
             setUpJSONArrayForRMI(jw);
             marshaller.serializeLockType(lockType, jw);
             marshaller.serializeLockRequest(lockRequest, jw);
+
             final JSONReader reader = makeCall(streams);
             final TableProxy result = marshaller.deserializeTableProxy(reader);
             finishCall(streams);
@@ -281,9 +297,10 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
 
         try {
             final IStreamPair streams = startCall("addReplicaInformation");
-            final JSONWriter jw = streams.getJSONwriter();
-            setUpJSONArrayForRMI(jw);
 
+            final JSONWriter jw = streams.getJSONwriter();
+
+            setUpJSONArrayForRMI(jw);
             marshaller.serializeTableInfo(tableDetails, jw);
 
             makeCall(streams);
@@ -297,6 +314,7 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
             throw e;
         }
         catch (final Exception e) {
+            e.printStackTrace();
             dealWithException(e);
         }
 

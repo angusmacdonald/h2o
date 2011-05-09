@@ -478,6 +478,7 @@ public class CreateReplica extends SchemaCommand {
 
                     try {
                         tableManager.addReplicaInformation(ti);
+
                     }
                     catch (final MovedException e) {
                         // If this is an old cached reference contact the system table directly.

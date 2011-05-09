@@ -34,8 +34,6 @@ import uk.ac.standrews.cs.nds.JSONstream.rpc.JSONReader;
 import uk.ac.standrews.cs.nds.JSONstream.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.rpc.DeserializationException;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
-import uk.ac.standrews.cs.nds.rpc.json.JSONString;
-import uk.ac.standrews.cs.nds.rpc.json.JSONValue;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.numonic.data.FileSystemData;
 import uk.ac.standrews.cs.numonic.data.MachineUtilisationData;
@@ -161,7 +159,7 @@ public class H2OMarshaller extends Marshaller {
 
     }
 
-    public ITableManagerRemote deserializeITableManagerRemote(final JSONReader reader) throws uk.ac.standrews.cs.nds.rpc.DeserializationException, uk.ac.standrews.cs.nds.rpc.DeserializationException {
+    public ITableManagerRemote deserializeITableManagerRemote(final JSONReader reader) throws DeserializationException {
 
         try {
 
@@ -248,12 +246,12 @@ public class H2OMarshaller extends Marshaller {
         try {
             if (reader.checkNull()) { return null; }
             reader.object();
-
+            reader.key(DATABASE_ID);
+            final DatabaseID id = DatabaseID.parseURL(reader.stringValue());
             reader.key(DATABASE_URL);
             final DatabaseURL url = DatabaseURL.parseURL(reader.stringValue());
-
+            id.setRMIPort(url.getRMIPort());
             reader.endObject();
-
             return new DatabaseID(url);
         }
         catch (final Exception e) {
@@ -293,19 +291,26 @@ public class H2OMarshaller extends Marshaller {
 
             if (reader.checkNull()) { return null; }
             reader.object();
-            reader.key(TABLE_NAME);
 
+            reader.key(TABLE_NAME);
             final String tableName = reader.stringValue();
+
             reader.key(SCHEMA_NAME);
             final String schemaName = reader.stringValue();
+
             reader.key(MODIFICATION_ID);
-            final long modificationID = reader.longValue();
+            final long modificationID = reader.intValue();
+
             reader.key(TABLE_SET);
             final int tableSet = reader.intValue();
-            reader.key(TABLE_TYPE);
-            final String tableType = reader.stringValue();
-            reader.key(DATABASE_LOCATION);
 
+            reader.key(TABLE_TYPE);
+            final String tableType = null;
+            if (!reader.checkNull()) {
+                reader.stringValue();
+            }
+
+            reader.key(DATABASE_LOCATION);
             final DatabaseID dbLocation = deserializeDatabaseID(reader);
 
             reader.endObject();
@@ -320,9 +325,9 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeLockType(final LockType source, final JSONWriter writer) {
+    public void serializeLockType(final LockType source, final JSONWriter writer) throws JSONException {
 
-        return new JSONString(source.toString());
+        writer.value(source.toString());
     }
 
     public LockType deserializeLockType(final String s) throws DeserializationException {
@@ -495,13 +500,13 @@ public class H2OMarshaller extends Marshaller {
             if (reader.checkNull()) { return null; }
             reader.object();
 
+            reader.key(TABLE_INFO);
+            final TableInfo tableInfo = deserializeTableInfo(reader);
+
             reader.key(TABLE_MANAGER);
             final ITableManagerRemote tableManager = deserializeITableManagerRemote(reader);
             reader.key(TABLE_MANAGER_URL);
             final DatabaseID tableManagerURL = deserializeDatabaseID(reader);
-
-            reader.key(TABLE_INFO);
-            final TableInfo tableInfo = deserializeTableInfo(reader);
 
             reader.endObject();
 

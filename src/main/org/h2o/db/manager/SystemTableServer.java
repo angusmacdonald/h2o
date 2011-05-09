@@ -418,7 +418,7 @@ public class SystemTableServer extends ApplicationServer {
             public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
                 final TableInfo p0 = marshaller.deserializeTableInfo(args);
-                response.value(system_table.recreateTableManager(p0));
+                marshaller.serializeITableManagerRemote(system_table.recreateTableManager(p0), response);
             }
         });
 

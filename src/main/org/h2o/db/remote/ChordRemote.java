@@ -62,9 +62,9 @@ import org.h2o.viewer.H2OEventBus;
 import org.h2o.viewer.gwt.client.DatabaseStates;
 import org.h2o.viewer.gwt.client.H2OEvent;
 
+import uk.ac.standrews.cs.nds.JSONstream.registry.IRegistry;
+import uk.ac.standrews.cs.nds.JSONstream.registry.LocateRegistry;
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
-import uk.ac.standrews.cs.nds.registry.IRegistry;
-import uk.ac.standrews.cs.nds.registry.LocateRegistry;
 import uk.ac.standrews.cs.nds.registry.RegistryUnavailableException;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -536,6 +536,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         catch (final RegistryUnavailableException e) {
             ErrorHandling.errorNoEvent("Couldn't find an active registry on this machine (" + hostname + "). Restarting registry locally.");
             recreateRegistryAndAddLocalInstance();
+            return getDatabaseInstanceAt(hostname);
         }
 
         return null;
