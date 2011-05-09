@@ -240,6 +240,7 @@ public class SystemTableServer extends ApplicationServer {
             public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
                 system_table.recreateInMemorySystemTableFromLocalPersistedState();
+                response.value("");
 
             }
         });
@@ -404,6 +405,7 @@ public class SystemTableServer extends ApplicationServer {
                 final TableInfo p0 = marshaller.deserializeTableInfo(args);
                 final DatabaseID p1 = marshaller.deserializeDatabaseID(args);
                 system_table.removeTableManagerStateReplica(p0, p1);
+                response.value("");
 
             }
         });

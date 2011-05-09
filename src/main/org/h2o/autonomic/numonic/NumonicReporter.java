@@ -119,14 +119,15 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
         /*
          * Only check for thresholds on the file system being used by the database system, and not any others.
          */
+        if (fileSystem != null) {
+            for (final SingleSummary<FileSystemData> specificFsSummary : fileSystemSummary.getSummaries()) {
+                if (specificFsSummary.getMax().file_system_location.equalsIgnoreCase(fileSystem)) {
+                    thresholdChecker.analyseNewMonitoringData(specificFsSummary);
+                    resourceRanker.collateRankingData(specificFsSummary);
+                    break;
+                }
 
-        for (final SingleSummary<FileSystemData> specificFsSummary : fileSystemSummary.getSummaries()) {
-            if (specificFsSummary.getMax().file_system_location.equalsIgnoreCase(fileSystem)) {
-                thresholdChecker.analyseNewMonitoringData(specificFsSummary);
-                resourceRanker.collateRankingData(specificFsSummary);
-                break;
             }
-
         }
 
     }

@@ -30,9 +30,9 @@ import org.h2o.db.wrappers.TableManagerWrapper;
 import org.json.JSONException;
 import org.json.JSONWriter;
 
-import uk.ac.standrews.cs.nds.JSONstream.rpc.DeserializationException;
 import uk.ac.standrews.cs.nds.JSONstream.rpc.JSONReader;
 import uk.ac.standrews.cs.nds.JSONstream.rpc.Marshaller;
+import uk.ac.standrews.cs.nds.rpc.DeserializationException;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.rpc.json.JSONString;
 import uk.ac.standrews.cs.nds.rpc.json.JSONValue;
@@ -127,9 +127,9 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public JSONValue serializeChordRemoteReference(final IChordRemoteReference source, final JSONWriter writer) {
+    public void serializeChordRemoteReference(final IChordRemoteReference source, final JSONWriter writer) throws JSONException, RPCException {
 
-        return chord_marshaller.serializeChordRemoteReference(source);
+        chord_marshaller.serializeChordRemoteReference(source, writer);
     }
 
     public IChordRemoteReference deserializeChordRemoteReference(final JSONReader reader) throws DeserializationException {
@@ -161,7 +161,7 @@ public class H2OMarshaller extends Marshaller {
 
     }
 
-    public ITableManagerRemote deserializeITableManagerRemote(final JSONReader reader) throws DeserializationException, uk.ac.standrews.cs.nds.rpc.DeserializationException {
+    public ITableManagerRemote deserializeITableManagerRemote(final JSONReader reader) throws uk.ac.standrews.cs.nds.rpc.DeserializationException, uk.ac.standrews.cs.nds.rpc.DeserializationException {
 
         try {
 

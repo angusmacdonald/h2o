@@ -23,10 +23,10 @@ import org.h2o.util.exceptions.MigrationException;
 import org.h2o.util.exceptions.MovedException;
 import org.json.JSONWriter;
 
+import uk.ac.standrews.cs.nds.JSONstream.rpc.IStreamPair;
 import uk.ac.standrews.cs.nds.JSONstream.rpc.JSONReader;
 import uk.ac.standrews.cs.nds.JSONstream.rpc.Marshaller;
 import uk.ac.standrews.cs.nds.JSONstream.rpc.Proxy;
-import uk.ac.standrews.cs.nds.JSONstream.rpc.StreamPair;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
@@ -75,7 +75,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
 
-            final StreamPair streams = startCall("lookup");
+            final IStreamPair streams = startCall("lookup");
             final JSONWriter jw = streams.getJSONwriter();
 
             marshaller.serializeTableInfo(ti, jw);
@@ -99,7 +99,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public boolean exists(final TableInfo ti) throws RPCException, MovedException {
 
         try {
-            final StreamPair streams = startCall("exists");
+            final IStreamPair streams = startCall("exists");
             final JSONWriter jw = streams.getJSONwriter();
 
             marshaller.serializeTableInfo(ti, jw);
@@ -123,7 +123,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public boolean addTableInformation(final ITableManagerRemote tableManager, final TableInfo tableDetails, final Set<DatabaseInstanceWrapper> replicaLocations) throws RPCException, MovedException, SQLException {
 
         try {
-            final StreamPair streams = startCall("addTableInformation");
+            final IStreamPair streams = startCall("addTableInformation");
             final JSONWriter jw = streams.getJSONwriter();
             marshaller.serializeITableManagerRemote(tableManager, jw);
             marshaller.serializeTableInfo(tableDetails, jw);
@@ -150,7 +150,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public boolean removeTableInformation(final TableInfo ti) throws RPCException, MovedException {
 
         try {
-            final StreamPair streams = startCall("removeTableInformation");
+            final IStreamPair streams = startCall("removeTableInformation");
             final JSONWriter jw = streams.getJSONwriter();
             marshaller.serializeTableInfo(ti, jw);
             final JSONReader reader = makeCall(streams);
@@ -172,7 +172,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public int addConnectionInformation(final DatabaseID databaseID, final DatabaseInstanceWrapper databaseInstanceWrapper) throws RPCException, MovedException, SQLException {
 
         try {
-            final StreamPair streams = startCall("addConnectionInformation");
+            final IStreamPair streams = startCall("addConnectionInformation");
             final JSONWriter jw = streams.getJSONwriter();
             marshaller.serializeDatabaseID(databaseID, jw);
             marshaller.serializeDatabaseInstanceWrapper(databaseInstanceWrapper, jw);
@@ -198,7 +198,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public int getNewTableSetNumber() throws RPCException, MovedException {
 
         try {
-            final StreamPair streams = startCall("getNewTableSetNumber");
+            final IStreamPair streams = startCall("getNewTableSetNumber");
             final JSONReader reader = makeCall(streams);
             final int result = reader.intValue();
             finishCall(streams);
@@ -217,7 +217,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public Set<String> getAllTablesInSchema(final String schemaName) throws RPCException, MovedException {
 
         try {
-            final StreamPair streams = startCall("getAllTablesInSchema");
+            final IStreamPair streams = startCall("getAllTablesInSchema");
             final JSONWriter jw = streams.getJSONwriter();
             jw.value(schemaName);
             final JSONReader reader = makeCall(streams);
@@ -243,7 +243,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
             try {
 
-                final StreamPair streams = startCall("recreateSystemTable");
+                final IStreamPair streams = startCall("recreateSystemTable");
                 final JSONWriter jw = streams.getJSONwriter();
                 marshaller.serializeISystemTableMigratable(migratableSystemTable, jw);
                 makeCall(streams);
@@ -270,7 +270,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
 
-            final StreamPair streams = startCall("recreateInMemorySystemTableFromLocalPersistedState");
+            final IStreamPair streams = startCall("recreateInMemorySystemTableFromLocalPersistedState");
             makeCall(streams);
             finishCall(streams);
 
@@ -292,7 +292,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
 
-            final StreamPair streams = startCall("getConnectionInformation");
+            final IStreamPair streams = startCall("getConnectionInformation");
             final JSONReader reader = makeCall(streams);
 
             final Map<DatabaseID, DatabaseInstanceWrapper> result = marshaller.deserializeMapDatabaseIDDatabaseInstanceWrapper(reader);
@@ -317,7 +317,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
 
-            final StreamPair streams = startCall("getTableManagers");
+            final IStreamPair streams = startCall("getTableManagers");
             final JSONReader reader = makeCall(streams);
 
             final Map<TableInfo, TableManagerWrapper> result = marshaller.deserializeMapTableInfoTableManagerWrapper(reader);
@@ -340,7 +340,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
 
-            final StreamPair streams = startCall("getReplicaLocations");
+            final IStreamPair streams = startCall("getReplicaLocations");
             final JSONReader reader = makeCall(streams);
 
             final Map<TableInfo, Set<DatabaseID>> result = marshaller.deserializeMapTableInfoSetDatabaseID(reader);
@@ -361,7 +361,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
 
-            final StreamPair streams = startCall("removeAllTableInformation");
+            final IStreamPair streams = startCall("removeAllTableInformation");
             makeCall(streams);
 
             finishCall(streams);
@@ -380,7 +380,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
 
-            final StreamPair streams = startCall("getDatabaseInstance");
+            final IStreamPair streams = startCall("getDatabaseInstance");
             final JSONWriter jw = streams.getJSONwriter();
             marshaller.serializeDatabaseID(databaseURL, jw);
             final JSONReader reader = makeCall(streams);
@@ -405,7 +405,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
 
-            final StreamPair streams = startCall("getDatabaseInstances");
+            final IStreamPair streams = startCall("getDatabaseInstances");
             final JSONReader reader = makeCall(streams);
 
             final Set<DatabaseInstanceWrapper> result = marshaller.deserializeSetDatabaseInstanceWrapper(reader);
@@ -426,7 +426,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
 
-            final StreamPair streams = startCall("removeConnectionInformation");
+            final IStreamPair streams = startCall("removeConnectionInformation");
             final JSONWriter jw = streams.getJSONwriter();
             marshaller.serializeIDatabaseInstanceRemote(localDatabaseInstance, jw);
             makeCall(streams);
@@ -447,7 +447,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
 
-            final StreamPair streams = startCall("getLocalDatabaseInstances");
+            final IStreamPair streams = startCall("getLocalDatabaseInstances");
             final JSONWriter jw = streams.getJSONwriter();
             marshaller.serializeDatabaseID(localMachineLocation, jw);
             final JSONReader reader = makeCall(streams);
@@ -471,7 +471,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
 
-            final StreamPair streams = startCall("changeTableManagerLocation");
+            final IStreamPair streams = startCall("changeTableManagerLocation");
             final JSONWriter jw = streams.getJSONwriter();
             marshaller.serializeITableManagerRemote(stub, jw);
             marshaller.serializeTableInfo(tableInfo, jw);
@@ -493,7 +493,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
 
-            final StreamPair streams = startCall("addTableManagerStateReplica");
+            final IStreamPair streams = startCall("addTableManagerStateReplica");
             final JSONWriter jw = streams.getJSONwriter();
             marshaller.serializeTableInfo(table, jw);
             marshaller.serializeDatabaseID(replicaLocation, jw);
@@ -517,7 +517,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
 
-            final StreamPair streams = startCall("getPrimaryLocations");
+            final IStreamPair streams = startCall("getPrimaryLocations");
             final JSONReader reader = makeCall(streams);
 
             final Map<TableInfo, DatabaseID> result = marshaller.deserializeMapTableInfoDatabaseID(reader);
@@ -537,7 +537,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public void removeTableManagerStateReplica(final TableInfo table, final DatabaseID replicaLocation) throws RPCException, MovedException {
 
         try {
-            final StreamPair streams = startCall("removeTableManagerStateReplica");
+            final IStreamPair streams = startCall("removeTableManagerStateReplica");
             final JSONWriter jw = streams.getJSONwriter();
             marshaller.serializeTableInfo(table, jw);
             marshaller.serializeDatabaseID(replicaLocation, jw);
@@ -559,7 +559,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public ITableManagerRemote recreateTableManager(final TableInfo table) throws RPCException, MovedException {
 
         try {
-            final StreamPair streams = startCall("recreateTableManager");
+            final IStreamPair streams = startCall("recreateTableManager");
             final JSONWriter jw = streams.getJSONwriter();
             marshaller.serializeTableInfo(table, jw);
             final JSONReader reader = makeCall(streams);
@@ -581,7 +581,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public boolean checkTableManagerAccessibility() throws RPCException, MovedException {
 
         try {
-            final StreamPair streams = startCall("checkTableManagerAccessibility");
+            final IStreamPair streams = startCall("checkTableManagerAccessibility");
             final JSONReader reader = makeCall(streams);
 
             final boolean result = reader.booleanValue();
@@ -603,7 +603,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
 
-            final StreamPair streams = startCall("getAvailableMachines");
+            final IStreamPair streams = startCall("getAvailableMachines");
             final JSONWriter jw = streams.getJSONwriter();
             //marshaller.serializeActionRequest(typeOfRequest, jw); //TODO complete if needed
             final JSONReader reader = makeCall(streams);
@@ -626,7 +626,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public void prepareForMigration(final String newLocation) throws RPCException, MigrationException, MovedException {
 
         try {
-            final StreamPair streams = startCall("prepareForMigration");
+            final IStreamPair streams = startCall("prepareForMigration");
             final JSONWriter jw = streams.getJSONwriter();
             jw.value(newLocation);
             makeCall(streams);
@@ -645,7 +645,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public void checkConnection() throws RPCException, MovedException {
 
         try {
-            final StreamPair streams = startCall("checkConnection");
+            final IStreamPair streams = startCall("checkConnection");
             makeCall(streams);
             finishCall(streams);
         }
@@ -661,7 +661,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public void completeMigration() throws RPCException, MovedException, MigrationException {
 
         try {
-            final StreamPair streams = startCall("completeMigration");
+            final IStreamPair streams = startCall("completeMigration");
             makeCall(streams);
             finishCall(streams);
         }
@@ -677,7 +677,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public void shutdown(final boolean shutdown) throws RPCException, MovedException {
 
         try {
-            final StreamPair streams = startCall("shutdown");
+            final IStreamPair streams = startCall("shutdown");
             final JSONWriter jw = streams.getJSONwriter();
             jw.value(shutdown);
             makeCall(streams);
@@ -695,7 +695,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public IChordRemoteReference getChordReference() throws RPCException {
 
         try {
-            final StreamPair streams = startCall("getChordReference");
+            final IStreamPair streams = startCall("getChordReference");
             final JSONReader reader = makeCall(streams);
             final IChordRemoteReference result = marshaller.deserializeChordRemoteReference(reader);
             finishCall(streams);
@@ -713,7 +713,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public boolean isAlive() throws RPCException, MovedException {
 
         try {
-            final StreamPair streams = startCall("isAlive");
+            final IStreamPair streams = startCall("isAlive");
             final JSONReader reader = makeCall(streams);
             final boolean result = reader.booleanValue();
             finishCall(streams);
@@ -731,7 +731,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     public InetSocketAddress getAddress() throws RPCException {
 
         try {
-            final StreamPair streams = startCall("getAddress");
+            final IStreamPair streams = startCall("getAddress");
             final JSONReader reader = makeCall(streams);
             final InetSocketAddress result = marshaller.deserializeInetSocketAddress(reader);
             finishCall(streams);
@@ -749,7 +749,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
 
-            final StreamPair streams = startCall("addMonitoringSummary");
+            final IStreamPair streams = startCall("addMonitoringSummary");
             final JSONWriter jw = streams.getJSONwriter();
             marshaller.serializeMachineMonitoringData(summary, jw);
             makeCall(streams);

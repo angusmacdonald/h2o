@@ -15,7 +15,6 @@ import uk.ac.standrews.cs.nds.JSONstream.rpc.ApplicationServer;
 import uk.ac.standrews.cs.nds.JSONstream.rpc.IHandler;
 import uk.ac.standrews.cs.nds.JSONstream.rpc.JSONReader;
 import uk.ac.standrews.cs.nds.JSONstream.rpc.Marshaller;
-import uk.ac.standrews.cs.nds.rpc.json.JSONBoolean;
 
 public class TableManagerServer extends ApplicationServer {
 
@@ -91,6 +90,7 @@ public class TableManagerServer extends ApplicationServer {
 
                 final TableInfo p0 = marshaller.deserializeTableInfo(args);
                 table_manager.addReplicaInformation(p0);
+                writer.value("");
             }
         });
 

@@ -497,8 +497,13 @@ public class Database implements DataHandler, Observer {
      */
     private String getFileSystemName(final String databaseName) {
 
-        final String nameBeforeSlash = databaseName.substring(0, databaseName.indexOf(File.separator));
-        return nameBeforeSlash + File.separator;
+        if (databaseName.indexOf(File.separator) >= 0) {
+            final String nameBeforeSlash = databaseName.substring(0, databaseName.indexOf(File.separator));
+            return nameBeforeSlash + File.separator;
+        }
+        else {
+            return null;
+        }
     }
 
     private H2OPropertiesWrapper setUpLocalDatabaseProperties(final DatabaseID localMachineLocation) {
