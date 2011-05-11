@@ -28,11 +28,12 @@ public class DropDatabase extends DefineCommand {
 
     private boolean deleteFiles;
 
-    public DropDatabase(Session session) {
+    public DropDatabase(final Session session) {
 
         super(session);
     }
 
+    @Override
     public int update() throws SQLException {
 
         if (dropAllObjects) {
@@ -48,18 +49,18 @@ public class DropDatabase extends DefineCommand {
 
         session.getUser().checkAdmin();
         session.commit(true);
-        Database db = session.getDatabase();
+        final Database db = session.getDatabase();
         ObjectArray objects;
 
         /*
          * Drop everything from the System Table.
          */
-        ISystemTableReference systemTableReference = db.getSystemTableReference();
+        final ISystemTableReference systemTableReference = db.getSystemTableReference();
 
         try {
             systemTableReference.removeAllTableInformation();
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             throw new SQLException(e.getMessage());
         }
         // **************************************
@@ -67,27 +68,33 @@ public class DropDatabase extends DefineCommand {
         // TODO local temp tables are not removed
         objects = db.getAllSchemas();
         for (int i = 0; i < objects.size(); i++) {
-            Schema schema = (Schema) objects.get(i);
+            final Schema schema = (Schema) objects.get(i);
             if (schema.canDrop() && !schema.getName().startsWith(Constants.H2O_SCHEMA)) {
                 db.removeDatabaseObject(session, schema);
             }
         }
 
-        Set<Table> tables = db.getAllReplicas();
-        for (Table t : tables) {
-            if (t.getName() != null && t.getName().startsWith(Constants.H2O_SCHEMA)) continue;
+        final Set<Table> tables = db.getAllReplicas();
+        for (final Table t : tables) {
+            if (t.getName() != null && t.getName().startsWith(Constants.H2O_SCHEMA)) {
+                continue;
+            }
             if (t.getName() != null && Table.VIEW.equals(t.getTableType())) {
                 db.removeSchemaObject(session, t);
             }
         }
-        for (Table t : tables) {
-            if (t.getName() != null && t.getName().startsWith(Constants.H2O_SCHEMA)) continue;
+        for (final Table t : tables) {
+            if (t.getName() != null && t.getName().startsWith(Constants.H2O_SCHEMA)) {
+                continue;
+            }
             if (t.getName() != null && Table.TABLE_LINK.equals(t.getTableType())) {
                 db.removeSchemaObject(session, t);
             }
         }
-        for (Table t : tables) {
-            if (t.getName() != null && t.getName().startsWith(Constants.H2O_SCHEMA)) continue;
+        for (final Table t : tables) {
+            if (t.getName() != null && t.getName().startsWith(Constants.H2O_SCHEMA)) {
+                continue;
+            }
             if (t.getName() != null && Table.TABLE.equals(t.getTableType())) {
                 db.removeSchemaObject(session, t);
             }
@@ -101,22 +108,22 @@ public class DropDatabase extends DefineCommand {
         objects.addAll(db.getAllSchemaObjects(DbObject.TRIGGER));
         objects.addAll(db.getAllSchemaObjects(DbObject.CONSTANT));
         for (int i = 0; i < objects.size(); i++) {
-            SchemaObject obj = (SchemaObject) objects.get(i);
+            final SchemaObject obj = (SchemaObject) objects.get(i);
             if (!obj.getSchema().getName().startsWith(Constants.H2O_SCHEMA)) {
                 db.removeSchemaObject(session, obj);
             }
         }
         objects = db.getAllUsers();
         for (int i = 0; i < objects.size(); i++) {
-            User user = (User) objects.get(i);
+            final User user = (User) objects.get(i);
             if (user != session.getUser()) {
                 db.removeDatabaseObject(session, user);
             }
         }
         objects = db.getAllRoles();
         for (int i = 0; i < objects.size(); i++) {
-            Role role = (Role) objects.get(i);
-            String sql = role.getCreateSQL();
+            final Role role = (Role) objects.get(i);
+            final String sql = role.getCreateSQL();
             // the role PUBLIC must not be dropped
             if (sql != null) {
                 db.removeDatabaseObject(session, role);
@@ -127,8 +134,8 @@ public class DropDatabase extends DefineCommand {
         objects.addAll(db.getAllAggregates());
         objects.addAll(db.getAllUserDataTypes());
         for (int i = 0; i < objects.size(); i++) {
-            DbObject obj = (DbObject) objects.get(i);
-            String sql = obj.getCreateSQL();
+            final DbObject obj = (DbObject) objects.get(i);
+            final String sql = obj.getCreateSQL();
             // the role PUBLIC must not be dropped
             if (sql != null) {
                 db.removeDatabaseObject(session, obj);
@@ -136,14 +143,14 @@ public class DropDatabase extends DefineCommand {
         }
     }
 
-    public void setDropAllObjects(boolean b) {
+    public void setDropAllObjects(final boolean b) {
 
-        this.dropAllObjects = b;
+        dropAllObjects = b;
     }
 
-    public void setDeleteFiles(boolean b) {
+    public void setDeleteFiles(final boolean b) {
 
-        this.deleteFiles = b;
+        deleteFiles = b;
     }
 
 }

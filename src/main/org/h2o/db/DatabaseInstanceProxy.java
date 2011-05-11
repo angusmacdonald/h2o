@@ -253,8 +253,7 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
 
             marshaller.serializeChordRemoteReference(systemTableLocation, jw);
             marshaller.serializeDatabaseID(databaseURL, jw);
-
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
 
             finishCall(streams);
 
@@ -301,7 +300,8 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
             final JSONWriter jw = streams.getJSONwriter();
             jw.value(alive);
 
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
+
 
             finishCall(streams);
 

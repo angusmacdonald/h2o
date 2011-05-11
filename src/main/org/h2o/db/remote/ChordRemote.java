@@ -72,6 +72,7 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 import uk.ac.standrews.cs.stachord.impl.ChordNodeFactory;
+import uk.ac.standrews.cs.stachord.impl.PredecessorKeyUnknownException;
 import uk.ac.standrews.cs.stachord.impl.RemoteChordException;
 import uk.ac.standrews.cs.stachord.interfaces.IChordNode;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
@@ -341,7 +342,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             }
         }
         catch (final RPCException e) {
-            e.printStackTrace();
+            ErrorHandling.exceptionError(e, "Failed to get the System Table URL.");
         }
 
         /*
@@ -627,7 +628,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             chordNode = new ChordNodeFactory().createNode(localChordAddress);
         }
         catch (final Exception e) {
-            e.printStackTrace();
+            ErrorHandling.exceptionError(e, "Failed to create new Chord ring.");
             return false;
         }
 
@@ -696,6 +697,14 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
                 ErrorHandling.errorNoEvent("RCE: Failed to connect to chord node on + " + localHostname + ":" + localPort + " known host: " + remoteHostname + ":" + remoteChordPort);
                 return false;
+            }
+            catch (final PredecessorKeyUnknownException e) {
+                ErrorHandling.errorNoEvent("Couldn't perform Chord lookup because predecessor key was not known.");
+                connected = false;
+            }
+            catch (final RPCException e) {
+                ErrorHandling.errorNoEvent("An RPCException was thrown connecting to + " + localHostname + ":" + localPort + " known host: " + remoteHostname + ":" + remoteChordPort);
+                connected = false;
             }
             catch (final Exception e) {
                 ErrorHandling.errorNoEvent("E: Failed to create new chord node on + " + localHostname + ":" + localPort + " known host: " + remoteHostname + ":" + remoteChordPort);

@@ -3,6 +3,7 @@ package org.h2o.db.manager;
 import java.net.UnknownHostException;
 import java.util.Set;
 
+import org.h2o.autonomic.decision.ranker.metric.Metric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.db.H2OMarshaller;
 import org.h2o.db.id.DatabaseID;
@@ -280,15 +281,15 @@ public class SystemTableServer extends ApplicationServer {
 
         // public Queue<DatabaseInstanceWrapper> getAvailableMachines(ActionRequest typeOfRequest) throws RPCException, MovedException;
 
-        //        handler_map.put("getAvailableMachines", new IHandler() {
-        //
-        //            @Override
-        //            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
-        //
-        //                final Metric p0 = marshaller.deserializeActionRequest(args);
-        //                marshaller.serializeQueueDatabaseInstanceWrapper(system_table.getAvailableMachines(p0), response);
-        //            }
-        //        });
+        handler_map.put("getAvailableMachines", new IHandler() {
+
+            @Override
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
+
+                final Metric p0 = marshaller.deserializeActionRequest(args);
+                marshaller.serializeQueueDatabaseInstanceWrapper(system_table.getAvailableMachines(p0), response);
+            }
+        });
 
         //      public void removeAllTableInformation() throws RPCException, MovedException;
 

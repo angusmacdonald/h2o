@@ -9,10 +9,6 @@
 package org.h2o.autonomic.decision.ranker.metric;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-
-import uk.ac.standrews.cs.numonic.data.ResourceType;
 
 public class Metric implements Serializable {
 
@@ -22,25 +18,27 @@ public class Metric implements Serializable {
      * ####################### PROBABILITY-BASED. ####################### cpu + memory + network + disk should add up to one.
      */
 
-    private final Map<EnumResourceRequest, Long> requestInformation = new HashMap<EnumResourceRequest, Long>();
+    public final double disk;
 
-    private final Map<ResourceType, Double> importanceOfResources = new HashMap<ResourceType, Double>();
+    public final double cpu;
+
+    public final long immediateDiskSpace;
+
+    public final long expectedTimeToCompletion;
+
+    public final double memory;
+
+    public final double network;
 
     public Metric(final long expectedTimeToCompletion, final long immediateDiskSpace, final double cpu, final double memory, final double network, final double disk) {
 
-        requestInformation.put(EnumResourceRequest.EXPECTED_TIME_TO_COMPLETE, expectedTimeToCompletion);
-        requestInformation.put(EnumResourceRequest.DISK_SPACE_NEEDED, immediateDiskSpace);
+        this.expectedTimeToCompletion = expectedTimeToCompletion;
+        this.immediateDiskSpace = immediateDiskSpace;
+        this.cpu = cpu;
+        this.memory = memory;
+        this.network = network;
+        this.disk = disk;
 
-        //TODO fix.
-        //        importanceOfResources.put(ResourceType.CPU_UTIL, cpu);
-        //        importanceOfResources.put(ResourceType.MEMORY_UTIL, memory);
-        //        importanceOfResources.put(ResourceType.NETWORK_UTIL, network);
-        //        importanceOfResources.put(ResourceType.DISK_UTIL, disk);
-    }
-
-    public Map<ResourceType, Double> getResourceImportanceMap() {
-
-        return importanceOfResources;
     }
 
     public static Metric getDefaultSystemTableMetric() {

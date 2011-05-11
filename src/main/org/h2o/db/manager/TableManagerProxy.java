@@ -24,7 +24,6 @@
  ***************************************************************************/
 package org.h2o.db.manager;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -51,8 +50,6 @@ import uk.ac.standrews.cs.nds.rpc.stream.IStreamPair;
 import uk.ac.standrews.cs.nds.rpc.stream.JSONReader;
 import uk.ac.standrews.cs.nds.rpc.stream.Marshaller;
 import uk.ac.standrews.cs.nds.rpc.stream.Proxy;
-import uk.ac.standrews.cs.nds.rpc.stream.StreamPair;
-import uk.ac.standrews.cs.nds.rpc.stream.StreamPool;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 public class TableManagerProxy extends Proxy implements ITableManagerRemote {
@@ -95,17 +92,6 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
         return marshaller;
     }
 
-    @Override
-    /*
-     * Overridden to prevent the 'crossing the streams' problem.
-     */
-    protected IStreamPair setupStreams() throws IOException {
-
-        final IStreamPair stream_pair = new StreamPair(StreamPool.makeSocket(node_address));
-        handleStreamPairChange(stream_pair);
-        return stream_pair;
-    }
-
     // -------------------------------------------------------------------------------------------------------
 
     @Override
@@ -137,8 +123,7 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
             final IStreamPair streams = startCall("prepareForMigration");
             final JSONWriter jw = streams.getJSONwriter();
             setUpJSONArrayForRMI(jw);
-
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
             finishCall(streams);
         }
         catch (final MovedException e) {
@@ -160,8 +145,7 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
             final IStreamPair streams = startCall("checkConnection");
             final JSONWriter jw = streams.getJSONwriter();
             setUpJSONArrayForRMI(jw);
-
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
             finishCall(streams);
         }
         catch (final MovedException e) {
@@ -179,8 +163,7 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
             final IStreamPair streams = startCall("completeMigration");
             final JSONWriter jw = streams.getJSONwriter();
             setUpJSONArrayForRMI(jw);
-
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
             finishCall(streams);
         }
         catch (final MovedException e) {
@@ -203,8 +186,7 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
             final JSONWriter jw = streams.getJSONwriter();
             setUpJSONArrayForRMI(jw);
             jw.value(shutdown);
-
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
             finishCall(streams);
         }
         catch (final MovedException e) {
@@ -302,8 +284,7 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
 
             setUpJSONArrayForRMI(jw);
             marshaller.serializeTableInfo(tableDetails, jw);
-
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
             finishCall(streams);
 
         }
@@ -329,8 +310,7 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
             setUpJSONArrayForRMI(jw);
 
             marshaller.serializeTableInfo(ti, jw);
-
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
             finishCall(streams);
         }
         catch (final MovedException e) {
@@ -405,8 +385,7 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
             marshaller.serializeLockRequest(requestingDatabase, jw);
             marshaller.serializeCollectionCommitResult(committedQueries, jw);
             jw.value(asynchronousCommit);
-
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
             finishCall(streams);
 
         }
@@ -430,8 +409,7 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
             setUpJSONArrayForRMI(jw);
 
             jw.value(dropCommand);
-
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
             finishCall(streams);
         }
         catch (final Exception e) {
@@ -503,7 +481,7 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
             setUpJSONArrayForRMI(jw);
 
             marshaller.serializeITableManagerRemote(oldTableManager, jw);
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
             finishCall(streams);
 
         }
@@ -541,7 +519,7 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
             final JSONWriter jw = streams.getJSONwriter();
             setUpJSONArrayForRMI(jw);
             jw.value(oldPrimaryDatabaseName);
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
             finishCall(streams);
         }
         catch (final SQLException e) {
@@ -578,7 +556,7 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
             final JSONWriter jw = streams.getJSONwriter();
             setUpJSONArrayForRMI(jw);
             marshaller.serializeTableInfo(ti, jw);
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
             finishCall(streams);
         }
         catch (final StartupException e) {

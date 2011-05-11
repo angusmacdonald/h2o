@@ -187,6 +187,7 @@ public class SystemTableReference implements ISystemTableReference {
                 systemTableNode = systemTableWrapper.getSystemTable().getChordReference();
             }
             catch (final RPCException e) {
+                e.printStackTrace();
                 ErrorHandling.errorNoEvent("Failed to obtain the new System Table's chord reference.");
             }
         }

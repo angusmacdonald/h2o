@@ -246,7 +246,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
                 final IStreamPair streams = startCall("recreateSystemTable");
                 final JSONWriter jw = streams.getJSONwriter();
                 marshaller.serializeISystemTableMigratable(migratableSystemTable, jw);
-                makeCall(streams);
+                handleVoidCall(makeCall(streams));
                 finishCall(streams);
 
             }
@@ -271,7 +271,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
         try {
 
             final IStreamPair streams = startCall("recreateInMemorySystemTableFromLocalPersistedState");
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
             finishCall(streams);
 
         }
@@ -362,7 +362,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
         try {
 
             final IStreamPair streams = startCall("removeAllTableInformation");
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
 
             finishCall(streams);
         }
@@ -429,7 +429,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
             final IStreamPair streams = startCall("removeConnectionInformation");
             final JSONWriter jw = streams.getJSONwriter();
             marshaller.serializeIDatabaseInstanceRemote(localDatabaseInstance, jw);
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
 
             finishCall(streams);
         }
@@ -475,7 +475,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
             final JSONWriter jw = streams.getJSONwriter();
             marshaller.serializeITableManagerRemote(stub, jw);
             marshaller.serializeTableInfo(tableInfo, jw);
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
 
             finishCall(streams);
 
@@ -498,8 +498,8 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
             marshaller.serializeTableInfo(table, jw);
             marshaller.serializeDatabaseID(replicaLocation, jw);
             marshaller.serializeDatabaseID(primaryLocation, jw);
-
-            makeCall(streams);
+            jw.value(active);
+            handleVoidCall(makeCall(streams));
 
             finishCall(streams);
 
@@ -541,8 +541,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
             final JSONWriter jw = streams.getJSONwriter();
             marshaller.serializeTableInfo(table, jw);
             marshaller.serializeDatabaseID(replicaLocation, jw);
-
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
 
             finishCall(streams);
 
@@ -605,7 +604,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
             final IStreamPair streams = startCall("getAvailableMachines");
             final JSONWriter jw = streams.getJSONwriter();
-            //marshaller.serializeActionRequest(typeOfRequest, jw); //TODO complete if needed
+            marshaller.serializeActionRequest(typeOfRequest, jw);
             final JSONReader reader = makeCall(streams);
 
             final Queue<DatabaseInstanceWrapper> result = marshaller.deserializeQueueDatabaseInstanceWrapper(reader);
@@ -629,7 +628,8 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
             final IStreamPair streams = startCall("prepareForMigration");
             final JSONWriter jw = streams.getJSONwriter();
             jw.value(newLocation);
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
+
             finishCall(streams);
 
         }
@@ -646,7 +646,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
             final IStreamPair streams = startCall("checkConnection");
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
             finishCall(streams);
         }
         catch (final MovedException e) {
@@ -662,7 +662,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
 
         try {
             final IStreamPair streams = startCall("completeMigration");
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
             finishCall(streams);
         }
         catch (final MovedException e) {
@@ -680,7 +680,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
             final IStreamPair streams = startCall("shutdown");
             final JSONWriter jw = streams.getJSONwriter();
             jw.value(shutdown);
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
             finishCall(streams);
         }
         catch (final MovedException e) {
@@ -752,7 +752,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
             final IStreamPair streams = startCall("addMonitoringSummary");
             final JSONWriter jw = streams.getJSONwriter();
             marshaller.serializeMachineMonitoringData(summary, jw);
-            makeCall(streams);
+            handleVoidCall(makeCall(streams));
             finishCall(streams);
 
         }

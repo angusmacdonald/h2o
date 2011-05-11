@@ -127,7 +127,6 @@ public class TestBase {
 
         try {
             if (sb != null) {
-                sb.execute("DROP ALL OBJECTS");
                 sb.execute("SHUTDOWN");
                 if (!sb.isClosed()) {
                     sb.close();

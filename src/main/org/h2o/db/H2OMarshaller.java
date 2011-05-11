@@ -11,6 +11,7 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 
+import org.h2o.autonomic.decision.ranker.metric.Metric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
@@ -1645,6 +1646,91 @@ public class H2OMarshaller extends Marshaller {
             final SystemInfoData fsd = new SystemInfoData(machine_id, os_name, os_version, hostname, primary_ip, default_gateway, cpu_vendor, cpu_model, number_of_cores, number_of_cpus, cpu_clock_speed, cpu_cache_size, memory_total, swap_total);
 
             return fsd;
+        }
+        catch (final Exception e) {
+            throw new DeserializationException(e);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------------------
+
+    public void serializeActionRequest(final Metric source, final JSONWriter writer) throws JSONException {
+
+        if (source == null) {
+            writer.value(null);
+        }
+        else {
+
+            writer.object();
+            writer.key(CPU);
+            writer.value(source.cpu);
+            writer.key(DISK);
+            writer.value(source.disk);
+            writer.key(MEMORY);
+            writer.value(source.memory);
+            writer.key(NETWORK);
+            writer.value(source.network);
+            writer.key(EXPECTED_TIME_TO_COMPLETION);
+            writer.value(source.expectedTimeToCompletion);
+            writer.key(IMMEDIATE_DISK_SPACE);
+            writer.value(source.immediateDiskSpace);
+
+            writer.endObject();
+        }
+    }
+
+    public Metric deserializeActionRequest(final JSONReader reader) throws JSONException, DeserializationException {
+
+        try {
+
+            if (reader.checkNull()) { return null; }
+
+            reader.object();
+
+            reader.key(CPU);
+
+            double cpu = 0;
+            if (reader.have(JSONReader.DOUBLE)) {
+                cpu = reader.doubleValue();
+            }
+            else {
+                cpu = reader.intValue();
+            }
+
+            reader.key(DISK);
+            final double disk = reader.doubleValue();
+            reader.key(MEMORY);
+            final double memory = reader.doubleValue();
+
+            reader.key(NETWORK);
+            final double network = reader.doubleValue();
+            reader.key(EXPECTED_TIME_TO_COMPLETION);
+            long expectedTimeToCompletion = 0;
+            if (reader.have(JSONReader.LONG)) {
+                expectedTimeToCompletion = reader.longValue();
+            }
+            else if (reader.have(JSONReader.DOUBLE)) {
+                expectedTimeToCompletion = new Double(reader.doubleValue()).longValue();
+            }
+            else {
+                expectedTimeToCompletion = reader.intValue();
+            }
+            reader.key(IMMEDIATE_DISK_SPACE);
+
+            long immediateDiskSpace = 0;
+            if (reader.have(JSONReader.LONG)) {
+                immediateDiskSpace = reader.longValue();
+            }
+            else if (reader.have(JSONReader.DOUBLE)) {
+                immediateDiskSpace = new Double(reader.doubleValue()).longValue();
+            }
+            else {
+                immediateDiskSpace = reader.intValue();
+            }
+
+            reader.endObject();
+
+            return new Metric(expectedTimeToCompletion, immediateDiskSpace, cpu, memory, network, disk);
         }
         catch (final Exception e) {
             throw new DeserializationException(e);
