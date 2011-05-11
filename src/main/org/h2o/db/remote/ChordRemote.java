@@ -62,10 +62,10 @@ import org.h2o.viewer.H2OEventBus;
 import org.h2o.viewer.gwt.client.DatabaseStates;
 import org.h2o.viewer.gwt.client.H2OEvent;
 
-import uk.ac.standrews.cs.nds.JSONstream.registry.IRegistry;
-import uk.ac.standrews.cs.nds.JSONstream.registry.LocateRegistry;
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
 import uk.ac.standrews.cs.nds.registry.RegistryUnavailableException;
+import uk.ac.standrews.cs.nds.registry.stream.IRegistry;
+import uk.ac.standrews.cs.nds.registry.stream.LocateRegistry;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;

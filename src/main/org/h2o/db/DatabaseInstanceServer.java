@@ -8,10 +8,10 @@ import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.json.JSONWriter;
 
-import uk.ac.standrews.cs.nds.JSONstream.rpc.ApplicationServer;
-import uk.ac.standrews.cs.nds.JSONstream.rpc.IHandler;
-import uk.ac.standrews.cs.nds.JSONstream.rpc.JSONReader;
-import uk.ac.standrews.cs.nds.JSONstream.rpc.Marshaller;
+import uk.ac.standrews.cs.nds.rpc.stream.ApplicationServer;
+import uk.ac.standrews.cs.nds.rpc.stream.IHandler;
+import uk.ac.standrews.cs.nds.rpc.stream.JSONReader;
+import uk.ac.standrews.cs.nds.rpc.stream.Marshaller;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.NetworkUtil;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;

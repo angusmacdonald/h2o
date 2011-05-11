@@ -14,11 +14,11 @@ import org.h2o.db.manager.recovery.SystemTableAccessException;
 import org.h2o.util.exceptions.MovedException;
 import org.json.JSONWriter;
 
-import uk.ac.standrews.cs.nds.JSONstream.rpc.IStreamPair;
-import uk.ac.standrews.cs.nds.JSONstream.rpc.JSONReader;
-import uk.ac.standrews.cs.nds.JSONstream.rpc.Marshaller;
-import uk.ac.standrews.cs.nds.JSONstream.rpc.Proxy;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
+import uk.ac.standrews.cs.nds.rpc.stream.IStreamPair;
+import uk.ac.standrews.cs.nds.rpc.stream.JSONReader;
+import uk.ac.standrews.cs.nds.rpc.stream.Marshaller;
+import uk.ac.standrews.cs.nds.rpc.stream.Proxy;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRemote {
