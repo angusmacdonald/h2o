@@ -112,7 +112,7 @@ public class FailureTests extends MultiProcessTestBase {
          */
         killDatabase(findSystemTableInstance());
 
-        sleep(14000); // if 4000, location will be fixed through handlemovedexception, if 8000 fixed through predecessorChange.
+        sleep(14000); // if 4000, location will be fixed through handlemovedexception, if 14000 fixed through predecessorChange.
 
         // createConnectionsToDatabases();
 

@@ -376,16 +376,17 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     }
 
     @Override
-    public IDatabaseInstanceRemote getDatabaseInstance(final DatabaseID databaseURL) throws RPCException, MovedException {
+    public IDatabaseInstanceRemote getDatabaseInstance(final DatabaseID databaseID) throws RPCException, MovedException {
 
         try {
 
             final IStreamPair streams = startCall("getDatabaseInstance");
             final JSONWriter jw = streams.getJSONwriter();
-            marshaller.serializeDatabaseID(databaseURL, jw);
-            final JSONReader reader = makeCall(streams);
+            marshaller.serializeDatabaseID(databaseID, jw);
 
+            final JSONReader reader = makeCall(streams);
             final IDatabaseInstanceRemote result = marshaller.deserializeIDatabaseInstanceRemote(reader);
+
             finishCall(streams);
             return result;
 
@@ -394,7 +395,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
             throw e;
         }
         catch (final Exception e) {
-            e.printStackTrace();
+            ErrorHandling.exceptionError(e, "Error in getDatabaseInstance() call in SystemTableProxy.");
             dealWithException(e);
             return null; //not reached
         }

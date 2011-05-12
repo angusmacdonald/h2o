@@ -175,7 +175,7 @@ public class DatabaseInstance implements IDatabaseInstanceRemote {
             success = true;
         }
         catch (final SQLException e) {
-            Diagnostic.trace(DiagnosticLevel.FULL, "error recreating table manager");
+            Diagnostic.trace(DiagnosticLevel.FULL, "Error re-creating table manager");
         }
         return success;
     }

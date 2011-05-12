@@ -14,7 +14,6 @@ import java.util.Set;
 import org.h2o.autonomic.decision.ranker.metric.Metric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.db.id.DatabaseID;
-import org.h2o.db.id.DatabaseURL;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
@@ -211,7 +210,7 @@ public class H2OMarshaller extends Marshaller {
             serializeInetSocketAddress(source.getAddress(), writer);
         }
         catch (final RPCException e) {
-            ErrorHandling.exceptionError(e, "Unexpected RPCException.");
+            ErrorHandling.exceptionError(e, "Unexpected RPCException in serializeIDatabaseInstanceRemote.");
         }
     }
 
@@ -233,8 +232,6 @@ public class H2OMarshaller extends Marshaller {
         else {
             writer.object();
 
-            writer.key(DATABASE_ID);
-            writer.value(source.getID());
             writer.key(DATABASE_URL);
             writer.value(source.getURLwithRMIPort());
 
@@ -247,13 +244,12 @@ public class H2OMarshaller extends Marshaller {
         try {
             if (reader.checkNull()) { return null; }
             reader.object();
-            reader.key(DATABASE_ID);
-            final DatabaseID id = DatabaseID.parseURL(reader.stringValue());
+
             reader.key(DATABASE_URL);
-            final DatabaseURL url = DatabaseURL.parseURL(reader.stringValue());
-            id.setRMIPort(url.getRMIPort());
+            final DatabaseID url = DatabaseID.parseURL(reader.stringValue());
+
             reader.endObject();
-            return new DatabaseID(url);
+            return url;
         }
         catch (final Exception e) {
             throw new DeserializationException(e);
