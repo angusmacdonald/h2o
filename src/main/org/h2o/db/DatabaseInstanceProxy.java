@@ -15,13 +15,13 @@ import org.h2o.util.exceptions.MovedException;
 import org.json.JSONWriter;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
-import uk.ac.standrews.cs.nds.rpc.stream.IStreamPair;
+import uk.ac.standrews.cs.nds.rpc.stream.Connection;
 import uk.ac.standrews.cs.nds.rpc.stream.JSONReader;
 import uk.ac.standrews.cs.nds.rpc.stream.Marshaller;
-import uk.ac.standrews.cs.nds.rpc.stream.Proxy;
+import uk.ac.standrews.cs.nds.rpc.stream.StreamProxy;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
-public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRemote {
+public class DatabaseInstanceProxy extends StreamProxy implements IDatabaseInstanceRemote {
 
     private static final Map<InetSocketAddress, DatabaseInstanceProxy> proxy_map;
     private final H2OMarshaller marshaller;
@@ -74,12 +74,12 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public boolean isAlive() throws RPCException, MovedException {
 
         try {
-            final IStreamPair streams = startCall("isAlive");
-            final JSONReader reader = makeCall(streams);
+            final Connection connection = (Connection) startCall("isAlive");
+            final JSONReader reader = makeCall(connection);
 
             final boolean result = reader.booleanValue();
 
-            finishCall(streams);
+            finishCall(connection);
             return result;
         }
         catch (final MovedException e) {
@@ -95,20 +95,19 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public int execute(final String query, final String transactionName, final boolean commitOperation) throws RPCException, SQLException {
 
         try {
+            final Connection connection = (Connection) startCall("execute");
 
-            final IStreamPair streams = startCall("execute");
-
-            final JSONWriter jw = streams.getJSONwriter();
+            final JSONWriter jw = connection.getJSONwriter();
 
             jw.value(query);
             jw.value(transactionName);
             jw.value(commitOperation);
 
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
 
             final int result = reader.intValue();
 
-            finishCall(streams);
+            finishCall(connection);
 
             return result;
         }
@@ -125,21 +124,19 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public int prepare(final String transactionName) throws RPCException, SQLException {
 
         try {
+            final Connection connection = (Connection) startCall("prepare");
 
-            final IStreamPair streams = startCall("prepare");
-
-            final JSONWriter jw = streams.getJSONwriter();
+            final JSONWriter jw = connection.getJSONwriter();
 
             jw.value(transactionName);
 
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
 
             final int result = reader.intValue();
 
-            finishCall(streams);
+            finishCall(connection);
 
             return result;
-
         }
         catch (final SQLException e) {
             throw e;
@@ -148,21 +145,19 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
             dealWithException(e);
             return -1; //not reached
         }
-
     }
 
     @Override
     public String getConnectionString() throws RPCException {
 
         try {
+            final Connection connection = (Connection) startCall("getConnectionString");
 
-            final IStreamPair streams = startCall("getConnectionString");
-
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
 
             final String result = reader.stringValue();
 
-            finishCall(streams);
+            finishCall(connection);
 
             return result;
         }
@@ -170,21 +165,19 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
             dealWithException(e);
             return ""; //not reached
         }
-
     }
 
     @Override
     public DatabaseID getURL() throws RPCException {
 
         try {
+            final Connection connection = (Connection) startCall("getURL");
 
-            final IStreamPair streams = startCall("getURL");
-
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
 
             final DatabaseID result = marshaller.deserializeDatabaseID(reader);
 
-            finishCall(streams);
+            finishCall(connection);
 
             return result;
         }
@@ -198,13 +191,13 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public DatabaseID getSystemTableURL() throws RPCException {
 
         try {
-            final IStreamPair streams = startCall("getSystemTableURL");
+            final Connection connection = (Connection) startCall("getSystemTableURL");
 
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
 
             final DatabaseID result = marshaller.deserializeDatabaseID(reader);
 
-            finishCall(streams);
+            finishCall(connection);
 
             return result;
         }
@@ -218,20 +211,19 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public int executeUpdate(final String sql, final boolean systemTableCommand) throws RPCException, SQLException {
 
         try {
-            final IStreamPair streams = startCall("executeUpdate");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("executeUpdate");
+            final JSONWriter jw = connection.getJSONwriter();
 
             jw.value(sql);
             jw.value(systemTableCommand);
 
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
 
             final int result = reader.intValue();
 
-            finishCall(streams);
+            finishCall(connection);
 
             return result;
-
         }
         catch (final SQLException e) {
             throw e;
@@ -246,43 +238,39 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public void setSystemTableLocation(final IChordRemoteReference systemTableLocation, final DatabaseID databaseURL) throws RPCException {
 
         try {
+            final Connection connection = (Connection) startCall("setSystemTableLocation");
 
-            final IStreamPair streams = startCall("setSystemTableLocation");
-
-            final JSONWriter jw = streams.getJSONwriter();
+            final JSONWriter jw = connection.getJSONwriter();
 
             marshaller.serializeChordRemoteReference(systemTableLocation, jw);
             marshaller.serializeDatabaseID(databaseURL, jw);
-            handleVoidCall(makeCall(streams));
 
-            finishCall(streams);
+            handleVoidCall(makeCall(connection));
 
+            finishCall(connection);
         }
         catch (final Exception e) {
             dealWithException(e);
         }
-
     }
 
     @Override
     public ITableManagerRemote findTableManagerReference(final TableInfo tableInfo, final boolean searchOnlyCache) throws RPCException {
 
         try {
+            final Connection connection = (Connection) startCall("findTableManagerReference");
 
-            final IStreamPair streams = startCall("findTableManagerReference");
-
-            final JSONWriter jw = streams.getJSONwriter();
+            final JSONWriter jw = connection.getJSONwriter();
             marshaller.serializeTableInfo(tableInfo, jw);
             jw.value(searchOnlyCache);
 
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
 
             final ITableManagerRemote result = marshaller.deserializeITableManagerRemote(reader);
 
-            finishCall(streams);
+            finishCall(connection);
 
             return result;
-
         }
         catch (final Exception e) {
             dealWithException(e);
@@ -294,35 +282,31 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public void setAlive(final boolean alive) throws RPCException {
 
         try {
+            final Connection connection = (Connection) startCall("setAlive");
 
-            final IStreamPair streams = startCall("setAlive");
-
-            final JSONWriter jw = streams.getJSONwriter();
+            final JSONWriter jw = connection.getJSONwriter();
             jw.value(alive);
 
-            handleVoidCall(makeCall(streams));
+            makeCall(connection);
 
-            finishCall(streams);
-
+            finishCall(connection);
         }
         catch (final Exception e) {
             dealWithException(e);
         }
-
     }
 
     @Override
     public ISystemTableMigratable recreateSystemTable() throws RPCException, SQLException, SystemTableAccessException {
 
         try {
+            final Connection connection = (Connection) startCall("recreateSystemTable");
 
-            final IStreamPair streams = startCall("recreateSystemTable");
-
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
 
             final ISystemTableMigratable result = marshaller.deserializeISystemTableMigratable(reader);
 
-            finishCall(streams);
+            finishCall(connection);
 
             return result;
         }
@@ -342,17 +326,17 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public boolean recreateTableManager(final TableInfo tableInfo, final DatabaseID databaseURL) throws RPCException {
 
         try {
-            final IStreamPair streams = startCall("recreateTableManager");
+            final Connection connection = (Connection) startCall("recreateTableManager");
 
-            final JSONWriter jw = streams.getJSONwriter();
+            final JSONWriter jw = connection.getJSONwriter();
             marshaller.serializeTableInfo(tableInfo, jw);
             marshaller.serializeDatabaseID(databaseURL, jw);
 
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
 
             final boolean result = reader.booleanValue();
 
-            finishCall(streams);
+            finishCall(connection);
 
             return result;
         }
@@ -366,13 +350,13 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public boolean isSystemTable() throws RPCException {
 
         try {
-            final IStreamPair streams = startCall("isSystemTable");
+            final Connection connection = (Connection) startCall("isSystemTable");
 
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
 
             final boolean result = reader.booleanValue();
 
-            finishCall(streams);
+            finishCall(connection);
 
             return result;
         }
@@ -386,13 +370,13 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public ISystemTableMigratable getSystemTable() throws RPCException {
 
         try {
-            final IStreamPair streams = startCall("getSystemTable");
+            final Connection connection = (Connection) startCall("getSystemTable");
 
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
 
             final ISystemTableMigratable result = marshaller.deserializeISystemTableMigratable(reader);
 
-            finishCall(streams);
+            finishCall(connection);
 
             return result;
         }
@@ -412,13 +396,13 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     public int getChordPort() throws RPCException {
 
         try {
-            final IStreamPair streams = startCall("getChordPort");
+            final Connection connection = (Connection) startCall("getChordPort");
 
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
 
             final int result = reader.intValue();
 
-            finishCall(streams);
+            finishCall(connection);
 
             return result;
         }

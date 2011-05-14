@@ -24,6 +24,7 @@
  ***************************************************************************/
 package org.h2o.db.manager;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -46,13 +47,13 @@ import org.json.JSONException;
 import org.json.JSONWriter;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
-import uk.ac.standrews.cs.nds.rpc.stream.IStreamPair;
+import uk.ac.standrews.cs.nds.rpc.stream.Connection;
 import uk.ac.standrews.cs.nds.rpc.stream.JSONReader;
 import uk.ac.standrews.cs.nds.rpc.stream.Marshaller;
-import uk.ac.standrews.cs.nds.rpc.stream.Proxy;
+import uk.ac.standrews.cs.nds.rpc.stream.StreamProxy;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
-public class TableManagerProxy extends Proxy implements ITableManagerRemote {
+public class TableManagerProxy extends StreamProxy implements ITableManagerRemote {
 
     private static final Map<TableNameSocketPair, TableManagerProxy> proxy_map;
     private final H2OMarshaller marshaller;
@@ -98,12 +99,12 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     public boolean isAlive() throws RPCException, MovedException {
 
         try {
-            final IStreamPair streams = startCall("isAlive");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("isAlive");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
             final boolean result = reader.booleanValue();
-            finishCall(streams);
+            finishCall(connection);
             return result;
         }
         catch (final MovedException e) {
@@ -113,18 +114,17 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
             dealWithException(e);
             return false; //not reached
         }
-
     }
 
     @Override
     public void prepareForMigration(final String newLocation) throws RPCException, MigrationException, MovedException {
 
         try {
-            final IStreamPair streams = startCall("prepareForMigration");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("prepareForMigration");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
-            handleVoidCall(makeCall(streams));
-            finishCall(streams);
+            handleVoidCall(makeCall(connection));
+            finishCall(connection);
         }
         catch (final MovedException e) {
             throw e;
@@ -135,18 +135,17 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
         catch (final Exception e) {
             dealWithException(e);
         }
-
     }
 
     @Override
     public void checkConnection() throws RPCException, MovedException {
 
         try {
-            final IStreamPair streams = startCall("checkConnection");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("checkConnection");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
-            handleVoidCall(makeCall(streams));
-            finishCall(streams);
+            handleVoidCall(makeCall(connection));
+            finishCall(connection);
         }
         catch (final MovedException e) {
             throw e;
@@ -160,11 +159,11 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     public void completeMigration() throws RPCException, MovedException, MigrationException {
 
         try {
-            final IStreamPair streams = startCall("completeMigration");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("completeMigration");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
-            handleVoidCall(makeCall(streams));
-            finishCall(streams);
+            handleVoidCall(makeCall(connection));
+            finishCall(connection);
         }
         catch (final MovedException e) {
             throw e;
@@ -175,19 +174,18 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
         catch (final Exception e) {
             dealWithException(e);
         }
-
     }
 
     @Override
     public void shutdown(final boolean shutdown) throws RPCException, MovedException {
 
         try {
-            final IStreamPair streams = startCall("shutdown");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("shutdown");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
             jw.value(shutdown);
-            handleVoidCall(makeCall(streams));
-            finishCall(streams);
+            handleVoidCall(makeCall(connection));
+            finishCall(connection);
         }
         catch (final MovedException e) {
             throw e;
@@ -195,20 +193,19 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
         catch (final Exception e) {
             dealWithException(e);
         }
-
     }
 
     @Override
     public IChordRemoteReference getChordReference() throws RPCException {
 
         try {
-            final IStreamPair streams = startCall("IChordRemoteReference");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("IChordRemoteReference");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
 
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
             final IChordRemoteReference result = marshaller.deserializeChordRemoteReference(reader);
-            finishCall(streams);
+            finishCall(connection);
             return result;
         }
         catch (final Exception e) {
@@ -221,18 +218,17 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     public TableProxy getTableProxy(final LockType lockType, final LockRequest lockRequest) throws RPCException, SQLException, MovedException {
 
         try {
-            final IStreamPair streams = startCall("getTableProxy");
+            final Connection connection = (Connection) startCall("getTableProxy");
 
-            final JSONWriter jw = streams.getJSONwriter();
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
             marshaller.serializeLockType(lockType, jw);
             marshaller.serializeLockRequest(lockRequest, jw);
 
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
             final TableProxy result = marshaller.deserializeTableProxy(reader);
-            finishCall(streams);
+            finishCall(connection);
             return result;
-
         }
         catch (final MovedException e) {
             throw e;
@@ -250,17 +246,16 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     public boolean addTableInformation(final DatabaseID tableManagerURL, final TableInfo tableDetails) throws RPCException, MovedException, SQLException {
 
         try {
-            final IStreamPair streams = startCall("addTableInformation");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("addTableInformation");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
 
             marshaller.serializeDatabaseID(tableManagerURL, jw);
             marshaller.serializeTableInfo(tableDetails, jw);
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
             final boolean result = reader.booleanValue();
-            finishCall(streams);
+            finishCall(connection);
             return result;
-
         }
         catch (final MovedException e) {
             throw e;
@@ -278,15 +273,14 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     public void addReplicaInformation(final TableInfo tableDetails) throws RPCException, MovedException, SQLException {
 
         try {
-            final IStreamPair streams = startCall("addReplicaInformation");
+            final Connection connection = (Connection) startCall("addReplicaInformation");
 
-            final JSONWriter jw = streams.getJSONwriter();
+            final JSONWriter jw = connection.getJSONwriter();
 
             setUpJSONArrayForRMI(jw);
             marshaller.serializeTableInfo(tableDetails, jw);
-            handleVoidCall(makeCall(streams));
-            finishCall(streams);
-
+            handleVoidCall( makeCall(connection));
+            finishCall(connection);
         }
         catch (final MovedException e) {
             throw e;
@@ -298,20 +292,19 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
             e.printStackTrace();
             dealWithException(e);
         }
-
     }
 
     @Override
     public void removeReplicaInformation(final TableInfo ti) throws RPCException, MovedException, SQLException {
 
         try {
-            final IStreamPair streams = startCall("removeReplicaInformation");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("removeReplicaInformation");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
 
             marshaller.serializeTableInfo(ti, jw);
-            handleVoidCall(makeCall(streams));
-            finishCall(streams);
+            handleVoidCall(makeCall(connection));
+            finishCall(connection);
         }
         catch (final MovedException e) {
             throw e;
@@ -322,20 +315,19 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
         catch (final Exception e) {
             dealWithException(e);
         }
-
     }
 
     @Override
     public boolean removeTableInformation() throws RPCException, SQLException, MovedException {
 
         try {
-            final IStreamPair streams = startCall("removeTableInformation");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("removeTableInformation");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
 
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
             final boolean result = reader.booleanValue();
-            finishCall(streams);
+            finishCall(connection);
             return result;
         }
         catch (final MovedException e) {
@@ -354,15 +346,14 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     public DatabaseID getLocation() throws RPCException, MovedException {
 
         try {
-            final IStreamPair streams = startCall("getLocation");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("getLocation");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
 
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
             final DatabaseID result = marshaller.deserializeDatabaseID(reader);
-            finishCall(streams);
+            finishCall(connection);
             return result;
-
         }
         catch (final MovedException e) {
             throw e;
@@ -377,17 +368,16 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     public void releaseLockAndUpdateReplicaState(final boolean commit, final LockRequest requestingDatabase, final Collection<CommitResult> committedQueries, final boolean asynchronousCommit) throws RPCException, MovedException, SQLException {
 
         try {
-            final IStreamPair streams = startCall("releaseLockAndUpdateReplicaState");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("releaseLockAndUpdateReplicaState");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
 
             jw.value(commit);
             marshaller.serializeLockRequest(requestingDatabase, jw);
             marshaller.serializeCollectionCommitResult(committedQueries, jw);
             jw.value(asynchronousCommit);
-            handleVoidCall(makeCall(streams));
-            finishCall(streams);
-
+            handleVoidCall( makeCall(connection));
+            finishCall(connection);
         }
         catch (final MovedException e) {
             throw e;
@@ -404,13 +394,13 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     public void remove(final boolean dropCommand) throws RPCException {
 
         try {
-            final IStreamPair streams = startCall("remove");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("remove");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
 
             jw.value(dropCommand);
-            handleVoidCall(makeCall(streams));
-            finishCall(streams);
+            handleVoidCall( makeCall(connection));
+            finishCall(connection);
         }
         catch (final Exception e) {
             dealWithException(e);
@@ -421,14 +411,13 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     public String getSchemaName() throws RPCException {
 
         try {
-            final IStreamPair streams = startCall("getSchemaName");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("getSchemaName");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
             final String result = reader.stringValue();
-            finishCall(streams);
+            finishCall(connection);
             return result;
-
         }
         catch (final Exception e) {
             dealWithException(e);
@@ -440,12 +429,12 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     public String getTableName() throws RPCException {
 
         try {
-            final IStreamPair streams = startCall("getTableName");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("getTableName");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
             final String result = reader.stringValue();
-            finishCall(streams);
+            finishCall(connection);
             return result;
         }
         catch (final Exception e) {
@@ -458,12 +447,12 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     public int getTableSet() throws RPCException {
 
         try {
-            final IStreamPair streams = startCall("getTableSet");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("getTableSet");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
             final int result = reader.intValue();
-            finishCall(streams);
+            finishCall(connection);
             return result;
         }
         catch (final Exception e) {
@@ -476,14 +465,13 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     public void buildTableManagerState(final ITableManagerRemote oldTableManager) throws RPCException, MovedException {
 
         try {
-            final IStreamPair streams = startCall("buildTableManagerState");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("buildTableManagerState");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
 
             marshaller.serializeITableManagerRemote(oldTableManager, jw);
-            handleVoidCall(makeCall(streams));
-            finishCall(streams);
-
+            handleVoidCall( makeCall(connection));
+            finishCall(connection);
         }
         catch (final MovedException e) {
             throw e;
@@ -497,12 +485,12 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     public DatabaseID getDatabaseURL() throws RPCException {
 
         try {
-            final IStreamPair streams = startCall("getDatabaseURL");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("getDatabaseURL");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
             final DatabaseID result = marshaller.deserializeDatabaseID(reader);
-            finishCall(streams);
+            finishCall(connection);
             return result;
         }
         catch (final Exception e) {
@@ -515,12 +503,12 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     public void recreateReplicaManagerState(final String oldPrimaryDatabaseName) throws RPCException, SQLException {
 
         try {
-            final IStreamPair streams = startCall("recreateReplicaManagerState");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("recreateReplicaManagerState");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
             jw.value(oldPrimaryDatabaseName);
-            handleVoidCall(makeCall(streams));
-            finishCall(streams);
+            handleVoidCall( makeCall(connection));
+            finishCall(connection);
         }
         catch (final SQLException e) {
             throw e;
@@ -534,12 +522,12 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     public int getNumberofReplicas() throws RPCException {
 
         try {
-            final IStreamPair streams = startCall("getNumberofReplicas");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("getNumberofReplicas");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
             final int result = reader.intValue();
-            finishCall(streams);
+            finishCall(connection);
             return result;
         }
         catch (final Exception e) {
@@ -552,12 +540,12 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     public void persistToCompleteStartup(final TableInfo ti) throws RPCException, StartupException {
 
         try {
-            final IStreamPair streams = startCall("persistToCompleteStartup");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("persistToCompleteStartup");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
             marshaller.serializeTableInfo(ti, jw);
-            handleVoidCall(makeCall(streams));
-            finishCall(streams);
+            handleVoidCall(  makeCall(connection));
+            finishCall(connection);
         }
         catch (final StartupException e) {
             throw e;
@@ -571,12 +559,12 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     public TableInfo getTableInfo() throws RPCException {
 
         try {
-            final IStreamPair streams = startCall("getTableInfo");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("getTableInfo");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
             final TableInfo result = marshaller.deserializeTableInfo(reader);
-            finishCall(streams);
+            finishCall(connection);
             return result;
         }
         catch (final Exception e) {
@@ -589,12 +577,12 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     public Map<DatabaseInstanceWrapper, Integer> getActiveReplicas() throws RPCException, MovedException {
 
         try {
-            final IStreamPair streams = startCall("getActiveReplicas");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("getActiveReplicas");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
             final Map<DatabaseInstanceWrapper, Integer> result = marshaller.deserializeMapDatabaseInstanceWrapperInteger(reader);
-            finishCall(streams);
+            finishCall(connection);
             return result;
         }
         catch (final Exception e) {
@@ -607,13 +595,13 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     public Map<DatabaseInstanceWrapper, Integer> getAllReplicas() throws RPCException, MovedException {
 
         try {
-            final IStreamPair streams = startCall("getAllReplicas");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("getAllReplicas");
+            final JSONWriter jw = connection.getJSONwriter();
 
             setUpJSONArrayForRMI(jw);
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
             final Map<DatabaseInstanceWrapper, Integer> result = marshaller.deserializeMapDatabaseInstanceWrapperInteger(reader);
-            finishCall(streams);
+            finishCall(connection);
             return result;
         }
         catch (final Exception e) {
@@ -626,13 +614,12 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     public DatabaseInstanceWrapper getDatabaseLocation() throws RPCException, MovedException {
 
         try {
-
-            final IStreamPair streams = startCall("getDatabaseLocation");
-            final JSONWriter jw = streams.getJSONwriter();
+            final Connection connection = (Connection) startCall("getDatabaseLocation");
+            final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
-            final JSONReader reader = makeCall(streams);
+            final JSONReader reader = makeCall(connection);
             final DatabaseInstanceWrapper result = marshaller.deserializeDatabaseInstanceWrapper(reader);
-            finishCall(streams);
+            finishCall(connection);
             return result;
         }
         catch (final Exception e) {

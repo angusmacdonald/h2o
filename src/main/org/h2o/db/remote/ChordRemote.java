@@ -63,9 +63,9 @@ import org.h2o.viewer.gwt.client.DatabaseStates;
 import org.h2o.viewer.gwt.client.H2OEvent;
 
 import uk.ac.standrews.cs.nds.p2p.interfaces.IKey;
+import uk.ac.standrews.cs.nds.registry.IRegistry;
 import uk.ac.standrews.cs.nds.registry.RegistryUnavailableException;
-import uk.ac.standrews.cs.nds.registry.stream.IRegistry;
-import uk.ac.standrews.cs.nds.registry.stream.LocateRegistry;
+import uk.ac.standrews.cs.nds.registry.stream.RegistryFactory;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -498,7 +498,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     public IDatabaseInstanceRemote getDatabaseInstanceAt(final String hostname) throws RPCException, RPCException {
 
         try {
-            final IRegistry registry = LocateRegistry.getRegistry(InetAddress.getByName(hostname));
+            final IRegistry registry = RegistryFactory.FACTORY.getRegistry(InetAddress.getByName(hostname));
 
             final Map<String, Integer> serverLocations = registry.getEntries();
 
@@ -547,9 +547,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     public void recreateRegistryIfItHasFailed() {
 
         try {
-            final IRegistry registry = LocateRegistry.getRegistry(true);
+            final IRegistry registry = RegistryFactory.FACTORY.getRegistry(true);
             registry.rebind(getApplicationRegistryIDForLocalDatabase(), localMachineLocation.getRMIPort());
-
         }
         catch (final Exception e) {
             ErrorHandling.exceptionError(e, "Error trying to recreate registry and adding the local database instance port.");
@@ -592,7 +591,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     public IDatabaseInstanceRemote getDatabaseInstanceAt(final String hostname, final String databaseName) throws RPCException, NotBoundException {
 
         try {
-            final IRegistry registry = LocateRegistry.getRegistry(InetAddress.getByName(hostname));
+            final IRegistry registry = RegistryFactory.FACTORY.getRegistry(InetAddress.getByName(hostname));
 
             final int port = registry.lookup(getApplicationRegistryID(databaseName));
 
