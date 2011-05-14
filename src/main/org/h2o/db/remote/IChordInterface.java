@@ -60,4 +60,9 @@ public interface IChordInterface {
      */
     IChordNode getChordNode();
 
+    /**
+     * Checks whether the RPC registry on this machine has failed, and recreates it (adding a reference to the local database) if it has.
+     */
+    void recreateRegistryIfItHasFailed();
+
 }

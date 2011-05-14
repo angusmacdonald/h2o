@@ -282,7 +282,7 @@ public class FailureTests extends MultiProcessTestBase {
         /*
          * Kill off the System Table process.
          */
-        killDatabase(fullDbName[1]);
+        killDatabase(dbs[1]);
 
         sleep(8000);
 
@@ -327,9 +327,9 @@ public class FailureTests extends MultiProcessTestBase {
         /*
          * Kill off the System Table process.
          */
-        killDatabase(fullDbName[1]);
+        killDatabase(dbs[1]);
 
-        sleep(7000);
+        sleep(10000);
 
         assertTestTableExists(connections[2], 2, false);
     }

@@ -644,19 +644,7 @@ public class TableManagerProxy extends Proxy implements ITableManagerRemote {
     @Override
     public InetSocketAddress getAddress() throws RPCException {
 
-        try {
-            final IStreamPair streams = startCall("getAddress");
-            final JSONWriter jw = streams.getJSONwriter();
-            setUpJSONArrayForRMI(jw);
-            final JSONReader reader = makeCall(streams);
-            final InetSocketAddress result = marshaller.deserializeInetSocketAddress(reader);
-            finishCall(streams);
-            return result;
-        }
-        catch (final Exception e) {
-            dealWithException(e);
-            return null; // not reached
-        }
+        return super.node_address;
     }
 
     /**

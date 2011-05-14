@@ -350,7 +350,7 @@ public class Database implements DataHandler, Observer {
 
     private DatabaseInstanceServer database_instance_server;
 
-    private SystemTableServer system_table_server;
+    private SystemTableServer system_table_server = null;
 
     private INumonic numonic = null;
 
@@ -962,55 +962,13 @@ public class Database implements DataHandler, Observer {
          */
         if (!isManagementDB()) { // don't run this code with the TCP server management DB
 
-            /*
-             * Connect to Database System.
-             */
             databaseRemote.connectToDatabaseSystem(h2oSystemSession, databaseSettings);
 
             // Establish Proxies
+            startTableManagerInstanceServer();
+            startDatabaseInstanceServer();
 
-            int preferredTableManagerPort = Integer.parseInt(databaseSettings.get("TABLE_MANAGER_SERVER_PORT"));
-            preferredTableManagerPort = H2ONetUtils.getInactiveTCPPort(preferredTableManagerPort);
-
-            table_manager_instance_server = new TableManagerInstanceServer(preferredTableManagerPort);
-
-            try {
-                table_manager_instance_server.start();
-            }
-            catch (final Exception e) {
-                ErrorHandling.hardExceptionError(e, "Couldn't start table manager instance server.");
-            }
-
-            int preferredDatabaseInstancePort = Integer.parseInt(databaseSettings.get("DATABASE_INSTANCE_SERVER_PORT"));
-            preferredDatabaseInstancePort = H2ONetUtils.getInactiveTCPPort(preferredDatabaseInstancePort);
-
-            database_instance_server = new DatabaseInstanceServer(getLocalDatabaseInstance(), preferredDatabaseInstancePort, getRemoteInterface().getApplicationRegistryIDForLocalDatabase());
-
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, getID() + ": Database instance server started on port " + preferredDatabaseInstancePort);
-
-            try {
-                database_instance_server.start(true); // true means: allow registry entry for this database ID to be overwritten
-            }
-            catch (final Exception e) {
-                ErrorHandling.hardExceptionError(e, "Couldn't start database instance server.");
-            }
-
-            databaseRemote.setDatabaseInstanceServerPort(preferredDatabaseInstancePort);
-
-            system_table_server = null;
-            /*
-             * Create Meta-Data Replication Manager. Must be executed after call to databaseRemote because of
-             * getLocalDatabaseInstanceInWrapper() call.
-             */
-            final boolean metaDataReplicationEnabled = Boolean.parseBoolean(databaseSettings.get("METADATA_REPLICATION_ENABLED"));
-            final int systemTableReplicationFactor = Integer.parseInt(databaseSettings.get("SYSTEM_TABLE_REPLICATION_FACTOR"));
-            final int tableManagerReplicationFactor = Integer.parseInt(databaseSettings.get("TABLE_MANAGER_REPLICATION_FACTOR"));
-
-            final int replicationThreadSleepTime = Integer.parseInt(databaseSettings.get("METADATA_REPLICATION_THREAD_SLEEP_TIME"));
-
-            metaDataReplicaManager = new MetaDataReplicaManager(metaDataReplicationEnabled, systemTableReplicationFactor, tableManagerReplicationFactor, getLocalDatabaseInstanceInWrapper(), this);
-            metaDataReplicationThread = new MetaDataReplicationThread(metaDataReplicaManager, systemTableRef, this, replicationThreadSleepTime);
-            metaDataReplicationThread.setName("MetaDataReplicationThread");
+            createMetaDataReplicationThread(); //Must be executed after call to databaseRemote because of getLocalDatabaseInstanceInWrapper() call.
         }
 
         /*
@@ -1109,6 +1067,55 @@ public class Database implements DataHandler, Observer {
                 Diagnostic.trace(DiagnosticLevel.FULL, "error creating H2O tables");
             }
         }
+    }
+
+    public void startDatabaseInstanceServer() {
+
+        int preferredDatabaseInstancePort = Integer.parseInt(databaseSettings.get("DATABASE_INSTANCE_SERVER_PORT"));
+        preferredDatabaseInstancePort = H2ONetUtils.getInactiveTCPPort(preferredDatabaseInstancePort);
+
+        database_instance_server = new DatabaseInstanceServer(getLocalDatabaseInstance(), preferredDatabaseInstancePort, getRemoteInterface().getApplicationRegistryIDForLocalDatabase());
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, getID() + ": Database instance server started on port " + preferredDatabaseInstancePort);
+
+        try {
+            database_instance_server.start(true); // true means: allow registry entry for this database ID to be overwritten
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Database Instance Server started for database " + getID() + " on port " + preferredDatabaseInstancePort + ".");
+        }
+        catch (final Exception e) {
+            ErrorHandling.hardExceptionError(e, "Couldn't start database instance server.");
+        }
+
+        databaseRemote.setDatabaseInstanceServerPort(preferredDatabaseInstancePort);
+    }
+
+    public void startTableManagerInstanceServer() {
+
+        int preferredTableManagerPort = Integer.parseInt(databaseSettings.get("TABLE_MANAGER_SERVER_PORT"));
+        preferredTableManagerPort = H2ONetUtils.getInactiveTCPPort(preferredTableManagerPort);
+
+        table_manager_instance_server = new TableManagerInstanceServer(preferredTableManagerPort);
+
+        try {
+            table_manager_instance_server.start();
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Table Manager Instance Server started for database " + getID() + " on port " + preferredTableManagerPort + ".");
+        }
+        catch (final Exception e) {
+            ErrorHandling.hardExceptionError(e, "Couldn't start table manager instance server.");
+        }
+    }
+
+    public void createMetaDataReplicationThread() {
+
+        final boolean metaDataReplicationEnabled = Boolean.parseBoolean(databaseSettings.get("METADATA_REPLICATION_ENABLED"));
+        final int systemTableReplicationFactor = Integer.parseInt(databaseSettings.get("SYSTEM_TABLE_REPLICATION_FACTOR"));
+        final int tableManagerReplicationFactor = Integer.parseInt(databaseSettings.get("TABLE_MANAGER_REPLICATION_FACTOR"));
+
+        final int replicationThreadSleepTime = Integer.parseInt(databaseSettings.get("METADATA_REPLICATION_THREAD_SLEEP_TIME"));
+
+        metaDataReplicaManager = new MetaDataReplicaManager(metaDataReplicationEnabled, systemTableReplicationFactor, tableManagerReplicationFactor, getLocalDatabaseInstanceInWrapper(), this);
+        metaDataReplicationThread = new MetaDataReplicationThread(metaDataReplicaManager, systemTableRef, this, replicationThreadSleepTime);
+        metaDataReplicationThread.setName("MetaDataReplicationThread");
     }
 
     private void commitSystemTableCreation(final boolean databaseExists, final boolean persistedTablesExist, final boolean createTables) throws SQLException {

@@ -52,7 +52,7 @@ public class MultiProcessTestBase extends TestBase {
 
     private LocatorServer ls;
 
-    private static String[] dbs = {"one", "two", "three"};
+    protected static String[] dbs = {"one", "two", "three"};
 
     protected String[] fullDbName = null;
 
@@ -68,13 +68,14 @@ public class MultiProcessTestBase extends TestBase {
     @BeforeClass
     public static void initialSetUp() {
 
-        Diagnostic.setLevel(DiagnosticLevel.INIT);
+        Diagnostic.setLevel(DiagnosticLevel.FULL);
         Constants.IS_TEST = true;
         Constants.IS_NON_SM_TEST = false;
 
         setReplicated(false);
         deleteDatabaseData();
         ChordRemote.setCurrentPort(40000);
+
     }
 
     public static synchronized void setReplicated(final boolean b) {
@@ -137,8 +138,16 @@ public class MultiProcessTestBase extends TestBase {
 
         startDatabases(true);
 
+        createShutdownHook();
+
         sleep(2000);
         createConnectionsToDatabases();
+    }
+
+    public void createShutdownHook() {
+
+        final MultiProcessCloser shutdownHook = new MultiProcessCloser(processes);
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
     private void killExistingProcessesIfNotOnWindows() throws IOException {
@@ -664,6 +673,8 @@ public class MultiProcessTestBase extends TestBase {
         for (final Process process : processes.values()) {
             process.destroy();
         }
+
+        processes.clear(); // clear the map so the shutdown hook doesn't do anything.
     }
 
     protected void killDatabase(final String instance) {

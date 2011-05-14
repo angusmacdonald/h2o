@@ -14,17 +14,19 @@ import org.h2o.db.replication.MetaDataReplicaManager;
 
 public class MetaDataReplicationThread extends Thread {
 
-    private MetaDataReplicaManager metaDataReplicaManager;
+    private final MetaDataReplicaManager metaDataReplicaManager;
 
-    private ISystemTableReference systemTableReference;
+    private final ISystemTableReference systemTableReference;
 
     private boolean running = true;
 
-    private int threadSleepTime;
+    private final int threadSleepTime;
 
-    private Database database;
+    private final Database database;
 
-    public MetaDataReplicationThread(MetaDataReplicaManager metaDataReplicaManager, ISystemTableReference systemTableReference, Database database, int threadSleepTime) {
+    public MetaDataReplicationThread(final MetaDataReplicaManager metaDataReplicaManager, final ISystemTableReference systemTableReference, final Database database, final int threadSleepTime) {
+
+        setName("h2o-meta-data-replication-thread");
 
         this.metaDataReplicaManager = metaDataReplicaManager;
         this.systemTableReference = systemTableReference;
@@ -32,6 +34,7 @@ public class MetaDataReplicationThread extends Thread {
         this.threadSleepTime = threadSleepTime;
     }
 
+    @Override
     public void run() {
 
         int i = 0;
@@ -42,11 +45,13 @@ public class MetaDataReplicationThread extends Thread {
         try {
             Thread.sleep(threadSleepTime);
         }
-        catch (InterruptedException e) {
+        catch (final InterruptedException e) {
         }
 
         while (isRunning()) {
-            if (!database.isRunning()) continue;
+            if (!database.isRunning()) {
+                continue;
+            }
 
             /*
              * Sleep.
@@ -54,7 +59,7 @@ public class MetaDataReplicationThread extends Thread {
             try {
                 Thread.sleep(threadSleepTime);
             }
-            catch (InterruptedException e) {
+            catch (final InterruptedException e) {
             }
 
             /*
@@ -67,7 +72,13 @@ public class MetaDataReplicationThread extends Thread {
              */
             metaDataReplicaManager.replicateMetaDataIfPossible(systemTableReference, true);
 
-            if (!database.isRunning()) return;
+            /*
+             * Check that the local application registry is still active. If it isn't, re-create it and re-add this
+             * instances reference.
+             */
+            database.getChordInterface().recreateRegistryIfItHasFailed();
+
+            if (!database.isRunning()) { return; }
             i++;
         }
     }
@@ -84,7 +95,7 @@ public class MetaDataReplicationThread extends Thread {
      * @param running
      *            the running to set
      */
-    public synchronized void setRunning(boolean running) {
+    public synchronized void setRunning(final boolean running) {
 
         this.running = running;
     }

@@ -65,6 +65,7 @@ public class TableManagerServer extends ApplicationServer {
                 final LockType p0 = marshaller.deserializeLockType(args.stringValue());
                 final LockRequest p1 = marshaller.deserializeLockRequest(args);
                 marshaller.serializeTableProxy(table_manager.getTableProxy(p0, p1), writer);
+
             }
         });
 

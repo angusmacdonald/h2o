@@ -302,7 +302,6 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
 
             handleVoidCall(makeCall(streams));
 
-
             finishCall(streams);
 
         }
@@ -406,22 +405,7 @@ public class DatabaseInstanceProxy extends Proxy implements IDatabaseInstanceRem
     @Override
     public InetSocketAddress getAddress() throws RPCException {
 
-        try {
-
-            final IStreamPair streams = startCall("getAddress");
-
-            final JSONReader reader = makeCall(streams);
-
-            final InetSocketAddress result = marshaller.deserializeInetSocketAddress(reader);
-
-            finishCall(streams);
-
-            return result;
-        }
-        catch (final Exception e) {
-            dealWithException(e);
-            return null; // final not reached
-        }
+        return super.node_address;
     }
 
     @Override

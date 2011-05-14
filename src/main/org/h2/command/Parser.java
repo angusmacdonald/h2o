@@ -153,6 +153,7 @@ import org.h2.value.ValueTimestamp;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.PersistentSystemTable;
+import org.h2o.db.manager.TableManagerProxy;
 import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.db.query.TableProxy;
@@ -4948,14 +4949,23 @@ public class Parser {
                 return tableManager.getTableProxy(LockType.NONE, new LockRequest(session));
             }
             catch (final RPCException e1) {
-                e.printStackTrace();
+
                 // Recreate Table Manager then try again.
                 try {
                     tableManager = systemTableReference.getSystemTable().recreateTableManager(tableInfo);
                     return tableManager.getTableProxy(LockType.NONE, new LockRequest(session));
                 }
                 catch (final Exception e2) {
-                    throw new SQLException("Failed to contact Table Manager: " + e2.getMessage());
+
+                    try {
+                        ErrorHandling.exceptionError(e2, "Failed to recreate or contact recreated Table Manager at " + ((TableManagerProxy) tableManager).getAddress());
+                    }
+                    catch (final RPCException e3) {
+                        // Only an error that affects the diagnostic message, so we effectively ignore it.
+                        ErrorHandling.exceptionError(e2, "Failed to recreate or contact recreated Table Manager.");
+                    }
+
+                    throw new SQLException("Failed to recreate or contact recreated Table Manager: " + e2.getMessage());
                 }
             }
             catch (final MovedException e1) {

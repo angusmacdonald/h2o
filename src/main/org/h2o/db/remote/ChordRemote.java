@@ -502,7 +502,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
             final Map<String, Integer> serverLocations = registry.getEntries();
 
-            Diagnostic.trace(PrettyPrinter.toString("Registry contents: " + serverLocations.keySet()));
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, PrettyPrinter.toString("Registry contents: " + serverLocations.keySet()));
 
             for (final Entry<String, Integer> applicationRegistryMap : serverLocations.entrySet()) {
 
@@ -510,7 +510,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
                     //If this is not the local machine being listed.
 
-                    Diagnostic.trace("Looking for another active database ID in application registry. Currently looking at: " + applicationRegistryMap.getKey());
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Looking for another active database ID in application registry. Currently looking at: " + applicationRegistryMap.getKey());
 
                     final IDatabaseInstanceRemote instanceReference = DatabaseInstanceProxy.getProxy(new InetSocketAddress(hostname, applicationRegistryMap.getValue()));
 
@@ -536,20 +536,20 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         }
         catch (final RegistryUnavailableException e) {
             ErrorHandling.errorNoEvent("Couldn't find an active registry on this machine (" + hostname + "). Restarting registry locally.");
-            recreateRegistryAndAddLocalInstance();
+            recreateRegistryIfItHasFailed();
             return getDatabaseInstanceAt(hostname);
         }
 
         return null;
     }
 
-    private void recreateRegistryAndAddLocalInstance() {
+    @Override
+    public void recreateRegistryIfItHasFailed() {
 
         try {
             final IRegistry registry = LocateRegistry.getRegistry(true);
-            registry.bind(getApplicationRegistryIDForLocalDatabase(), localMachineLocation.getRMIPort());
+            registry.rebind(getApplicationRegistryIDForLocalDatabase(), localMachineLocation.getRMIPort());
 
-            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Recreated application registry locally on " + localMachineLocation);
         }
         catch (final Exception e) {
             ErrorHandling.exceptionError(e, "Error trying to recreate registry and adding the local database instance port.");
@@ -602,8 +602,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             ErrorHandling.exceptionError(e, "Failed to find the host specified: " + hostname);
         }
         catch (final RegistryUnavailableException e) {
-            //TODO replace registry and re-register.
-            ErrorHandling.exceptionError(e, "Couldn't find an active registry on this machine (the machine has probably failed): " + hostname);
+            recreateRegistryIfItHasFailed(); //this call recreates only the local registry, which may not be the registry involved in this case.
+            ErrorHandling.errorNoEvent("Couldn't find an active registry on " + hostname + ". If the machine is still active the registry will eventually be recreated.");
         }
 
         return null;

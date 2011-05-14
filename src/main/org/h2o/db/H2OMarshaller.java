@@ -185,14 +185,10 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public void serializeISystemTableMigratable(final ISystemTableMigratable source, final JSONWriter writer) throws JSONException {
+    public void serializeISystemTableMigratable(final ISystemTableMigratable source, final JSONWriter writer) throws JSONException, RPCException {
 
-        try {
-            serializeInetSocketAddress(source.getAddress(), writer);
-        }
-        catch (final RPCException e) {
-            ErrorHandling.exceptionError(e, "Unexpected RPCException.");
-        }
+        serializeInetSocketAddress(source.getAddress(), writer);
+
     }
 
     public ISystemTableMigratable deserializeISystemTableMigratable(final JSONReader reader) throws DeserializationException, uk.ac.standrews.cs.nds.rpc.DeserializationException {
@@ -204,17 +200,13 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public void serializeIDatabaseInstanceRemote(final IDatabaseInstanceRemote source, final JSONWriter writer) throws JSONException {
+    public void serializeIDatabaseInstanceRemote(final IDatabaseInstanceRemote source, final JSONWriter writer) throws JSONException, RPCException {
 
-        try {
-            serializeInetSocketAddress(source.getAddress(), writer);
-        }
-        catch (final RPCException e) {
-            ErrorHandling.exceptionError(e, "Unexpected RPCException in serializeIDatabaseInstanceRemote.");
-        }
+        serializeInetSocketAddress(source.getAddress(), writer);
+
     }
 
-    public IDatabaseInstanceRemote deserializeIDatabaseInstanceRemote(final JSONReader reader) throws DeserializationException, uk.ac.standrews.cs.nds.rpc.DeserializationException {
+    public IDatabaseInstanceRemote deserializeIDatabaseInstanceRemote(final JSONReader reader) throws DeserializationException {
 
         final InetSocketAddress address = deserializeInetSocketAddress(reader);
 
@@ -339,7 +331,7 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public void serializeLockRequest(final LockRequest source, final JSONWriter writer) throws JSONException {
+    public void serializeLockRequest(final LockRequest source, final JSONWriter writer) throws JSONException, RPCException {
 
         if (source == null) {
             writer.value(null);
@@ -378,7 +370,7 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public void serializeReplicaManager(final ReplicaManager source, final JSONWriter writer) throws JSONException {
+    public void serializeReplicaManager(final ReplicaManager source, final JSONWriter writer) throws JSONException, RPCException {
 
         if (source == null) {
             writer.value(null);
@@ -426,7 +418,7 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public void serializeDatabaseInstanceWrapper(final DatabaseInstanceWrapper source, final JSONWriter writer) throws JSONException {
+    public void serializeDatabaseInstanceWrapper(final DatabaseInstanceWrapper source, final JSONWriter writer) throws JSONException, RPCException {
 
         if (source == null) {
             writer.value(null);
@@ -516,7 +508,7 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public void serializeTableProxy(final TableProxy source, final JSONWriter writer) throws JSONException {
+    public void serializeTableProxy(final TableProxy source, final JSONWriter writer) throws JSONException, RPCException {
 
         if (source == null) {
             writer.value(null);
@@ -574,7 +566,7 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public void serializeCollectionDatabaseInstanceWrapper(final Collection<DatabaseInstanceWrapper> source, final JSONWriter writer) throws JSONException {
+    public void serializeCollectionDatabaseInstanceWrapper(final Collection<DatabaseInstanceWrapper> source, final JSONWriter writer) throws JSONException, RPCException {
 
         if (source == null) {
             writer.value(null);
@@ -631,7 +623,7 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public void serializeMapDatabaseIDDatabaseInstanceWrapper(final Map<DatabaseID, DatabaseInstanceWrapper> source, final JSONWriter writer) throws JSONException {
+    public void serializeMapDatabaseIDDatabaseInstanceWrapper(final Map<DatabaseID, DatabaseInstanceWrapper> source, final JSONWriter writer) throws JSONException, RPCException {
 
         if (source == null) {
             writer.value(null);
@@ -912,7 +904,7 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public void serializeCollectionCommitResult(final Collection<CommitResult> source, final JSONWriter writer) throws JSONException {
+    public void serializeCollectionCommitResult(final Collection<CommitResult> source, final JSONWriter writer) throws JSONException, RPCException {
 
         if (source == null) {
             writer.value(null);
@@ -984,7 +976,7 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public void serializeQueueDatabaseInstanceWrapper(final Queue<DatabaseInstanceWrapper> source, final JSONWriter writer) throws JSONException {
+    public void serializeQueueDatabaseInstanceWrapper(final Queue<DatabaseInstanceWrapper> source, final JSONWriter writer) throws JSONException, RPCException {
 
         if (source == null) {
             writer.value(null);
@@ -1022,7 +1014,7 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public void serializeMapDatabaseInstanceWrapperInteger(final Map<DatabaseInstanceWrapper, Integer> source, final JSONWriter writer) throws JSONException {
+    public void serializeMapDatabaseInstanceWrapperInteger(final Map<DatabaseInstanceWrapper, Integer> source, final JSONWriter writer) throws JSONException, RPCException {
 
         if (source == null) {
             writer.value(null);
@@ -1272,7 +1264,7 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private void serializeCommitResult(final CommitResult source, final JSONWriter writer) throws JSONException {
+    private void serializeCommitResult(final CommitResult source, final JSONWriter writer) throws JSONException, RPCException {
 
         if (source == null) {
             writer.value(null);

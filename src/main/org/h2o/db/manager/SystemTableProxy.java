@@ -395,7 +395,6 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
             throw e;
         }
         catch (final Exception e) {
-            ErrorHandling.exceptionError(e, "Error in getDatabaseInstance() call in SystemTableProxy.");
             dealWithException(e);
             return null; //not reached
         }
@@ -731,18 +730,7 @@ public class SystemTableProxy extends Proxy implements ISystemTableMigratable {
     @Override
     public InetSocketAddress getAddress() throws RPCException {
 
-        try {
-            final IStreamPair streams = startCall("getAddress");
-            final JSONReader reader = makeCall(streams);
-            final InetSocketAddress result = marshaller.deserializeInetSocketAddress(reader);
-            finishCall(streams);
-
-            return result;
-        }
-        catch (final Exception e) {
-            dealWithException(e);
-            return null; // not reached
-        }
+        return super.node_address;
     }
 
     @Override

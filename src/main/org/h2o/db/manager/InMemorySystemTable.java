@@ -512,7 +512,8 @@ public final class InMemorySystemTable implements ISystemTable {
             }
         }
 
-        ErrorHandling.errorNoEvent("Failed to recreate Table Manager for " + tableManagerWrapper.getTableInfo() + ". There were " + tableManagerReplicaLocations.size() + " replicas available (including the failed machine) at " + PrettyPrinter.toString(tableManagerReplicaLocations) + ".");
+        ErrorHandling.errorNoEvent(DiagnosticLevel.INIT,
+                        "Failed to recreate Table Manager for " + tableManagerWrapper.getTableInfo() + ". There were " + tableManagerReplicaLocations.size() + " replicas available (including the failed machine) at " + PrettyPrinter.toString(tableManagerReplicaLocations) + ".");
         return false;
     }
 
