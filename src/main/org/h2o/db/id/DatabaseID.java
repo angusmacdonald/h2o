@@ -105,6 +105,11 @@ public class DatabaseID implements Serializable {
         return databaseURL.getURL();
     }
 
+    public String getName() {
+
+        return databaseURL.getName();
+    }
+
     public String getHostname() {
 
         return databaseURL.getHostname();
