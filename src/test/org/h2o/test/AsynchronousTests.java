@@ -17,6 +17,7 @@ import org.h2.table.Table;
 import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.test.fixture.MultiProcessTestBase;
+import org.h2o.util.exceptions.StartupException;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -34,9 +35,10 @@ public class AsynchronousTests extends MultiProcessTestBase {
      * @throws InterruptedException
      * @throws SQLException 
      * @throws IOException 
+     * @throws StartupException 
      */
     @Test(timeout = 35000)
-    public void basicAsynchronousUpdate() throws InterruptedException, SQLException, IOException {
+    public void basicAsynchronousUpdate() throws InterruptedException, SQLException, IOException, StartupException {
 
         final String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
 
@@ -86,9 +88,10 @@ public class AsynchronousTests extends MultiProcessTestBase {
      * @throws InterruptedException
      * @throws SQLException 
      * @throws IOException 
+     * @throws StartupException 
      */
     @Test(timeout = 60000)
-    public void inactiveReplicaRecognisedOnRestart() throws InterruptedException, SQLException, IOException {
+    public void inactiveReplicaRecognisedOnRestart() throws InterruptedException, SQLException, IOException, StartupException {
 
         final String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
 
@@ -147,9 +150,10 @@ public class AsynchronousTests extends MultiProcessTestBase {
      * @throws InterruptedException
      * @throws SQLException 
      * @throws IOException 
+     * @throws StartupException 
      */
     @Test(timeout = 60000)
-    public void asynchronousUpdateEventuallyCommitted() throws InterruptedException, SQLException, IOException {
+    public void asynchronousUpdateEventuallyCommitted() throws InterruptedException, SQLException, IOException, StartupException {
 
         final String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
 
@@ -201,9 +205,10 @@ public class AsynchronousTests extends MultiProcessTestBase {
      * @throws InterruptedException
      * @throws SQLException 
      * @throws IOException 
+     * @throws StartupException 
      */
     @Test(timeout = 60000)
-    public void anotherTransactionIntervenes() throws InterruptedException, SQLException, IOException {
+    public void anotherTransactionIntervenes() throws InterruptedException, SQLException, IOException, StartupException {
 
         final String create1 = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255)); " + "INSERT INTO TEST VALUES(1, 'Hello'); INSERT INTO TEST VALUES(2, 'World');";
 

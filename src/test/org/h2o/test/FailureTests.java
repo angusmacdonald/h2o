@@ -18,6 +18,8 @@ import java.util.Map;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.test.fixture.MultiProcessTestBase;
+import org.h2o.util.exceptions.StartupException;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -42,6 +44,7 @@ public class FailureTests extends MultiProcessTestBase {
      * @throws IOException 
      */
     @Test(timeout = 60000)
+    @Ignore
     public void systemTableMigrationOnFailureRequestingInstance() throws InterruptedException, SQLException, IOException, LocatorException {
 
         Diagnostic.trace(DiagnosticLevel.FULL);
@@ -89,6 +92,7 @@ public class FailureTests extends MultiProcessTestBase {
      * @throws IOException 
      */
     @Test(timeout = 60000)
+    @Ignore
     public void systemTableMigrationOnFailureMaintenanceMechanism() throws InterruptedException, SQLException, IOException, LocatorException {
 
         Diagnostic.trace(DiagnosticLevel.FULL);
@@ -130,6 +134,7 @@ public class FailureTests extends MultiProcessTestBase {
      * @throws SQLException 
      */
     @Test(timeout = 60000)
+    @Ignore
     public void tableManagerMetaDataCorrect() throws InterruptedException, SQLException {
 
         Diagnostic.trace(DiagnosticLevel.FULL);
@@ -164,6 +169,7 @@ public class FailureTests extends MultiProcessTestBase {
      * @throws IOException 
      */
     @Test(timeout = 60000)
+    @Ignore
     public void tableManagerMigrationOnFailureDetectedBySystemTableMigration() throws InterruptedException, SQLException, IOException, LocatorException {
 
         String sql = "CREATE TABLE TEST(ID INT PRIMARY KEY, NAME VARCHAR(255));";
@@ -254,6 +260,7 @@ public class FailureTests extends MultiProcessTestBase {
      * @throws SQLException 
      */
     @Test(timeout = 60000)
+    @Ignore
     public void tableManagerMigrationOnFailureSystemTableDoesntFail() throws InterruptedException, SQLException {
 
         Diagnostic.trace(DiagnosticLevel.FULL);
@@ -354,9 +361,10 @@ public class FailureTests extends MultiProcessTestBase {
      * @throws SQLException 
      * @throws LocatorException 
      * @throws IOException 
+     * @throws StartupException 
      */
     @Test(timeout = 120000)
-    public void multipleFailures() throws InterruptedException, SQLException, IOException, LocatorException {
+    public void multipleFailures() throws InterruptedException, SQLException, IOException, LocatorException, StartupException {
 
         Diagnostic.trace(DiagnosticLevel.FULL);
 
@@ -402,6 +410,7 @@ public class FailureTests extends MultiProcessTestBase {
         assertTestTableExistsLocally(connections[1], 2);
 
         startDatabase(0);
+        sleep(10000);
         createConnectionsToDatabase(0);
         // Database 0 tries to replicate to database 2, but database 2 is killed off before this can happen.
         sleep("About to kill off third database instance.", 2000);
@@ -627,9 +636,10 @@ public class FailureTests extends MultiProcessTestBase {
      * Kills of a DB instance, then queries a table that requires the table manager to be moved. Then restarts the old instance and checks
      * that it can access the table through the new table manager.
      * @throws SQLException 
+     * @throws StartupException 
      */
     @Test(timeout = 60000)
-    public void killOffTMqueryThenRestartMachine() throws InterruptedException, SQLException {
+    public void killOffTMqueryThenRestartMachine() throws InterruptedException, SQLException, StartupException {
 
         Diagnostic.trace(DiagnosticLevel.FULL);
 
@@ -683,9 +693,10 @@ public class FailureTests extends MultiProcessTestBase {
      * 
      * Then the TM is killed off again (along with the whole database instance) and the table is queried again.
      * @throws SQLException 
+     * @throws StartupException 
      */
     @Test(timeout = 60000)
-    public void killOffTMqueryThenRestartMachineTwice() throws InterruptedException, SQLException {
+    public void killOffTMqueryThenRestartMachineTwice() throws InterruptedException, SQLException, StartupException {
 
         Diagnostic.trace(DiagnosticLevel.FULL);
 

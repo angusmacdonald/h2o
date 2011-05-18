@@ -106,6 +106,13 @@ public interface ITableManagerRemote extends IH2ORemote, IMigratable {
     public String getTableName() throws RPCException;
 
     /**
+     * Get the fully qualified name of the table (schema name + table name).
+     * @return
+     * @throws RPCException
+     */
+    public String getFullTableName() throws RPCException;
+
+    /**
      * The Information about this table
      * @throws RPCException 
      */
@@ -168,4 +175,5 @@ public interface ITableManagerRemote extends IH2ORemote, IMigratable {
      *            Used to get the table set number for this table manager.
      */
     public void persistToCompleteStartup(TableInfo ti) throws RPCException, StartupException;
+
 }

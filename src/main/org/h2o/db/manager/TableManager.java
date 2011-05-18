@@ -933,4 +933,10 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
             //Act on this.
         }
     }
+
+    @Override
+    public String getFullTableName() throws RPCException {
+
+        return tableInfo.getFullTableName();
+    }
 }

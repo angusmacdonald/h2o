@@ -22,6 +22,8 @@ import org.h2o.test.fixture.TestBase;
 import org.h2o.test.util.ReadBenchmarkQueriesFromFile;
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.rpc.AbstractConnectionPool;
+
 /**
  * Tests that check for problems that have previous occurred when running the PolePosition and BenchmarkSQL benchmarking tools.
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
@@ -190,6 +192,7 @@ public class BenchmarkTests extends TestBase {
     @Test
     public void benchmarkSQLQueriesFullTwoReplicas() throws SQLException, FileNotFoundException, IOException {
 
+        AbstractConnectionPool.MAX_FREE_CONNECTIONS_PER_ADDRESS = 10;
         createBenchmarkSQLTables();
 
         createReplicaOnB("warehouse");

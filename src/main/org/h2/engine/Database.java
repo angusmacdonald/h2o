@@ -3311,6 +3311,7 @@ public class Database implements DataHandler, Observer {
 
         Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.stachord");
         Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.nds");
+        Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.numonic");
         Diagnostic.setTimestampFlag(true);
         Diagnostic.setTimestampFormat(new SimpleDateFormat("HH:mm:ss:SSS "));
         Diagnostic.setTimestampDelimiterFlag(false);

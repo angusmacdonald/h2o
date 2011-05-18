@@ -33,6 +33,7 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.rpc.AbstractConnectionPool;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
@@ -48,6 +49,7 @@ public class SystemTableTests {
     @BeforeClass
     public static void initialSetUp() throws SQLException {
 
+        AbstractConnectionPool.MAX_FREE_CONNECTIONS_PER_ADDRESS = 0;
         Diagnostic.setLevel(DiagnosticLevel.INIT);
         Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.stachord");
 

@@ -24,7 +24,6 @@
  ***************************************************************************/
 package org.h2o.db.manager;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -279,7 +278,7 @@ public class TableManagerProxy extends StreamProxy implements ITableManagerRemot
 
             setUpJSONArrayForRMI(jw);
             marshaller.serializeTableInfo(tableDetails, jw);
-            handleVoidCall( makeCall(connection));
+            handleVoidCall(makeCall(connection));
             finishCall(connection);
         }
         catch (final MovedException e) {
@@ -376,7 +375,7 @@ public class TableManagerProxy extends StreamProxy implements ITableManagerRemot
             marshaller.serializeLockRequest(requestingDatabase, jw);
             marshaller.serializeCollectionCommitResult(committedQueries, jw);
             jw.value(asynchronousCommit);
-            handleVoidCall( makeCall(connection));
+            handleVoidCall(makeCall(connection));
             finishCall(connection);
         }
         catch (final MovedException e) {
@@ -399,7 +398,7 @@ public class TableManagerProxy extends StreamProxy implements ITableManagerRemot
             setUpJSONArrayForRMI(jw);
 
             jw.value(dropCommand);
-            handleVoidCall( makeCall(connection));
+            handleVoidCall(makeCall(connection));
             finishCall(connection);
         }
         catch (final Exception e) {
@@ -470,7 +469,7 @@ public class TableManagerProxy extends StreamProxy implements ITableManagerRemot
             setUpJSONArrayForRMI(jw);
 
             marshaller.serializeITableManagerRemote(oldTableManager, jw);
-            handleVoidCall( makeCall(connection));
+            handleVoidCall(makeCall(connection));
             finishCall(connection);
         }
         catch (final MovedException e) {
@@ -507,7 +506,7 @@ public class TableManagerProxy extends StreamProxy implements ITableManagerRemot
             final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
             jw.value(oldPrimaryDatabaseName);
-            handleVoidCall( makeCall(connection));
+            handleVoidCall(makeCall(connection));
             finishCall(connection);
         }
         catch (final SQLException e) {
@@ -544,7 +543,7 @@ public class TableManagerProxy extends StreamProxy implements ITableManagerRemot
             final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
             marshaller.serializeTableInfo(ti, jw);
-            handleVoidCall(  makeCall(connection));
+            handleVoidCall(makeCall(connection));
             finishCall(connection);
         }
         catch (final StartupException e) {
@@ -634,6 +633,12 @@ public class TableManagerProxy extends StreamProxy implements ITableManagerRemot
         return super.node_address;
     }
 
+    @Override
+    public String getFullTableName() throws RPCException {
+
+        return tableName;
+    }
+
     /**
      * This proxy class must send the table name of the table manager as the first parameter call to allow for the remote server
      * to identify which table manager is being called.
@@ -647,4 +652,5 @@ public class TableManagerProxy extends StreamProxy implements ITableManagerRemot
 
         jw.value(tableName);
     }
+
 }

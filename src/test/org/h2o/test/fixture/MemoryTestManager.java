@@ -34,6 +34,7 @@ import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
 
 import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
+import uk.ac.standrews.cs.nds.rpc.AbstractConnectionPool;
 
 import com.mindbright.ssh2.SSH2Exception;
 
@@ -65,6 +66,7 @@ public class MemoryTestManager extends TestManager {
 
         super.setUp();
 
+        AbstractConnectionPool.MAX_FREE_CONNECTIONS_PER_ADDRESS = 0; /* in single process tests connection pooling causes slow tearDown, so it is disabled */
         startupLocator();
         setupDatabaseDescriptorLocation();
         initializeDatabaseProperties();

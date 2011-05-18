@@ -29,6 +29,7 @@ import org.h2o.locator.client.H2OLocatorInterface;
 import org.h2o.locator.server.LocatorServer;
 import org.h2o.run.AllTests;
 import org.h2o.util.H2OPropertiesWrapper;
+import org.h2o.util.exceptions.StartupException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -224,12 +225,17 @@ public class MultiProcessTestBase extends TestBase {
 
     protected void executeUpdateOnNthMachine(final String sql, final int machineNumber) throws SQLException {
 
-        final Statement s = connections[machineNumber].createStatement();
         try {
-            s.executeUpdate(sql);
+            final Statement s = connections[machineNumber].createStatement();
+            try {
+                s.executeUpdate(sql);
+            }
+            finally {
+                s.close();
+            }
         }
-        finally {
-            s.close();
+        catch (final Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -632,16 +638,17 @@ public class MultiProcessTestBase extends TestBase {
 
     /**
      * Create JDBC connections to every database in the LocatorDatabaseTests.dbs string array.
+     * @throws StartupException 
      */
-    private void createConnectionsToDatabases() {
+    private void createConnectionsToDatabases() throws StartupException {
 
         connections = new Connection[dbs.length];
         for (int i = 0; i < dbs.length; i++) {
-            connections[i] = createConnectionToDatabase(fullDbName[i]);
+            createConnectionsToDatabase(i);
         }
     }
 
-    protected void createConnectionsToDatabase(final int i) {
+    protected void createConnectionsToDatabase(final int i) throws StartupException {
 
         connections[i] = createConnectionToDatabase(fullDbName[i]);
     }
@@ -653,15 +660,15 @@ public class MultiProcessTestBase extends TestBase {
      *            Database URL of the database which this method connects to.
      * @return The newly created connection.
      */
-    public static Connection createConnectionToDatabase(final String connectionString) {
+    public static Connection createConnectionToDatabase(final String connectionString) throws StartupException {
 
         try {
+
             return DriverManager.getConnection(connectionString, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
         }
         catch (final SQLException e) {
-            e.printStackTrace();
-            ErrorHandling.errorNoEvent("Failed to connect to: " + connectionString);
-            return null;
+            ErrorHandling.exceptionError(e, "Failed to connect to " + connectionString);
+            throw new StartupException("Couldn't connect to " + connectionString);
         }
     }
 

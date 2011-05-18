@@ -147,7 +147,7 @@ public class H2OMarshaller extends Marshaller {
 
                 writer.object();
                 writer.key(TABLE_NAME);
-                writer.value(source.getTableInfo().getFullTableName());
+                writer.value(source.getFullTableName());
                 writer.key(TABLE_MANAGER_ADDRESS);
                 serializeInetSocketAddress(source.getAddress(), writer);
                 writer.endObject();
