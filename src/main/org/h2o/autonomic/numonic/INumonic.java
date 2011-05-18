@@ -21,4 +21,9 @@ public interface INumonic {
      */
     public abstract void addObserver(final Observer observer);
 
+    /**
+     * Stop the numonic monitor.
+     */
+    public void shutdown();
+
 }

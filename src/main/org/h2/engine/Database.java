@@ -1646,6 +1646,10 @@ public class Database implements DataHandler, Observer {
             catch (final Exception e) {
                 ErrorHandling.exceptionErrorNoEvent(e, "Failed to shutdown one of the H2O servers on database shutdown.");
             }
+
+            if (numonic != null) {
+                numonic.shutdown();
+            }
         }
 
         if (userSessions.size() > 0) {

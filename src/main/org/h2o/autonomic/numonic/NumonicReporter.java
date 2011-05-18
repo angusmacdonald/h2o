@@ -217,4 +217,10 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
         thresholdChecker.addObserver(observer);
     }
 
+    @Override
+    public void shutdown() {
+
+        numonic.setRunning(false);
+    }
+
 }
