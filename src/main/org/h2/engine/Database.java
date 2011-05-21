@@ -998,7 +998,7 @@ public class Database implements DataHandler, Observer {
              * Create or connect to a new System Table instance if this node already has tables on it.
              */
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Database already exists. No need to recreate the System Table.");
-            commitSystemTableCreation(true, systemTableRef.isSystemTableLocal(), false);
+            createSystemTableOrGetReferenceToIt(true, systemTableRef.isSystemTableLocal(), false);
         }
 
         if (records.size() > 0) {
@@ -1118,7 +1118,7 @@ public class Database implements DataHandler, Observer {
         metaDataReplicationThread.setName("MetaDataReplicationThread");
     }
 
-    private void commitSystemTableCreation(final boolean databaseExists, final boolean persistedTablesExist, final boolean createTables) throws SQLException {
+    private void createSystemTableOrGetReferenceToIt(final boolean databaseExists, final boolean persistedTablesExist, final boolean createTables) throws SQLException {
 
         if (systemTableRef.isSystemTableLocal()) {
             // Create the System Table tables and immediately add local tables to this manager.
@@ -1137,11 +1137,12 @@ public class Database implements DataHandler, Observer {
             systemTableRef.setSystemTable(systemTable);
 
             databaseRemote.commitSystemTableCreation();
-
+            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Created new System Table locally.");
         }
         else {
             // Not a System Table - Get a reference to the System Table.
             systemTableRef.findSystemTable();
+            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Obtained reference to existing System Table.");
         }
     }
 
@@ -3061,8 +3062,8 @@ public class Database implements DataHandler, Observer {
     private void createH2OTables(final boolean persistedSchemaTablesExist, final boolean databaseExists) throws Exception {
 
         if (!databaseExists) {
-            commitSystemTableCreation(databaseExists, persistedSchemaTablesExist, true);
-            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, " Created new System Table tables.");
+            createSystemTableOrGetReferenceToIt(databaseExists, persistedSchemaTablesExist, true);
+
         }
 
         if (!persistedSchemaTablesExist) {
