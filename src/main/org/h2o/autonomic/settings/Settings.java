@@ -119,7 +119,7 @@ public class Settings {
         defaults.setProperty("REPLICATOR_SLEEP_TIME", "2000");
 
         // The number of copies required for individual relations in the system.
-        defaults.setProperty("RELATION_REPLICATION_FACTOR", "1");
+        defaults.setProperty("RELATION_REPLICATION_FACTOR", "2");
 
         // Number of copies required of the System Table's state.
         defaults.setProperty("SYSTEM_TABLE_REPLICATION_FACTOR", "2");
