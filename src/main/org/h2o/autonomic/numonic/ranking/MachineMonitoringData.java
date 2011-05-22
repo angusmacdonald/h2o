@@ -28,12 +28,12 @@ public class MachineMonitoringData {
      */
     private final int measurements_before_summary;
 
-    private final SystemInfoData staticSysInfoData;
+    private final SystemInfoData staticSystemData;
 
     public MachineMonitoringData(final DatabaseID localDatabaseID, final SystemInfoData staticSysInfoData, final MachineUtilisationData machineUtilData, final FileSystemData fsData, final int measurements_before_summary) {
 
         databaseID = localDatabaseID;
-        this.staticSysInfoData = staticSysInfoData;
+        staticSystemData = staticSysInfoData;
         this.machineUtilData = machineUtilData;
         this.fsData = fsData;
         this.measurements_before_summary = measurements_before_summary;
@@ -62,13 +62,42 @@ public class MachineMonitoringData {
 
     public SystemInfoData getSystemInfoData() {
 
-        return staticSysInfoData;
+        return staticSystemData;
     }
 
     @Override
     public String toString() {
 
-        return "MachineMonitoringData [databaseID=" + databaseID + ", \n\tmachineUtilData=" + machineUtilData + ", \n\tfsData=" + fsData + ", \n\tmeasurements_before_summary=" + measurements_before_summary + ", \n\tstaticSysInfoData=" + staticSysInfoData + "\n]";
+        return "MachineMonitoringData [databaseID=" + databaseID + ", \n\tmachineUtilData=" + machineUtilData + ", \n\tfsData=" + fsData + ", \n\tmeasurements_before_summary=" + measurements_before_summary + ", \n\tstaticSysInfoData=" + staticSystemData + "\n]";
+    }
+
+    @Override
+    public int hashCode() {
+
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (databaseID == null ? 0 : databaseID.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+
+        if (this == obj) { return true; }
+        if (obj == null) { return false; }
+        if (getClass() != obj.getClass()) { return false; }
+        final MachineMonitoringData other = (MachineMonitoringData) obj;
+        if (databaseID == null) {
+            if (other.databaseID != null) { return false; }
+        }
+        else if (!databaseID.equals(other.databaseID)) { return false; }
+        return true;
+    }
+
+    public boolean meetsRequirements(final Requirements requirements) {
+
+        return (staticSystemData == null || requirements.getCpuCapacity() > staticSystemData.getCpuClockSpeed()) && (staticSystemData == null || requirements.getMemoryCapacity() > staticSystemData.getMemoryTotal()) && (fsData == null || requirements.getDiskCapacity() > fsData.getSpaceFree());
+
     }
 
 }

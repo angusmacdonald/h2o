@@ -1,4 +1,4 @@
-package org.h2o.autonomic.numonic;
+package org.h2o.autonomic.numonic.interfaces;
 
 import java.util.Observer;
 

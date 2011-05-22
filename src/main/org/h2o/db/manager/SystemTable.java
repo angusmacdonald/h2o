@@ -17,15 +17,17 @@ import java.util.SortedSet;
 
 import org.h2.engine.Database;
 import org.h2o.autonomic.decision.ranker.metric.Metric;
+import org.h2o.autonomic.numonic.SystemTableDataCollctor;
+import org.h2o.autonomic.numonic.interfaces.ICentralDataCollector;
+import org.h2o.autonomic.numonic.ranking.IMetric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
+import org.h2o.autonomic.numonic.ranking.Requirements;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTable;
 import org.h2o.db.manager.interfaces.ISystemTableMigratable;
-import org.h2o.db.manager.monitoring.systemtable.IMachineRanking;
-import org.h2o.db.manager.monitoring.systemtable.InstanceMonitor;
 import org.h2o.db.manager.util.SystemTableMigrationState;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
@@ -53,7 +55,10 @@ public class SystemTable implements ISystemTableMigratable {
      */
     private final ISystemTable persisted;
 
-    private final IMachineRanking monitoring = new InstanceMonitor(Metric.getDefaultSystemTableMetric());
+    private static final Requirements DEFAULT_REQUIREMENTS = new Requirements(0, 0, 0, 0);
+    private static final IMetric DEFAULT_SORT_METRIC = new SystemTableSortMetric();
+
+    private final ICentralDataCollector monitoring = new SystemTableDataCollctor(DEFAULT_REQUIREMENTS, DEFAULT_SORT_METRIC);
 
     /**
      * Fields related to the migration functionality of the System Table.
@@ -362,17 +367,21 @@ public class SystemTable implements ISystemTableMigratable {
     }
 
     @Override
-    public void addMonitoringSummary(final MachineMonitoringData summary) {
+    public void addMonitoringSummary(final MachineMonitoringData summary) throws RPCException, MovedException {
+
+        preMethodTest();
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Monitoring data received on System Table: " + summary);
+
+        monitoring.addMonitoringSummary(summary);
 
     }
 
     @Override
-    public SortedSet<MachineMonitoringData> getRankedListOfInstances() {
+    public SortedSet<MachineMonitoringData> getRankedListOfInstances() throws RPCException, MovedException {
 
-        // TODO Auto-generated method stub
-        return null;
+        preMethodTest();
+        return monitoring.getRankedListOfInstances();
     }
 
 }

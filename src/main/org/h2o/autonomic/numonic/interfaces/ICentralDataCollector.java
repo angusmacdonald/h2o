@@ -1,7 +1,8 @@
-package org.h2o.db.manager.monitoring.systemtable;
+package org.h2o.autonomic.numonic.interfaces;
 
 import java.util.SortedSet;
 
+import org.h2o.autonomic.numonic.ranking.IMetric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.util.exceptions.MovedException;
 
@@ -17,7 +18,7 @@ import uk.ac.standrews.cs.nds.rpc.RPCException;
  *
  * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
  */
-public interface IMachineRanking {
+public interface ICentralDataCollector {
 
     /**
      * Add summary information (detailing the availability of a machine at a particular instance) to the System Table's
@@ -31,8 +32,10 @@ public interface IMachineRanking {
     /**
      * Get the set of database instances in the database system, sorted by their availability: most available first.
      * 
-     * <p>These are sorted based on an availability metric, described here: XXX. //TODO add link.
+     * <p>These are sorted based on an availability metric, described in {@link IMetric}
      * @return Ranked set of H2O instances.
+     * @throws MovedException 
+     * @throws RPCException 
      */
-    public SortedSet<MachineMonitoringData> getRankedListOfInstances();
+    public SortedSet<MachineMonitoringData> getRankedListOfInstances() throws RPCException, MovedException;
 }

@@ -8,8 +8,8 @@
  */
 package org.h2o.db.manager.interfaces;
 
+import org.h2o.autonomic.numonic.interfaces.ICentralDataCollector;
 import org.h2o.db.interfaces.IH2ORemote;
-import org.h2o.db.manager.monitoring.systemtable.IMachineRanking;
 import org.h2o.db.manager.util.IMigratable;
 
 /**
@@ -20,6 +20,6 @@ import org.h2o.db.manager.util.IMigratable;
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public interface ISystemTableMigratable extends ISystemTable, IMigratable, IH2ORemote, IMachineRanking {
+public interface ISystemTableMigratable extends ISystemTable, IMigratable, IH2ORemote, ICentralDataCollector {
 
 }

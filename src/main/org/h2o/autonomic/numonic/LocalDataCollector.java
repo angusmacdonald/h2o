@@ -1,5 +1,7 @@
-package org.h2o.autonomic.numonic.ranking;
+package org.h2o.autonomic.numonic;
 
+import org.h2o.autonomic.numonic.interfaces.ILocalDataCollector;
+import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.util.exceptions.MovedException;
@@ -15,11 +17,11 @@ import uk.ac.standrews.cs.numonic.data.SystemInfoData;
 import uk.ac.standrews.cs.numonic.summary.SingleSummary;
 
 /**
- * This class collects incoming monitoring data, then sends it to the System Table when enough data has been collected.
+ * This class collects incoming monitoring data on a local database instance, then sends it to the System Table when enough data has been collected.
  *
  * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
  */
-public class LocalMonitoringDataCollector {
+public class LocalDataCollector implements ILocalDataCollector {
 
     /*
      * 
@@ -69,17 +71,16 @@ public class LocalMonitoringDataCollector {
      * @param localDatabaseID How this set of data will be identified when it is sent to the System Table.
      * @param systemTable Where data will be sent.
      */
-    public LocalMonitoringDataCollector(final DatabaseID localDatabaseID, final ISystemTableReference systemTable) {
+    public LocalDataCollector(final DatabaseID localDatabaseID, final ISystemTableReference systemTable) {
 
         this.localDatabaseID = localDatabaseID;
         this.systemTable = systemTable;
     }
 
-    /**
-     * Wait for ranking data to be received for both file system data and for CPU and memory data, then send it to the
-     * System Table.
-     * @param summary New monitoring data.
+    /* (non-Javadoc)
+     * @see org.h2o.autonomic.numonic.ILocalDataCollector#collateRankingData(uk.ac.standrews.cs.numonic.summary.SingleSummary)
      */
+    @Override
     public void collateRankingData(final SingleSummary<? extends Data> summary) {
 
         if (machineUtilData == null && summary.getMax() instanceof MachineUtilisationData) {
@@ -127,6 +128,10 @@ public class LocalMonitoringDataCollector {
         }
     }
 
+    /* (non-Javadoc)
+     * @see org.h2o.autonomic.numonic.ILocalDataCollector#setStaticSystemInfo(uk.ac.standrews.cs.numonic.data.SystemInfoData)
+     */
+    @Override
     public void setStaticSystemInfo(final SystemInfoData staticSysInfoData) {
 
         this.staticSysInfoData = staticSysInfoData;
