@@ -73,9 +73,10 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
      * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
      * @throws TimeoutException
      * @throws SSH2Exception
+     * @throws InterruptedException 
      */
     @Test
-    public void persistence() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
+    public void persistence() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
 
         Diagnostic.trace();
 
@@ -126,9 +127,10 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
      * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
      * @throws TimeoutException
      * @throws SSH2Exception
+     * @throws InterruptedException 
      */
     @Test
-    public void rollbackWithoutAutoCommit() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
+    public void rollbackWithoutAutoCommit() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
 
         Diagnostic.trace();
 
@@ -156,9 +158,10 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
      * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
      * @throws TimeoutException
      * @throws SSH2Exception
+     * @throws InterruptedException 
      */
     @Test
-    public void explicitCommit() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
+    public void explicitCommit() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
 
         Diagnostic.trace();
 
@@ -188,9 +191,10 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
      * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
      * @throws TimeoutException
      * @throws SSH2Exception
+     * @throws InterruptedException 
      */
     @Test
-    public void tableCantBeCreatedTwice() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
+    public void tableCantBeCreatedTwice() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
 
         Diagnostic.trace();
 
@@ -217,9 +221,10 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
      * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
      * @throws TimeoutException
      * @throws SSH2Exception
+     * @throws InterruptedException 
      */
     @Test
-    public void createIfNotExists() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
+    public void createIfNotExists() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
 
         Diagnostic.trace();
 
@@ -246,9 +251,10 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
      * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
      * @throws TimeoutException
      * @throws SSH2Exception
+     * @throws InterruptedException 
      */
     @Test
-    public void multipleInserts() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
+    public void multipleInserts() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
 
         Diagnostic.trace();
 
@@ -284,9 +290,10 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
      * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
      * @throws TimeoutException
      * @throws SSH2Exception
+     * @throws InterruptedException 
      */
     @Test
-    public void concurrentUpdates() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
+    public void concurrentUpdates() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
 
         Diagnostic.trace();
 

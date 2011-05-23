@@ -62,7 +62,7 @@ public class MemoryTestManager extends TestManager {
     // -------------------------------------------------------------------------------------------------------
 
     @Override
-    public void setUp() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
+    public void setUp() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
 
         super.setUp();
 

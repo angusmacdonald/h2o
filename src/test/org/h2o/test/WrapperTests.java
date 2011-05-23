@@ -191,8 +191,9 @@ public class WrapperTests {
      * @throws SSH2Exception
      * @throws UnknownPlatformException
      * @throws IOException
+     * @throws InterruptedException 
      */
-    private void startDatabaseInSeparateProcess() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
+    private void startDatabaseInSeparateProcess() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
 
         /*
          * Start the database instance.

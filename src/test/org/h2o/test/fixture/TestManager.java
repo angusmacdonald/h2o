@@ -153,7 +153,7 @@ public abstract class TestManager implements ITestManager {
     // -------------------------------------------------------------------------------------------------------
 
     @Override
-    public void setUp() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
+    public void setUp() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
 
         Diagnostic.setLevel(DIAGNOSTIC_LEVEL);
         Diagnostic.setTimestampFlag(true);
@@ -182,7 +182,7 @@ public abstract class TestManager implements ITestManager {
     }
 
     @Override
-    public void startup() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
+    public void startup() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
 
         connections_to_be_closed = new HashSet<Connection>();
     }
@@ -201,7 +201,7 @@ public abstract class TestManager implements ITestManager {
 
     // -------------------------------------------------------------------------------------------------------
 
-    protected void startupLocator() throws UnknownPlatformException, IOException, SSH2Exception, TimeoutException {
+    protected void startupLocator() throws UnknownPlatformException, IOException, SSH2Exception, TimeoutException, InterruptedException {
 
         if (locator_process == null) {
 

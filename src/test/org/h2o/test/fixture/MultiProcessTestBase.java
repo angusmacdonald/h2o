@@ -622,16 +622,7 @@ public class MultiProcessTestBase extends TestBase {
         try {
             processes.put(databaseInstanceName, new ProcessManager().runProcess(new JavaProcessDescriptor().classToBeInvoked(StartDatabaseInstance.class).args(args)));
         }
-        catch (final IOException e) {
-            ErrorHandling.error("Failed to create new database process.");
-        }
-        catch (final UnknownPlatformException e) {
-            ErrorHandling.error("Failed to create new database process.");
-        }
-        catch (final SSH2Exception e) {
-            ErrorHandling.error("Failed to create new database process.");
-        }
-        catch (final TimeoutException e) {
+        catch (final Exception e) {
             ErrorHandling.error("Failed to create new database process.");
         }
     }

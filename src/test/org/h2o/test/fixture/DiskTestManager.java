@@ -42,7 +42,7 @@ public class DiskTestManager extends TestManager {
     // -------------------------------------------------------------------------------------------------------
 
     @Override
-    public void startup() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
+    public void startup() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
 
         super.startup();
 
@@ -100,7 +100,7 @@ public class DiskTestManager extends TestManager {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private void startupDatabaseProcesses() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
+    private void startupDatabaseProcesses() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
 
         db_processes = new Process[database_base_directory_paths.length];
         databaseNames = new String[database_base_directory_paths.length];

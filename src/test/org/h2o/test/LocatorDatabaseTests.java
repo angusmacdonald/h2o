@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeoutException;
 
 import org.h2.engine.Constants;
 import org.h2.tools.DeleteDbFiles;
@@ -47,12 +46,9 @@ import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.madface.JavaProcessDescriptor;
 import uk.ac.standrews.cs.nds.madface.ProcessManager;
-import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
-
-import com.mindbright.ssh2.SSH2Exception;
 
 /**
  * Class which conducts tests on <i>n</i> in-memory databases running at the same time.
@@ -827,16 +823,7 @@ public class LocatorDatabaseTests extends TestBase {
         try {
             processes.put(connectionString, new ProcessManager().runProcess(new JavaProcessDescriptor().classToBeInvoked(StartDatabaseInstance.class).args(args)));
         }
-        catch (final IOException e) {
-            ErrorHandling.error("Failed to create new database process.");
-        }
-        catch (final UnknownPlatformException e) {
-            ErrorHandling.error("Failed to create new database process.");
-        }
-        catch (final SSH2Exception e) {
-            ErrorHandling.error("Failed to create new database process.");
-        }
-        catch (final TimeoutException e) {
+        catch (final Exception e) {
             ErrorHandling.error("Failed to create new database process.");
         }
     }

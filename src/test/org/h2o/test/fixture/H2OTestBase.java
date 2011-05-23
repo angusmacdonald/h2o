@@ -28,9 +28,10 @@ public abstract class H2OTestBase {
      * @throws UndefinedDiagnosticLevelException
      * @throws TimeoutException
      * @throws SSH2Exception
+     * @throws InterruptedException 
      */
     @Before
-    public void setUp() throws SQLException, IOException, UnknownPlatformException, UndefinedDiagnosticLevelException, SSH2Exception, TimeoutException {
+    public void setUp() throws SQLException, IOException, UnknownPlatformException, UndefinedDiagnosticLevelException, SSH2Exception, TimeoutException, InterruptedException {
 
         getTestManager().setUp();
     }
@@ -48,7 +49,7 @@ public abstract class H2OTestBase {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public void startup() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
+    public void startup() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
 
         getTestManager().startup();
     }

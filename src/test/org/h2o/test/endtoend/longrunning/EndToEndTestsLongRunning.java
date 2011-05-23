@@ -53,9 +53,10 @@ public class EndToEndTestsLongRunning extends EndToEndTestsCommon {
      * @throws UnknownPlatformException
      * @throws TimeoutException
      * @throws SSH2Exception
+     * @throws InterruptedException 
      */
     @Test
-    public void multipleThreads1() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
+    public void multipleThreads1() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
 
         Diagnostic.trace();
 
@@ -75,9 +76,10 @@ public class EndToEndTestsLongRunning extends EndToEndTestsCommon {
      * @throws UnknownPlatformException
      * @throws TimeoutException
      * @throws SSH2Exception
+     * @throws InterruptedException 
      */
     @Test
-    public void multipleThreads2() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
+    public void multipleThreads2() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
 
         Diagnostic.trace();
 
@@ -89,7 +91,7 @@ public class EndToEndTestsLongRunning extends EndToEndTestsCommon {
         multipleThreads(number_of_values, number_of_threads, delay, number_of_columns);
     }
 
-    private void multipleThreads(final int number_of_values, final int number_of_threads, final int delay, final int number_of_columns) throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
+    private void multipleThreads(final int number_of_values, final int number_of_threads, final int delay, final int number_of_columns) throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
 
         final EndToEndConnectionDriver driver1 = makeSpecificConnectionDriver();
 

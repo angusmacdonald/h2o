@@ -39,8 +39,9 @@ public interface ITestManager {
      *
      * @throws IOException if fixture setup fails
      * @throws UnknownPlatformException  if fixture setup fails
+     * @throws InterruptedException 
      */
-    void setUp() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException;
+    void setUp() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException;
 
     /**
      * Tears down the test, removing persistent state.
@@ -49,7 +50,7 @@ public interface ITestManager {
      */
     void tearDown() throws SQLException;
 
-    void startup() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException;
+    void startup() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException;
 
     void shutdown();
 
