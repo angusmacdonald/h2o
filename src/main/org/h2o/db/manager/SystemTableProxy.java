@@ -6,9 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.SortedSet;
 
-import org.h2o.autonomic.decision.ranker.metric.Metric;
+import org.h2o.autonomic.numonic.ranking.IMetric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.db.H2OMarshaller;
 import org.h2o.db.id.DatabaseID;
@@ -566,28 +565,6 @@ public class SystemTableProxy extends StreamProxy implements ISystemTableMigrata
     }
 
     @Override
-    public Queue<DatabaseInstanceWrapper> getAvailableMachines(final Metric typeOfRequest) throws RPCException, MovedException {
-
-        try {
-            final Connection connection = (Connection) startCall("getAvailableMachines");
-            final JSONWriter jw = connection.getJSONwriter();
-            marshaller.serializeActionRequest(typeOfRequest, jw);
-            final JSONReader reader = makeCall(connection);
-
-            final Queue<DatabaseInstanceWrapper> result = marshaller.deserializeQueueDatabaseInstanceWrapper(reader);
-            finishCall(connection);
-            return result;
-        }
-        catch (final MovedException e) {
-            throw e;
-        }
-        catch (final Exception e) {
-            dealWithException(e);
-            return null; //not reached
-        }
-    }
-
-    @Override
     public void prepareForMigration(final String newLocation) throws RPCException, MigrationException, MovedException {
 
         try {
@@ -715,9 +692,51 @@ public class SystemTableProxy extends StreamProxy implements ISystemTableMigrata
     }
 
     @Override
-    public SortedSet<MachineMonitoringData> getRankedListOfInstances() {
+    public Queue<DatabaseInstanceWrapper> getRankedListOfInstances() throws MovedException, RPCException {
 
-        // TODO Auto-generated method stub
-        return null;
+        try {
+            final Connection connection = (Connection) startCall("getRankedListOfInstances");
+
+            final JSONReader reader = makeCall(connection);
+
+            final Queue<DatabaseInstanceWrapper> result = marshaller.deserializeQueueDatabaseInstanceWrapper(reader);
+
+            finishCall(connection);
+
+            return result;
+        }
+        catch (final MovedException e) {
+            throw e;
+        }
+        catch (final Exception e) {
+            dealWithException(e);
+            return null; //not reached.
+        }
+    }
+
+    @Override
+    public Queue<DatabaseInstanceWrapper> getRankedListOfInstances(final IMetric metric) throws RPCException, MovedException {
+
+        try {
+            final Connection connection = (Connection) startCall("getRankedListOfInstances");
+            final JSONWriter jw = connection.getJSONwriter();
+
+            marshaller.serializeMetric(metric, jw);
+
+            final JSONReader reader = makeCall(connection);
+
+            final Queue<DatabaseInstanceWrapper> result = marshaller.deserializeQueueDatabaseInstanceWrapper(reader);
+
+            finishCall(connection);
+
+            return result;
+        }
+        catch (final MovedException e) {
+            throw e;
+        }
+        catch (final Exception e) {
+            dealWithException(e);
+            return null; //not reached.
+        }
     }
 }

@@ -1,9 +1,10 @@
 package org.h2o.autonomic.numonic.interfaces;
 
-import java.util.SortedSet;
+import java.util.Queue;
 
 import org.h2o.autonomic.numonic.ranking.IMetric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
+import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
@@ -32,10 +33,20 @@ public interface ICentralDataCollector {
     /**
      * Get the set of database instances in the database system, sorted by their availability: most available first.
      * 
-     * <p>These are sorted based on an availability metric, described in {@link IMetric}
+     * <p>These are sorted based on the default availability metric implemented by the class implementing this interface.
      * @return Ranked set of H2O instances.
      * @throws MovedException 
      * @throws RPCException 
      */
-    public SortedSet<MachineMonitoringData> getRankedListOfInstances() throws RPCException, MovedException;
+    public Queue<DatabaseInstanceWrapper> getRankedListOfInstances() throws RPCException, MovedException;
+
+    /**
+     * Get a ranked list of database instances based on the metric given in this request.
+     * @param metric    Metric to be used to rank machines.
+     * @return
+     * @throws MovedException 
+     * @throws RPCException 
+     */
+    public Queue<DatabaseInstanceWrapper> getRankedListOfInstances(IMetric metric) throws RPCException, MovedException;
+
 }

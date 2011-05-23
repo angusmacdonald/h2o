@@ -13,10 +13,8 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.SortedSet;
 
 import org.h2.engine.Database;
-import org.h2o.autonomic.decision.ranker.metric.Metric;
 import org.h2o.autonomic.numonic.SystemTableDataCollctor;
 import org.h2o.autonomic.numonic.interfaces.ICentralDataCollector;
 import org.h2o.autonomic.numonic.ranking.IMetric;
@@ -217,13 +215,6 @@ public class SystemTable implements ISystemTableMigratable {
     }
 
     @Override
-    public Queue<DatabaseInstanceWrapper> getAvailableMachines(final Metric typeOfRequest) throws RPCException, MovedException {
-
-        preMethodTest();
-        return inMemory.getAvailableMachines(typeOfRequest);
-    }
-
-    @Override
     public Set<DatabaseInstanceWrapper> getDatabaseInstances() throws RPCException, MovedException {
 
         preMethodTest();
@@ -373,15 +364,26 @@ public class SystemTable implements ISystemTableMigratable {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Monitoring data received on System Table: " + summary);
 
+        final DatabaseID databaseID = summary.getDatabaseID();
+        final IDatabaseInstanceRemote remoteReference = getDatabaseInstance(databaseID);
+        summary.setDatabaseWrapper(new DatabaseInstanceWrapper(databaseID, remoteReference, true));
+
         monitoring.addMonitoringSummary(summary);
 
     }
 
     @Override
-    public SortedSet<MachineMonitoringData> getRankedListOfInstances() throws RPCException, MovedException {
+    public Queue<DatabaseInstanceWrapper> getRankedListOfInstances() throws RPCException, MovedException {
 
         preMethodTest();
         return monitoring.getRankedListOfInstances();
+    }
+
+    @Override
+    public Queue<DatabaseInstanceWrapper> getRankedListOfInstances(final IMetric metric) throws RPCException, MovedException {
+
+        preMethodTest();
+        return monitoring.getRankedListOfInstances(metric);
     }
 
 }

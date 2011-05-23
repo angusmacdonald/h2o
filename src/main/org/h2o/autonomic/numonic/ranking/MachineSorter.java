@@ -1,8 +1,10 @@
 package org.h2o.autonomic.numonic.ranking;
 
 import java.util.Collection;
+import java.util.Queue;
 import java.util.Set;
-import java.util.SortedSet;
+
+import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -19,16 +21,16 @@ public class MachineSorter {
     * @param machineData  The machines which must be filtered and ranked.
     * @return a sorted set of machines
     */
-    public static SortedSet<MachineMonitoringData> filterThenRankMachines(final Requirements requirements, final IMetric sort_metric, final Collection<MachineMonitoringData> machineData) {
+    public static Queue<DatabaseInstanceWrapper> filterThenRankMachines(final Requirements requirements, final IMetric sort_metric, final Collection<MachineMonitoringData> machineData) {
 
         // Filter Machines.
         final Set<MachineMonitoringData> filteredInstances = filterMachines(requirements, machineData);
 
         // Rank Machines.
         final MachineRanker ranker = new MachineRanker(sort_metric);
-        final SortedSet<MachineMonitoringData> sortedMachines = ranker.sortMachines(filteredInstances);
 
-        return sortedMachines;
+        return ranker.sortMachines(filteredInstances);
+
     }
 
     /**

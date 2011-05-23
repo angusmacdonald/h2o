@@ -13,13 +13,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Queue;
 import java.util.Set;
 
 import org.h2.engine.Database;
 import org.h2.result.LocalResult;
 import org.h2.value.Value;
-import org.h2o.autonomic.decision.ranker.metric.Metric;
 import org.h2o.db.DatabaseInstanceProxy;
 import org.h2o.db.DefaultSettings;
 import org.h2o.db.id.DatabaseID;
@@ -591,13 +589,6 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
         // Done by in-memory system table.
         return false;
-    }
-
-    @Override
-    public Queue<DatabaseInstanceWrapper> getAvailableMachines(final Metric typeOfRequest) {
-
-        // TODO Auto-generated method stub
-        return null;
     }
 
 }

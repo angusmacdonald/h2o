@@ -4,7 +4,6 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Set;
 
-import org.h2o.autonomic.decision.IReplicaChoice;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
@@ -15,7 +14,7 @@ import org.h2o.util.exceptions.MovedException;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
 
-public interface ISystemTable extends IReplicaChoice {
+public interface ISystemTable {
 
     /**
      * Find a reference for the Table Manager responsible for the given table.

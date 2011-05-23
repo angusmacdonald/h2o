@@ -1,14 +1,15 @@
 package org.h2o.autonomic.numonic;
 
 import java.util.HashSet;
+import java.util.Queue;
 import java.util.Set;
-import java.util.SortedSet;
 
 import org.h2o.autonomic.numonic.interfaces.ICentralDataCollector;
 import org.h2o.autonomic.numonic.ranking.IMetric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.autonomic.numonic.ranking.MachineSorter;
 import org.h2o.autonomic.numonic.ranking.Requirements;
+import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
@@ -42,9 +43,16 @@ public class SystemTableDataCollctor implements ICentralDataCollector {
     }
 
     @Override
-    public SortedSet<MachineMonitoringData> getRankedListOfInstances() {
+    public Queue<DatabaseInstanceWrapper> getRankedListOfInstances() {
 
         return MachineSorter.filterThenRankMachines(requirements, sort_metric, monitoringData);
+
+    }
+
+    @Override
+    public Queue<DatabaseInstanceWrapper> getRankedListOfInstances(final IMetric metric) throws RPCException, MovedException {
+
+        return MachineSorter.filterThenRankMachines(requirements, metric, monitoringData);
     }
 
 }

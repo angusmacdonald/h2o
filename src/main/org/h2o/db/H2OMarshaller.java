@@ -6,12 +6,15 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
-import org.h2o.autonomic.decision.ranker.metric.Metric;
+import org.h2o.autonomic.numonic.Metric;
+import org.h2o.autonomic.numonic.ranking.IMetric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
@@ -115,6 +118,11 @@ public class H2OMarshaller extends Marshaller {
     private static final String MEMORY_TOTAL = "memory_total";
     private static final String SWAP_TOTAL = "swap_total";
     private static final String MACHINE_ID = "machine_id";
+    private static final String DISK_READ = "diskRead";
+    private static final String DISK_WRITE = "diskWrite";
+    private static final String SWAP = "swap";
+    private static final String NETWORK_READ = "networkRead";
+    private static final String NETWORK_WRITE = "networkWrite";
 
     private final ChordRemoteMarshaller chord_marshaller;
 
@@ -621,6 +629,25 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
+    public Queue<DatabaseInstanceWrapper> deserializeQueueDatabaseInstanceWrapper(final JSONReader reader) throws DeserializationException {
+
+        try {
+            if (reader.checkNull()) { return null; }
+
+            reader.array();
+
+            final Queue<DatabaseInstanceWrapper> result = new LinkedList<DatabaseInstanceWrapper>();
+            while (!reader.have(JSONReader.ENDARRAY)) {
+                result.add(deserializeDatabaseInstanceWrapper(reader));
+            }
+
+            return result;
+        }
+        catch (final Exception e) {
+            throw new DeserializationException(e);
+        }
+    }
+
     // -------------------------------------------------------------------------------------------------------
 
     public void serializeMapDatabaseIDDatabaseInstanceWrapper(final Map<DatabaseID, DatabaseInstanceWrapper> source, final JSONWriter writer) throws JSONException, RPCException {
@@ -991,27 +1018,6 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
-    public Queue<DatabaseInstanceWrapper> deserializeQueueDatabaseInstanceWrapper(final JSONReader reader) throws DeserializationException {
-
-        try {
-
-            if (reader.checkNull()) { return null; }
-            reader.array();
-
-            final Queue<DatabaseInstanceWrapper> result = new PriorityQueue<DatabaseInstanceWrapper>();
-            while (!reader.have(JSONReader.ENDARRAY)) {
-                result.add(deserializeDatabaseInstanceWrapper(reader));
-            }
-
-            reader.endArray();
-            return result;
-        }
-        catch (final Exception e) {
-            ErrorHandling.exceptionErrorNoEvent(e, "Failure on database instance wrapper queue deserialization.");
-            throw new DeserializationException(e);
-        }
-    }
-
     // -------------------------------------------------------------------------------------------------------
 
     public void serializeMapDatabaseInstanceWrapperInteger(final Map<DatabaseInstanceWrapper, Integer> source, final JSONWriter writer) throws JSONException, RPCException {
@@ -1308,6 +1314,43 @@ public class H2OMarshaller extends Marshaller {
 
             reader.endObject();
             return new CommitResult(commit, wrapper, updateID, expectedUpdateID, tableName);
+        }
+        catch (final Exception e) {
+            throw new DeserializationException(e);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------------------
+
+    public void serializeSortedSetMachineMonitoringData(final SortedSet<MachineMonitoringData> source, final JSONWriter writer) throws JSONException {
+
+        if (source == null) {
+            writer.value(null);
+        }
+        else {
+
+            writer.array();
+            for (final MachineMonitoringData instance : source) {
+                serializeMachineMonitoringData(instance, writer);
+            }
+            writer.endArray();
+        }
+    }
+
+    public SortedSet<MachineMonitoringData> deserializeSortedSetMachineMonitoringData(final JSONReader reader) throws DeserializationException {
+
+        try {
+
+            if (reader.checkNull()) { return null; }
+            reader.array();
+
+            final SortedSet<MachineMonitoringData> result = new TreeSet<MachineMonitoringData>();
+            while (!reader.have(JSONReader.ENDARRAY)) {
+                result.add(deserializeMachineMonitoringData(reader));
+            }
+
+            reader.endArray();
+            return result;
         }
         catch (final Exception e) {
             throw new DeserializationException(e);
@@ -1642,7 +1685,7 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public void serializeActionRequest(final Metric source, final JSONWriter writer) throws JSONException {
+    public void serializeMetric(final IMetric source, final JSONWriter writer) throws JSONException {
 
         if (source == null) {
             writer.value(null);
@@ -1651,23 +1694,25 @@ public class H2OMarshaller extends Marshaller {
 
             writer.object();
             writer.key(CPU);
-            writer.value(source.cpu);
-            writer.key(DISK);
-            writer.value(source.disk);
+            writer.value(source.getCpuUtilization());
+            writer.key(DISK_READ);
+            writer.value(source.getDiskUtilizationRead());
+            writer.key(DISK_WRITE);
+            writer.value(source.getDiskUtilizationWrite());
             writer.key(MEMORY);
-            writer.value(source.memory);
-            writer.key(NETWORK);
-            writer.value(source.network);
-            writer.key(EXPECTED_TIME_TO_COMPLETION);
-            writer.value(source.expectedTimeToCompletion);
-            writer.key(IMMEDIATE_DISK_SPACE);
-            writer.value(source.immediateDiskSpace);
+            writer.value(source.getMemoryUtilization());
+            writer.key(SWAP);
+            writer.value(source.getSwapUtilization());
+            writer.key(NETWORK_READ);
+            writer.value(source.getNetworkUtilizationRead());
+            writer.key(NETWORK_WRITE);
+            writer.value(source.getNetworkUtilizationWrite());
 
             writer.endObject();
         }
     }
 
-    public Metric deserializeActionRequest(final JSONReader reader) throws JSONException, DeserializationException {
+    public IMetric deserializeMetric(final JSONReader reader) throws JSONException, DeserializationException {
 
         try {
 
@@ -1676,52 +1721,29 @@ public class H2OMarshaller extends Marshaller {
             reader.object();
 
             reader.key(CPU);
+            final double cpu = reader.doubleValue();
 
-            double cpu = 0;
-            if (reader.have(JSONReader.DOUBLE)) {
-                cpu = reader.doubleValue();
-            }
-            else {
-                cpu = reader.intValue();
-            }
+            reader.key(DISK_READ);
+            final double disk_r = reader.doubleValue();
+            reader.key(DISK_WRITE);
+            final double disk_w = reader.doubleValue();
 
-            reader.key(DISK);
-            final double disk = reader.doubleValue();
             reader.key(MEMORY);
             final double memory = reader.doubleValue();
+            reader.key(SWAP);
+            final double swap = reader.doubleValue();
 
-            reader.key(NETWORK);
-            final double network = reader.doubleValue();
-            reader.key(EXPECTED_TIME_TO_COMPLETION);
-            long expectedTimeToCompletion = 0;
-            if (reader.have(JSONReader.LONG)) {
-                expectedTimeToCompletion = reader.longValue();
-            }
-            else if (reader.have(JSONReader.DOUBLE)) {
-                expectedTimeToCompletion = new Double(reader.doubleValue()).longValue();
-            }
-            else {
-                expectedTimeToCompletion = reader.intValue();
-            }
-            reader.key(IMMEDIATE_DISK_SPACE);
-
-            long immediateDiskSpace = 0;
-            if (reader.have(JSONReader.LONG)) {
-                immediateDiskSpace = reader.longValue();
-            }
-            else if (reader.have(JSONReader.DOUBLE)) {
-                immediateDiskSpace = new Double(reader.doubleValue()).longValue();
-            }
-            else {
-                immediateDiskSpace = reader.intValue();
-            }
-
+            reader.key(NETWORK_READ);
+            final double network_r = reader.doubleValue();
+            reader.key(NETWORK_WRITE);
+            final double network_w = reader.doubleValue();
             reader.endObject();
 
-            return new Metric(expectedTimeToCompletion, immediateDiskSpace, cpu, memory, network, disk);
+            return new Metric(cpu, memory, swap, disk_r, disk_w, network_r, network_w);
         }
         catch (final Exception e) {
             throw new DeserializationException(e);
         }
     }
+
 }

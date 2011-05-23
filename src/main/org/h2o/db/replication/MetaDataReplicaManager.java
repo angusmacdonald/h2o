@@ -37,7 +37,7 @@ import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.result.LocalResult;
-import org.h2o.autonomic.decision.ranker.metric.CreateReplicaRequest;
+import org.h2o.autonomic.numonic.PropertiesFileMetric;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.manager.PersistentSystemTable;
@@ -211,7 +211,7 @@ public class MetaDataReplicaManager {
                     Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "System table was NULL so the meta-data manager is unable to replicate.");
                     return;
                 }
-                databaseInstances = systemTableRemote.getAvailableMachines(new CreateReplicaRequest(20, 100, 200));
+                databaseInstances = systemTableRemote.getRankedListOfInstances(new PropertiesFileMetric("metaDataReplication.metric"));
             }
             catch (final Exception e) {
 

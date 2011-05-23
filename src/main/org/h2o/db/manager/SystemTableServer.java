@@ -3,7 +3,7 @@ package org.h2o.db.manager;
 import java.net.UnknownHostException;
 import java.util.Set;
 
-import org.h2o.autonomic.decision.ranker.metric.Metric;
+import org.h2o.autonomic.numonic.ranking.IMetric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.db.H2OMarshaller;
 import org.h2o.db.id.DatabaseID;
@@ -279,18 +279,6 @@ public class SystemTableServer extends ApplicationServer {
             }
         });
 
-        // public Queue<DatabaseInstanceWrapper> getAvailableMachines(ActionRequest typeOfRequest) throws RPCException, MovedException;
-
-        handler_map.put("getAvailableMachines", new IHandler() {
-
-            @Override
-            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
-
-                final Metric p0 = marshaller.deserializeActionRequest(args);
-                marshaller.serializeQueueDatabaseInstanceWrapper(system_table.getAvailableMachines(p0), response);
-            }
-        });
-
         //      public void removeAllTableInformation() throws RPCException, MovedException;
 
         handler_map.put("removeAllTableInformation", new IHandler() {
@@ -452,6 +440,28 @@ public class SystemTableServer extends ApplicationServer {
                 final MachineMonitoringData p0 = marshaller.deserializeMachineMonitoringData(args);
                 system_table.addMonitoringSummary(p0);
                 response.value("");
+
+            }
+        });
+
+        handler_map.put("getRankedListOfInstances", new IHandler() {
+
+            @Override
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
+
+                marshaller.serializeCollectionDatabaseInstanceWrapper(system_table.getRankedListOfInstances(), response);
+
+            }
+        });
+
+        handler_map.put("getRankedListOfInstances", new IHandler() {
+
+            @Override
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
+
+                final IMetric p0 = marshaller.deserializeMetric(args);
+
+                marshaller.serializeCollectionDatabaseInstanceWrapper(system_table.getRankedListOfInstances(p0), response);
 
             }
         });

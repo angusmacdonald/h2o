@@ -46,7 +46,7 @@ import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.result.LocalResult;
-import org.h2o.autonomic.decision.ranker.metric.CreateTableRequest;
+import org.h2o.autonomic.numonic.PropertiesFileMetric;
 import org.h2o.autonomic.numonic.threshold.Threshold;
 import org.h2o.autonomic.numonic.threshold.ThresholdChecker;
 import org.h2o.autonomic.settings.Settings;
@@ -456,7 +456,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
             try {
                 // the update could be sent to any or all machines in the system.
-                potentialReplicaLocations = getDB().getSystemTable().getAvailableMachines(new CreateTableRequest(0));
+                potentialReplicaLocations = getDB().getSystemTable().getRankedListOfInstances(new PropertiesFileMetric("createreplica.metric"));
             }
             catch (final RPCException e) {
                 e.printStackTrace();

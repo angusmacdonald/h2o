@@ -1,9 +1,13 @@
 package org.h2o.autonomic.numonic.ranking;
 
 import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+
+import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 import uk.ac.standrews.cs.numonic.data.MachineUtilisationData;
 import uk.ac.standrews.cs.numonic.data.SystemInfoData;
@@ -47,14 +51,36 @@ public class MachineRanker implements Comparator<MachineMonitoringData> {
         metric = sortingMetric;
     }
 
-    public SortedSet<MachineMonitoringData> sortMachines(final Set<MachineMonitoringData> machines) {
+    /**
+     * Given a set of monitoring information on machines, sort the machines based on their availability and return a queue,
+     * where the most available machine is at the front.
+     * @param machines Resource data on a set of machines.
+     * @return Queue of machines based on their availability (highest availability first).
+     */
+    public Queue<DatabaseInstanceWrapper> sortMachines(final Set<MachineMonitoringData> machines) {
 
         getBoundsForNormalization(machines);
 
         final SortedSet<MachineMonitoringData> sorted_machines = new TreeSet<MachineMonitoringData>(this);
         sorted_machines.addAll(machines);
 
-        return sorted_machines;
+        return convertToQueueOfInstanceWrappers(sorted_machines);
+    }
+
+    /**
+     * Convert the sorted set of monitoring data to a queue of database instance wrappers, with the most 'available' instances first.
+     * @param sorted_machines   Sorted set of machines based on their availability.
+     * @return Queue of machines based on their availability (highest availability first).
+     */
+    private Queue<DatabaseInstanceWrapper> convertToQueueOfInstanceWrappers(final SortedSet<MachineMonitoringData> sorted_machines) {
+
+        final Queue<DatabaseInstanceWrapper> queueOfDatabases = new LinkedList<DatabaseInstanceWrapper>();
+
+        for (final MachineMonitoringData machineData : sorted_machines) {
+            queueOfDatabases.add(machineData.getDatabaseWrapper());
+        }
+
+        return queueOfDatabases;
     }
 
     @Override

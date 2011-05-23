@@ -14,12 +14,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.PriorityQueue;
-import java.util.Queue;
 import java.util.Set;
 
 import org.h2.engine.Database;
-import org.h2o.autonomic.decision.ranker.metric.Metric;
 import org.h2o.db.DatabaseInstanceProxy;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
@@ -665,22 +662,6 @@ public final class InMemorySystemTable implements ISystemTable {
     public Map<TableInfo, DatabaseID> getPrimaryLocations() {
 
         return primaryLocations;
-    }
-
-    @Override
-    public Queue<DatabaseInstanceWrapper> getAvailableMachines(final Metric typeOfRequest) {
-
-        final Queue<DatabaseInstanceWrapper> sortedMachines = new PriorityQueue<DatabaseInstanceWrapper>();
-
-        // TODO make use of action request.
-        try {
-            sortedMachines.addAll(getDatabaseInstances());
-        }
-        catch (final Exception e) {
-            // Local call - won't happen.
-        }
-
-        return sortedMachines;
     }
 
 }

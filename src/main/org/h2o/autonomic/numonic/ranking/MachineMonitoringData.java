@@ -1,6 +1,7 @@
 package org.h2o.autonomic.numonic.ranking;
 
 import org.h2o.db.id.DatabaseID;
+import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 import uk.ac.standrews.cs.numonic.data.FileSystemData;
 import uk.ac.standrews.cs.numonic.data.MachineUtilisationData;
@@ -12,6 +13,9 @@ public class MachineMonitoringData {
      * The database which this monitoring data is taken from.
      */
     private final DatabaseID databaseID;
+
+    //Null at first but may be set by the system table when it is received.
+    private DatabaseInstanceWrapper databaseWrapper = null;
 
     /**
      * Average of CPU and memory resources on the machine.
@@ -98,6 +102,16 @@ public class MachineMonitoringData {
 
         return (staticSystemData == null || requirements.getCpuCapacity() > staticSystemData.getCpuClockSpeed()) && (staticSystemData == null || requirements.getMemoryCapacity() > staticSystemData.getMemoryTotal()) && (fsData == null || requirements.getDiskCapacity() > fsData.getSpaceFree());
 
+    }
+
+    public DatabaseInstanceWrapper getDatabaseWrapper() {
+
+        return databaseWrapper;
+    }
+
+    public void setDatabaseWrapper(final DatabaseInstanceWrapper wrapper) {
+
+        databaseWrapper = wrapper;
     }
 
 }
