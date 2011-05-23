@@ -13,7 +13,6 @@ import org.h2o.autonomic.numonic.threshold.ThresholdChecker;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 
-import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 import uk.ac.standrews.cs.numonic.data.FileSystemData;
 import uk.ac.standrews.cs.numonic.data.LatencyAndBandwidthData;
 import uk.ac.standrews.cs.numonic.data.MachineUtilisationData;
@@ -101,20 +100,6 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
     }
 
     @Override
-    public void reportDistributionData(final DistributionCollector<?> machineProbability) throws Exception {
-
-        // System.out.println(machineProbability);
-
-    }
-
-    @Override
-    public void reportFileSystemData(final DistributionCollector<FileSystemData> fileSystemSummary) throws Exception {
-
-        //System.out.println(fileSystemSummary);
-
-    }
-
-    @Override
     public void reportFileSystemData(final MultipleSummary<FileSystemData> fileSystemSummary) throws Exception {
 
         /*
@@ -122,15 +107,33 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
          */
         if (fileSystem != null) {
             for (final SingleSummary<FileSystemData> specificFsSummary : fileSystemSummary.getSummaries()) {
-                if (specificFsSummary.getMax().file_system_location.equalsIgnoreCase(fileSystem)) {
-                    thresholdChecker.analyseNewMonitoringData(specificFsSummary);
-                    resourceRanker.collateRankingData(specificFsSummary);
+                if (thisIsPrimaryFileSystem(specificFsSummary)) {
+                    collectFileSystemData(specificFsSummary);
                     break;
                 }
-
             }
         }
 
+    }
+
+    /**
+     * Collect data from this file system summary and send it to the threshold checker and to the resource ranker.
+     * @param specificFsSummary  Summary of file system utilization
+     */
+    public void collectFileSystemData(final SingleSummary<FileSystemData> specificFsSummary) {
+
+        thresholdChecker.analyseNewMonitoringData(specificFsSummary);
+        resourceRanker.collateRankingData(specificFsSummary);
+    }
+
+    /**
+     * 
+     * @param specificFsSummary Summary of file system utilization, including the name of the filesystem.
+     * @return true if this is data for the primary file system, as specified by {@link #fileSystem}.
+     */
+    public boolean thisIsPrimaryFileSystem(final SingleSummary<FileSystemData> specificFsSummary) {
+
+        return specificFsSummary.getMax().file_system_location.equalsIgnoreCase(fileSystem);
     }
 
     @Override
@@ -141,72 +144,9 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
     }
 
     @Override
-    public void reportNetworkData(final SingleSummary<NetworkData> summary) throws Exception {
-
-        // System.out.println(summary);
-
-    }
-
-    @Override
-    public void reportAllNetworkData(final MultipleSummary<NetworkData> allNetworkSummary) throws Exception {
-
-        // System.out.println(allNetworkSummary);
-
-    }
-
-    @Override
-    public void reportProcessData(final SingleSummary<ProcessData> summary) throws Exception {
-
-        // System.out.println(summary);
-
-    }
-
-    @Override
-    public void reportAllProcessData(final MultipleSummary<ProcessData> summaries) throws Exception {
-
-        //System.out.println(summaries);
-
-    }
-
-    @Override
     public void reportSystemInfo(final SystemInfoData staticSysInfoData) throws Exception {
 
         resourceRanker.setStaticSystemInfo(staticSysInfoData);
-    }
-
-    @Override
-    public void reportLatencyAndBandwidthData(final LatencyAndBandwidthData data) throws Exception {
-
-        //System.out.println(data);
-
-    }
-
-    @Override
-    public void reportEventData(final List<uk.ac.standrews.cs.numonic.event.Event> events) throws Exception {
-
-        System.out.println(PrettyPrinter.toString(events));
-
-    }
-
-    @Override
-    public List<FileSystemData> getFileSystemData(final int minutes) throws Exception {
-
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Collection<DistributionData> getDistributionData(final int minutes) throws Exception {
-
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Collection<uk.ac.standrews.cs.numonic.event.Event> getEvents(final int minutes) throws Exception {
-
-        // TODO Auto-generated method stub
-        return null;
     }
 
     /* (non-Javadoc)
@@ -222,6 +162,84 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
     public void shutdown() {
 
         numonic.setRunning(false);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Methods below are not implemented.
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void reportDistributionData(final DistributionCollector<?> machineProbability) throws Exception {
+
+        // System.out.println(machineProbability);
+
+    }
+
+    @Override
+    public void reportFileSystemData(final DistributionCollector<FileSystemData> fileSystemSummary) throws Exception {
+
+        //Do nothing with data.
+
+    }
+
+    @Override
+    public void reportNetworkData(final SingleSummary<NetworkData> summary) throws Exception {
+
+        //Do nothing with data.
+
+    }
+
+    @Override
+    public void reportAllNetworkData(final MultipleSummary<NetworkData> allNetworkSummary) throws Exception {
+
+        //Do nothing with data.
+
+    }
+
+    @Override
+    public void reportProcessData(final SingleSummary<ProcessData> summary) throws Exception {
+
+        //Do nothing with data.
+
+    }
+
+    @Override
+    public void reportAllProcessData(final MultipleSummary<ProcessData> summaries) throws Exception {
+
+        //Do nothing with data.
+
+    }
+
+    @Override
+    public void reportLatencyAndBandwidthData(final LatencyAndBandwidthData data) throws Exception {
+
+        //Do nothing with data.
+
+    }
+
+    @Override
+    public void reportEventData(final List<uk.ac.standrews.cs.numonic.event.Event> events) throws Exception {
+
+        //Do nothing with data.
+
+    }
+
+    @Override
+    public List<FileSystemData> getFileSystemData(final int minutes) throws Exception {
+
+        throw new Exception("This method shouldn't be called. It isn't implemented in H2O.");
+    }
+
+    @Override
+    public Collection<DistributionData> getDistributionData(final int minutes) throws Exception {
+
+        throw new Exception("This method shouldn't be called. It isn't implemented in H2O.");
+    }
+
+    @Override
+    public Collection<uk.ac.standrews.cs.numonic.event.Event> getEvents(final int minutes) throws Exception {
+
+        throw new Exception("This method shouldn't be called. It isn't implemented in H2O.");
     }
 
 }

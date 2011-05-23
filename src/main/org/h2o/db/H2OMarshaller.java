@@ -13,8 +13,8 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.h2o.autonomic.numonic.Metric;
-import org.h2o.autonomic.numonic.ranking.IMetric;
+import org.h2o.autonomic.numonic.metric.IMetric;
+import org.h2o.autonomic.numonic.metric.Metric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;

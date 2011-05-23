@@ -2,7 +2,7 @@ package org.h2o.autonomic.numonic.interfaces;
 
 import java.util.Queue;
 
-import org.h2o.autonomic.numonic.ranking.IMetric;
+import org.h2o.autonomic.numonic.metric.IMetric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;

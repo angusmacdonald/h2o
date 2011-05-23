@@ -1,6 +1,6 @@
 package org.h2o.db.manager;
 
-import org.h2o.autonomic.numonic.ranking.IMetric;
+import org.h2o.autonomic.numonic.metric.IMetric;
 
 public class SystemTableSortMetric implements IMetric {
 

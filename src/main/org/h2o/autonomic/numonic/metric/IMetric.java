@@ -1,4 +1,6 @@
-package org.h2o.autonomic.numonic.ranking;
+package org.h2o.autonomic.numonic.metric;
+
+import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 
 /**
  * Metric which defines how {@link MachineMonitoringData} instances should be sorted.

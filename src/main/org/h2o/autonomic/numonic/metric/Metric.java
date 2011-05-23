@@ -1,6 +1,5 @@
-package org.h2o.autonomic.numonic;
+package org.h2o.autonomic.numonic.metric;
 
-import org.h2o.autonomic.numonic.ranking.IMetric;
 
 public class Metric implements IMetric {
 

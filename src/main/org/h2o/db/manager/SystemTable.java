@@ -17,7 +17,7 @@ import java.util.Set;
 import org.h2.engine.Database;
 import org.h2o.autonomic.numonic.SystemTableDataCollctor;
 import org.h2o.autonomic.numonic.interfaces.ICentralDataCollector;
-import org.h2o.autonomic.numonic.ranking.IMetric;
+import org.h2o.autonomic.numonic.metric.IMetric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.autonomic.numonic.ranking.Requirements;
 import org.h2o.db.id.DatabaseID;

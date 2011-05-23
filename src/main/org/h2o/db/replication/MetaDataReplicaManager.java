@@ -25,6 +25,8 @@
 
 package org.h2o.db.replication;
 
+import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,7 +39,8 @@ import org.h2.command.Command;
 import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.result.LocalResult;
-import org.h2o.autonomic.numonic.PropertiesFileMetric;
+import org.h2o.autonomic.numonic.metric.IMetric;
+import org.h2o.autonomic.numonic.metric.PropertiesFileMetric;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.manager.PersistentSystemTable;
@@ -110,6 +113,20 @@ public class MetaDataReplicaManager {
      * The number of replicas required of Table Manager meta-data.
      */
     private final int tableManagerReplicationFactor;
+
+    /**
+     * The metric used when asking the System Table where a meta data replica should be created.
+     */
+    private static IMetric createMetaDataReplicaMetric;
+
+    static {
+        try {
+            createMetaDataReplicaMetric = new PropertiesFileMetric("metric " + File.separator + "createMetaDataReplica.metric");
+        }
+        catch (final IOException e) {
+            ErrorHandling.exceptionError(e, "Failed to find metric file for creating replicas, located at : " + "metric " + File.separator + "createMetaDataReplica.metric");
+        }
+    }
 
     /*
      * DATABASE STATE.
@@ -211,7 +228,7 @@ public class MetaDataReplicaManager {
                     Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "System table was NULL so the meta-data manager is unable to replicate.");
                     return;
                 }
-                databaseInstances = systemTableRemote.getRankedListOfInstances(new PropertiesFileMetric("metaDataReplication.metric"));
+                databaseInstances = systemTableRemote.getRankedListOfInstances(createMetaDataReplicaMetric);
             }
             catch (final Exception e) {
 

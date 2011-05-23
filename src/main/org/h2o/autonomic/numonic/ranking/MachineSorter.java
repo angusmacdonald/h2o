@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Queue;
 import java.util.Set;
 
+import org.h2o.autonomic.numonic.metric.IMetric;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
