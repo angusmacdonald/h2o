@@ -364,10 +364,10 @@ public class SystemTableProxy extends StreamProxy implements ISystemTableMigrata
             final Connection connection = (Connection) startCall("getDatabaseInstance");
             final JSONWriter jw = connection.getJSONwriter();
             marshaller.serializeDatabaseID(databaseID, jw);
-            
+
             final JSONReader reader = makeCall(connection);
             final IDatabaseInstanceRemote result = marshaller.deserializeIDatabaseInstanceRemote(reader);
- 
+
             finishCall(connection);
             return result;
         }
@@ -571,7 +571,7 @@ public class SystemTableProxy extends StreamProxy implements ISystemTableMigrata
         try {
             final Connection connection = (Connection) startCall("getAvailableMachines");
             final JSONWriter jw = connection.getJSONwriter();
-            marshaller.serializeActionRequest(typeOfRequest, jw); 
+            marshaller.serializeActionRequest(typeOfRequest, jw);
             final JSONReader reader = makeCall(connection);
 
             final Queue<DatabaseInstanceWrapper> result = marshaller.deserializeQueueDatabaseInstanceWrapper(reader);
@@ -595,7 +595,7 @@ public class SystemTableProxy extends StreamProxy implements ISystemTableMigrata
             final JSONWriter jw = connection.getJSONwriter();
             jw.value(newLocation);
             handleVoidCall(makeCall(connection));
-            
+
             finishCall(connection);
         }
         catch (final MovedException e) {
@@ -645,7 +645,7 @@ public class SystemTableProxy extends StreamProxy implements ISystemTableMigrata
             final Connection connection = (Connection) startCall("shutdown");
             final JSONWriter jw = connection.getJSONwriter();
             jw.value(shutdown);
-            handleVoidCall( makeCall(connection));
+            handleVoidCall(makeCall(connection));
             finishCall(connection);
         }
         catch (final MovedException e) {
@@ -703,7 +703,7 @@ public class SystemTableProxy extends StreamProxy implements ISystemTableMigrata
             final Connection connection = (Connection) startCall("addMonitoringSummary");
             final JSONWriter jw = connection.getJSONwriter();
             marshaller.serializeMachineMonitoringData(summary, jw);
-            handleVoidCall( makeCall(connection));
+            handleVoidCall(makeCall(connection));
             finishCall(connection);
         }
         catch (final MovedException e) {

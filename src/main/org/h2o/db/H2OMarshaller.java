@@ -1326,14 +1326,14 @@ public class H2OMarshaller extends Marshaller {
             reader.key(DATABASE_ID);
 
             final DatabaseID databaseID = deserializeDatabaseID(reader);
-            reader.key(DATABASE_ID);
-            final MachineUtilisationData machineUtilData = deserializeMachineUtilizationData(reader);
-            reader.key(DATABASE_ID);
+            reader.key(SYSTEM_INFO_DATA);
             final SystemInfoData sysInfoData = deserializeSystemInfoData(reader);
+            reader.key(MACHINE_UTILIZATION_DATA);
+            final MachineUtilisationData machineUtilData = deserializeMachineUtilizationData(reader);
 
-            reader.key(DATABASE_ID);
+            reader.key(FS_DATA);
             final FileSystemData fsData = deserializeFileSystemData(reader);
-            reader.key(DATABASE_ID);
+            reader.key(MEASUREMENTS_BEFORE_SUMMARY);
             final int measurements_before_summary = reader.intValue();
             reader.endObject();
 
