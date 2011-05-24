@@ -14,6 +14,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -22,6 +23,7 @@ import java.sql.Statement;
 
 import org.h2.engine.Constants;
 import org.h2.tools.DeleteDbFiles;
+import org.h2.util.NetUtils;
 import org.h2o.H2O;
 import org.h2o.H2OLocator;
 import org.h2o.db.manager.PersistentSystemTable;
@@ -29,6 +31,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+import uk.ac.standrews.cs.nds.registry.IRegistry;
+import uk.ac.standrews.cs.nds.registry.stream.RegistryFactory;
+import uk.ac.standrews.cs.nds.rpc.AbstractConnectionPool;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
@@ -63,6 +68,7 @@ public class TestBase2 {
     @BeforeClass
     public static void initialSetUp() {
 
+        AbstractConnectionPool.MAX_FREE_CONNECTIONS_PER_ADDRESS = 0;
         Diagnostic.setLevel(DiagnosticLevel.FULL);
         Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.stachord");
     }
@@ -107,11 +113,11 @@ public class TestBase2 {
         Constants.IS_TEAR_DOWN = true;
 
         try {
-            if (sa != null) {
-                sa.execute("SHUTDOWN");
-            }
             if (sb != null) {
                 sb.execute("SHUTDOWN");
+            }
+            if (sa != null) {
+                sa.execute("SHUTDOWN");
             }
         }
         catch (final Exception e1) {
@@ -175,8 +181,21 @@ public class TestBase2 {
             }
         }
 
+        shutdownRegistry();
+
         Constants.IS_NON_SM_TEST = false;
 
+    }
+
+    public static void shutdownRegistry() {
+
+        try {
+            final IRegistry registry = RegistryFactory.FACTORY.getRegistry(InetAddress.getByName(NetUtils.getLocalAddress()));
+            registry.shutdown();
+        }
+        catch (final Exception e) {
+            //May already be shutdown.
+        }
     }
 
     /**

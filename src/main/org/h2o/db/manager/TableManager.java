@@ -200,7 +200,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
     static {
         try {
-            createReplicaMetric = new PropertiesFileMetric("metric " + File.separator + "createReplica.metric");
+            createReplicaMetric = new PropertiesFileMetric("metric" + File.separator + "createReplica.metric");
         }
         catch (final IOException e) {
             ErrorHandling.exceptionError(e, "Failed to find metric file for creating replicas, located at : " + "metric " + File.separator + "createReplica.metric");

@@ -121,7 +121,7 @@ public class MetaDataReplicaManager {
 
     static {
         try {
-            createMetaDataReplicaMetric = new PropertiesFileMetric("metric " + File.separator + "createMetaDataReplica.metric");
+            createMetaDataReplicaMetric = new PropertiesFileMetric("metric" + File.separator + "createMetaDataReplica.metric");
         }
         catch (final IOException e) {
             ErrorHandling.exceptionError(e, "Failed to find metric file for creating replicas, located at : " + "metric " + File.separator + "createMetaDataReplica.metric");

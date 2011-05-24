@@ -102,7 +102,7 @@ public class MachineRankingTests {
      * <p>Metric: cpuIntensive.metric
      */
     @Test
-    public void rank() throws Exception {
+    public void cpuIntensiveWorkload() throws Exception {
 
         //Ranking setup.
         final IMetric metric = new PropertiesFileMetric("metric" + File.separator + "cpuIntensive.metric");

@@ -151,6 +151,8 @@ public class TestBase {
         sa = null;
         sb = null;
 
+        TestBase2.shutdownRegistry();
+
         ls.deletePersistedState();
         ls.setRunning(false);
         while (!ls.isFinished()) {

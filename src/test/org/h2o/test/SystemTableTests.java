@@ -27,6 +27,7 @@ import org.h2o.autonomic.settings.TestingSettings;
 import org.h2o.db.manager.PersistentSystemTable;
 import org.h2o.locator.server.LocatorServer;
 import org.h2o.test.fixture.TestBase;
+import org.h2o.test.fixture.TestBase2;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -85,6 +86,8 @@ public class SystemTableTests {
         TestBase.closeDatabaseCompletely();
 
         DeleteDbFiles.execute(BASEDIR, "schema_test", false);
+
+        TestBase2.shutdownRegistry();
 
         ls.setRunning(false);
 
