@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.h2o.autonomic.numonic.metric.IMetric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
+import org.h2o.autonomic.numonic.ranking.Requirements;
 import org.h2o.db.H2OMarshaller;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
@@ -692,36 +693,14 @@ public class SystemTableProxy extends StreamProxy implements ISystemTableMigrata
     }
 
     @Override
-    public Queue<DatabaseInstanceWrapper> getRankedListOfInstances() throws MovedException, RPCException {
-
-        try {
-            final Connection connection = (Connection) startCall("getRankedListOfInstances");
-
-            final JSONReader reader = makeCall(connection);
-
-            final Queue<DatabaseInstanceWrapper> result = marshaller.deserializeQueueDatabaseInstanceWrapper(reader);
-
-            finishCall(connection);
-
-            return result;
-        }
-        catch (final MovedException e) {
-            throw e;
-        }
-        catch (final Exception e) {
-            dealWithException(e);
-            return null; //not reached.
-        }
-    }
-
-    @Override
-    public Queue<DatabaseInstanceWrapper> getRankedListOfInstances(final IMetric metric) throws RPCException, MovedException {
+    public Queue<DatabaseInstanceWrapper> getRankedListOfInstances(final IMetric metric, final Requirements requirements) throws RPCException, MovedException {
 
         try {
             final Connection connection = (Connection) startCall("getRankedListOfInstances");
             final JSONWriter jw = connection.getJSONwriter();
 
             marshaller.serializeMetric(metric, jw);
+            marshaller.serializeRequirements(requirements, jw);
 
             final JSONReader reader = makeCall(connection);
 

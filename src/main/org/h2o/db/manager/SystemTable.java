@@ -53,10 +53,7 @@ public class SystemTable implements ISystemTableMigratable {
      */
     private final ISystemTable persisted;
 
-    private static final Requirements DEFAULT_REQUIREMENTS = new Requirements(0, 0, 0, 0);
-    private static final IMetric DEFAULT_SORT_METRIC = new SystemTableSortMetric();
-
-    private final ICentralDataCollector monitoring = new SystemTableDataCollector(DEFAULT_REQUIREMENTS, DEFAULT_SORT_METRIC);
+    private final ICentralDataCollector monitoring = new SystemTableDataCollector();
 
     /**
      * Fields related to the migration functionality of the System Table.
@@ -373,17 +370,10 @@ public class SystemTable implements ISystemTableMigratable {
     }
 
     @Override
-    public Queue<DatabaseInstanceWrapper> getRankedListOfInstances() throws RPCException, MovedException {
+    public Queue<DatabaseInstanceWrapper> getRankedListOfInstances(final IMetric metric, final Requirements requirements) throws RPCException, MovedException {
 
         preMethodTest();
-        return monitoring.getRankedListOfInstances();
-    }
-
-    @Override
-    public Queue<DatabaseInstanceWrapper> getRankedListOfInstances(final IMetric metric) throws RPCException, MovedException {
-
-        preMethodTest();
-        return monitoring.getRankedListOfInstances(metric);
+        return monitoring.getRankedListOfInstances(metric, requirements);
     }
 
 }

@@ -16,6 +16,7 @@ import java.util.TreeSet;
 import org.h2o.autonomic.numonic.metric.IMetric;
 import org.h2o.autonomic.numonic.metric.Metric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
+import org.h2o.autonomic.numonic.ranking.Requirements;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
@@ -1740,6 +1741,57 @@ public class H2OMarshaller extends Marshaller {
             reader.endObject();
 
             return new Metric(cpu, memory, swap, disk_r, disk_w, network_r, network_w);
+        }
+        catch (final Exception e) {
+            throw new DeserializationException(e);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------------------
+
+    public void serializeRequirements(final Requirements source, final JSONWriter writer) throws JSONException {
+
+        if (source == null) {
+            writer.value(null);
+        }
+        else {
+
+            writer.object();
+            writer.key(CPU);
+            writer.value(source.getCpuCapacity());
+            writer.key(MEMORY);
+            writer.value(source.getMemoryCapacity());
+            writer.key(DISK);
+            writer.value(source.getDiskCapacity());
+            writer.key(NETWORK);
+            writer.value(source.getNetworkCapacity());
+
+            writer.endObject();
+        }
+
+    }
+
+    public Requirements deserializeRequirements(final JSONReader reader) throws DeserializationException {
+
+        try {
+
+            if (reader.checkNull()) { return null; }
+
+            reader.object();
+
+            reader.key(CPU);
+            final long cpu = reader.longValue();
+
+            reader.key(MEMORY);
+            final long memory = reader.longValue();
+
+            reader.key(DISK);
+            final long disk = reader.longValue();
+
+            reader.key(NETWORK);
+            final long network = reader.longValue();
+
+            return new Requirements(cpu, memory, disk, network);
         }
         catch (final Exception e) {
             throw new DeserializationException(e);

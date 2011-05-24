@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.h2o.autonomic.numonic.metric.IMetric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
+import org.h2o.autonomic.numonic.ranking.Requirements;
 import org.h2o.db.H2OMarshaller;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
@@ -449,19 +450,9 @@ public class SystemTableServer extends ApplicationServer {
             @Override
             public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
-                marshaller.serializeCollectionDatabaseInstanceWrapper(system_table.getRankedListOfInstances(), response);
-
-            }
-        });
-
-        handler_map.put("getRankedListOfInstances", new IHandler() {
-
-            @Override
-            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
-
                 final IMetric p0 = marshaller.deserializeMetric(args);
-
-                marshaller.serializeCollectionDatabaseInstanceWrapper(system_table.getRankedListOfInstances(p0), response);
+                final Requirements p1 = marshaller.deserializeRequirements(args);
+                marshaller.serializeCollectionDatabaseInstanceWrapper(system_table.getRankedListOfInstances(p0, p1), response);
 
             }
         });

@@ -4,6 +4,7 @@ import java.util.Queue;
 
 import org.h2o.autonomic.numonic.metric.IMetric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
+import org.h2o.autonomic.numonic.ranking.Requirements;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
 
@@ -31,22 +32,13 @@ public interface ICentralDataCollector {
     public void addMonitoringSummary(MachineMonitoringData summary) throws RPCException, MovedException;
 
     /**
-     * Get the set of database instances in the database system, sorted by their availability: most available first.
-     * 
-     * <p>These are sorted based on the default availability metric implemented by the class implementing this interface.
-     * @return Ranked set of H2O instances.
-     * @throws MovedException 
-     * @throws RPCException 
-     */
-    public Queue<DatabaseInstanceWrapper> getRankedListOfInstances() throws RPCException, MovedException;
-
-    /**
      * Get a ranked list of database instances based on the metric given in this request.
      * @param metric    Metric to be used to rank machines.
+     * @param requirements The minimum requirements for machines involved in this query.
      * @return
      * @throws MovedException 
      * @throws RPCException 
      */
-    public Queue<DatabaseInstanceWrapper> getRankedListOfInstances(IMetric metric) throws RPCException, MovedException;
+    public Queue<DatabaseInstanceWrapper> getRankedListOfInstances(IMetric metric, final Requirements requirements) throws RPCException, MovedException;
 
 }

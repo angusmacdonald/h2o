@@ -43,7 +43,7 @@ public class MachineRankingTests {
         //Ranking setup.
         final IMetric metric = new PropertiesFileMetric("metric" + File.separator + "createReplica.metric");
         final Requirements requirements = new Requirements(0, 0, 0, 0);
-        final SystemTableDataCollector c = new SystemTableDataCollector(requirements, metric);
+        final SystemTableDataCollector c = new SystemTableDataCollector();
 
         //Machines
         final MachineMonitoringData m1 = ResourceSpec.generateMonitoringData("jdbc:h2o:mem:one", 10, 10, 10, 0.3, 0.2, 0.2);
@@ -55,7 +55,7 @@ public class MachineRankingTests {
         c.addMonitoringSummary(m3);
 
         //Tests
-        final Queue<DatabaseInstanceWrapper> rankedInstances = c.getRankedListOfInstances();
+        final Queue<DatabaseInstanceWrapper> rankedInstances = c.getRankedListOfInstances(metric, requirements);
 
         assertEquals(3, rankedInstances.size());
 
@@ -68,15 +68,15 @@ public class MachineRankingTests {
      * Tests that filtering is performed correctly when there is not enough hard disk space available.
      * 
      * <p>Requirements: 10Gb disk space.
-     * <p>Metric: createReplica.metric.
+     * <p>Metric: createtReplica.metric.
      */
     @Test
     public void filterTest() throws Exception {
 
         //Ranking setup.
         final IMetric metric = new PropertiesFileMetric("metric" + File.separator + "createReplica.metric");
-        final Requirements requirements = new Requirements(0, 0, 10, 0);
-        final SystemTableDataCollector c = new SystemTableDataCollector(requirements, metric);
+        final Requirements requirements = new Requirements(0, 0, 10 * 1024 * 1024, 0);
+        final SystemTableDataCollector c = new SystemTableDataCollector();
 
         //Machines
         final MachineMonitoringData m1 = ResourceSpec.generateMonitoringData("jdbc:h2o:mem:one", 10, 10, 1, 0.3, 0.2, 0.99);
@@ -88,7 +88,7 @@ public class MachineRankingTests {
         c.addMonitoringSummary(m3);
 
         //Tests
-        final Queue<DatabaseInstanceWrapper> rankedInstances = c.getRankedListOfInstances();
+        final Queue<DatabaseInstanceWrapper> rankedInstances = c.getRankedListOfInstances(metric, requirements);
 
         assertEquals(2, rankedInstances.size());
 
@@ -107,7 +107,7 @@ public class MachineRankingTests {
         //Ranking setup.
         final IMetric metric = new PropertiesFileMetric("metric" + File.separator + "cpuIntensive.metric");
         final Requirements requirements = new Requirements(0, 0, 0, 0);
-        final SystemTableDataCollector c = new SystemTableDataCollector(requirements, metric);
+        final SystemTableDataCollector c = new SystemTableDataCollector();
 
         //Machines
         final MachineMonitoringData m1 = ResourceSpec.generateMonitoringData("jdbc:h2o:mem:one", 11, 10, 1, 0.2, 0.2, 0.2);
@@ -119,7 +119,7 @@ public class MachineRankingTests {
         c.addMonitoringSummary(m3);
 
         //Tests
-        final Queue<DatabaseInstanceWrapper> rankedInstances = c.getRankedListOfInstances();
+        final Queue<DatabaseInstanceWrapper> rankedInstances = c.getRankedListOfInstances(metric, requirements);
 
         assertEquals(3, rankedInstances.size());
 
@@ -139,7 +139,7 @@ public class MachineRankingTests {
         //Ranking setup.
         final IMetric metric = new PropertiesFileMetric("metric" + File.separator + "createReplica.metric");
         final Requirements requirements = new Requirements(0, 0, 0, 0);
-        final SystemTableDataCollector c = new SystemTableDataCollector(requirements, metric);
+        final SystemTableDataCollector c = new SystemTableDataCollector();
 
         //Machines
         final MachineMonitoringData m1 = ResourceSpec.generateMonitoringData("jdbc:h2o:mem:one", 10, 10, 10, 0.5, 0.2, 0.2);
@@ -151,7 +151,7 @@ public class MachineRankingTests {
         c.addMonitoringSummary(m3);
 
         //Tests
-        final Queue<DatabaseInstanceWrapper> rankedInstances = c.getRankedListOfInstances();
+        final Queue<DatabaseInstanceWrapper> rankedInstances = c.getRankedListOfInstances(metric, requirements);
 
         assertEquals(3, rankedInstances.size());
 

@@ -44,4 +44,10 @@ public interface IMetric {
      */
     public double getNetworkUtilizationWrite();
 
+    /**
+     * Must implement hashCode to ensure that results can be cached by metric.
+     */
+    @Override
+    public int hashCode();
+
 }

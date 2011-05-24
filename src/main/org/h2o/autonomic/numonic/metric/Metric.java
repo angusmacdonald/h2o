@@ -1,6 +1,5 @@
 package org.h2o.autonomic.numonic.metric;
 
-
 public class Metric implements IMetric {
 
     private final double cpu;
@@ -63,6 +62,46 @@ public class Metric implements IMetric {
     public double getNetworkUtilizationWrite() {
 
         return network_w;
+    }
+
+    @Override
+    public int hashCode() {
+
+        final int prime = 31;
+        int result = 1;
+        long temp;
+        temp = Double.doubleToLongBits(cpu);
+        result = prime * result + (int) (temp ^ temp >>> 32);
+        temp = Double.doubleToLongBits(disk_r);
+        result = prime * result + (int) (temp ^ temp >>> 32);
+        temp = Double.doubleToLongBits(disk_w);
+        result = prime * result + (int) (temp ^ temp >>> 32);
+        temp = Double.doubleToLongBits(memory);
+        result = prime * result + (int) (temp ^ temp >>> 32);
+        temp = Double.doubleToLongBits(network_r);
+        result = prime * result + (int) (temp ^ temp >>> 32);
+        temp = Double.doubleToLongBits(network_w);
+        result = prime * result + (int) (temp ^ temp >>> 32);
+        temp = Double.doubleToLongBits(swap);
+        result = prime * result + (int) (temp ^ temp >>> 32);
+        return result;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+
+        if (this == obj) { return true; }
+        if (obj == null) { return false; }
+        if (getClass() != obj.getClass()) { return false; }
+        final Metric other = (Metric) obj;
+        if (Double.doubleToLongBits(cpu) != Double.doubleToLongBits(other.cpu)) { return false; }
+        if (Double.doubleToLongBits(disk_r) != Double.doubleToLongBits(other.disk_r)) { return false; }
+        if (Double.doubleToLongBits(disk_w) != Double.doubleToLongBits(other.disk_w)) { return false; }
+        if (Double.doubleToLongBits(memory) != Double.doubleToLongBits(other.memory)) { return false; }
+        if (Double.doubleToLongBits(network_r) != Double.doubleToLongBits(other.network_r)) { return false; }
+        if (Double.doubleToLongBits(network_w) != Double.doubleToLongBits(other.network_w)) { return false; }
+        if (Double.doubleToLongBits(swap) != Double.doubleToLongBits(other.swap)) { return false; }
+        return true;
     }
 
 }

@@ -13,6 +13,11 @@ public class Requirements {
     private static final int BITS_SHIFTED = 32;
 
     /**
+     * Default requirements which will not filter any machines.
+     */
+    public static final Requirements NO_FILTERING = new Requirements(0, 0, 0, 0);
+
+    /**
      * The amount of CPU capacity required, in MHz.
      */
     private final long cpu_capacity;
@@ -38,15 +43,15 @@ public class Requirements {
      * Initializes a set of requirements.
      *
      * @param cpu_capacity the amount of CPU capacity required, in MHz
-     * @param memoryCapacityGB the quantity of memory required, in GB
-     * @param diskCapacityGB the quantity of disk space required, in GB
+     * @param memoryCapacity the quantity of memory required, in Kb
+     * @param diskCapacity the quantity of disk space required, in Kb
      * @param network_capacity the bandwidth of network connection required, in KB/s
      */
-    public Requirements(final long cpu_capacity, final long memoryCapacityGB, final long diskCapacityGB, final long network_capacity) {
+    public Requirements(final long cpu_capacity, final long memoryCapacity, final long diskCapacity, final long network_capacity) {
 
         this.cpu_capacity = cpu_capacity;
-        memory_capacity = memoryCapacityGB * 1024 * 1024;
-        disk_capacity = diskCapacityGB * 1024 * 1024;
+        memory_capacity = memoryCapacity;
+        disk_capacity = diskCapacity;
         this.network_capacity = network_capacity;
     }
 
