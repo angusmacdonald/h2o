@@ -49,7 +49,7 @@ public class MachineRankingTests {
         c.addMonitoringSummary(m3);
 
         //Test 1.
-        final Queue<DatabaseInstanceWrapper> rankedInstances = c.getRankedListOfInstances(metric, requirements);
+        c.getRankedListOfInstances(metric, requirements);
 
     }
 
