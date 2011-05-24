@@ -20,8 +20,21 @@ public class SystemTableDataCollector implements ICentralDataCollector {
 
     Set<MachineMonitoringData> monitoringData = new HashSet<MachineMonitoringData>();
 
+    /**
+     * Cache of previously computed rankings.
+     */
     private final Map<CacheKey, CacheValue> cache = new HashMap<CacheKey, CacheValue>();
 
+    /**
+     * Maximum number of entries that can be stored in the cache. It is unlikely that it will get this high,
+     * because old entries are constantly being invalidated, so there would have to be more than 10 different request
+     * types (metric/requirement combinations) for this to matter.
+     */
+    private static final int MAXIMUM_CACHE_SIZE = 10;
+
+    /**
+     * Used to invalidate cache entries.
+     */
     private long timeOfLastUpdate;
 
     @Override
@@ -47,7 +60,7 @@ public class SystemTableDataCollector implements ICentralDataCollector {
 
             final Queue<DatabaseInstanceWrapper> rankedMachines = MachineSorter.filterThenRankMachines(requirements, metric, monitoringData);
 
-            cacheMachineRanking(rankedMachines, metric, requirements);
+            addToCache(rankedMachines, metric, requirements);
 
             return rankedMachines;
         }
@@ -86,7 +99,11 @@ public class SystemTableDataCollector implements ICentralDataCollector {
      * @param metric the metric used to rank these machines.
      * @param requirements 
      */
-    private void cacheMachineRanking(final Queue<DatabaseInstanceWrapper> rankedMachines, final IMetric metric, final Requirements requirements) {
+    private void addToCache(final Queue<DatabaseInstanceWrapper> rankedMachines, final IMetric metric, final Requirements requirements) {
+
+        if (cache.size() > MAXIMUM_CACHE_SIZE) {
+            cache.clear();
+        }
 
         final long timeOfRanking = System.currentTimeMillis();
 
