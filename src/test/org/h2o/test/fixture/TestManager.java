@@ -40,8 +40,8 @@ import java.util.concurrent.TimeoutException;
 import org.h2.engine.Constants;
 import org.h2o.H2OLocator;
 
+import uk.ac.standrews.cs.nds.madface.HostDescriptor;
 import uk.ac.standrews.cs.nds.madface.JavaProcessDescriptor;
-import uk.ac.standrews.cs.nds.madface.ProcessManager;
 import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -212,7 +212,7 @@ public abstract class TestManager implements ITestManager {
             locator_args.add("-f" + config_directory_path);
             locator_args.add("-D" + DIAGNOSTIC_LEVEL.numericalValue());
 
-            locator_process = new ProcessManager().runProcess(new JavaProcessDescriptor().classToBeInvoked(H2OLocator.class).args(locator_args));
+            locator_process = new HostDescriptor().getProcessManager().runProcess(new JavaProcessDescriptor().classToBeInvoked(H2OLocator.class).args(locator_args));
         }
     }
 

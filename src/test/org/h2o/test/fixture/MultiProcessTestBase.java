@@ -37,7 +37,6 @@ import org.junit.BeforeClass;
 import uk.ac.standrews.cs.nds.madface.HostDescriptor;
 import uk.ac.standrews.cs.nds.madface.JavaProcessDescriptor;
 import uk.ac.standrews.cs.nds.madface.PlatformDescriptor;
-import uk.ac.standrews.cs.nds.madface.ProcessManager;
 import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -620,7 +619,7 @@ public class MultiProcessTestBase extends TestBase {
         args.add("-d" + databaseDescriptorLocation);
 
         try {
-            processes.put(databaseInstanceName, new ProcessManager().runProcess(new JavaProcessDescriptor().classToBeInvoked(StartDatabaseInstance.class).args(args)));
+            processes.put(databaseInstanceName, new HostDescriptor().getProcessManager().runProcess(new JavaProcessDescriptor().classToBeInvoked(StartDatabaseInstance.class).args(args)));
         }
         catch (final Exception e) {
             ErrorHandling.error("Failed to create new database process.");
