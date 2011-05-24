@@ -2,6 +2,7 @@ package org.h2o.autonomic.numonic;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -107,7 +108,7 @@ public class SystemTableDataCollector implements ICentralDataCollector {
 
         final long timeOfRanking = System.currentTimeMillis();
 
-        cache.put(new CacheKey(metric, requirements), new CacheValue(timeOfRanking, rankedMachines));
+        cache.put(new CacheKey(metric, requirements), new CacheValue(timeOfRanking, new LinkedList<DatabaseInstanceWrapper>(rankedMachines)));
     }
 
     /**

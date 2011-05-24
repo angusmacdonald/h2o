@@ -137,7 +137,7 @@ public class MachineRankingTests {
     public void highCapacityHighUtilization() throws Exception {
 
         //Ranking setup.
-        final IMetric metric = new PropertiesFileMetric("metric" + File.separator + "createReplica.metric");
+        final IMetric metric = new PropertiesFileMetric("metric" + File.separator + "cpuIntensive.metric");
         final Requirements requirements = new Requirements(0, 0, 0, 0);
         final SystemTableDataCollector c = new SystemTableDataCollector();
 
@@ -158,5 +158,47 @@ public class MachineRankingTests {
         assertEquals(m2.getDatabaseID(), rankedInstances.remove().getURL());
         assertEquals(m3.getDatabaseID(), rankedInstances.remove().getURL());
         assertEquals(m1.getDatabaseID(), rankedInstances.remove().getURL());
+    }
+
+    /**
+     * Tests that caching works correctly.
+     * <p>Requirements: none.
+     * <p>Metric: cpuIntensive.metric
+     */
+    @Test
+    public void caching() throws Exception {
+
+        //Ranking setup.
+        final IMetric metric = new PropertiesFileMetric("metric" + File.separator + "cpuIntensive.metric");
+        final Requirements requirements = new Requirements(0, 0, 0, 0);
+        final SystemTableDataCollector c = new SystemTableDataCollector();
+
+        //Machines
+        final MachineMonitoringData m1 = ResourceSpec.generateMonitoringData("jdbc:h2o:mem:one", 10, 10, 10, 0.5, 0.2, 0.2);
+        final MachineMonitoringData m2 = ResourceSpec.generateMonitoringData("jdbc:h2o:mem:two", 9, 8, 8, 0.2, 0.2, 0.2);
+        final MachineMonitoringData m3 = ResourceSpec.generateMonitoringData("jdbc:h2o:mem:three", 8, 8, 8, 0.2, 0.2, 0.2);
+
+        c.addMonitoringSummary(m1);
+        c.addMonitoringSummary(m2);
+        c.addMonitoringSummary(m3);
+
+        //Test 1.
+        Queue<DatabaseInstanceWrapper> rankedInstances = c.getRankedListOfInstances(metric, requirements);
+
+        assertEquals(3, rankedInstances.size());
+
+        assertEquals(m2.getDatabaseID(), rankedInstances.remove().getURL());
+        assertEquals(m3.getDatabaseID(), rankedInstances.remove().getURL());
+        assertEquals(m1.getDatabaseID(), rankedInstances.remove().getURL());
+
+        //Test 2. (repeat).
+        rankedInstances = c.getRankedListOfInstances(metric, requirements);
+
+        assertEquals(3, rankedInstances.size());
+
+        assertEquals(m2.getDatabaseID(), rankedInstances.remove().getURL());
+        assertEquals(m3.getDatabaseID(), rankedInstances.remove().getURL());
+        assertEquals(m1.getDatabaseID(), rankedInstances.remove().getURL());
+
     }
 }
