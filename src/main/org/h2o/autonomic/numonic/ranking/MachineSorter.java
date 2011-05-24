@@ -26,6 +26,7 @@ public class MachineSorter {
 
         // Filter Machines.
         final Set<MachineMonitoringData> filteredInstances = filterMachines(requirements, machineData);
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Instances remaining after filtering: " + filteredInstances.size());
 
         // Rank Machines.
         final MachineRanker ranker = new MachineRanker(sort_metric);
@@ -45,10 +46,6 @@ public class MachineSorter {
         final MachineFilter filter = new MachineFilter();
 
         final Set<MachineMonitoringData> filteredInstances = filter.selectSuitableMachines(machineData, requirements);
-
-        for (final MachineMonitoringData machineInfo : filteredInstances) {
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Meets requirements: " + machineInfo);
-        }
 
         return filteredInstances;
     }

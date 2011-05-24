@@ -14,7 +14,7 @@ import org.h2o.util.exceptions.MovedException;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
 
-public class SystemTableDataCollctor implements ICentralDataCollector {
+public class SystemTableDataCollector implements ICentralDataCollector {
 
     Set<MachineMonitoringData> monitoringData = new HashSet<MachineMonitoringData>();
 
@@ -29,7 +29,7 @@ public class SystemTableDataCollctor implements ICentralDataCollector {
      * @param defaultSortMetric The default metric used to rank the instances being sorted. Used if no metric was specified in
      * the call to {@link #getRankedListOfInstances(IMetric)}, or used always in the call to {@link #getRankedListOfInstances()}.
      */
-    public SystemTableDataCollctor(final Requirements requirements, final IMetric defaultSortMetric) {
+    public SystemTableDataCollector(final Requirements requirements, final IMetric defaultSortMetric) {
 
         this.requirements = requirements;
         this.defaultSortMetric = defaultSortMetric;

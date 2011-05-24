@@ -10,6 +10,8 @@ import java.util.TreeSet;
 import org.h2o.autonomic.numonic.metric.IMetric;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.numonic.data.MachineUtilisationData;
 import uk.ac.standrews.cs.numonic.data.SystemInfoData;
 import uk.ac.standrews.cs.numonic.sort.data.DistributionData;
@@ -90,7 +92,7 @@ public class MachineRanker implements Comparator<MachineMonitoringData> {
         final Double m1_value = getMachineValue(m1);
         final Double m2_value = getMachineValue(m2);
 
-        return m1_value.compareTo(m2_value);
+        return m2_value.compareTo(m1_value);
     }
 
     /**
@@ -102,8 +104,6 @@ public class MachineRanker implements Comparator<MachineMonitoringData> {
 
         final MachineUtilisationData machineData = machine.getMachineUtilData();
 
-        double totalValue = 1;
-
         final double cpu_value = getCpuValue(machine);
         final double mem_value = getMemValue(machine);
 
@@ -111,8 +111,16 @@ public class MachineRanker implements Comparator<MachineMonitoringData> {
         final double normalized_mem_weight = normalize(mem_value, maxima.getMemMax(), 0);
 
         // Value of resource = normalised power of resource * probability resource is available * importance of this resource to request.
-        totalValue *= normalized_cpu_weight * machineData.getCpuUserTotal() * metric.getCpuUtilization();
-        totalValue *= normalized_mem_weight * machineData.getMemoryUtilization() * metric.getMemoryUtilization();
+        final double cpuMetricValue = normalized_cpu_weight * (1 - machineData.getCpuUserTotal()) * metric.getCpuUtilization();
+
+        final double memMetricValue = normalized_mem_weight * (1 - machineData.getMemoryUtilization()) * metric.getMemoryUtilization();
+
+        //Calculate accumulated metric value.
+        double totalValue = 0;
+        totalValue += cpuMetricValue;
+        totalValue += memMetricValue;
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Metric for " + machine.getDatabaseID() + ": [cpu: " + cpuMetricValue + ", mem: " + memMetricValue + "]");
 
         return totalValue;
     }

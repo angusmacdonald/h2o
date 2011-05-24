@@ -100,7 +100,7 @@ public class MachineMonitoringData {
 
     public boolean meetsRequirements(final Requirements requirements) {
 
-        return (staticSystemData == null || requirements.getCpuCapacity() > staticSystemData.getCpuClockSpeed()) && (staticSystemData == null || requirements.getMemoryCapacity() > staticSystemData.getMemoryTotal()) && (fsData == null || requirements.getDiskCapacity() > fsData.getSpaceFree());
+        return (staticSystemData == null || requirements.getCpuCapacity() < staticSystemData.getCpuClockSpeed()) && (staticSystemData == null || requirements.getMemoryCapacity() < staticSystemData.getMemoryTotal()) && (fsData == null || requirements.getDiskCapacity() < fsData.getSpaceFree());
 
     }
 

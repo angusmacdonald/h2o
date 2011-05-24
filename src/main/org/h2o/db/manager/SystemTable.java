@@ -15,7 +15,7 @@ import java.util.Queue;
 import java.util.Set;
 
 import org.h2.engine.Database;
-import org.h2o.autonomic.numonic.SystemTableDataCollctor;
+import org.h2o.autonomic.numonic.SystemTableDataCollector;
 import org.h2o.autonomic.numonic.interfaces.ICentralDataCollector;
 import org.h2o.autonomic.numonic.metric.IMetric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
@@ -56,7 +56,7 @@ public class SystemTable implements ISystemTableMigratable {
     private static final Requirements DEFAULT_REQUIREMENTS = new Requirements(0, 0, 0, 0);
     private static final IMetric DEFAULT_SORT_METRIC = new SystemTableSortMetric();
 
-    private final ICentralDataCollector monitoring = new SystemTableDataCollctor(DEFAULT_REQUIREMENTS, DEFAULT_SORT_METRIC);
+    private final ICentralDataCollector monitoring = new SystemTableDataCollector(DEFAULT_REQUIREMENTS, DEFAULT_SORT_METRIC);
 
     /**
      * Fields related to the migration functionality of the System Table.

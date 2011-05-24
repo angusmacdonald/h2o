@@ -1,6 +1,5 @@
 package org.h2o.autonomic.numonic.ranking;
 
-
 /**
  * Used to filter out machines that don't meet the requirements of a particular request.
  *
@@ -39,15 +38,15 @@ public class Requirements {
      * Initializes a set of requirements.
      *
      * @param cpu_capacity the amount of CPU capacity required, in MHz
-     * @param memory_capacity the quantity of memory required, in KB
-     * @param disk_capacity the quantity of disk space required, in KB
+     * @param memoryCapacityGB the quantity of memory required, in GB
+     * @param diskCapacityGB the quantity of disk space required, in GB
      * @param network_capacity the bandwidth of network connection required, in KB/s
      */
-    public Requirements(final long cpu_capacity, final long memory_capacity, final long disk_capacity, final long network_capacity) {
+    public Requirements(final long cpu_capacity, final long memoryCapacityGB, final long diskCapacityGB, final long network_capacity) {
 
         this.cpu_capacity = cpu_capacity;
-        this.memory_capacity = memory_capacity;
-        this.disk_capacity = disk_capacity;
+        memory_capacity = memoryCapacityGB * 1024 * 1024;
+        disk_capacity = diskCapacityGB * 1024 * 1024;
         this.network_capacity = network_capacity;
     }
 
