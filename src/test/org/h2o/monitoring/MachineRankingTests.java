@@ -11,10 +11,10 @@ import org.h2o.autonomic.numonic.metric.PropertiesFileMetric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.autonomic.numonic.ranking.Requirements;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
@@ -26,8 +26,30 @@ public class MachineRankingTests {
         Diagnostic.setLevel(DiagnosticLevel.FULL);
     }
 
-    @After
-    public void tearDown() throws Exception {
+    /**
+     * Tests that an exception is thrown if the requirements and sort metric provided are null.
+     * <p>Requirements: <null>
+     * <p>Metric: <null>
+     */
+    @Test(expected = RPCException.class)
+    public void nullCheck() throws Exception {
+
+        //Ranking setup.
+        final IMetric metric = null;
+        final Requirements requirements = null;
+        final SystemTableDataCollector c = new SystemTableDataCollector();
+
+        //Machines
+        final MachineMonitoringData m1 = ResourceSpec.generateMonitoringData("jdbc:h2o:mem:one", 10, 10, 10, 0.5, 0.2, 0.2);
+        final MachineMonitoringData m2 = ResourceSpec.generateMonitoringData("jdbc:h2o:mem:two", 9, 8, 8, 0.2, 0.2, 0.2);
+        final MachineMonitoringData m3 = ResourceSpec.generateMonitoringData("jdbc:h2o:mem:three", 8, 8, 8, 0.2, 0.2, 0.2);
+
+        c.addMonitoringSummary(m1);
+        c.addMonitoringSummary(m2);
+        c.addMonitoringSummary(m3);
+
+        //Test 1.
+        final Queue<DatabaseInstanceWrapper> rankedInstances = c.getRankedListOfInstances(metric, requirements);
 
     }
 
@@ -161,12 +183,12 @@ public class MachineRankingTests {
     }
 
     /**
-     * Tests that caching works correctly.
+     * Tests that caching works correctly when the same call is made twice.
      * <p>Requirements: none.
      * <p>Metric: cpuIntensive.metric
      */
     @Test
-    public void caching() throws Exception {
+    public void cachingDoubleCall() throws Exception {
 
         //Ranking setup.
         final IMetric metric = new PropertiesFileMetric("metric" + File.separator + "cpuIntensive.metric");
@@ -201,4 +223,50 @@ public class MachineRankingTests {
         assertEquals(m1.getDatabaseID(), rankedInstances.remove().getURL());
 
     }
+
+    /**
+     * Tests that caching works correctly when different calls are made (i.e. the cache shouldn't be used).
+     * <p>Requirements: none.
+     * <p>Metric: cpuIntensive.metric
+     */
+    @Test
+    public void cachingDifferentCalls() throws Exception {
+
+        //Ranking setup.
+        final IMetric metric = new PropertiesFileMetric("metric" + File.separator + "cpuIntensive.metric");
+        final Requirements requirements = new Requirements(0, 0, 0, 0);
+        final SystemTableDataCollector c = new SystemTableDataCollector();
+
+        final IMetric metric2 = new PropertiesFileMetric("metric" + File.separator + "memoryIntensive.metric");
+        final Requirements requirements2 = new Requirements(0, 0, 0, 0);
+
+        //Machines
+        final MachineMonitoringData m1 = ResourceSpec.generateMonitoringData("jdbc:h2o:mem:one", 10, 10, 10, 0.5, 0.2, 0.2);
+        final MachineMonitoringData m2 = ResourceSpec.generateMonitoringData("jdbc:h2o:mem:two", 9, 8, 8, 0.2, 0.2, 0.2);
+        final MachineMonitoringData m3 = ResourceSpec.generateMonitoringData("jdbc:h2o:mem:three", 8, 12, 8, 0.2, 0.2, 0.2);
+
+        c.addMonitoringSummary(m1);
+        c.addMonitoringSummary(m2);
+        c.addMonitoringSummary(m3);
+
+        //Test 1.
+        Queue<DatabaseInstanceWrapper> rankedInstances = c.getRankedListOfInstances(metric, requirements);
+
+        assertEquals(3, rankedInstances.size());
+
+        assertEquals(m2.getDatabaseID(), rankedInstances.remove().getURL());
+        assertEquals(m3.getDatabaseID(), rankedInstances.remove().getURL());
+        assertEquals(m1.getDatabaseID(), rankedInstances.remove().getURL());
+
+        //Test 2. (repeat).
+        rankedInstances = c.getRankedListOfInstances(metric2, requirements2);
+
+        assertEquals(3, rankedInstances.size());
+
+        assertEquals(m3.getDatabaseID(), rankedInstances.remove().getURL());
+        assertEquals(m1.getDatabaseID(), rankedInstances.remove().getURL());
+        assertEquals(m2.getDatabaseID(), rankedInstances.remove().getURL());
+
+    }
+
 }
