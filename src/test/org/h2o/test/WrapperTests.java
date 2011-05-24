@@ -34,7 +34,6 @@ import org.junit.Test;
 import uk.ac.standrews.cs.nds.madface.HostDescriptor;
 import uk.ac.standrews.cs.nds.madface.JavaProcessDescriptor;
 import uk.ac.standrews.cs.nds.madface.PlatformDescriptor;
-import uk.ac.standrews.cs.nds.madface.ProcessManager;
 import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -85,7 +84,7 @@ public class WrapperTests {
             locatorArgs.add("-d");
             locatorArgs.add("-f'" + defaultLocation + "'");
 
-            locatorProcess = new ProcessManager().runProcess(new JavaProcessDescriptor().classToBeInvoked(H2OLocator.class).args(locatorArgs));
+            locatorProcess = new HostDescriptor().getProcessManager().runProcess(new JavaProcessDescriptor().classToBeInvoked(H2OLocator.class).args(locatorArgs));
 
             Thread.sleep(1000);
 
@@ -204,7 +203,7 @@ public class WrapperTests {
         databaseArgs.add("-d'" + defaultLocation + File.separator + databaseName + ".h2od'");
         databaseArgs.add("-f'" + defaultLocation + "'");
 
-        databaseProcess = new ProcessManager().runProcess(new JavaProcessDescriptor().classToBeInvoked(H2O.class).args(databaseArgs));
+        databaseProcess = new HostDescriptor().getProcessManager().runProcess(new JavaProcessDescriptor().classToBeInvoked(H2O.class).args(databaseArgs));
     }
 
     private String extractDatabaseLocation(final int databasePort, final String databaseName, String defaultLocation) {
