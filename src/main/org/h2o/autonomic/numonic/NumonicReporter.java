@@ -9,7 +9,6 @@ import java.util.Observer;
 import org.h2o.autonomic.numonic.interfaces.ILocalDataCollector;
 import org.h2o.autonomic.numonic.interfaces.INumonic;
 import org.h2o.autonomic.numonic.threshold.Threshold;
-import org.h2o.autonomic.numonic.threshold.ThresholdChecker;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 
@@ -83,7 +82,9 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
                     numonic = new Numonic(location);
                 }
                 else {
-                    final IPropertiesWrapper propertiesWrapper = new JarPropertiesWrapper("/" + location);
+                    final PropertiesFileLoader loader = new PropertiesFileLoader();
+                    final IPropertiesWrapper propertiesWrapper = new JarPropertiesWrapper(loader.getResource(location));
+
                     propertiesWrapper.loadProperties();
 
                     numonic = new Numonic(propertiesWrapper);

@@ -1,4 +1,4 @@
-package org.h2o.autonomic.numonic.threshold;
+package org.h2o.autonomic.numonic;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Set;
 
+import org.h2o.autonomic.numonic.threshold.Threshold;
 import org.h2o.util.H2OPropertiesWrapper;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -124,7 +125,9 @@ public class ThresholdChecker extends Observable {
             }
             else { //get from jar.
 
-                final IPropertiesWrapper propertiesWrapper = new JarPropertiesWrapper("/" + location);
+                final PropertiesFileLoader loader = new PropertiesFileLoader();
+
+                final IPropertiesWrapper propertiesWrapper = new JarPropertiesWrapper(loader.getResource(location));
                 propertiesWrapper.loadProperties();
 
                 return getThresholds(propertiesWrapper);

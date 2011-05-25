@@ -5,8 +5,8 @@ import java.util.Observable;
 import java.util.Observer;
 
 import org.h2o.autonomic.numonic.NumonicReporter;
+import org.h2o.autonomic.numonic.ThresholdChecker;
 import org.h2o.autonomic.numonic.threshold.Threshold;
-import org.h2o.autonomic.numonic.threshold.ThresholdChecker;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
