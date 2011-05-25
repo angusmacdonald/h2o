@@ -1,5 +1,6 @@
 package org.h2o.autonomic.numonic;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -73,11 +74,20 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
         try {
 
             if (numonicPropertiesFileName.startsWith("JAR:")) {
+                final String location = numonicPropertiesFileName.substring("JAR:".length());
                 //Get the properties file from inside the H2O jar file (note: this will still work in eclipse, etc.
-                final IPropertiesWrapper propertiesWrapper = new JarPropertiesWrapper(numonicPropertiesFileName.substring("JAR:".length()));
-                propertiesWrapper.loadProperties();
 
-                numonic = new Numonic(propertiesWrapper);
+                final File f = new File(location);
+
+                if (f.exists()) {
+                    numonic = new Numonic(location);
+                }
+                else {
+                    final IPropertiesWrapper propertiesWrapper = new JarPropertiesWrapper("/" + location);
+                    propertiesWrapper.loadProperties();
+
+                    numonic = new Numonic(propertiesWrapper);
+                }
             }
             else {
                 numonic = new Numonic(numonicPropertiesFileName);

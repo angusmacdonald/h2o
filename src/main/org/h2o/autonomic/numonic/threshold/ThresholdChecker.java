@@ -1,5 +1,6 @@
 package org.h2o.autonomic.numonic.threshold;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -112,19 +113,35 @@ public class ThresholdChecker extends Observable {
     public static Threshold[] getThresholds(final String thresholdPropertiesLocation) throws IOException {
 
         if (thresholdPropertiesLocation.startsWith("JAR:")) {
-            //Get the properties file from inside the H2O jar file (note: this will still work in eclipse, etc.
-            final IPropertiesWrapper propertiesWrapper = new JarPropertiesWrapper(thresholdPropertiesLocation.substring("JAR:".length()));
-            propertiesWrapper.loadProperties();
+            //Get the properties file from inside the H2O jar file (note: this will still work in eclipse, etc.)
 
-            return getThresholds(propertiesWrapper);
+            final String location = thresholdPropertiesLocation.substring("JAR:".length());
+
+            final File f = new File(location);
+
+            if (f.exists()) {
+                return getPropertiesFromFile(location);
+            }
+            else { //get from jar.
+
+                final IPropertiesWrapper propertiesWrapper = new JarPropertiesWrapper("/" + location);
+                propertiesWrapper.loadProperties();
+
+                return getThresholds(propertiesWrapper);
+            }
         }
         else {
 
-            final H2OPropertiesWrapper propertiesFile = H2OPropertiesWrapper.getWrapper(thresholdPropertiesLocation);
-            propertiesFile.loadProperties();
-            return getThresholds(propertiesFile);
+            return getPropertiesFromFile(thresholdPropertiesLocation);
 
         }
+    }
+
+    public static Threshold[] getPropertiesFromFile(final String thresholdPropertiesLocation) throws IOException {
+
+        final H2OPropertiesWrapper propertiesFile = H2OPropertiesWrapper.getWrapper(thresholdPropertiesLocation);
+        propertiesFile.loadProperties();
+        return getThresholds(propertiesFile);
     }
 
     /**
