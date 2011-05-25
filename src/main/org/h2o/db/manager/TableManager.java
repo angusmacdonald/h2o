@@ -25,8 +25,6 @@
 
 package org.h2o.db.manager;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.rmi.NoSuchObjectException;
 import java.rmi.server.UnicastRemoteObject;
@@ -48,8 +46,8 @@ import org.h2.command.Parser;
 import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.result.LocalResult;
+import org.h2o.autonomic.numonic.metric.CreateReplicaMetric;
 import org.h2o.autonomic.numonic.metric.IMetric;
-import org.h2o.autonomic.numonic.metric.PropertiesFileMetric;
 import org.h2o.autonomic.numonic.ranking.Requirements;
 import org.h2o.autonomic.numonic.threshold.Threshold;
 import org.h2o.autonomic.numonic.threshold.ThresholdChecker;
@@ -197,16 +195,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
     /**
      * Metric used to query the System Table when asking where to create a replica.
      */
-    private static IMetric createReplicaMetric;
-
-    static {
-        try {
-            createReplicaMetric = new PropertiesFileMetric("metric" + File.separator + "createReplica.metric");
-        }
-        catch (final IOException e) {
-            ErrorHandling.exceptionError(e, "Failed to find metric file for creating replicas, located at : " + "metric " + File.separator + "createReplica.metric");
-        }
-    }
+    private static IMetric createReplicaMetric = new CreateReplicaMetric();
 
     /**
      * A new Table Manager object is created when acquiring locks during a CREATE TABLE operation and when recreating or moving

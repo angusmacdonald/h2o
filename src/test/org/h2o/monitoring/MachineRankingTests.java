@@ -2,12 +2,13 @@ package org.h2o.monitoring;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.File;
 import java.util.Queue;
 
 import org.h2o.autonomic.numonic.SystemTableDataCollector;
+import org.h2o.autonomic.numonic.metric.CpuIntensiveMetric;
+import org.h2o.autonomic.numonic.metric.CreateReplicaMetric;
 import org.h2o.autonomic.numonic.metric.IMetric;
-import org.h2o.autonomic.numonic.metric.PropertiesFileMetric;
+import org.h2o.autonomic.numonic.metric.MemIntensiveMetric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.autonomic.numonic.ranking.Requirements;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
@@ -63,7 +64,7 @@ public class MachineRankingTests {
     public void basicObviousRanking() throws Exception {
 
         //Ranking setup.
-        final IMetric metric = new PropertiesFileMetric("metric" + File.separator + "createReplica.metric");
+        final IMetric metric = new CreateReplicaMetric();
         final Requirements requirements = new Requirements(0, 0, 0, 0);
         final SystemTableDataCollector c = new SystemTableDataCollector();
 
@@ -96,7 +97,7 @@ public class MachineRankingTests {
     public void filterTest() throws Exception {
 
         //Ranking setup.
-        final IMetric metric = new PropertiesFileMetric("metric" + File.separator + "createReplica.metric");
+        final IMetric metric = new CreateReplicaMetric();
         final Requirements requirements = new Requirements(0, 0, 10 * 1024 * 1024, 0);
         final SystemTableDataCollector c = new SystemTableDataCollector();
 
@@ -127,7 +128,7 @@ public class MachineRankingTests {
     public void cpuIntensiveWorkload() throws Exception {
 
         //Ranking setup.
-        final IMetric metric = new PropertiesFileMetric("metric" + File.separator + "cpuIntensive.metric");
+        final IMetric metric = new CpuIntensiveMetric();
         final Requirements requirements = new Requirements(0, 0, 0, 0);
         final SystemTableDataCollector c = new SystemTableDataCollector();
 
@@ -159,7 +160,7 @@ public class MachineRankingTests {
     public void highCapacityHighUtilization() throws Exception {
 
         //Ranking setup.
-        final IMetric metric = new PropertiesFileMetric("metric" + File.separator + "cpuIntensive.metric");
+        final IMetric metric = new CpuIntensiveMetric();
         final Requirements requirements = new Requirements(0, 0, 0, 0);
         final SystemTableDataCollector c = new SystemTableDataCollector();
 
@@ -191,7 +192,7 @@ public class MachineRankingTests {
     public void cachingDoubleCall() throws Exception {
 
         //Ranking setup.
-        final IMetric metric = new PropertiesFileMetric("metric" + File.separator + "cpuIntensive.metric");
+        final IMetric metric = new CpuIntensiveMetric();
         final Requirements requirements = new Requirements(0, 0, 0, 0);
         final SystemTableDataCollector c = new SystemTableDataCollector();
 
@@ -233,11 +234,11 @@ public class MachineRankingTests {
     public void cachingDifferentCalls() throws Exception {
 
         //Ranking setup.
-        final IMetric metric = new PropertiesFileMetric("metric" + File.separator + "cpuIntensive.metric");
+        final IMetric metric = new CpuIntensiveMetric();
         final Requirements requirements = new Requirements(0, 0, 0, 0);
         final SystemTableDataCollector c = new SystemTableDataCollector();
 
-        final IMetric metric2 = new PropertiesFileMetric("metric" + File.separator + "memoryIntensive.metric");
+        final IMetric metric2 = new MemIntensiveMetric();
         final Requirements requirements2 = new Requirements(0, 0, 0, 0);
 
         //Machines

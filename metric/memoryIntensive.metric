@@ -1,8 +1,0 @@
-cpu_utilization=0.2
-mem_utilization=1
-swap_utilization=0
-disk_read_utilization=0
-disk_read_utilization=0
-disk_write_utilization=0
-network_read_utilization=0
-network_write_utilization=0

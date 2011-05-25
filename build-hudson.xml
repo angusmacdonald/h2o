@@ -88,7 +88,6 @@
 		<zip destfile="bin/h2o.zip">
 			<fileset dir="bin" includes="**/*.jar" />
 			<fileset dir="lib" includes="**/*.jar" />
-			<fileset dir="metric" />
 		</zip>
 	</target>
 
