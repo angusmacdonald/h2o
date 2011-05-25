@@ -70,7 +70,6 @@
 		    <zipfileset src="${lib-stachord}"/>
 		    <zipfileset src="${lib-numonic}"/>
 			<fileset dir="." includes="numonic-settings/**/*.*" />
-
 		</jar>
 	</target>
 
@@ -78,17 +77,26 @@
 	<target name="3rd-party-jars">
 		<copy file="${lib-json}" todir="lib" />
 		<copy file="${lib-mindterm}" todir="lib" />
+		<copy file="${lib-sigar}" todir="lib" />
+		<copy file="${lib-log4j}" todir="lib" />
 		<copy file="${lib-lucene}" todir="lib" />
 		<copy file="${lib-osgi}" todir="lib" />
 		<copy file="${lib-servlet}" todir="lib" />
 		<copy file="${lib-slf4j}" todir="lib" />
+		
+		<copy file="../../numonic/lastSuccessful/archive/lib/libsigar-amd64-linux.so" todir="lib" />
+		<copy file="../../numonic/lastSuccessful/archive/lib/libsigar-universal-macosx.dylib" todir="lib" />
+		<copy file="../../numonic/lastSuccessful/archive/lib/libsigar-universal64-macosx.dylib" todir="lib" />
+		<copy file="../../numonic/lastSuccessful/archive/lib/libsigar-x86-linux.so" todir="lib" />
+		<copy file="../../numonic/lastSuccessful/archive/lib/sigar-x86-winnt.dll" todir="lib" />
+		<copy file="../../numonic/lastSuccessful/archive/lib/sigar-x86-winnt.lib" todir="lib" />
 	</target>
 
 	<!-- Generate project release containing jar and libraries. -->
 	<target name="project-release">
 		<zip destfile="bin/h2o.zip">
 			<fileset dir="bin" includes="**/*.jar" />
-			<fileset dir="lib" includes="**/*.jar" />
+			<fileset dir="lib" />
 		</zip>
 	</target>
 
