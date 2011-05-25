@@ -41,13 +41,14 @@ import org.h2o.db.id.DatabaseID;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.numonic.util.IPropertiesWrapper;
 
 /**
  * Wrapper for java properties class, which make it easier to create, load, and save properties.
  *
  * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
  */
-public class H2OPropertiesWrapper {
+public class H2OPropertiesWrapper implements IPropertiesWrapper {
 
     private final Properties properties;
     private final String propertiesFileLocation;

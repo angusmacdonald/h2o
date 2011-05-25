@@ -15,6 +15,8 @@ import uk.ac.standrews.cs.numonic.data.Data;
 import uk.ac.standrews.cs.numonic.data.ResourceType;
 import uk.ac.standrews.cs.numonic.summary.MeasurementType;
 import uk.ac.standrews.cs.numonic.summary.SingleSummary;
+import uk.ac.standrews.cs.numonic.util.IPropertiesWrapper;
+import uk.ac.standrews.cs.numonic.util.JarPropertiesWrapper;
 
 public class ThresholdChecker extends Observable {
 
@@ -69,7 +71,7 @@ public class ThresholdChecker extends Observable {
      * @param thresholdProperties The properties file which contains threshold information.
      * @return
      */
-    public static Threshold[] getThresholds(final H2OPropertiesWrapper thresholdProperties) {
+    public static Threshold[] getThresholds(final IPropertiesWrapper thresholdProperties) {
 
         final Set<Object> resourceNames = thresholdProperties.getKeys();
 
@@ -90,7 +92,7 @@ public class ThresholdChecker extends Observable {
             final String[] thresholdInfo = value.split(",");
 
             if (thresholdInfo.length != 2) {
-                ErrorHandling.errorNoEvent("Threshold data in file '" + thresholdProperties.getLocation() + "' is in an incorrect format: " + value + " (expected <value>, [above | below])");
+                ErrorHandling.errorNoEvent("Threshold data in properties file is in an incorrect format: " + value + " (expected <value>, [above | below])");
                 continue;
             }
 
@@ -109,9 +111,20 @@ public class ThresholdChecker extends Observable {
 
     public static Threshold[] getThresholds(final String thresholdPropertiesLocation) throws IOException {
 
-        final H2OPropertiesWrapper propertiesFile = H2OPropertiesWrapper.getWrapper(thresholdPropertiesLocation);
-        propertiesFile.loadProperties();
-        return getThresholds(propertiesFile);
+        if (thresholdPropertiesLocation.startsWith("JAR:")) {
+            //Get the properties file from inside the H2O jar file (note: this will still work in eclipse, etc.
+            final IPropertiesWrapper propertiesWrapper = new JarPropertiesWrapper(thresholdPropertiesLocation.substring("JAR:".length()));
+            propertiesWrapper.loadProperties();
+
+            return getThresholds(propertiesWrapper);
+        }
+        else {
+
+            final H2OPropertiesWrapper propertiesFile = H2OPropertiesWrapper.getWrapper(thresholdPropertiesLocation);
+            propertiesFile.loadProperties();
+            return getThresholds(propertiesFile);
+
+        }
     }
 
     /**

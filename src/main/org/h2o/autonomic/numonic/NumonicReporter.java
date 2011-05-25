@@ -1,7 +1,6 @@
 package org.h2o.autonomic.numonic;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Observer;
@@ -25,6 +24,8 @@ import uk.ac.standrews.cs.numonic.reporting.IReporting;
 import uk.ac.standrews.cs.numonic.sort.data.DistributionData;
 import uk.ac.standrews.cs.numonic.summary.MultipleSummary;
 import uk.ac.standrews.cs.numonic.summary.SingleSummary;
+import uk.ac.standrews.cs.numonic.util.IPropertiesWrapper;
+import uk.ac.standrews.cs.numonic.util.JarPropertiesWrapper;
 
 /**
  * Reporting class for H2O. Events are reported here by Numonic and the H2O instance which started Numonic
@@ -64,18 +65,27 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
      */
     public NumonicReporter(final String numonicPropertiesFileName, final String fileSystem, final DatabaseID localDatabaseID, final ISystemTableReference systemTable, final Threshold... thresholds) {
 
-        setName("numonic-reporting-thread"); //$NON-NLS-1$
+        setName("numonic-reporting-thread");
 
         /*
          * Create Numonic instance and set up reporting class.
          */
         try {
 
-            numonic = new Numonic(numonicPropertiesFileName);
+            if (numonicPropertiesFileName.startsWith("JAR:")) {
+                //Get the properties file from inside the H2O jar file (note: this will still work in eclipse, etc.
+                final IPropertiesWrapper propertiesWrapper = new JarPropertiesWrapper(numonicPropertiesFileName.substring("JAR:".length()));
+                propertiesWrapper.loadProperties();
+
+                numonic = new Numonic(propertiesWrapper);
+            }
+            else {
+                numonic = new Numonic(numonicPropertiesFileName);
+            }
 
             numonic.setReporter(this);
         }
-        catch (final UnknownHostException e) {
+        catch (final IOException e) {
             e.printStackTrace();
         }
 
