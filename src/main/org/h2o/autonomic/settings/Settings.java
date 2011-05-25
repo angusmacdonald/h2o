@@ -13,6 +13,7 @@
 
 package org.h2o.autonomic.settings;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map.Entry;
@@ -204,13 +205,13 @@ public class Settings {
         /*
          * The location of the numonic configuration file, which specifies what the database's numonic instance will monitor.
          */
-        defaults.setProperty("NUMONIC_MONITORING_FILE_LOCATION", "default_numonic_settings.properties");
+        defaults.setProperty("NUMONIC_MONITORING_FILE_LOCATION", "numonic-settings" + File.separator + "default_numonic_settings.properties");
 
         /*
          * The location of the numonic thresholds file, which specifies what thresholds the database will monitor (and alert observer components
          * when they are exceeded).
          */
-        defaults.setProperty("NUMONIC_THRESHOLDS_FILE_LOCATION", "default_numonic_thresholds.properties");
+        defaults.setProperty("NUMONIC_THRESHOLDS_FILE_LOCATION", "numonic-settings" + File.separator + "default_numonic_thresholds.properties");
 
         /*
          * Whether numonic should be started with this database instance.

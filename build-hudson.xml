@@ -69,6 +69,7 @@
 		    <zipfileset src="${lib-nds}"/>
 		    <zipfileset src="${lib-stachord}"/>
 		    <zipfileset src="${lib-numonic}"/>
+			<fileset dir="." includes="numonic-settings/**/*.*" />
 
 		</jar>
 	</target>
