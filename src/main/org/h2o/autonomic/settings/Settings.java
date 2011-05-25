@@ -215,7 +215,7 @@ public class Settings {
         /*
          * Whether numonic should be started with this database instance.
          */
-        defaults.setProperty("NUMONIC_MONITORING_ENABLED", "false");
+        defaults.setProperty("NUMONIC_MONITORING_ENABLED", "true");
 
         return defaults;
     }

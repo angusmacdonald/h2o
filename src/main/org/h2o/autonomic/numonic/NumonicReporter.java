@@ -64,7 +64,7 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
      */
     public NumonicReporter(final String numonicPropertiesFileName, final String fileSystem, final DatabaseID localDatabaseID, final ISystemTableReference systemTable, final Threshold... thresholds) {
 
-        setName("numonic-reporting-thread");
+        setName("numonic-reporting-thread"); //$NON-NLS-1$
 
         /*
          * Create Numonic instance and set up reporting class.
@@ -227,19 +227,19 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
     @Override
     public List<FileSystemData> getFileSystemData(final int minutes) throws Exception {
 
-        throw new Exception("This method shouldn't be called. It isn't implemented in H2O.");
+        throw new Exception("This method shouldn't be called. It isn't implemented in H2O."); //$NON-NLS-1$
     }
 
     @Override
     public Collection<DistributionData> getDistributionData(final int minutes) throws Exception {
 
-        throw new Exception("This method shouldn't be called. It isn't implemented in H2O.");
+        throw new Exception("This method shouldn't be called. It isn't implemented in H2O."); //$NON-NLS-1$
     }
 
     @Override
     public Collection<uk.ac.standrews.cs.numonic.event.Event> getEvents(final int minutes) throws Exception {
 
-        throw new Exception("This method shouldn't be called. It isn't implemented in H2O.");
+        throw new Exception("This method shouldn't be called. It isn't implemented in H2O."); //$NON-NLS-1$
     }
 
 }
