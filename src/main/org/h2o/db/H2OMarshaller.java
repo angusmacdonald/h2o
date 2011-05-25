@@ -14,7 +14,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.h2o.autonomic.numonic.metric.IMetric;
-import org.h2o.autonomic.numonic.metric.GenericMetric;
+import org.h2o.autonomic.numonic.metric.Metric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.autonomic.numonic.ranking.Requirements;
 import org.h2o.db.id.DatabaseID;
@@ -1740,7 +1740,7 @@ public class H2OMarshaller extends Marshaller {
             final double network_w = reader.doubleValue();
             reader.endObject();
 
-            return new GenericMetric(cpu, memory, swap, disk_r, disk_w, network_r, network_w);
+            return new Metric(cpu, memory, swap, disk_r, disk_w, network_r, network_w);
         }
         catch (final Exception e) {
             throw new DeserializationException(e);
