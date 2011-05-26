@@ -3334,6 +3334,10 @@ public class Database implements DataHandler, Observer {
                 final File sysOutFile = new File(sysOutFileLocation);
 
                 if (!sysOutFile.exists()) {
+                    final File parentFolder = sysOutFile.getParentFile();
+                    if (!parentFolder.exists()) {
+                        parentFolder.mkdirs();
+                    }
                     sysOutFile.createNewFile();
                 }
 
@@ -3356,6 +3360,10 @@ public class Database implements DataHandler, Observer {
                 final File sysErrFile = new File(sysErrFileLocation);
 
                 if (!sysErrFile.exists()) {
+                    final File parentFolder = sysErrFile.getParentFile();
+                    if (!parentFolder.exists()) {
+                        parentFolder.mkdirs();
+                    }
                     sysErrFile.createNewFile();
                 }
 
