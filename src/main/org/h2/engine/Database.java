@@ -499,6 +499,8 @@ public class Database implements DataHandler, Observer {
      */
     private String getFileSystemName(final String databaseName) {
 
+        System.err.println(databaseName);
+
         if (databaseName.indexOf(File.separator) >= 0) {
             final String nameBeforeSlash = databaseName.substring(0, databaseName.indexOf(File.separator));
             return nameBeforeSlash + File.separator;
