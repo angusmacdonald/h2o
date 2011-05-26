@@ -105,6 +105,8 @@ public class H2O {
     private String databaseInstanceIdentifier;
 
     private DatabaseID databaseID;
+    private String sysOutLocation = null;
+    private String sysErrLocation = null;
 
     // -------------------------------------------------------------------------------------------------------
 
@@ -121,6 +123,8 @@ public class H2O {
      *            <li><em>-f<directory></em>. Optional. Specifies the directory containing the persistent database state. The default is the current working directory.</li>
      *            <li><em>-D<level></em>. Optional. Specifies a diagnostic level from 0 (most detailed) to 6 (least detailed).</li>
      *            <li><em>-M</em>. Optional. Specifies an in-memory database. If specified, the -p, -w and -f flags are ignored.</li>
+     *            <li><em>-o</em>. Optional. Specifies where System.out messages should be redirected, if they should be redirected at all.</li>
+     *            <li><em>-e</em>. Optional. Specifies where System.err messages should be redirected, if they should be redirected at all.</li>
      *            </ul>
      *            </p>
      *            <p>
@@ -152,9 +156,9 @@ public class H2O {
      * @param databaseDirectoryPath the directory in which database files are stored
      * @param databaseDescriptorLocation the location (file path or URL) of the database descriptor file
      */
-    public H2O(final String databaseName, final String databaseInstanceIdentifier, final String databaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
+    public H2O(final String databaseName, final String databaseInstanceIdentifier, final String databaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel, final String sysOutLocation, final String sysErrLocation) {
 
-        init(databaseName, databaseInstanceIdentifier, 0, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel);
+        init(databaseName, databaseInstanceIdentifier, 0, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel, sysOutLocation, sysErrLocation);
     }
 
     /**
@@ -166,9 +170,9 @@ public class H2O {
      * @param webPort the port for this database's web interface
      * @param databaseDirectoryPath the directory in which database files are stored
      */
-    public H2O(final String databaseName, final String databaseInstanceIdentifier, final int webPort, final String databaseDirectoryPath, final DiagnosticLevel diagnosticLevel) {
+    public H2O(final String databaseName, final String databaseInstanceIdentifier, final int webPort, final String databaseDirectoryPath, final DiagnosticLevel diagnosticLevel, final String sysOutLocation, final String sysErrLocation) {
 
-        init(databaseName, databaseInstanceIdentifier, webPort, databaseDirectoryPath, null, diagnosticLevel);
+        init(databaseName, databaseInstanceIdentifier, webPort, databaseDirectoryPath, null, diagnosticLevel, sysOutLocation, sysErrLocation);
     }
 
     public H2O(final String[] args) throws StartupException {
@@ -193,6 +197,16 @@ public class H2O {
         init(databaseName, databaseInstanceIdentifier, databaseDescriptorLocation, diagnosticLevel);
     }
 
+    public H2O(final String databaseName, final String databaseInstanceIdentifier, final int webPort, final String databaseDirectoryPath, final DiagnosticLevel diagnosticLevel) {
+
+        this(databaseName, databaseInstanceIdentifier, webPort, databaseDirectoryPath, diagnosticLevel, null, null);
+    }
+
+    public H2O(final String databaseName, final String databaseInstanceIdentifier, final String databaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
+
+        this(databaseName, databaseInstanceIdentifier, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel, null, null);
+    }
+
     // -------------------------------------------------------------------------------------------------------
 
     /**
@@ -203,8 +217,10 @@ public class H2O {
      * @param webPort the port for this database's web interface
      * @param databaseBaseDirectoryPath the directory in which database files are stored
      * @param databaseDescriptorLocation the location (file path or URL) of the database descriptor file
+     * @param sysErrLocation Location where System.err messages should be redirected.
+     * @param sysOutLocation Location where System.out messages should be redirected.
      */
-    private void init(final String databaseSystemName, final String databaseInstanceIdentifier, final int webPort, final String databaseBaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
+    private void init(final String databaseSystemName, final String databaseInstanceIdentifier, final int webPort, final String databaseBaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel, final String sysOutLocation, final String sysErrLocation) {
 
         this.databaseSystemName = databaseSystemName;
         this.databaseInstanceIdentifier = databaseInstanceIdentifier;
@@ -212,6 +228,9 @@ public class H2O {
         this.databaseBaseDirectoryPath = databaseBaseDirectoryPath;
         this.databaseDescriptorLocation = databaseDescriptorLocation;
         this.diagnosticLevel = diagnosticLevel;
+
+        this.sysOutLocation = sysOutLocation;
+        this.sysErrLocation = sysErrLocation;
 
         databaseType = DatabaseType.DISK;
 
@@ -243,6 +262,9 @@ public class H2O {
         final int webPort = processWebPort(arguments.get("-w"));
         final DiagnosticLevel diagnosticLevel = DiagnosticLevel.getDiagnosticLevelFromCommandLineArg(arguments.get("-D"), DEFAULT_DIAGNOSTIC_LEVEL);
 
+        final String sysOutLocation = removeQuotes(arguments.get("-o"));
+        final String sysErrLocation = removeQuotes(arguments.get("-e"));
+
         final DatabaseType databaseType = processDatabaseType(arguments.get("-M"));
 
         switch (databaseType) {
@@ -253,7 +275,7 @@ public class H2O {
             }
             case DISK: {
 
-                init(databaseSystemName, databaseInstanceIdentifier, webPort, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel);
+                init(databaseSystemName, databaseInstanceIdentifier, webPort, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel, sysOutLocation, sysErrLocation);
                 break;
             }
             default: {
@@ -285,7 +307,7 @@ public class H2O {
         final DatabaseID databaseID = generateDatabaseIDandURL();
 
         startServer(databaseID);
-        initializeDatabase(databaseID);
+        initializeDatabase(databaseID, sysOutLocation, sysErrLocation);
     }
 
     /**
@@ -413,18 +435,20 @@ public class H2O {
      * Connects to the server and initializes the database at a particular location on disk.
      * 
      * @param databaseID
+     * @param sysOutLocation 
+     * @param sysErrLocation 
      * @throws SQLException 
      * @throws IOException 
      */
-    private void initializeDatabase(final DatabaseID databaseID) throws SQLException, IOException {
+    private void initializeDatabase(final DatabaseID databaseID, final String sysOutLocation, final String sysErrLocation) throws SQLException, IOException {
 
-        initializeDatabaseProperties(databaseID, diagnosticLevel, databaseDescriptorLocation, databaseSystemName);
+        initializeDatabaseProperties(databaseID, diagnosticLevel, databaseDescriptorLocation, databaseSystemName, sysOutLocation, sysErrLocation);
 
         // Create a connection so that the database starts up, but don't do anything with it here.
         connection = DriverManager.getConnection(databaseID.getURLandID(), PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
     }
 
-    public static void initializeDatabaseProperties(final DatabaseID databaseID, final DiagnosticLevel diagnosticLevel, final String databaseDescriptorLocation, final String databaseName) throws IOException {
+    public static void initializeDatabaseProperties(final DatabaseID databaseID, final DiagnosticLevel diagnosticLevel, final String databaseDescriptorLocation, final String databaseName, final String sysOutLocation, final String sysErrLocation) throws IOException {
 
         final H2OPropertiesWrapper properties = H2OPropertiesWrapper.getWrapper(databaseID);
 
@@ -437,6 +461,14 @@ public class H2O {
 
         // Overwrite these properties regardless of whether properties file exists or not.
         properties.setProperty("diagnosticLevel", diagnosticLevel.toString());
+
+        if (sysOutLocation != null) {
+            properties.setProperty("sysOutLocation", sysOutLocation);
+        }
+
+        if (sysErrLocation != null) {
+            properties.setProperty("sysErrLocation", sysErrLocation);
+        }
         properties.setProperty("descriptor", databaseDescriptorLocation);
         properties.setProperty("databaseName", databaseName);
 

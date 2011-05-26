@@ -26,7 +26,9 @@
 package org.h2.engine;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -3287,8 +3289,11 @@ public class Database implements DataHandler, Observer {
             databaseProperties.loadProperties();
         }
         catch (final IOException e) {
-            e.printStackTrace();
+            ErrorHandling.exceptionErrorNoEvent(e, "Failed to load database properties for database: " + localMachineLocation);
         }
+
+        redirectSystemOut(databaseProperties);
+        redirectSystemErr(databaseProperties);
 
         final String diagnosticLevel = databaseProperties.getProperty("diagnosticLevel");
 
@@ -3318,6 +3323,50 @@ public class Database implements DataHandler, Observer {
         Diagnostic.setTimestampDelimiterFlag(false);
 
         ErrorHandling.setTimestampFlag(false);
+    }
+
+    public void redirectSystemOut(final H2OPropertiesWrapper databaseProperties) {
+
+        final String sysOutFileLocation = databaseProperties.getProperty("sysOutLocation");
+
+        if (sysOutFileLocation != null) {
+            try {
+                final File sysOutFile = new File(sysOutFileLocation);
+
+                if (!sysOutFile.exists()) {
+                    sysOutFile.createNewFile();
+                }
+
+                final PrintStream printStream = new PrintStream(new FileOutputStream(sysOutFile, true));
+
+                System.setOut(printStream);
+            }
+            catch (final IOException e) {
+                ErrorHandling.exceptionErrorNoEvent(e, "Failed to redirect System.out messages to file located at: " + sysOutFileLocation);
+            }
+        }
+    }
+
+    public void redirectSystemErr(final H2OPropertiesWrapper databaseProperties) {
+
+        final String sysErrFileLocation = databaseProperties.getProperty("sysErrLocation");
+
+        if (sysErrFileLocation != null) {
+            try {
+                final File sysErrFile = new File(sysErrFileLocation);
+
+                if (!sysErrFile.exists()) {
+                    sysErrFile.createNewFile();
+                }
+
+                final PrintStream printStream = new PrintStream(new FileOutputStream(sysErrFile, true));
+
+                System.setErr(printStream);
+            }
+            catch (final IOException e) {
+                ErrorHandling.exceptionErrorNoEvent(e, "Failed to redirect System.out messages to file located at: " + databaseProperties.getProperty("systemOutLocation"));
+            }
+        }
     }
 
     public AsynchronousQueryManager getAsynchronousQueryManager() {
