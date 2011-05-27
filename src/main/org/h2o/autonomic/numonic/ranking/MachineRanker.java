@@ -10,8 +10,6 @@ import java.util.TreeSet;
 import org.h2o.autonomic.numonic.metric.IMetric;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 
-import uk.ac.standrews.cs.nds.util.Diagnostic;
-import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.numonic.data.MachineUtilisationData;
 import uk.ac.standrews.cs.numonic.data.SystemInfoData;
 import uk.ac.standrews.cs.numonic.sort.data.DistributionData;
@@ -120,7 +118,7 @@ public class MachineRanker implements Comparator<MachineMonitoringData> {
         totalValue += cpuMetricValue;
         totalValue += memMetricValue;
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Metric for " + machine.getDatabaseID() + ": [cpu: " + cpuMetricValue + ", mem: " + memMetricValue + "]");
+        //Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Metric for " + machine.getDatabaseID() + ": [cpu: " + cpuMetricValue + ", mem: " + memMetricValue + "]");
 
         return totalValue;
     }

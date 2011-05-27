@@ -7,8 +7,6 @@ import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.util.exceptions.MovedException;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
-import uk.ac.standrews.cs.nds.util.Diagnostic;
-import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.numonic.data.Data;
 import uk.ac.standrews.cs.numonic.data.FileSystemData;
@@ -115,7 +113,7 @@ public class LocalDataCollector implements ILocalDataCollector {
      */
     private void sendDataToSystemTable(final int measurements_before_summary, final SystemInfoData staticSysInfoData, final MachineUtilisationData machineUtilData, final FileSystemData fsData) {
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Sending monitoring data from " + localDatabaseID + " to the System Table.");
+        //Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Sending monitoring data from " + localDatabaseID + " to the System Table.");
 
         final MachineMonitoringData monitoringData = new MachineMonitoringData(localDatabaseID, staticSysInfoData, machineUtilData, fsData, measurements_before_summary);
 

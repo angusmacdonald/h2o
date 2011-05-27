@@ -31,8 +31,6 @@ import org.h2.value.Transfer;
 import org.h2.value.Value;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
-import uk.ac.standrews.cs.nds.util.Diagnostic;
-import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
  * One server thread is opened per client connection.
@@ -246,7 +244,7 @@ public class TcpServerThread implements Runnable {
                 final int id = transfer.readInt();
                 final String sql = transfer.readString();
 
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Incoming Query:: " + sql);
+                //Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Incoming Query:: " + sql);
 
                 final int old = session.getModificationId();
                 final Command command = session.prepareLocal(sql);
