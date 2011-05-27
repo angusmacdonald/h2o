@@ -129,7 +129,6 @@ public class RemoteQueryExecutor extends Thread {
 
         }
         catch (final RPCException e) {
-            e.printStackTrace();
             qr = new QueryResult(new SQLException(e.getMessage()), databaseWrapper, updateID, tableInfo);
         }
         catch (final SQLException e) {

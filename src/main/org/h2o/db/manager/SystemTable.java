@@ -10,6 +10,7 @@ package org.h2o.db.manager;
 
 import java.net.InetSocketAddress;
 import java.sql.SQLException;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -369,7 +370,20 @@ public class SystemTable implements ISystemTableMigratable {
     public Queue<DatabaseInstanceWrapper> getRankedListOfInstances(final IMetric metric, final Requirements requirements) throws RPCException, MovedException {
 
         preMethodTest();
-        return monitoring.getRankedListOfInstances(metric, requirements);
+        return SystemTable.removeInactiveInstances(monitoring.getRankedListOfInstances(metric, requirements), getDatabaseInstances());
+    }
+
+    public static Queue<DatabaseInstanceWrapper> removeInactiveInstances(final Queue<DatabaseInstanceWrapper> rankedListOfInstances, final Set<DatabaseInstanceWrapper> activeDatabaseInstances) {
+
+        final Queue<DatabaseInstanceWrapper> trimmedQueue = new LinkedList<DatabaseInstanceWrapper>();
+
+        for (final DatabaseInstanceWrapper rankedInstance : rankedListOfInstances) {
+            if (activeDatabaseInstances.contains(rankedInstance)) {
+                trimmedQueue.add(rankedInstance);
+            }
+        }
+
+        return trimmedQueue;
     }
 
 }

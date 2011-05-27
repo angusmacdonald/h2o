@@ -2,7 +2,9 @@ package org.h2o.monitoring;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.HashSet;
 import java.util.Queue;
+import java.util.Set;
 
 import org.h2o.autonomic.numonic.SystemTableDataCollector;
 import org.h2o.autonomic.numonic.metric.CpuIntensiveMetric;
@@ -11,6 +13,7 @@ import org.h2o.autonomic.numonic.metric.IMetric;
 import org.h2o.autonomic.numonic.metric.MemIntensiveMetric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.autonomic.numonic.ranking.Requirements;
+import org.h2o.db.manager.SystemTable;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.junit.Before;
 import org.junit.Test;
@@ -268,6 +271,42 @@ public class MachineRankingTests {
         assertEquals(m1.getDatabaseID(), rankedInstances.remove().getURL());
         assertEquals(m2.getDatabaseID(), rankedInstances.remove().getURL());
 
+    }
+
+    /**
+     * Tests that removing non-active database instances doesn't upset the ordering of the queue.
+     * 
+     * <p>Requirements: none.
+     * <p>Metric: createReplica.metric.
+     */
+    @Test
+    public void removeInactiveInstances() throws Exception {
+
+        //Ranking setup.
+        final IMetric metric = new CreateReplicaMetric();
+        final Requirements requirements = new Requirements(0, 0, 0, 0);
+        final SystemTableDataCollector c = new SystemTableDataCollector();
+
+        //Machines
+        final MachineMonitoringData m1 = ResourceSpec.generateMonitoringData("jdbc:h2o:mem:one", 10, 10, 10, 0.3, 0.2, 0.2);
+        final MachineMonitoringData m2 = ResourceSpec.generateMonitoringData("jdbc:h2o:mem:two", 9, 9, 9, 0.3, 0.2, 0.2);
+        final MachineMonitoringData m3 = ResourceSpec.generateMonitoringData("jdbc:h2o:mem:three", 8, 8, 8, 0.3, 0.2, 0.2);
+
+        c.addMonitoringSummary(m1);
+        c.addMonitoringSummary(m2);
+        c.addMonitoringSummary(m3);
+
+        final Set<DatabaseInstanceWrapper> activeInstances = new HashSet<DatabaseInstanceWrapper>();
+        activeInstances.add(m1.getDatabaseWrapper());
+        activeInstances.add(m2.getDatabaseWrapper());
+
+        //Tests
+        final Queue<DatabaseInstanceWrapper> rankedInstances = SystemTable.removeInactiveInstances(c.getRankedListOfInstances(metric, requirements), activeInstances);
+
+        assertEquals(2, rankedInstances.size());
+
+        assertEquals(m1.getDatabaseID(), rankedInstances.remove().getURL());
+        assertEquals(m2.getDatabaseID(), rankedInstances.remove().getURL());
     }
 
 }
