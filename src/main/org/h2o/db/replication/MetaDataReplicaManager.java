@@ -245,6 +245,10 @@ public class MetaDataReplicaManager {
                     }
                 }
             }
+            else {
+                Diagnostic.trace(DiagnosticLevel.FULL, "Only one database instance was found (the local one), so no meta-data can be replicated.");
+
+            }
         }
     }
 
