@@ -16,12 +16,14 @@ public interface ILocalDataCollector {
      * System Table.
      * @param summary New monitoring data.
      */
-    public abstract void collateRankingData(final SingleSummary<? extends Data> summary);
+    public void collateRankingData(final SingleSummary<? extends Data> summary);
 
     /**
      * When static machine information is received, store it.
      * @param staticSysInfoData Static system information for the local machine.
      */
-    public abstract void setStaticSystemInfo(final SystemInfoData staticSysInfoData);
+    public void setStaticSystemInfo(final SystemInfoData staticSysInfoData);
+
+    public void setFsMonitoringEnabled();
 
 }

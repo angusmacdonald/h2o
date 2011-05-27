@@ -67,7 +67,7 @@ public class LocalDataCollector implements ILocalDataCollector {
      */
     private SystemInfoData staticSysInfoData;
 
-    private final boolean fsMonitoringEnabled;
+    private boolean fsMonitoringEnabled;
 
     /**
      * @param localDatabaseID How this set of data will be identified when it is sent to the System Table.
@@ -139,6 +139,12 @@ public class LocalDataCollector implements ILocalDataCollector {
 
         this.staticSysInfoData = staticSysInfoData;
 
+    }
+
+    @Override
+    public void setFsMonitoringEnabled() {
+
+        fsMonitoringEnabled = true;
     }
 
 }
