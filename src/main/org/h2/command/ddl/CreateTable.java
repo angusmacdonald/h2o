@@ -48,6 +48,7 @@ import org.h2o.viewer.gwt.client.H2OEvent;
 import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * This class represents the statement CREATE TABLE
@@ -355,11 +356,16 @@ public class CreateTable extends SchemaCommand {
             for (final DatabaseInstanceWrapper replicaLocation : replicaLocations.keySet()) {
                 final IDatabaseInstanceRemote instance = replicaLocation.getDatabaseInstance();
 
-                final int result = instance.execute(sql, transactionName, false);
+                try {
+                    final int result = instance.execute(sql, transactionName, false);
 
-                if (result == 0) {
+                    if (result == 0) {
 
-                    successfulUpdates.add(replicaLocation);
+                        successfulUpdates.add(replicaLocation);
+                    }
+                }
+                catch (final RPCException e) {
+                    ErrorHandling.errorNoEvent("Tried to create replica of " + tableInfo.getFullTableName() + " onto " + replicaLocation.getURL() + ", but couldn't connnect: " + e.getMessage());
                 }
             }
 
