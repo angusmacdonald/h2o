@@ -134,7 +134,6 @@ public class TableProxyManager {
         boolean hasLock = hasLock(proxy);
 
         if (!hasLock && getTableManagersThatHoldLocks().contains(proxy.getTableManager())) {
-            assert false : "this should never happen?";
 
             // The new proxy doesn't have the lock,but a lock is held in the QPM by another
             // query proxy.  It can acquire the lock from here.
