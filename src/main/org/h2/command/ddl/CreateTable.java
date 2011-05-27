@@ -366,6 +366,7 @@ public class CreateTable extends SchemaCommand {
                 }
                 catch (final RPCException e) {
                     ErrorHandling.errorNoEvent("Tried to create replica of " + tableInfo.getFullTableName() + " onto " + replicaLocation.getURL() + ", but couldn't connnect: " + e.getMessage());
+                    tableProxy.removeReplicaLocation(replicaLocation);
                 }
             }
 

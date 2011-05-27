@@ -386,4 +386,10 @@ public class TableProxy implements Serializable {
 
         tableManager = null;
     }
+
+    public void removeReplicaLocation(final DatabaseInstanceWrapper replicaLocation) {
+
+        allReplicas.remove(replicaLocation);
+
+    }
 }
