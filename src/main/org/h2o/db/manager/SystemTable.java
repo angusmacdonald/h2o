@@ -33,8 +33,6 @@ import org.h2o.util.exceptions.MigrationException;
 import org.h2o.util.exceptions.MovedException;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
-import uk.ac.standrews.cs.nds.util.Diagnostic;
-import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 /**
@@ -358,8 +356,6 @@ public class SystemTable implements ISystemTableMigratable {
     public void addMonitoringSummary(final MachineMonitoringData summary) throws RPCException, MovedException {
 
         preMethodTest();
-
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Monitoring data received on System Table: " + summary);
 
         final DatabaseID databaseID = summary.getDatabaseID();
         final IDatabaseInstanceRemote remoteReference = getDatabaseInstance(databaseID);
