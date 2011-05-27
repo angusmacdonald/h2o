@@ -488,14 +488,19 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
     @Override
     public IDatabaseInstanceRemote getDatabaseInstanceAt(final IChordRemoteReference lookupLocation) throws RPCException, RPCException {
 
+        return getDatabaseInstanceAt(lookupLocation, false);
+    }
+
+    private IDatabaseInstanceRemote getDatabaseInstanceAt(final IChordRemoteReference lookupLocation, final boolean inShutdown) throws RPCException, RPCException {
+
         final InetSocketAddress address = lookupLocation.getRemote().getAddress();
 
         final String hostname = address.getHostName();
 
-        return getDatabaseInstanceAt(hostname);
+        return getDatabaseInstanceAt(hostname, inShutdown);
     }
 
-    public IDatabaseInstanceRemote getDatabaseInstanceAt(final String hostname) throws RPCException, RPCException {
+    public IDatabaseInstanceRemote getDatabaseInstanceAt(final String hostname, final boolean inShutdown) throws RPCException, RPCException {
 
         try {
             final IRegistry registry = RegistryFactory.FACTORY.getRegistry(InetAddress.getByName(hostname));
@@ -535,9 +540,15 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             ErrorHandling.exceptionError(e, "Failed to find the host specified: " + hostname);
         }
         catch (final RegistryUnavailableException e) {
-            ErrorHandling.errorNoEvent("Couldn't find an active registry on this machine (" + hostname + "). Restarting registry locally.");
-            recreateRegistryIfItHasFailed();
-            return getDatabaseInstanceAt(hostname);
+
+            if (!inShutdown) {
+                ErrorHandling.errorNoEvent("Couldn't find an active registry on this machine (" + hostname + "). Restarting registry locally.");
+                recreateRegistryIfItHasFailed();
+                return getDatabaseInstanceAt(hostname, true);
+            }
+            else {
+                ErrorHandling.errorNoEvent("Couldn't find an active registry on this machine (" + hostname + "). Not attempting to restart registry.");
+            }
         }
 
         return null;
@@ -725,7 +736,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         systemTableRef.setInKeyRange(false);
 
         try {
-            final IDatabaseInstanceRemote lookupInstance = getDatabaseInstanceAt(remoteHostname);
+            final IDatabaseInstanceRemote lookupInstance = getDatabaseInstanceAt(remoteHostname, false);
 
             if (lookupInstance != null) {
                 actualSystemTableLocation = lookupInstance.getSystemTableURL();
@@ -918,7 +929,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             final InetSocketAddress address = successor.getRemote().getAddress();
             final String hostname = address.getHostName();
 
-            final IDatabaseInstanceRemote successorInstance = getDatabaseInstanceAt(hostname);
+            final IDatabaseInstanceRemote successorInstance = getDatabaseInstanceAt(hostname, false);
 
             if (successorInstance != null) {
 
@@ -989,7 +1000,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
              * Migrate any local Table Managers.
              */
             try {
-                successorDB = getDatabaseInstanceAt(successor);
+                successorDB = getDatabaseInstanceAt(successor, true);
 
                 final Set<TableManagerWrapper> localManagers = systemTableRef.getSystemTable().getLocalDatabaseInstances(getLocalMachineLocation());
 
