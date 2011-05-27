@@ -247,10 +247,10 @@ public class H2OMarshaller extends Marshaller {
             reader.object();
 
             reader.key(DATABASE_URL);
-            final DatabaseID url = DatabaseID.parseURL(reader.stringValue());
+            final DatabaseID id = DatabaseID.parseURL(reader.stringValue());
 
             reader.endObject();
-            return url;
+            return id;
         }
         catch (final Exception e) {
             throw new DeserializationException(e);
@@ -436,12 +436,13 @@ public class H2OMarshaller extends Marshaller {
 
             writer.object();
 
-            writer.key(DATABASE_URL);
+            writer.key(DATABASE_ID);
             serializeDatabaseID(source.getURL(), writer);
             writer.key(DATABASE_INSTANCE);
             serializeIDatabaseInstanceRemote(source.getDatabaseInstance(), writer);
             writer.key(ACTIVE);
             writer.value(source.getActive());
+
             writer.endObject();
         }
     }
@@ -453,8 +454,8 @@ public class H2OMarshaller extends Marshaller {
             if (reader.checkNull()) { return null; }
             reader.object();
 
-            reader.key(DATABASE_URL);
-            final DatabaseID databaseURL = deserializeDatabaseID(reader);
+            reader.key(DATABASE_ID);
+            final DatabaseID databaseID = deserializeDatabaseID(reader);
 
             reader.key(DATABASE_INSTANCE);
             final IDatabaseInstanceRemote databaseInstance = deserializeIDatabaseInstanceRemote(reader);
@@ -464,7 +465,7 @@ public class H2OMarshaller extends Marshaller {
 
             reader.endObject();
 
-            return new DatabaseInstanceWrapper(databaseURL, databaseInstance, active);
+            return new DatabaseInstanceWrapper(databaseID, databaseInstance, active);
         }
         catch (final Exception e) {
             throw new DeserializationException(e);
@@ -581,7 +582,6 @@ public class H2OMarshaller extends Marshaller {
             writer.value(null);
         }
         else {
-
             writer.array();
             for (final DatabaseInstanceWrapper instance : source) {
                 serializeDatabaseInstanceWrapper(instance, writer);
@@ -1790,6 +1790,8 @@ public class H2OMarshaller extends Marshaller {
 
             reader.key(NETWORK);
             final long network = reader.longValue();
+
+            reader.endObject();
 
             return new Requirements(cpu, memory, disk, network);
         }

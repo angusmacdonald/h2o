@@ -13,6 +13,7 @@ import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.interfaces.ISystemTableMigratable;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
+import org.json.JSONException;
 import org.json.JSONWriter;
 
 import uk.ac.standrews.cs.nds.rpc.stream.ApplicationServer;
@@ -80,7 +81,7 @@ public class SystemTableServer extends ApplicationServer {
 
                 final String p0 = args.stringValue();
                 system_table.prepareForMigration(p0);
-                response.value("");
+                completeVoidResponse(response);
             }
 
         });
@@ -93,7 +94,7 @@ public class SystemTableServer extends ApplicationServer {
             public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
                 system_table.checkConnection();
-                response.value("");
+                completeVoidResponse(response);
             }
         });
 
@@ -105,7 +106,7 @@ public class SystemTableServer extends ApplicationServer {
             public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
                 system_table.completeMigration();
-                response.value("");
+                completeVoidResponse(response);
             }
         });
 
@@ -118,7 +119,7 @@ public class SystemTableServer extends ApplicationServer {
 
                 final boolean p0 = args.booleanValue();
                 system_table.shutdown(p0);
-                response.value("");
+                completeVoidResponse(response);
             }
         });
 
@@ -229,7 +230,7 @@ public class SystemTableServer extends ApplicationServer {
 
                 final ISystemTableMigratable p0 = marshaller.deserializeISystemTableMigratable(args);
                 system_table.recreateSystemTable(p0);
-                response.value("");
+                completeVoidResponse(response);
 
             }
         });
@@ -242,7 +243,7 @@ public class SystemTableServer extends ApplicationServer {
             public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
                 system_table.recreateInMemorySystemTableFromLocalPersistedState();
-                response.value("");
+                completeVoidResponse(response);
 
             }
         });
@@ -288,7 +289,7 @@ public class SystemTableServer extends ApplicationServer {
             public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
                 system_table.removeAllTableInformation();
-                response.value("");
+                completeVoidResponse(response);
 
             }
         });
@@ -325,7 +326,7 @@ public class SystemTableServer extends ApplicationServer {
 
                 final IDatabaseInstanceRemote p0 = marshaller.deserializeIDatabaseInstanceRemote(args);
                 system_table.removeConnectionInformation(p0);
-                response.value("");
+                completeVoidResponse(response);
 
             }
         });
@@ -352,7 +353,7 @@ public class SystemTableServer extends ApplicationServer {
                 final ITableManagerRemote p0 = marshaller.deserializeITableManagerRemote(args);
                 final TableInfo p1 = marshaller.deserializeTableInfo(args);
                 system_table.changeTableManagerLocation(p0, p1);
-                response.value("");
+                completeVoidResponse(response);
 
             }
         });
@@ -369,7 +370,7 @@ public class SystemTableServer extends ApplicationServer {
                 final DatabaseID p2 = marshaller.deserializeDatabaseID(args);
                 final boolean p3 = args.booleanValue();
                 system_table.addTableManagerStateReplica(p0, p1, p2, p3);
-                response.value("");
+                completeVoidResponse(response);
 
             }
         });
@@ -395,7 +396,7 @@ public class SystemTableServer extends ApplicationServer {
                 final TableInfo p0 = marshaller.deserializeTableInfo(args);
                 final DatabaseID p1 = marshaller.deserializeDatabaseID(args);
                 system_table.removeTableManagerStateReplica(p0, p1);
-                response.value("");
+                completeVoidResponse(response);
 
             }
         });
@@ -440,7 +441,7 @@ public class SystemTableServer extends ApplicationServer {
 
                 final MachineMonitoringData p0 = marshaller.deserializeMachineMonitoringData(args);
                 system_table.addMonitoringSummary(p0);
-                response.value("");
+                completeVoidResponse(response);
 
             }
         });
@@ -456,5 +457,10 @@ public class SystemTableServer extends ApplicationServer {
 
             }
         });
+    }
+
+    public void completeVoidResponse(final JSONWriter response) throws JSONException {
+
+        response.value("");
     }
 }

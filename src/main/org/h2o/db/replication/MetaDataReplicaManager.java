@@ -221,7 +221,7 @@ public class MetaDataReplicaManager {
                 databaseInstances = systemTableRemote.getRankedListOfInstances(createMetaDataReplicaMetric, Requirements.NO_FILTERING);
             }
             catch (final Exception e) {
-
+                e.printStackTrace();
                 Diagnostic.trace(DiagnosticLevel.FULL, "Error trying to contact system table (for the purposes of discovering new instances on which to replicate data). This is not a fatal error. No recovery is attempted.");
                 return; // just return, the system will attempt to replicate later on.
             }
