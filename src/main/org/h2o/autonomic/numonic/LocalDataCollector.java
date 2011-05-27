@@ -67,14 +67,17 @@ public class LocalDataCollector implements ILocalDataCollector {
      */
     private SystemInfoData staticSysInfoData;
 
+    private final boolean fsMonitoringEnabled;
+
     /**
      * @param localDatabaseID How this set of data will be identified when it is sent to the System Table.
      * @param systemTable Where data will be sent.
      */
-    public LocalDataCollector(final DatabaseID localDatabaseID, final ISystemTableReference systemTable) {
+    public LocalDataCollector(final DatabaseID localDatabaseID, final ISystemTableReference systemTable, final boolean fsMonitoringEnabled) {
 
         this.localDatabaseID = localDatabaseID;
         this.systemTable = systemTable;
+        this.fsMonitoringEnabled = fsMonitoringEnabled;
     }
 
     /* (non-Javadoc)
@@ -95,7 +98,7 @@ public class LocalDataCollector implements ILocalDataCollector {
             ErrorHandling.error("No static system info has been received from Numonic.");
         }
 
-        if (machineUtilData != null && fsData != null) {
+        if (machineUtilData != null && (fsData != null || !fsMonitoringEnabled)) {
             sendDataToSystemTable(measurements_before_summary, staticSysInfoData, machineUtilData, fsData);
 
             machineUtilData = null;

@@ -103,7 +103,7 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
         this.fileSystem = fileSystem;
 
         thresholdChecker = new ThresholdChecker(thresholds);
-        resourceRanker = new LocalDataCollector(localDatabaseID, systemTable);
+        resourceRanker = new LocalDataCollector(localDatabaseID, systemTable, (fileSystem != null));
     }
 
     public NumonicReporter(final String numonicPropertiesFile, final String fileSystem, final DatabaseID localDatabaseID, final ISystemTableReference systemTable, final String thresholdPropertiesFile) throws IOException {
