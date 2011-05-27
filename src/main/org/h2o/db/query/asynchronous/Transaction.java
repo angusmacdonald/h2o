@@ -216,12 +216,6 @@ public class Transaction {
     public synchronized Set<CommitResult> getCompletedQueries() {
 
         return completedQueries;
-
-        /*
-         * TODO Called by the query proxy manager to commit a transaction. All the updated replicas (based on information in this class)
-         * will be committed to the table manager. This method should return some data structure containing the names of updated replicas
-         * and information on their update ID, etc...
-         */
     }
 
     public String getTransactionID() {
