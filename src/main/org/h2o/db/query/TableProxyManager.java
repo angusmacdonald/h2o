@@ -219,7 +219,9 @@ public class TableProxyManager {
     public void finishTransaction(final boolean commit, final boolean h2oCommit, final Database db) throws SQLException {
 
         try {
-            if (getTableManagersThatHoldLocks().size() == 0 && allReplicas.size() > 0 && h2oCommit) {
+            final Map<DatabaseInstanceWrapper, Integer> replicasInvolvedInTransaction = getReplicasFromTableProxies();
+
+            if (getTableManagersThatHoldLocks().size() == 0 && replicasInvolvedInTransaction.size() > 0 && h2oCommit) {
 
                 // H2O commit required to prevent stack overflow on recursive commit calls. testExecuteCall test fails without this.
 
@@ -230,7 +232,7 @@ public class TableProxyManager {
                  */
                 commitLocal(commit, h2oCommit);
             }
-            else if ((getTableManagersThatHoldLocks().size() != 0 || allReplicas.size() > 0) && db.getAsynchronousQueryManager() != null) {
+            else if ((getTableManagersThatHoldLocks().size() != 0 || replicasInvolvedInTransaction.size() > 0) && db.getAsynchronousQueryManager() != null) {
 
                 final Transaction committingTransaction = db.getAsynchronousQueryManager().getTransaction(transactionName);
 
@@ -239,7 +241,7 @@ public class TableProxyManager {
                 if (committingTransaction == null) {
                     committedQueries = new HashSet<CommitResult>();
 
-                    for (final Entry<DatabaseInstanceWrapper, Integer> replica : allReplicas.entrySet()) {
+                    for (final Entry<DatabaseInstanceWrapper, Integer> replica : replicasInvolvedInTransaction.entrySet()) {
                         committedQueries.add(new CommitResult(commit, replica.getKey(), replica.getValue(), updateID, tableName));
                     }
                 }
@@ -261,6 +263,17 @@ public class TableProxyManager {
 
             session.completeTransaction();
         }
+    }
+
+    private Map<DatabaseInstanceWrapper, Integer> getReplicasFromTableProxies() {
+
+        final Map<DatabaseInstanceWrapper, Integer> replicaLocations = new HashMap<DatabaseInstanceWrapper, Integer>();
+
+        for (final TableProxy proxy : tableProxies.values()) {
+            replicaLocations.putAll(proxy.getAllReplicas());
+        }
+
+        return replicaLocations;
     }
 
     private void clearLockedTablesOnCommit(final boolean h2oCommit) {
