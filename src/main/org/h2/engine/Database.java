@@ -1144,14 +1144,29 @@ public class Database implements DataHandler, Observer, ISystemStatus {
 
             systemTableRef.setSystemTable(systemTable);
 
-            databaseRemote.commitSystemTableCreation();
-            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Created new System Table locally.");
+            final boolean successfullyCreated = databaseRemote.commitSystemTableCreation();
+
+            if (successfullyCreated) {
+                Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Created new System Table locally.");
+            }
+            else {
+                //In the case that another instance has created a system table at the same time, try to get a refrence to this:
+                connectToRemoteSystemTable();
+            }
         }
         else {
-            // Not a System Table - Get a reference to the System Table.
-            systemTableRef.findSystemTable();
-            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Obtained reference to existing System Table.");
+            connectToRemoteSystemTable();
         }
+    }
+
+    /**
+     * Try to create a connection to an active remote system table.
+     * @throws SQLException thrown if no connection could be made.
+     */
+    public void connectToRemoteSystemTable() throws SQLException {
+
+        systemTableRef.findSystemTable();
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Obtained reference to existing System Table.");
     }
 
     public void startSystemTableServer(final ISystemTableMigratable newSystemTable) {

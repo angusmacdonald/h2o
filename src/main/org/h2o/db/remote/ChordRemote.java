@@ -1166,9 +1166,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
      * <p>
      * The system will start throwing errors about meta-tables not existing if this is called too soon.
      */
-    public void commitSystemTableCreation() {
-
-        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Committed system table creation on " + localMachineLocation);
+    public boolean commitSystemTableCreation() {
 
         boolean successful = false;
 
@@ -1180,9 +1178,14 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             successful = false;
         }
 
-        if (!successful) {
+        if (successful) {
+            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Committed system table creation on " + localMachineLocation);
+        }
+        else {
             ErrorHandling.errorNoEvent("Failed to unlock database locator servers after creating the system table.");
         }
+
+        return successful;
     }
 
     /**
