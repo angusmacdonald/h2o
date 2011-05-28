@@ -76,7 +76,7 @@ public class TableLink extends Table {
         this.originalTable = originalTable;
         this.emitUpdates = emitUpdates;
         try {
-            connect();
+            connect(false);
         }
         catch (final SQLException e) {
             connectException = e;
@@ -88,17 +88,23 @@ public class TableLink extends Table {
         }
     }
 
-    private void connect() throws SQLException {
+    private void connect(final boolean clearLinkConnectionCache) throws SQLException {
 
-        conn = database.getLinkConnection(driver, url, user, password);
+        conn = database.getLinkConnection(driver, url, user, password, clearLinkConnectionCache);
         synchronized (conn) {
             try {
                 readMetaData();
             }
             catch (final SQLException e) {
-                conn.close();
-                conn = null;
-                throw e;
+
+                if (!clearLinkConnectionCache) {
+                    connect(true);
+                }
+                else {
+                    conn.close();
+                    conn = null;
+                    throw e;
+                }
             }
         }
     }

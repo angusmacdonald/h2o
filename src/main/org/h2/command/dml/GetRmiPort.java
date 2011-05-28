@@ -61,7 +61,7 @@ public class GetRmiPort extends SchemaCommand {
             /*
              * Send this query remotely to get the RMI port.
              */
-            return pushCommand(databaseLocation, "GET RMI PORT");
+            return pushCommand(databaseLocation, "GET RMI PORT", false);
         }
     }
 
@@ -85,11 +85,11 @@ public class GetRmiPort extends SchemaCommand {
      * @throws SQLException
      * @throws RPCException
      */
-    private int pushCommand(final String remoteDBLocation, final String query) throws SQLException, RPCException {
+    private int pushCommand(final String remoteDBLocation, final String query, final boolean clearLinkConnectionCache) throws SQLException, RPCException {
 
         final Database db = session.getDatabase();
 
-        conn = db.getLinkConnection("org.h2.Driver", remoteDBLocation, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+        conn = db.getLinkConnection("org.h2.Driver", remoteDBLocation, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD, clearLinkConnectionCache);
 
         int result = -1;
 
@@ -102,14 +102,20 @@ public class GetRmiPort extends SchemaCommand {
 
             }
             catch (final SQLException e) {
-                conn.close();
-                conn = null;
-                e.printStackTrace();
-                throw e;
+
+                if (!clearLinkConnectionCache) {
+                    pushCommand(remoteDBLocation, query, true);
+                }
+                else {
+
+                    conn.close();
+                    conn = null;
+                    e.printStackTrace();
+                    throw e;
+                }
             }
         }
 
         return result;
     }
-
 }

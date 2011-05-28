@@ -241,7 +241,7 @@ public class CreateReplica extends SchemaCommand {
 
         if (whereReplicaWillBeCreated != null || db.getFullDatabasePath().equals(whereReplicaWillBeCreated)) {
             // command will  be executed elsewhere
-            final int result = pushCommand(whereReplicaWillBeCreated, "CREATE REPLICA " + tableName + " FROM '" + whereDataWillBeTakenFrom + "'", true);
+            final int result = pushCommand(whereReplicaWillBeCreated, "CREATE REPLICA " + tableName + " FROM '" + whereDataWillBeTakenFrom + "'", true, false);
 
             // Update the System Table here.
 
@@ -528,12 +528,12 @@ public class CreateReplica extends SchemaCommand {
      * @throws SQLException
      * @throws RPCException
      */
-    private int pushCommand(final String remoteDBLocation, final String query, final boolean createReplica) throws SQLException, RPCException {
+    private int pushCommand(final String remoteDBLocation, final String query, final boolean createReplica, final boolean clearLinkConnectionCache) throws SQLException, RPCException {
 
         try {
             final Database db = session.getDatabase();
 
-            conn = db.getLinkConnection("org.h2.Driver", remoteDBLocation, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+            conn = db.getLinkConnection("org.h2.Driver", remoteDBLocation, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD, clearLinkConnectionCache);
 
             int result = -1;
 
@@ -546,10 +546,17 @@ public class CreateReplica extends SchemaCommand {
 
                 }
                 catch (final SQLException e) {
-                    conn.close();
-                    conn = null;
-                    e.printStackTrace();
-                    throw e;
+
+                    if (!clearLinkConnectionCache) {
+                        pushCommand(remoteDBLocation, query, createReplica, true);
+                    }
+                    else {
+
+                        conn.close();
+                        conn = null;
+                        e.printStackTrace();
+                        throw e;
+                    }
                 }
             }
 
@@ -655,7 +662,7 @@ public class CreateReplica extends SchemaCommand {
     public void readSQL() throws JdbcSQLException {
 
         try {
-            connect(whereDataWillBeTakenFrom);
+            connect(whereDataWillBeTakenFrom, false);
         }
         catch (final SQLException e) {
             ErrorHandling.errorNoEvent("Error reading meta-data from the replicas primary location: " + whereDataWillBeTakenFrom + ". Exception: " + e.getMessage());
@@ -663,11 +670,11 @@ public class CreateReplica extends SchemaCommand {
         }
     }
 
-    private void connect(final String tableLocation) throws SQLException {
+    private void connect(final String tableLocation, final boolean clearLinkConnectionCache) throws SQLException {
 
         final Database db = session.getDatabase();
         if (!empty) {
-            conn = db.getLinkConnection("org.h2.Driver", tableLocation, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD);
+            conn = db.getLinkConnection("org.h2.Driver", tableLocation, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD, clearLinkConnectionCache);
             synchronized (conn) {
                 try {
                     readMetaData();
@@ -675,9 +682,15 @@ public class CreateReplica extends SchemaCommand {
 
                 }
                 catch (final SQLException e) {
-                    conn.close();
-                    conn = null;
-                    throw e;
+
+                    if (!clearLinkConnectionCache) {
+                        connect(tableLocation, true);
+                    }
+                    else {
+                        conn.close();
+                        conn = null;
+                        throw e;
+                    }
                 }
             }
         }

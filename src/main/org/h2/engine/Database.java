@@ -2889,13 +2889,15 @@ public class Database implements DataHandler, Observer, ISystemStatus {
      *            the user name
      * @param password
      *            the password
+     * @param clearLinkConnectionCache 
      * @return the connection
      */
-    public TableLinkConnection getLinkConnection(final String driver, final String url, final String user, final String password) throws SQLException {
+    public TableLinkConnection getLinkConnection(final String driver, final String url, final String user, final String password, final boolean clearLinkConnectionCache) throws SQLException {
 
-        if (linkConnections == null) {
+        if (linkConnections == null || clearLinkConnectionCache) {
             linkConnections = new HashMap<TableLinkConnection, TableLinkConnection>();
         }
+
         return TableLinkConnection.open(linkConnections, driver, url, user, password);
     }
 
@@ -3339,6 +3341,7 @@ public class Database implements DataHandler, Observer, ISystemStatus {
         Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.stachord");
         Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.nds");
         Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.numonic");
+        Diagnostic.addIgnoredPackage("org.h2o.autonomic.numonic.ranking");
         Diagnostic.setTimestampFlag(true);
         Diagnostic.setTimestampFormat(new SimpleDateFormat("HH:mm:ss:SSS "));
         Diagnostic.setTimestampDelimiterFlag(false);
