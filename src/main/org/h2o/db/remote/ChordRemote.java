@@ -812,9 +812,16 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         try {
             if (predecessor == null) {
                 predecessor = chordNode.getPredecessor();
+                if (predecessorURL == null) {
+                    getPredecessorUrl();
+                }
                 return;
             }
             predecessor.getRemote().getPredecessor();
+
+            if (predecessorURL == null) {
+                getPredecessorUrl();
+            }
             return; // the old predecessor has not failed, so nothing needs to be recovered.
         }
         catch (final RPCException e1) {
@@ -826,18 +833,28 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
         final boolean systemTableWasOnPredecessor = systemTableRef.isThisSystemTableNode(predecessor);
 
+        if (!systemTableWasOnPredecessor && predecessorURL != null) {
+            try {
+                systemTableRef.suspectInstanceOfFailure(predecessorURL);
+            }
+            catch (final Exception e) {
+                try {
+                    systemTableRef.failureRecovery();
+                }
+                catch (final Exception e1) {
+                    //Don't do anything else if this fails here.
+                }
+            }
+        }
+
         predecessor = chordNode.getPredecessor();
 
         /*
          * This will often be null at this point because it hasn't stabilized.
          */
         if (predecessor != null) {
-            try {
-                predecessorURL = getDatabaseInstanceAt(predecessor).getURL();
-            }
-            catch (final RPCException e) {
-                e.printStackTrace();
-            }
+            getPredecessorUrl();
+
         }
         else {
             predecessorURL = null;
@@ -865,6 +882,20 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                 }
             }
         }
+    }
+
+    public void getPredecessorUrl() {
+
+        try {
+            final IDatabaseInstanceRemote remoteInstance = getDatabaseInstanceAt(predecessor);
+            if (remoteInstance != null) {
+                predecessorURL = remoteInstance.getURL();
+            }
+        }
+        catch (final RPCException e) {
+            e.printStackTrace();
+        }
+
     }
 
     private boolean isSystemTableActive() {
@@ -903,7 +934,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
              * responsibility of this node (the System Table's predecessor) to restart the System Table.
              */
             if (systemTable != null) {
-                localTableManagers = systemTable.getLocalDatabaseInstances(localMachineLocation);
+                localTableManagers = systemTable.getLocalTableManagers(localMachineLocation);
             }
         }
         catch (final RPCException e) {
@@ -1002,7 +1033,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             try {
                 successorDB = getDatabaseInstanceAt(successor, true);
 
-                final Set<TableManagerWrapper> localManagers = systemTableRef.getSystemTable().getLocalDatabaseInstances(getLocalMachineLocation());
+                final Set<TableManagerWrapper> localManagers = systemTableRef.getSystemTable().getLocalTableManagers(getLocalMachineLocation());
 
                 /*
                  * Create replicas if needed.

@@ -180,7 +180,7 @@ public interface ISystemTable {
      * @param localMachineLocation
      * @return
      */
-    public Set<TableManagerWrapper> getLocalDatabaseInstances(DatabaseID localMachineLocation) throws RPCException, MovedException;
+    public Set<TableManagerWrapper> getLocalTableManagers(DatabaseID localMachineLocation) throws RPCException, MovedException;
 
     /**
      * Called when the location of the Table Manager is to be changed.
@@ -229,5 +229,14 @@ public interface ISystemTable {
      * @throws RPCException
      */
     public boolean checkTableManagerAccessibility() throws RPCException, MovedException;
+
+    /**
+     * Inform the System table that a database instance has possibly failed.
+     * 
+     * <p>The system table will try to contact the instance itself, and if it can't, it removes
+     * it from the membership set.
+     * @param predecessorURL the instance that is suspected of failure.
+     */
+    public void suspectInstanceOfFailure(DatabaseID predecessorURL) throws RPCException, MovedException;
 
 }

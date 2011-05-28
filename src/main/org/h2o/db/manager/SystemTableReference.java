@@ -509,4 +509,11 @@ public class SystemTableReference implements ISystemTableReference {
         return systemTableWrapper.getSystemTable();
     }
 
+    @Override
+    public void suspectInstanceOfFailure(final DatabaseID predecessorURL) throws RPCException, MovedException {
+
+        systemTableWrapper.getSystemTable().suspectInstanceOfFailure(predecessorURL);
+
+    }
+
 }

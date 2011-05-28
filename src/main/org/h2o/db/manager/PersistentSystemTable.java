@@ -512,7 +512,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     }
 
     @Override
-    public Set<TableManagerWrapper> getLocalDatabaseInstances(final DatabaseID localMachineLocation) throws RPCException, MovedException {
+    public Set<TableManagerWrapper> getLocalTableManagers(final DatabaseID localMachineLocation) throws RPCException, MovedException {
 
         final int connectionID = getConnectionID(localMachineLocation);
 
@@ -589,6 +589,13 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
 
         // Done by in-memory system table.
         return false;
+    }
+
+    @Override
+    public void suspectInstanceOfFailure(final DatabaseID predecessorURL) throws RPCException, MovedException {
+
+        // TODO Auto-generated method stub
+
     }
 
 }

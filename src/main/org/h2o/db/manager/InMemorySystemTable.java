@@ -419,17 +419,27 @@ public final class InMemorySystemTable implements ISystemTable {
     @Override
     public boolean checkTableManagerAccessibility() {
 
+        return checkTableManagerAccessibility(null);
+    }
+
+    /**
+     * Check whether table managers are accessible on the given database instance.
+     * @param databaseID if 'null' this will perform a check for all table managers.
+     * @return
+     */
+    public boolean checkTableManagerAccessibility(final DatabaseID databaseID) {
+
         boolean anyTableManagerRecreated = false;
         if (started) {
 
-            // Note: done this way to avoid concurrent modification exceptions
-            // when a table manager entry is updated.
-            final TableManagerWrapper[] tableManagerArray = tableManagers.values().toArray(new TableManagerWrapper[0]);
+            final TableManagerWrapper[] tableManagerArray = tableManagers.values().toArray(new TableManagerWrapper[0]); // Note: done this way to avoid concurrent modification exceptions when a table manager entry is updated.
             for (final TableManagerWrapper tableManagerWrapper : tableManagerArray) {
-                final boolean thisTableManagerRecreated = recreateTableManagerIfNotAlive(tableManagerWrapper);
+                if (databaseID == null || tableManagerWrapper.isLocalTo(databaseID)) {
+                    final boolean thisTableManagerRecreated = recreateTableManagerIfNotAlive(tableManagerWrapper);
 
-                if (thisTableManagerRecreated) {
-                    anyTableManagerRecreated = true;
+                    if (thisTableManagerRecreated) {
+                        anyTableManagerRecreated = true;
+                    }
                 }
             }
         }
@@ -602,22 +612,17 @@ public final class InMemorySystemTable implements ISystemTable {
     }
 
     @Override
-    public Set<TableManagerWrapper> getLocalDatabaseInstances(final DatabaseID databaseInstance) throws RPCException, MovedException {
+    public Set<TableManagerWrapper> getLocalTableManagers(final DatabaseID databaseInstance) throws RPCException, MovedException {
 
         /*
-         * Create an interator to go through and chec whether a given Table Manager is local to the specified machine.
+         * Create an interator to go through and check whether a given Table Manager is local to the specified machine.
          */
         final Predicate<TableManagerWrapper, DatabaseID> isLocal = new Predicate<TableManagerWrapper, DatabaseID>() {
 
             @Override
             public boolean apply(final TableManagerWrapper wrapper, final DatabaseID databaseInstance) {
 
-                try {
-                    return wrapper.isLocalTo(databaseInstance);
-                }
-                catch (final RPCException e) {
-                    return false;
-                }
+                return wrapper.isLocalTo(databaseInstance);
             }
         };
 
@@ -662,6 +667,24 @@ public final class InMemorySystemTable implements ISystemTable {
     public Map<TableInfo, DatabaseID> getPrimaryLocations() {
 
         return primaryLocations;
+    }
+
+    @Override
+    public void suspectInstanceOfFailure(final DatabaseID suspectedDbURL) throws RPCException, MovedException {
+
+        final DatabaseInstanceWrapper suspectedDb = databasesInSystem.get(suspectedDbURL);
+
+        if (suspectedDb != null) {
+            try {
+                suspectedDb.getDatabaseInstance().isAlive();
+            }
+            catch (final RPCException e) {
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "The database instance " + suspectedDbURL + " is no longer active. Removing from membership set.");
+                databasesInSystem.remove(suspectedDbURL);
+                checkTableManagerAccessibility(suspectedDbURL);
+            }
+        }
+
     }
 
 }

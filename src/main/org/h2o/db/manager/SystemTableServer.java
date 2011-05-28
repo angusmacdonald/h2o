@@ -339,7 +339,7 @@ public class SystemTableServer extends ApplicationServer {
             public void execute(final JSONReader args, final JSONWriter response) throws Exception {
 
                 final DatabaseID p0 = marshaller.deserializeDatabaseID(args);
-                marshaller.serializeSetTableManagerWrapper(system_table.getLocalDatabaseInstances(p0), response);
+                marshaller.serializeSetTableManagerWrapper(system_table.getLocalTableManagers(p0), response);
             }
         });
 
@@ -454,6 +454,30 @@ public class SystemTableServer extends ApplicationServer {
                 final IMetric p0 = marshaller.deserializeMetric(args);
                 final Requirements p1 = marshaller.deserializeRequirements(args);
                 marshaller.serializeCollectionDatabaseInstanceWrapper(system_table.getRankedListOfInstances(p0, p1), response);
+
+            }
+        });
+
+        handler_map.put("suspectInstanceOfFailure", new IHandler() {
+
+            @Override
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
+
+                final DatabaseID p0 = marshaller.deserializeDatabaseID(args);
+                system_table.suspectInstanceOfFailure(p0);
+                completeVoidResponse(response);
+
+            }
+        });
+
+        handler_map.put("removeDataForInactiveInstance", new IHandler() {
+
+            @Override
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
+
+                final DatabaseID p0 = marshaller.deserializeDatabaseID(args);
+                system_table.removeDataForInactiveInstance(p0);
+                completeVoidResponse(response);
 
             }
         });

@@ -129,7 +129,7 @@ public class TableManagerWrapper implements Serializable, Remote {
      * @param localMachineLocation
      * @return
      */
-    public boolean isLocalTo(final DatabaseID localMachineLocation) throws RPCException {
+    public boolean isLocalTo(final DatabaseID localMachineLocation) {
 
         return tableManagerURL.equals(localMachineLocation);
     }

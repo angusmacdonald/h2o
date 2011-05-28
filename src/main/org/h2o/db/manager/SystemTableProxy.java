@@ -420,7 +420,7 @@ public class SystemTableProxy extends StreamProxy implements ISystemTableMigrata
     }
 
     @Override
-    public Set<TableManagerWrapper> getLocalDatabaseInstances(final DatabaseID localMachineLocation) throws RPCException, MovedException {
+    public Set<TableManagerWrapper> getLocalTableManagers(final DatabaseID localMachineLocation) throws RPCException, MovedException {
 
         try {
             final Connection connection = (Connection) startCall("getLocalDatabaseInstances");
@@ -717,5 +717,50 @@ public class SystemTableProxy extends StreamProxy implements ISystemTableMigrata
             dealWithException(e);
             return null; //not reached.
         }
+    }
+
+    @Override
+    public void suspectInstanceOfFailure(final DatabaseID predecessorURL) throws RPCException, MovedException {
+
+        try {
+            final Connection connection = (Connection) startCall("suspectInstanceOfFailure");
+            final JSONWriter jw = connection.getJSONwriter();
+
+            marshaller.serializeDatabaseID(predecessorURL, jw);
+
+            handleVoidCall(makeCall(connection));
+
+            finishCall(connection);
+
+        }
+        catch (final MovedException e) {
+            throw e;
+        }
+        catch (final Exception e) {
+            dealWithException(e);
+        }
+    }
+
+    @Override
+    public void removeDataForInactiveInstance(final DatabaseID inactiveDatabaseID) throws RPCException, MovedException {
+
+        try {
+            final Connection connection = (Connection) startCall("removeDataForInactiveInstance");
+            final JSONWriter jw = connection.getJSONwriter();
+
+            marshaller.serializeDatabaseID(inactiveDatabaseID, jw);
+
+            handleVoidCall(makeCall(connection));
+
+            finishCall(connection);
+
+        }
+        catch (final MovedException e) {
+            throw e;
+        }
+        catch (final Exception e) {
+            dealWithException(e);
+        }
+
     }
 }

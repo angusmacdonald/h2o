@@ -5,6 +5,7 @@ import java.util.Queue;
 import org.h2o.autonomic.numonic.metric.IMetric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.autonomic.numonic.ranking.Requirements;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
 
@@ -40,5 +41,13 @@ public interface ICentralDataCollector {
      * @throws RPCException 
      */
     public Queue<DatabaseInstanceWrapper> getRankedListOfInstances(IMetric metric, final Requirements requirements) throws RPCException, MovedException;
+
+    /**
+     * Removed any monitoring data stored for the database with this ID, because it is no longer active.
+     * @param inactiveDatabaseID
+     * @throws MovedException 
+     * @throws RPCException 
+     */
+    public void removeDataForInactiveInstance(DatabaseID inactiveDatabaseID) throws RPCException, MovedException;
 
 }

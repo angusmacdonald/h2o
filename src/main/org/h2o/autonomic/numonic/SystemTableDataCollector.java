@@ -1,17 +1,16 @@
 package org.h2o.autonomic.numonic;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 
 import org.h2o.autonomic.numonic.interfaces.ICentralDataCollector;
 import org.h2o.autonomic.numonic.metric.IMetric;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.autonomic.numonic.ranking.MachineSorter;
 import org.h2o.autonomic.numonic.ranking.Requirements;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
 
@@ -19,7 +18,7 @@ import uk.ac.standrews.cs.nds.rpc.RPCException;
 
 public class SystemTableDataCollector implements ICentralDataCollector {
 
-    Set<MachineMonitoringData> monitoringData = new HashSet<MachineMonitoringData>();
+    Map<DatabaseID, MachineMonitoringData> monitoringData = new HashMap<DatabaseID, MachineMonitoringData>();
 
     /**
      * Cache of previously computed rankings.
@@ -41,8 +40,8 @@ public class SystemTableDataCollector implements ICentralDataCollector {
     @Override
     public void addMonitoringSummary(final MachineMonitoringData summary) throws RPCException, MovedException {
 
-        monitoringData.remove(summary); //remove a previous summary from this machine if it existed (hash code is based on database ID).
-        monitoringData.add(summary); //add the new summary.
+        monitoringData.remove(summary.getDatabaseID()); //remove a previous summary from this machine if it existed (hash code is based on database ID).
+        monitoringData.put(summary.getDatabaseID(), summary); //add the new summary.
 
         timeOfLastUpdate = System.currentTimeMillis();
     }
@@ -59,12 +58,19 @@ public class SystemTableDataCollector implements ICentralDataCollector {
         }
         else {
 
-            final Queue<DatabaseInstanceWrapper> rankedMachines = MachineSorter.filterThenRankMachines(requirements, metric, monitoringData);
+            final Queue<DatabaseInstanceWrapper> rankedMachines = MachineSorter.filterThenRankMachines(requirements, metric, monitoringData.values());
 
             addToCache(rankedMachines, metric, requirements);
 
             return rankedMachines;
         }
+    }
+
+    @Override
+    public void removeDataForInactiveInstance(final DatabaseID inactiveDatabaseID) throws RPCException, MovedException {
+
+        monitoringData.remove(inactiveDatabaseID);
+
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -190,4 +196,5 @@ public class SystemTableDataCollector implements ICentralDataCollector {
         }
 
     }
+
 }

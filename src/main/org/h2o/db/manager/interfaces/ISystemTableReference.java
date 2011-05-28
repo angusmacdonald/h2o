@@ -265,6 +265,22 @@ public interface ISystemTableReference {
      */
     public ISystemTableMigratable getLocalSystemTable();
 
+    /**
+     * Attempt to find the system table, and recreate it if it is not active.
+     * @return
+     * @throws LocatorException
+     * @throws SQLException
+     * @throws SystemTableAccessException
+     */
     public ISystemTableMigratable failureRecovery() throws LocatorException, SQLException, SystemTableAccessException;
+
+    /**
+     * Inform the System table that a database instance has possibly failed.
+     * 
+     * <p>The system table will try to contact the instance itself, and if it can't, it removes
+     * it from the membership set.
+     * @param predecessorURL the instance that is suspected of failure.
+     */
+    public void suspectInstanceOfFailure(DatabaseID predecessorURL) throws RPCException, MovedException;
 
 }

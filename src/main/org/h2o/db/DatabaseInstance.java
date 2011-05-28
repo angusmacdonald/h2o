@@ -139,7 +139,7 @@ public class DatabaseInstance implements IDatabaseInstanceRemote {
     @Override
     public int executeUpdate(final String sql, final boolean systemTableCommand) throws RPCException, SQLException {
 
-        if (!database.isRunning()) { throw new SQLException("The database either hasn't fully started, or is being shut down."); }
+        if (!database.isRunning()) { throw new SQLException("Could execute query. The database either hasn't fully started, or is being shut down. Query: " + sql); }
 
         Command command = null;
         if (systemTableCommand) {

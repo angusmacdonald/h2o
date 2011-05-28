@@ -301,7 +301,7 @@ public class MachineRankingTests {
         activeInstances.add(m2.getDatabaseWrapper());
 
         //Tests
-        final Queue<DatabaseInstanceWrapper> rankedInstances = SystemTable.removeInactiveInstances(c.getRankedListOfInstances(metric, requirements), activeInstances);
+        final Queue<DatabaseInstanceWrapper> rankedInstances = SystemTable.removeInactiveInstances(c.getRankedListOfInstances(metric, requirements), c, activeInstances);
 
         assertEquals(2, rankedInstances.size());
 

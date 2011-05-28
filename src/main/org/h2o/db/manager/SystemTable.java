@@ -299,10 +299,10 @@ public class SystemTable implements ISystemTableMigratable {
     }
 
     @Override
-    public Set<TableManagerWrapper> getLocalDatabaseInstances(final DatabaseID localMachineLocation) throws RPCException, MovedException {
+    public Set<TableManagerWrapper> getLocalTableManagers(final DatabaseID localMachineLocation) throws RPCException, MovedException {
 
         preMethodTest();
-        return inMemory.getLocalDatabaseInstances(localMachineLocation);
+        return inMemory.getLocalTableManagers(localMachineLocation);
     }
 
     @Override
@@ -370,10 +370,10 @@ public class SystemTable implements ISystemTableMigratable {
     public Queue<DatabaseInstanceWrapper> getRankedListOfInstances(final IMetric metric, final Requirements requirements) throws RPCException, MovedException {
 
         preMethodTest();
-        return SystemTable.removeInactiveInstances(monitoring.getRankedListOfInstances(metric, requirements), getDatabaseInstances());
+        return SystemTable.removeInactiveInstances(monitoring.getRankedListOfInstances(metric, requirements), monitoring, getDatabaseInstances());
     }
 
-    public static Queue<DatabaseInstanceWrapper> removeInactiveInstances(final Queue<DatabaseInstanceWrapper> rankedListOfInstances, final Set<DatabaseInstanceWrapper> activeDatabaseInstances) {
+    public static Queue<DatabaseInstanceWrapper> removeInactiveInstances(final Queue<DatabaseInstanceWrapper> rankedListOfInstances, final ICentralDataCollector monitoring, final Set<DatabaseInstanceWrapper> activeDatabaseInstances) throws RPCException, MovedException {
 
         final Queue<DatabaseInstanceWrapper> trimmedQueue = new LinkedList<DatabaseInstanceWrapper>();
 
@@ -381,9 +381,29 @@ public class SystemTable implements ISystemTableMigratable {
             if (activeDatabaseInstances.contains(rankedInstance)) {
                 trimmedQueue.add(rankedInstance);
             }
+            else {
+                monitoring.removeDataForInactiveInstance(rankedInstance.getURL());
+            }
         }
 
         return trimmedQueue;
+    }
+
+    @Override
+    public void suspectInstanceOfFailure(final DatabaseID predecessorURL) throws RPCException, MovedException {
+
+        preMethodTest();
+
+        inMemory.suspectInstanceOfFailure(predecessorURL);
+
+    }
+
+    @Override
+    public void removeDataForInactiveInstance(final DatabaseID inactiveDatabaseID) throws RPCException, MovedException {
+
+        preMethodTest();
+
+        monitoring.removeDataForInactiveInstance(inactiveDatabaseID);
     }
 
 }
