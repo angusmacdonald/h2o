@@ -325,6 +325,9 @@ public class TcpServerThread implements Runnable {
 
                 setParameters(command);
                 final int old = session.getModificationId();
+
+                if (!session.getDatabase().isConnected()) { throw new SQLException("Can't execute command because this instance isn't connected to the System Table."); }
+
                 final int updateCount = command.update();
                 final int status;
                 if (session.isClosed()) {

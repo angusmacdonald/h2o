@@ -4,9 +4,7 @@ import org.h2o.autonomic.numonic.interfaces.ILocalDataCollector;
 import org.h2o.autonomic.numonic.ranking.MachineMonitoringData;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
-import org.h2o.util.exceptions.MovedException;
 
-import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.numonic.data.Data;
 import uk.ac.standrews.cs.numonic.data.FileSystemData;
@@ -26,6 +24,8 @@ public class LocalDataCollector implements ILocalDataCollector {
      * DATABASE STATE.
      * 
      */
+
+    private final ISystemStatus sysStatus;
 
     /**
      * How this set of data will be identified when it is sent to the System Table.
@@ -71,11 +71,12 @@ public class LocalDataCollector implements ILocalDataCollector {
      * @param localDatabaseID How this set of data will be identified when it is sent to the System Table.
      * @param systemTable Where data will be sent.
      */
-    public LocalDataCollector(final DatabaseID localDatabaseID, final ISystemTableReference systemTable, final boolean fsMonitoringEnabled) {
+    public LocalDataCollector(final DatabaseID localDatabaseID, final ISystemTableReference systemTable, final boolean fsMonitoringEnabled, final ISystemStatus sysStatus) {
 
         this.localDatabaseID = localDatabaseID;
         this.systemTable = systemTable;
         this.fsMonitoringEnabled = fsMonitoringEnabled;
+        this.sysStatus = sysStatus;
     }
 
     /* (non-Javadoc)
@@ -96,7 +97,7 @@ public class LocalDataCollector implements ILocalDataCollector {
             ErrorHandling.error("No static system info has been received from Numonic.");
         }
 
-        if (machineUtilData != null && (fsData != null || !fsMonitoringEnabled)) {
+        if (sysStatus.isConnected() && machineUtilData != null && (fsData != null || !fsMonitoringEnabled)) {
             sendDataToSystemTable(measurements_before_summary, staticSysInfoData, machineUtilData, fsData);
 
             machineUtilData = null;
@@ -120,12 +121,9 @@ public class LocalDataCollector implements ILocalDataCollector {
         try {
             systemTable.getSystemTable().addMonitoringSummary(monitoringData);
         }
-        catch (final RPCException e) {
-            ErrorHandling.exceptionError(e, "Failed to send monitoring results to the System Table.");
-        }
-        catch (final MovedException e) {
-            ErrorHandling.exceptionError(e, "Failed to send monitoring results to the System Table.");
-            //TODO send to new location.
+        catch (final Exception e) {
+            ErrorHandling.errorNoEvent("Failed to send monitoring results to the System Table.");
+
         }
     }
 

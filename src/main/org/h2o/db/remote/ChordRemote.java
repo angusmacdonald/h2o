@@ -863,7 +863,12 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         boolean systemTableAlive = true;
         ISystemTableMigratable newSystemTable = null;
         if (systemTableWasOnPredecessor) {
-            systemTableAlive = isSystemTableActive();
+            try {
+                systemTableAlive = isSystemTableActive();
+            }
+            catch (final Exception e1) {
+                systemTableAlive = false;
+            }
 
             if (!systemTableAlive) {
                 try {

@@ -62,15 +62,25 @@ public class MetaDataReplicationThread extends Thread {
             catch (final InterruptedException e) {
             }
 
-            /*
-             * Check that there are a sufficient number of replicas of Table Manager state.
-             */
-            metaDataReplicaManager.replicateMetaDataIfPossible(systemTableReference, false);
+            if (database.isConnected()) {
+                /*
+                 * Check that there are a sufficient number of replicas of Table Manager state.
+                 */
+                metaDataReplicaManager.replicateMetaDataIfPossible(systemTableReference, false);
 
-            /*
-             * Check that there are a sufficient number of replicas of System Table state.
-             */
-            metaDataReplicaManager.replicateMetaDataIfPossible(systemTableReference, true);
+                /*
+                 * Check that there are a sufficient number of replicas of System Table state.
+                 */
+                metaDataReplicaManager.replicateMetaDataIfPossible(systemTableReference, true);
+            }
+            else {
+                try {
+                    systemTableReference.failureRecovery();
+                }
+                catch (final Exception e) {
+                    //May fail. Nothing else we can do here.
+                }
+            }
 
             /*
              * Check that the local application registry is still active. If it isn't, re-create it and re-add this

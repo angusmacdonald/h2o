@@ -177,14 +177,17 @@ public class SystemTableReference implements ISystemTableReference {
             }
             catch (final LocatorException e1) {
                 ErrorHandling.errorNoEvent("Couldn't find any locator servers when looking for the System Table: " + e1.getMessage());
+                db.setConnected(false);
             }
             catch (final SystemTableAccessException e1) {
                 ErrorHandling.errorNoEvent("Tried to recreate the System Table (through recovery mechanisms) and failed to find a suitable instance.");
+                db.setConnected(false);
             }
         }
 
         if (foundSystemTable && systemTableWrapper.getSystemTable() != null) {
             try {
+                db.setConnected(true);
                 systemTableNode = systemTableWrapper.getSystemTable().getChordReference();
             }
             catch (final RPCException e) {
@@ -389,23 +392,26 @@ public class SystemTableReference implements ISystemTableReference {
                     }
                     catch (final LocatorException e1) {
                         ErrorHandling.errorNoEvent("Couldn't find locator servers.");
+                        db.setConnected(false);
                         throw new SQLException("Couldn't find locator servers.");
                     }
                     catch (final SystemTableAccessException e1) {
-                        e.printStackTrace();
+
                         ErrorHandling.errorNoEvent("Failed to create System Table.");
                         throw new SQLException("Failed to create System Table.");
                     }
                 }
                 catch (final LocatorException e) {
+                    db.setConnected(false);
                     throw new SQLException("Couldn't find locator servers.");
                 }
                 catch (final SystemTableAccessException e) {
-                    e.printStackTrace();
+                    db.setConnected(false);
                     throw new SQLException("Failed to create System Table.");
                 }
             }
 
+            db.setConnected(false);
             throw new SQLException("Failed to find System Table.");
         }
 

@@ -63,7 +63,7 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
      * @param systemTable Reference to the System Table wrapper class. Used to send data to the system table when enough has been collected.
      * @param thresholds    Array of thresholds that the system must check for.
      */
-    public NumonicReporter(final String numonicPropertiesFileName, final String fileSystem, final DatabaseID localDatabaseID, final ISystemTableReference systemTable, final Threshold... thresholds) {
+    public NumonicReporter(final String numonicPropertiesFileName, final String fileSystem, final DatabaseID localDatabaseID, final ISystemTableReference systemTable, final ISystemStatus db, final Threshold... thresholds) {
 
         setName("numonic-reporting-thread");
 
@@ -103,12 +103,12 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
         this.fileSystem = fileSystem;
 
         thresholdChecker = new ThresholdChecker(thresholds);
-        resourceRanker = new LocalDataCollector(localDatabaseID, systemTable, false);
+        resourceRanker = new LocalDataCollector(localDatabaseID, systemTable, false, db);
     }
 
-    public NumonicReporter(final String numonicPropertiesFile, final String fileSystem, final DatabaseID localDatabaseID, final ISystemTableReference systemTable, final String thresholdPropertiesFile) throws IOException {
+    public NumonicReporter(final String numonicPropertiesFile, final String fileSystem, final DatabaseID localDatabaseID, final ISystemTableReference systemTable, final ISystemStatus db, final String thresholdPropertiesFile) throws IOException {
 
-        this(numonicPropertiesFile, fileSystem, localDatabaseID, systemTable, ThresholdChecker.getThresholds(thresholdPropertiesFile));
+        this(numonicPropertiesFile, fileSystem, localDatabaseID, systemTable, db, ThresholdChecker.getThresholds(thresholdPropertiesFile));
     }
 
     /**

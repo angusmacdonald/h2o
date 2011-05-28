@@ -4764,9 +4764,11 @@ public class Parser {
 
         if (!tableName.equals("SESSIONS") && !tableName.contains("H2O_") && !database.getLocalSchema().contains(schemaName) && !internalQuery && searchRemote) {
             /*
-             * Internal Query: if false it indicates that this is not part of some larger update. Search Remote: only false if this method
+             * Re. Internal Query: if false it indicates that this is not part of some larger update. Search Remote: only false if this method
              * has already been called, and a linked table has been created. Other evaluations: eliminate local tables.
              */
+
+            if (!database.isConnected()) { throw new SQLException("Can't execute this query because this database instance (" + database.getID() + ") is not connected to a System Table."); }
 
             if (localSchemaName == null) {
                 localSchemaName = Constants.SCHEMA_MAIN;

@@ -96,6 +96,7 @@ import org.h2.value.CompareMode;
 import org.h2.value.Value;
 import org.h2.value.ValueInt;
 import org.h2.value.ValueLob;
+import org.h2o.autonomic.numonic.ISystemStatus;
 import org.h2o.autonomic.numonic.NumonicReporter;
 import org.h2o.autonomic.numonic.ThresholdChecker;
 import org.h2o.autonomic.numonic.interfaces.INumonic;
@@ -148,7 +149,7 @@ import uk.ac.standrews.cs.numonic.data.ResourceType;
  *
  * @since 2004-04-15 22:49
  */
-public class Database implements DataHandler, Observer {
+public class Database implements DataHandler, Observer, ISystemStatus {
 
     private static int initialPowerOffCount;
 
@@ -356,6 +357,8 @@ public class Database implements DataHandler, Observer {
 
     private INumonic numonic = null;
 
+    private boolean connected = false;
+
     public Database(final String name, final ConnectionInfo ci, final String cipher) throws SQLException {
 
         localSchema.add(Constants.H2O_SCHEMA);
@@ -478,7 +481,7 @@ public class Database implements DataHandler, Observer {
 
             try {
                 final String fileSystemName = getFileSystemName(databaseName);
-                numonic = new NumonicReporter(databaseSettings.get("NUMONIC_MONITORING_FILE_LOCATION"), fileSystemName, getID(), systemTableRef, databaseSettings.get("NUMONIC_THRESHOLDS_FILE_LOCATION"));
+                numonic = new NumonicReporter(databaseSettings.get("NUMONIC_MONITORING_FILE_LOCATION"), fileSystemName, getID(), systemTableRef, this, databaseSettings.get("NUMONIC_THRESHOLDS_FILE_LOCATION"));
 
                 if (Boolean.parseBoolean(databaseSettings.get("NUMONIC_MONITORING_ENABLED"))) {
                     numonic.start();
@@ -490,6 +493,7 @@ public class Database implements DataHandler, Observer {
         }
 
         running = true;
+        connected = true;
     }
 
     /**
@@ -552,6 +556,8 @@ public class Database implements DataHandler, Observer {
             }
         }
         catch (final Throwable e) {
+
+            ErrorHandling.exceptionError(e, "Error starting database. It will now shut down.");
 
             if (traceSystem != null) {
                 if (e instanceof SQLException) {
@@ -3412,6 +3418,19 @@ public class Database implements DataHandler, Observer {
 
             //Act on this.
         }
+    }
+
+    @Override
+    public boolean isConnected() {
+
+        return connected;
+    }
+
+    @Override
+    public void setConnected(final boolean connected) {
+
+        this.connected = connected;
+
     }
 
 }

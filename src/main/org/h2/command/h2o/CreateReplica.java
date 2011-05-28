@@ -658,7 +658,7 @@ public class CreateReplica extends SchemaCommand {
             connect(whereDataWillBeTakenFrom);
         }
         catch (final SQLException e) {
-            Diagnostic.trace(DiagnosticLevel.FULL, "whereDataWillBeTakenFrom: " + whereDataWillBeTakenFrom);
+            ErrorHandling.errorNoEvent("Error reading meta-data from the replicas primary location: " + whereDataWillBeTakenFrom + ". Exception: " + e.getMessage());
             throw Message.getSQLException(ErrorCode.CONNECTION_BROKEN, tableName);
         }
     }

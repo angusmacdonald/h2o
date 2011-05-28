@@ -170,6 +170,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
             newSystemTableWrapper = startSystemTableOnOneOfSpecifiedMachines(stLocations);
         }
 
+        db.setConnected(true);
         return newSystemTableWrapper;
     }
 
@@ -229,6 +230,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
 
                 if (isSystemTable) {
                     final SystemTableWrapper wrapper = new SystemTableWrapper(databaseInstance.getSystemTable(), databaseInstance.getURL());
+                    db.setConnected(true);
                     return wrapper;
                 }
             }
