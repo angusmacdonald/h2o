@@ -168,7 +168,7 @@ public class SystemTableReference implements ISystemTableReference {
              * SQLException when: findSystemTable() has failed to find the System Table instances registry. This indicates that the system
              * table instance has failed, so we should try to recreate the System Table somewhere else.
              */
-            e.printStackTrace();
+
             ErrorHandling.errorNoEvent(db.getID() + ": The current System Table reference points to an inactive instance. " + "H2O will attempt to find an active System Table.");
 
             try {
