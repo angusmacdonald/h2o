@@ -122,7 +122,7 @@ public class SystemTableDataCollector implements ICentralDataCollector {
      *
      * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
      */
-    private class CacheKey {
+    private static class CacheKey {
 
         public final IMetric metric;
         public final Requirements requirements;
@@ -143,7 +143,6 @@ public class SystemTableDataCollector implements ICentralDataCollector {
 
             final int prime = 31;
             int result = 1;
-            result = prime * result + getOuterType().hashCode();
             result = prime * result + (metric == null ? 0 : metric.hashCode());
             result = prime * result + (requirements == null ? 0 : requirements.hashCode());
             return result;
@@ -156,7 +155,6 @@ public class SystemTableDataCollector implements ICentralDataCollector {
             if (obj == null) { return false; }
             if (getClass() != obj.getClass()) { return false; }
             final CacheKey other = (CacheKey) obj;
-            if (!getOuterType().equals(other.getOuterType())) { return false; }
             if (metric == null) {
                 if (other.metric != null) { return false; }
             }
@@ -168,11 +166,6 @@ public class SystemTableDataCollector implements ICentralDataCollector {
             return true;
         }
 
-        private SystemTableDataCollector getOuterType() {
-
-            return SystemTableDataCollector.this;
-        }
-
     }
 
     /**
@@ -180,7 +173,7 @@ public class SystemTableDataCollector implements ICentralDataCollector {
      *
      * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
      */
-    private class CacheValue {
+    private static class CacheValue {
 
         public final long timeOfRanking;
         public final Queue<DatabaseInstanceWrapper> rankedMachines;
