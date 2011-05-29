@@ -136,7 +136,12 @@ public class LocalDataCollector implements ILocalDataCollector {
         }
         catch (final Exception e) {
             ErrorHandling.errorNoEvent("Failed to send monitoring results to the System Table.");
-
+            try {
+                systemTableRef.failureRecovery();
+            }
+            catch (final Exception e1) {
+                //Don't bother re-attempting creation here.
+            }
         }
     }
 
