@@ -1019,7 +1019,12 @@ public class Database implements DataHandler, Observer, ISystemStatus {
                     continue;
                 }
 
-                rec.execute(this, systemSession, eventListener, proxyManager);
+                try {
+                    rec.execute(this, systemSession, eventListener, proxyManager);
+                }
+                catch (final Exception e) {
+                    ErrorHandling.errorNoEvent("Failed to execute meta-record: " + rec.getSQL());
+                }
             }
 
             proxyManager.finishTransaction(true, true, this);
@@ -1072,7 +1077,7 @@ public class Database implements DataHandler, Observer, ISystemStatus {
                 Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Re-created System Table state.");
             }
             catch (final Exception e) {
-                Diagnostic.trace(DiagnosticLevel.FULL, "error creating H2O tables");
+                ErrorHandling.exceptionError(e, "Error creating H2O tables.");
             }
         }
     }
