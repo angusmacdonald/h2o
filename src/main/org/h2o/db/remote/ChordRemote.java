@@ -435,25 +435,25 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
             // Attempt to connect to a Chord node at this location.
             final String chordPort = persistedInstanceInformation.getProperty("chordPort");
 
-            int portToJoinOn = 0;
+            int localChordPort = 0;
             if (chordPort != null) {
                 Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Obtained chord port from disk: " + chordPort);
-                portToJoinOn = Integer.parseInt(chordPort);
+                localChordPort = Integer.parseInt(chordPort);
             }
             else {
-                portToJoinOn = getCurrentPort();
+                localChordPort = getCurrentPort();
             }
 
-            if (instanceURL.getRMIPort() == portToJoinOn) {
-                portToJoinOn++;
+            if (instanceURL.getRMIPort() == localChordPort) {
+                localChordPort++;
             }
 
             boolean connected = false;
             try {
-                connected = joinChordRing(localMachineLocation.getHostname(), portToJoinOn, instanceURL.getHostname(), instanceURL.getRMIPort(), localMachineLocation.sanitizedLocation());
+                connected = joinChordRing(localMachineLocation.getHostname(), localChordPort, instanceURL.getHostname(), instanceURL.getRMIPort(), localMachineLocation.sanitizedLocation());
             }
             catch (final RPCException e1) {
-                throw new StartupException("Couldn't connect to Chord ring at " + url);
+                connected = false;
             }
 
             if (connected) {
