@@ -39,3 +39,5 @@ H2O Version 0.2.6
 	DROP ALL OBJECTS now correctly removes table meta-data from the System Table / Table Manager.
 H2O Version 0.3
 	Communication with databases now handled with JSON rather than RMI.
+H2O Version 0.4
+	JSON communication now stream-based, and tested.
