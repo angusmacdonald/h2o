@@ -10,11 +10,16 @@ package org.h2o.db.manager.interfaces;
 
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 
+import org.h2o.autonomic.numonic.interfaces.ICentralDataCollector;
+import org.h2o.autonomic.numonic.metric.IMetric;
+import org.h2o.autonomic.numonic.ranking.Requirements;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.ITableManagerRemote;
+import org.h2o.db.manager.SystemTable;
 import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.recovery.LocatorException;
 import org.h2o.db.manager.recovery.SystemTableAccessException;
@@ -282,5 +287,16 @@ public interface ISystemTableReference {
      * @param predecessorURL the instance that is suspected of failure.
      */
     public void suspectInstanceOfFailure(DatabaseID predecessorURL) throws RPCException, MovedException;
+
+    /**
+     * Calls the {@link ICentralDataCollector#getRankedListOfInstances(IMetric, Requirements)} method on the {@link SystemTable} class,
+     * but may also cache some results locally for a period of time.
+     * @param metric
+     * @param requirements
+     * @return
+     * @throws MovedException 
+     * @throws RPCException 
+     */
+    public Queue<DatabaseInstanceWrapper> getRankedListOfInstances(IMetric metric, Requirements requirements) throws RPCException, MovedException;
 
 }

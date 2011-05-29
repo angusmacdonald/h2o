@@ -51,7 +51,7 @@ public class SystemTableDataCollector implements ICentralDataCollector {
 
         if (metric == null || requirements == null) { throw new RPCException("Null values passed in call to getRankedListOfInstances: [metric=" + metric + ", requirements=" + requirements + "]"); }
 
-        final Queue<DatabaseInstanceWrapper> cachedVersion = getCachedVersion(metric, requirements);
+        final Queue<DatabaseInstanceWrapper> cachedVersion = getCachedVersion(metric, requirements, cache, timeOfLastUpdate);
 
         if (cachedVersion != null) {
             return cachedVersion;
@@ -60,7 +60,7 @@ public class SystemTableDataCollector implements ICentralDataCollector {
 
             final Queue<DatabaseInstanceWrapper> rankedMachines = MachineSorter.filterThenRankMachines(requirements, metric, monitoringData.values());
 
-            addToCache(rankedMachines, metric, requirements);
+            addToCache(rankedMachines, metric, requirements, cache);
 
             return rankedMachines;
         }
@@ -84,7 +84,7 @@ public class SystemTableDataCollector implements ICentralDataCollector {
      * @param requirements 
      * @return cache of the results of running the specified metric over monitoring data. Null if no cached version exists.
      */
-    private Queue<DatabaseInstanceWrapper> getCachedVersion(final IMetric metric, final Requirements requirements) {
+    public static Queue<DatabaseInstanceWrapper> getCachedVersion(final IMetric metric, final Requirements requirements, final Map<CacheKey, CacheValue> cache, final long timeOfLastUpdate) {
 
         final CacheKey key = new CacheKey(metric, requirements);
 
@@ -106,7 +106,7 @@ public class SystemTableDataCollector implements ICentralDataCollector {
      * @param metric the metric used to rank these machines.
      * @param requirements 
      */
-    private void addToCache(final Queue<DatabaseInstanceWrapper> rankedMachines, final IMetric metric, final Requirements requirements) {
+    public static void addToCache(final Queue<DatabaseInstanceWrapper> rankedMachines, final IMetric metric, final Requirements requirements, final Map<CacheKey, CacheValue> cache) {
 
         if (cache.size() > MAXIMUM_CACHE_SIZE) {
             cache.clear();
@@ -122,7 +122,7 @@ public class SystemTableDataCollector implements ICentralDataCollector {
      *
      * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
      */
-    private static class CacheKey {
+    public static class CacheKey {
 
         public final IMetric metric;
         public final Requirements requirements;
@@ -173,7 +173,7 @@ public class SystemTableDataCollector implements ICentralDataCollector {
      *
      * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
      */
-    private static class CacheValue {
+    public static class CacheValue {
 
         public final long timeOfRanking;
         public final Queue<DatabaseInstanceWrapper> rankedMachines;

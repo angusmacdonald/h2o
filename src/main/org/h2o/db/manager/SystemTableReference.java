@@ -28,10 +28,16 @@ package org.h2o.db.manager;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 
 import org.h2.engine.Database;
 import org.h2.table.ReplicaSet;
+import org.h2o.autonomic.numonic.SystemTableDataCollector;
+import org.h2o.autonomic.numonic.SystemTableDataCollector.CacheKey;
+import org.h2o.autonomic.numonic.SystemTableDataCollector.CacheValue;
+import org.h2o.autonomic.numonic.metric.IMetric;
+import org.h2o.autonomic.numonic.ranking.Requirements;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.ITableManagerRemote;
@@ -107,6 +113,18 @@ public class SystemTableReference implements ISystemTableReference {
      * The key of the System Table. This must be used in lookup operations to find the current location of the schema manager reference.
      */
     public final static IKey systemTableKey = keyFactory.generateKey("systemTable");
+
+    /*
+     * Caching of monitoring data.
+     */
+    /**
+     * Cache of previously computed rankings.
+     */
+    private final Map<CacheKey, CacheValue> cache = new HashMap<CacheKey, CacheValue>();
+
+    private long timeOfLastUpdate = 0;
+
+    private static final long MAXIMUM_AGE_OF_CACHE_CONTENTS = 10000;
 
     /*
      * GENERAL DATABASE.
@@ -530,6 +548,31 @@ public class SystemTableReference implements ISystemTableReference {
 
         systemTableWrapper.getSystemTable().suspectInstanceOfFailure(predecessorURL);
 
+    }
+
+    @Override
+    public Queue<DatabaseInstanceWrapper> getRankedListOfInstances(final IMetric metric, final Requirements requirements) throws RPCException, MovedException {
+
+        final Queue<DatabaseInstanceWrapper> cachedVersion = SystemTableDataCollector.getCachedVersion(metric, requirements, cache, 0);
+
+        if (cacheContentsArentTooOld() && cachedVersion != null) {
+            return cachedVersion;
+        }
+        else {
+
+            final Queue<DatabaseInstanceWrapper> rankedMachines = systemTableWrapper.getSystemTable().getRankedListOfInstances(metric, requirements);
+
+            SystemTableDataCollector.addToCache(rankedMachines, metric, requirements, cache);
+            timeOfLastUpdate = System.currentTimeMillis();
+
+            return rankedMachines;
+        }
+
+    }
+
+    private boolean cacheContentsArentTooOld() {
+
+        return timeOfLastUpdate + MAXIMUM_AGE_OF_CACHE_CONTENTS > System.currentTimeMillis();
     }
 
 }
