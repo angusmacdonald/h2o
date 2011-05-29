@@ -48,7 +48,7 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
     /**
      * Collects monitoring data and sends it to the System Table when enough has been collected.
      */
-    private final ILocalDataCollector resourceRanker;
+    private final ILocalDataCollector localDataCollector;
 
     /**
      * The name of the file system the database is running on. For example, "C:\" on windows.
@@ -103,7 +103,7 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
         this.fileSystem = fileSystem;
 
         thresholdChecker = new ThresholdChecker(thresholds);
-        resourceRanker = new LocalDataCollector(localDatabaseID, systemTable, false, db);
+        localDataCollector = new LocalDataCollector(localDatabaseID, systemTable, false, db);
     }
 
     public NumonicReporter(final String numonicPropertiesFile, final String fileSystem, final DatabaseID localDatabaseID, final ISystemTableReference systemTable, final ISystemStatus db, final String thresholdPropertiesFile) throws IOException {
@@ -129,7 +129,7 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
         if (fileSystem != null) {
             for (final SingleSummary<FileSystemData> specificFsSummary : fileSystemSummary.getSummaries()) {
                 if (thisIsPrimaryFileSystem(specificFsSummary)) {
-                    resourceRanker.setFsMonitoringEnabled();
+                    localDataCollector.setFsMonitoringEnabled();
                     collectFileSystemData(specificFsSummary);
                     break;
                 }
@@ -145,7 +145,7 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
     public void collectFileSystemData(final SingleSummary<FileSystemData> specificFsSummary) {
 
         thresholdChecker.analyseNewMonitoringData(specificFsSummary);
-        resourceRanker.collateRankingData(specificFsSummary);
+        localDataCollector.collateRankingData(specificFsSummary);
     }
 
     /**
@@ -162,13 +162,13 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
     public void reportMachineUtilData(final SingleSummary<MachineUtilisationData> summary) throws Exception {
 
         thresholdChecker.analyseNewMonitoringData(summary);
-        resourceRanker.collateRankingData(summary);
+        localDataCollector.collateRankingData(summary);
     }
 
     @Override
     public void reportSystemInfo(final SystemInfoData staticSysInfoData) throws Exception {
 
-        resourceRanker.setStaticSystemInfo(staticSysInfoData);
+        localDataCollector.setStaticSystemInfo(staticSysInfoData);
     }
 
     /* (non-Javadoc)
@@ -178,6 +178,26 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
     public void addObserver(final Observer observer) {
 
         thresholdChecker.addObserver(observer);
+    }
+
+    @Override
+    public void forceSendMonitoringData() {
+
+        //Start call in new thread to prevent blocking on other operations that were taking place while the System
+        //Table's location was changed (e.g. queries).
+
+        class ForceThread extends Thread {
+
+            @Override
+            public void run() {
+
+                localDataCollector.forceSendMonitoringData();
+            }
+        };
+
+        final ForceThread force = new ForceThread();
+        force.start();
+
     }
 
     @Override

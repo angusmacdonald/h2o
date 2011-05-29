@@ -22,6 +22,14 @@ public interface INumonic {
     public abstract void addObserver(final Observer observer);
 
     /**
+     * Tell the monitor to immediately send monitoring data to the central collector (e.g. the System Table), rather than wait for
+     * new monitoring data to become available.
+     * 
+     * <p>This operation is performed in a new thread to stop this call blocking other operations.
+     */
+    public void forceSendMonitoringData();
+
+    /**
      * Stop the numonic monitor.
      */
     public void shutdown();

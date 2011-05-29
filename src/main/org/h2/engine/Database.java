@@ -1053,7 +1053,7 @@ public class Database implements DataHandler, Observer, ISystemStatus {
                 createH2OTables(false, databaseExists);
             }
             catch (final Exception e) {
-                Diagnostic.trace(DiagnosticLevel.FULL, "error creating H2O tables");
+                ErrorHandling.exceptionError(e, "Error creating H2O tables.");
             }
 
             // called here, because at this point the system is ready to replicate TM state.
@@ -3341,7 +3341,7 @@ public class Database implements DataHandler, Observer, ISystemStatus {
         Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.stachord");
         Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.nds");
         Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.numonic");
-        Diagnostic.addIgnoredPackage("org.h2o.autonomic.numonic.ranking");
+        // Diagnostic.addIgnoredPackage("org.h2o.autonomic.numonic.ranking");
         Diagnostic.setTimestampFlag(true);
         Diagnostic.setTimestampFormat(new SimpleDateFormat("HH:mm:ss:SSS "));
         Diagnostic.setTimestampDelimiterFlag(false);

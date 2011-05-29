@@ -24,6 +24,15 @@ public interface ILocalDataCollector {
      */
     public void setStaticSystemInfo(final SystemInfoData staticSysInfoData);
 
+    /**
+     * Classes implementing this interface will send monitoring data when they are ready to do so (such as when they have collated enough new data. This
+     * method bypasses this process and forces the class to send monitoring data immediately. It will typically be used when the System Table has changed location.
+     */
+    public void forceSendMonitoringData();
+
+    /**
+     * Tell the data collector that this instance is performing file system monitoring.
+     */
     public void setFsMonitoringEnabled();
 
 }

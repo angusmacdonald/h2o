@@ -370,7 +370,9 @@ public class SystemTable implements ISystemTableMigratable {
     public Queue<DatabaseInstanceWrapper> getRankedListOfInstances(final IMetric metric, final Requirements requirements) throws RPCException, MovedException {
 
         preMethodTest();
+
         return SystemTable.removeInactiveInstances(monitoring.getRankedListOfInstances(metric, requirements), monitoring, getDatabaseInstances());
+
     }
 
     public static Queue<DatabaseInstanceWrapper> removeInactiveInstances(final Queue<DatabaseInstanceWrapper> rankedListOfInstances, final ICentralDataCollector monitoring, final Set<DatabaseInstanceWrapper> activeDatabaseInstances) throws RPCException, MovedException {

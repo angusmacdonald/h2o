@@ -173,6 +173,7 @@ public class SystemTableReference implements ISystemTableReference {
 
             try {
                 systemTableWrapper = systemTableRecovery.get();
+                forceResendMonitoringData();
                 foundSystemTable = true; // would throw an exception if it didn't.
             }
             catch (final LocatorException e1) {
@@ -216,6 +217,7 @@ public class SystemTableReference implements ISystemTableReference {
 
         try {
             systemTableWrapper = systemTableRecovery.get();
+            forceResendMonitoringData();
             return systemTableWrapper.getSystemTable();
         }
         catch (final LocatorException e) {
@@ -225,6 +227,13 @@ public class SystemTableReference implements ISystemTableReference {
         catch (final SystemTableAccessException e) {
 
             throw new SQLException("Couldn't create System Table.");
+        }
+    }
+
+    private void forceResendMonitoringData() {
+
+        if (db.getNumonic() != null) {
+            db.getNumonic().forceSendMonitoringData();
         }
     }
 
@@ -365,6 +374,7 @@ public class SystemTableReference implements ISystemTableReference {
                 try {
                     if (systemTableWrapper.getSystemTable() == null) {
                         systemTableWrapper = systemTableRecovery.get();
+                        forceResendMonitoringData();
                     }
                     else {
 
@@ -511,7 +521,7 @@ public class SystemTableReference implements ISystemTableReference {
     public ISystemTableMigratable failureRecovery() throws LocatorException, SystemTableAccessException {
 
         systemTableWrapper = systemTableRecovery.get();
-
+        forceResendMonitoringData();
         return systemTableWrapper.getSystemTable();
     }
 

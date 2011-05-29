@@ -109,6 +109,7 @@ public class MachineRanker implements Comparator<MachineMonitoringData> {
         final double normalized_mem_weight = normalize(mem_value, maxima.getMemMax(), 0);
 
         // Value of resource = normalised power of resource * probability resource is available * importance of this resource to request.
+
         final double cpuMetricValue = normalized_cpu_weight * (1 - machineData.getCpuUserTotal()) * metric.getCpuUtilization();
 
         final double memMetricValue = normalized_mem_weight * (1 - machineData.getMemoryUtilization()) * metric.getMemoryUtilization();

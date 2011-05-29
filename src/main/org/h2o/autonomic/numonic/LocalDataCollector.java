@@ -35,7 +35,7 @@ public class LocalDataCollector implements ILocalDataCollector {
     /**
      * Where data will be sent.
      */
-    private final ISystemTableReference systemTable;
+    private final ISystemTableReference systemTableRef;
 
     /*
      * 
@@ -54,6 +54,9 @@ public class LocalDataCollector implements ILocalDataCollector {
      * sent to the system table.
      */
     private FileSystemData fsData = null;
+
+    private boolean sentMachineUtilData = false;
+    private boolean sentFsData = false;
 
     /**
      * The number of measurements taken as part of each summary.
@@ -74,7 +77,7 @@ public class LocalDataCollector implements ILocalDataCollector {
     public LocalDataCollector(final DatabaseID localDatabaseID, final ISystemTableReference systemTable, final boolean fsMonitoringEnabled, final ISystemStatus sysStatus) {
 
         this.localDatabaseID = localDatabaseID;
-        this.systemTable = systemTable;
+        systemTableRef = systemTable;
         this.fsMonitoringEnabled = fsMonitoringEnabled;
         this.sysStatus = sysStatus;
     }
@@ -85,25 +88,35 @@ public class LocalDataCollector implements ILocalDataCollector {
     @Override
     public void collateRankingData(final SingleSummary<? extends Data> summary) {
 
-        if (machineUtilData == null && summary.getMax() instanceof MachineUtilisationData) {
+        if (summary.getMax() instanceof MachineUtilisationData) {
             machineUtilData = (MachineUtilisationData) summary.getAverage();
+            sentMachineUtilData = false;
             measurements_before_summary = summary.getNumberOfMeasurements();
         }
-        else if (fsData == null && summary.getMax() instanceof FileSystemData) {
+        else if (summary.getMax() instanceof FileSystemData) {
             fsData = (FileSystemData) summary.getAverage();
+            sentFsData = false;
         }
 
         if (staticSysInfoData == null) {
             ErrorHandling.error("No static system info has been received from Numonic.");
         }
 
-        if (sysStatus.isConnected() && machineUtilData != null && (fsData != null || !fsMonitoringEnabled)) {
+        if (sysStatus.isConnected() && !sentMachineUtilData && machineUtilData != null && (!sentFsData || !fsMonitoringEnabled)) {
             sendDataToSystemTable(measurements_before_summary, staticSysInfoData, machineUtilData, fsData);
 
-            machineUtilData = null;
-            fsData = null;
+            sentMachineUtilData = true;
+            sentFsData = true;
         }
 
+    }
+
+    @Override
+    public void forceSendMonitoringData() {
+
+        if (machineUtilData != null) {
+            sendDataToSystemTable(measurements_before_summary, staticSysInfoData, machineUtilData, fsData);
+        }
     }
 
     /**
@@ -119,7 +132,7 @@ public class LocalDataCollector implements ILocalDataCollector {
         final MachineMonitoringData monitoringData = new MachineMonitoringData(localDatabaseID, staticSysInfoData, machineUtilData, fsData, measurements_before_summary);
 
         try {
-            systemTable.getSystemTable().addMonitoringSummary(monitoringData);
+            systemTableRef.getSystemTable().addMonitoringSummary(monitoringData);
         }
         catch (final Exception e) {
             ErrorHandling.errorNoEvent("Failed to send monitoring results to the System Table.");
