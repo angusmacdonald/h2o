@@ -114,9 +114,9 @@ public class LocalDataCollector implements ILocalDataCollector {
     @Override
     public void forceSendMonitoringData() {
 
-        if (machineUtilData != null) {
-            sendDataToSystemTable(measurements_before_summary, staticSysInfoData, machineUtilData, fsData);
-        }
+        //        if (sysStatus.isConnected() && machineUtilData != null) {
+        //            sendDataToSystemTable(measurements_before_summary, staticSysInfoData, machineUtilData, fsData);
+        //        }
     }
 
     /**
