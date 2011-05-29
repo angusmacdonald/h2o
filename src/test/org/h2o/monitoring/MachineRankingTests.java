@@ -309,4 +309,50 @@ public class MachineRankingTests {
         assertEquals(m2.getDatabaseID(), rankedInstances.remove().getURL());
     }
 
+    /**
+     * Tests that instances for which there is no monitoring information are added to the end of the queue.
+     * 
+     * <p>Requirements: none.
+     * <p>Metric: createReplica.metric.
+     */
+    @Test
+    public void addUnomonitoredInstances() throws Exception {
+
+        //Ranking setup.
+        final IMetric metric = new CreateReplicaMetric();
+        final Requirements requirements = new Requirements(0, 0, 0, 0);
+        final SystemTableDataCollector c = new SystemTableDataCollector();
+
+        //Machines
+        final MachineMonitoringData m1 = ResourceSpec.generateMonitoringData("jdbc:h2o:mem:one", 10, 10, 10, 0.3, 0.2, 0.2);
+        final MachineMonitoringData m2 = ResourceSpec.generateMonitoringData("jdbc:h2o:mem:two", 9, 9, 9, 0.3, 0.2, 0.2);
+        final MachineMonitoringData m3 = ResourceSpec.generateMonitoringData("jdbc:h2o:mem:three", 8, 8, 8, 0.3, 0.2, 0.2);
+
+        final MachineMonitoringData m4 = ResourceSpec.generateMonitoringData("jdbc:h2o:mem:four", 8, 8, 8, 0.3, 0.2, 0.2);
+
+        c.addMonitoringSummary(m1);
+        c.addMonitoringSummary(m2);
+        c.addMonitoringSummary(m3);
+
+        final Set<DatabaseInstanceWrapper> activeInstances = new HashSet<DatabaseInstanceWrapper>();
+        activeInstances.add(m1.getDatabaseWrapper());
+        activeInstances.add(m2.getDatabaseWrapper());
+
+        //Tests
+        final Queue<DatabaseInstanceWrapper> rankedInstances = SystemTable.removeInactiveInstances(c.getRankedListOfInstances(metric, requirements), c, activeInstances);
+
+        assertEquals(2, rankedInstances.size());
+
+        final Set<DatabaseInstanceWrapper> unMonitored = new HashSet<DatabaseInstanceWrapper>();
+        unMonitored.add(m4.getDatabaseWrapper());
+
+        final Queue<DatabaseInstanceWrapper> unMonitoringInstancesIncluded = SystemTable.addUnMonitoredMachinesToEndOfQueue(rankedInstances, unMonitored);
+
+        assertEquals(3, unMonitoringInstancesIncluded.size());
+
+        assertEquals(m1.getDatabaseID(), unMonitoringInstancesIncluded.remove().getURL());
+        assertEquals(m2.getDatabaseID(), unMonitoringInstancesIncluded.remove().getURL());
+        assertEquals(m4.getDatabaseID(), unMonitoringInstancesIncluded.remove().getURL());
+    }
+
 }

@@ -1063,6 +1063,7 @@ public class Database implements DataHandler, Observer, ISystemStatus {
 
             // called here, because at this point the system is ready to replicate TM state.
             databaseRemote.setAsReadyToReplicateMetaData(metaDataReplicaManager);
+            metaDataReplicaManager.replicateMetaDataIfPossible(systemTableRef, false);
         }
         else if (!isManagementDB() && databaseExists && systemTableRef.isSystemTableLocal()) {
             /*
@@ -1073,7 +1074,7 @@ public class Database implements DataHandler, Observer, ISystemStatus {
                 systemTableRef.getSystemTable().recreateInMemorySystemTableFromLocalPersistedState();
                 // called here, because at this point the system is ready to replicate TM state.
                 databaseRemote.setAsReadyToReplicateMetaData(metaDataReplicaManager);
-
+                metaDataReplicaManager.replicateMetaDataIfPossible(systemTableRef, false);
                 Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Re-created System Table state.");
             }
             catch (final Exception e) {

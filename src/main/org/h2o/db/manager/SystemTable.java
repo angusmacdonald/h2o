@@ -371,8 +371,25 @@ public class SystemTable implements ISystemTableMigratable {
 
         preMethodTest();
 
-        return SystemTable.removeInactiveInstances(monitoring.getRankedListOfInstances(metric, requirements), monitoring, getDatabaseInstances());
+        final Queue<DatabaseInstanceWrapper> rankedInstances = monitoring.getRankedListOfInstances(metric, requirements);
+        final Queue<DatabaseInstanceWrapper> inactiveInstancesRemoved = SystemTable.removeInactiveInstances(rankedInstances, monitoring, getDatabaseInstances());
+        final Queue<DatabaseInstanceWrapper> unMonitoredInstancesAdded = SystemTable.addUnMonitoredMachinesToEndOfQueue(inactiveInstancesRemoved, getDatabaseInstances());
 
+        return unMonitoredInstancesAdded;
+
+    }
+
+    public static Queue<DatabaseInstanceWrapper> addUnMonitoredMachinesToEndOfQueue(final Queue<DatabaseInstanceWrapper> rankedActiveInstances, final Set<DatabaseInstanceWrapper> allInstances) {
+
+        if (rankedActiveInstances.size() == allInstances.size()) { return rankedActiveInstances; }
+
+        for (final DatabaseInstanceWrapper instance : allInstances) {
+            if (!rankedActiveInstances.contains(instance)) {
+                rankedActiveInstances.add(instance);
+            }
+        }
+
+        return rankedActiveInstances;
     }
 
     public static Queue<DatabaseInstanceWrapper> removeInactiveInstances(final Queue<DatabaseInstanceWrapper> rankedListOfInstances, final ICentralDataCollector monitoring, final Set<DatabaseInstanceWrapper> activeDatabaseInstances) throws RPCException, MovedException {

@@ -331,14 +331,12 @@ public class FailureTests extends MultiProcessTestBase {
         sleep(5000);
 
         assertTestTableExistsLocally(connections[1], 2);
+        assertTestTableExistsLocally(connections[0], 2);
 
-        /*
-         * Kill off the System Table process.
-         */
         killDatabase(dbs[1]);
 
         sleep(10000);
-
+        assertTestTableExists(connections[0], 2, false);
         assertTestTableExists(connections[2], 2, false);
     }
 

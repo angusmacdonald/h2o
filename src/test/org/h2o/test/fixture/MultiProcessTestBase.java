@@ -128,6 +128,7 @@ public class MultiProcessTestBase extends TestBase {
             properties.setProperty("descriptor", AllTests.TEST_DESCRIPTOR_FILE);
             properties.setProperty("databaseName", "testDB");
             properties.setProperty("diagnosticLevel", "FULL");
+            properties.setProperty("NUMONIC_MONITORING_ENABLED", "false");
 
             properties.saveAndClose();
         }

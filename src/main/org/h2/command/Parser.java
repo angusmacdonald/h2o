@@ -4964,7 +4964,6 @@ public class Parser {
                     }
                     catch (final RPCException e3) {
                         // Only an error that affects the diagnostic message, so we effectively ignore it.
-                        ErrorHandling.exceptionError(e2, "Failed to recreate or contact recreated Table Manager.");
                     }
 
                     throw new SQLException("Failed to recreate or contact recreated Table Manager: " + e2.getMessage());
