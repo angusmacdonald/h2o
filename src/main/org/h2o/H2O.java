@@ -254,6 +254,12 @@ public class H2O {
 
         final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
 
+        if (arguments.size() == 0) {
+            arguments.put("-n", "test");
+            arguments.put("-i", "testDB");
+            arguments.put("-w", "9898");
+        }
+
         final String databaseSystemName = processDatabaseSystemName(arguments.get("-n"));
         final String databaseInstanceIdentifier = processDatabaseInstanceName(arguments.get("-i"));
         final String databaseDirectoryPath = processDatabaseDirectoryPath(arguments.get("-f"));
