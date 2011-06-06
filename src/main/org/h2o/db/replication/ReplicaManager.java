@@ -284,7 +284,10 @@ public class ReplicaManager {
                          */
                         ErrorHandling.errorNoEvent("Replica will not commit because update IDs did not match. Expected: " + expectedUpdateID + "; Actual current: " + currentID);
 
-                        if (allReplicas.size() == 1) { throw new SQLException("Update IDs don't match on table " + tableInfo + ". There is only one replica so this shouldn't happen (i.e. replication is synchronous). Expected: " + expectedUpdateID + "; Actual current: " + currentID); }
+                        if (allReplicas.size() == 1) {
+                            System.out.println("");
+                            throw new SQLException("Update IDs don't match on table " + tableInfo + ". There is only one replica so this shouldn't happen (i.e. replication is synchronous). Expected: " + expectedUpdateID + "; Actual current: " + currentID);
+                        }
                     }
 
                 } // In many cases it won't contain this key, but another table (part of the same transaction) was on this machine.
