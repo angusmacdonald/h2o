@@ -219,7 +219,7 @@ public class TableProxyManager {
     public void finishTransaction(final boolean commit, final boolean h2oCommit, final Database db) throws SQLException {
 
         try {
-            final Map<DatabaseInstanceWrapper, Integer> replicasInvolvedInTransaction = getReplicasFromTableProxies();
+            final Map<DatabaseInstanceWrapper, Integer> replicasInvolvedInTransaction = getReplicasFromTableProxies(); //TODO preserve the update id's from 'allreplicas'
 
             if (getTableManagersThatHoldLocks().size() == 0 && replicasInvolvedInTransaction.size() > 0 && h2oCommit) {
 
@@ -267,10 +267,33 @@ public class TableProxyManager {
 
     private Map<DatabaseInstanceWrapper, Integer> getReplicasFromTableProxies() {
 
+        /*
+         * This method exists because when the finishTransaction method is called it is possible that the allReplicas
+         * map contains replicas that are no longer active, and are consequently not involved in the transaction. If these replicas are
+         * kept in the map then the commit call to them will cause the entire transaction to rollback.
+         * 
+         * To fix this, the set of replicas actually used in the transaction is obtained (through the first loop in this method) from every
+         * table proxy. However, the update IDs associated with these values may have changed, so the second loop in this method updates the update IDs
+         * for each replica to match the correct update ids maintained by this class.
+         * 
+         * As a small efficiency improvement the second loop is not executed if 'replicaLocations' is the same size as 'allReplicas', because this could
+         * only happen if no replicas were removed from 'allReplicas' during the course of the transaction.
+         * 
+         * - 01/06/11 (Angus).
+         */
+
         final Map<DatabaseInstanceWrapper, Integer> replicaLocations = new HashMap<DatabaseInstanceWrapper, Integer>();
 
         for (final TableProxy proxy : tableProxies.values()) {
             replicaLocations.putAll(proxy.getAllReplicas());
+        }
+
+        if (replicaLocations.size() == allReplicas.size()) { return allReplicas; }
+
+        for (final Entry<DatabaseInstanceWrapper, Integer> proxyReplicaLocation : allReplicas.entrySet()) {
+            if (replicaLocations.containsKey(proxyReplicaLocation.getKey())) {
+                replicaLocations.put(proxyReplicaLocation.getKey(), proxyReplicaLocation.getValue());
+            }
         }
 
         return replicaLocations;
