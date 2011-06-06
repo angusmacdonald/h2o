@@ -284,4 +284,18 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
         throw new Exception("This method shouldn't be called. It isn't implemented in H2O."); //$NON-NLS-1$
     }
 
+    @Override
+    public List<String> getKnownHosts() throws Exception {
+
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public List<SystemInfoData> getSystemInfo() throws Exception {
+
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }
