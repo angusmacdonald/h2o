@@ -263,7 +263,7 @@ public class H2O {
 
         final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
 
-        if (arguments.size() == 0) {
+        if (arguments.size() == 0 || arguments.size() == 1 && arguments.containsKey("-p")) {
             arguments.put("-n", "test");
             arguments.put("-i", "testDB");
             arguments.put("-w", "9898");
