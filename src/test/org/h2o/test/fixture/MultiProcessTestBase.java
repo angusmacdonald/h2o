@@ -616,7 +616,7 @@ public class MultiProcessTestBase extends TestBase {
 
         args.add("-n" + databaseName);
         args.add("-i" + databaseInstanceName);
-        args.add("-p" + databaseDirectoryPath);
+        args.add("-f" + databaseDirectoryPath);
         args.add("-d" + databaseDescriptorLocation);
 
         try {
@@ -642,6 +642,7 @@ public class MultiProcessTestBase extends TestBase {
     protected void createConnectionsToDatabase(final int i) throws StartupException {
 
         connections[i] = createConnectionToDatabase(fullDbName[i]);
+
     }
 
     /**

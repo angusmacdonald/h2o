@@ -2,6 +2,7 @@ package org.h2o.eval.interfaces;
 
 import java.rmi.RemoteException;
 
+import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.ShutdownException;
 import org.h2o.util.exceptions.StartupException;
 
@@ -20,11 +21,11 @@ public interface IWorker {
 
     /**
      * Start a new H2O instance which will connect to the database system described by the database descriptor file provided.
-     * @param descriptorFileLocation Location of the database descriptor file (can be a URI or a local file system path).
+     * @param descriptorFileLocation Serialized version of the descriptor file.
      * @return true if an H2O instance was successfully started.
      * @throws StartupException If the instance couln't be started.
      */
-    public void startH2OInstance(final String descriptorFileLocation) throws RemoteException, StartupException;
+    public void startH2OInstance(final H2OPropertiesWrapper descriptorFileLocation) throws RemoteException, StartupException;
 
     /**
      * Gracefully shutdown the H2O instance that this worker is running (by sending it a shutdown request).
@@ -46,8 +47,9 @@ public interface IWorker {
 
     /**
      * Delete any state that was created by H2O's instances previously run by this worker.
+     * @throws ShutdownException If database state could not be deleted.
      */
-    public void deleteH2OInstanceState() throws RemoteException;
+    public void deleteH2OInstanceState() throws RemoteException, ShutdownException;
 
     /*
      * Workload-related methods.

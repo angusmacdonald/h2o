@@ -30,6 +30,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -48,7 +49,9 @@ import uk.ac.standrews.cs.numonic.util.IPropertiesWrapper;
  *
  * @author Angus Macdonald (angus AT cs.st-andrews.ac.uk)
  */
-public class H2OPropertiesWrapper implements IPropertiesWrapper {
+public class H2OPropertiesWrapper implements IPropertiesWrapper, Serializable {
+
+    private static final long serialVersionUID = 836133291520954571L;
 
     private final Properties properties;
     private final String propertiesFileLocation;
@@ -97,6 +100,7 @@ public class H2OPropertiesWrapper implements IPropertiesWrapper {
      *
      * @throws IOException if the properties file does not exist or couldn't be loaded.
      */
+    @Override
     public synchronized void loadProperties() throws IOException {
 
         if (propertiesFileLocation.startsWith("http:")) { // Parse URL, request file from webpage.
@@ -140,6 +144,7 @@ public class H2OPropertiesWrapper implements IPropertiesWrapper {
      *
      * @throws IOException if an error occurs while creating a file
      */
+    @Override
     public synchronized void createNewFile() throws IOException {
 
         removePropertiesFile();
@@ -164,6 +169,7 @@ public class H2OPropertiesWrapper implements IPropertiesWrapper {
      * @param key a key
      * @return the corresponding property
      */
+    @Override
     public synchronized String getProperty(final String key) {
 
         return properties.getProperty(key);
@@ -175,6 +181,7 @@ public class H2OPropertiesWrapper implements IPropertiesWrapper {
      * @param key a key
      * @return true if the property for the key is true
      */
+    @Override
     public synchronized boolean isEnabled(final String key) {
 
         return TRUE.equals(getProperty(key));
@@ -186,6 +193,7 @@ public class H2OPropertiesWrapper implements IPropertiesWrapper {
      * @param key a key
      * @param value the new value to be associated with the key
      */
+    @Override
     public synchronized void setProperty(final String key, final String value) {
 
         properties.setProperty(key, value);
@@ -196,6 +204,7 @@ public class H2OPropertiesWrapper implements IPropertiesWrapper {
      *
      * @param propertyComment the comment
      */
+    @Override
     public synchronized void setPropertyComment(final String propertyComment) {
 
         comment = propertyComment;
@@ -213,6 +222,7 @@ public class H2OPropertiesWrapper implements IPropertiesWrapper {
      *
      * @throws IOException if the file couldn't be saved.
      */
+    @Override
     public synchronized void saveAndClose() throws IOException {
 
         FileOutputStream outputStream = null;
@@ -230,11 +240,27 @@ public class H2OPropertiesWrapper implements IPropertiesWrapper {
         }
     }
 
+    public synchronized void saveAndClose(final FileOutputStream outputStream) throws IOException {
+
+        try {
+            properties.store(outputStream, comment);
+        }
+        catch (final FileNotFoundException e) {
+            ErrorHandling.exceptionError(e, "Unexpected file not found exception");
+        }
+        finally {
+            if (outputStream != null) {
+                outputStream.close();
+            }
+        }
+    }
+
     /**
      * Returns a set of the keys in this properties file.
      *
      * @return a set of the keys in this properties file
      */
+    @Override
     public synchronized Set<Object> getKeys() {
 
         return properties.keySet();
