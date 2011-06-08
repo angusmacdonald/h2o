@@ -40,6 +40,7 @@ import java.util.Random;
 import java.util.Set;
 
 import org.h2.engine.Constants;
+import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.DatabaseInstance;
@@ -148,6 +149,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
     private DatabaseID predecessorURL;
 
+    private final Database db;
+
     public static final String REGISTRY_PREFIX = "H2O_DATABASE_INSTANCE_";
 
     /**
@@ -165,10 +168,11 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         currentPort = port;
     }
 
-    public ChordRemote(final DatabaseID localMachineLocation, final ISystemTableReference systemTableRef) {
+    public ChordRemote(final DatabaseID localMachineLocation, final ISystemTableReference systemTableRef, final Database db) {
 
         this.systemTableRef = systemTableRef;
         this.localMachineLocation = localMachineLocation;
+        this.db = db;
     }
 
     @Override
@@ -526,13 +530,13 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                     }
                     catch (final Exception e) {
 
-                        ErrorHandling.errorNoEvent("Couldn't connect to database instance with ID: " + applicationRegistryMap.getKey() + " on server port " + applicationRegistryMap.getValue());
+                        ErrorHandling.exceptionError(e, "Couldn't connect to database instance with ID: " + applicationRegistryMap.getKey() + " on server port " + applicationRegistryMap.getValue());
                         //Try again if the database is not active.
                     }
                 }
             }
 
-            ErrorHandling.errorNoEvent("Failed to find an active instance on the machine specified: " + hostname + ". Number of application registry entries: " + serverLocations.size());
+            ErrorHandling.errorNoEvent(localMachineLocation + ": Failed to find an active instance on the machine specified: " + hostname + ". Number of application registry entries: " + serverLocations.size());
 
             return null;
         }
@@ -559,7 +563,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
         try {
             final IRegistry registry = RegistryFactory.FACTORY.getRegistry(true);
-            registry.rebind(getApplicationRegistryIDForLocalDatabase(), localMachineLocation.getRMIPort());
+            registry.rebind(getApplicationRegistryIDForLocalDatabase(), db.getDatabaseInstanceServer().getAddress().getPort());
         }
         catch (final Exception e) {
             ErrorHandling.exceptionError(e, "Error trying to recreate registry and adding the local database instance port.");
@@ -743,7 +747,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                 systemTableRef.setSystemTableURL(actualSystemTableLocation);
             }
             else {
-                ErrorHandling.hardError("Couldn't find another lookup instance on startup.");
+                ErrorHandling.hardError(localMachineLocation + ": Couldn't find another lookup instance on startup. Looking for remote host at: " + remoteHostname);
             }
         }
         catch (final RPCException e) {

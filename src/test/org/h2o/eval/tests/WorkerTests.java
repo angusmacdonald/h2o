@@ -1,5 +1,7 @@
 package org.h2o.eval.tests;
 
+import static org.junit.Assert.assertFalse;
+
 import org.h2.tools.DeleteDbFiles;
 import org.h2o.H2OLocator;
 import org.h2o.eval.interfaces.IWorker;
@@ -8,12 +10,18 @@ import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.StartupException;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class WorkerTests {
 
+    private IWorker worker = null;
+    private IWorker worker2 = null;
+
     @Before
     public void setUp() throws Exception {
+
+        DeleteDbFiles.execute(EvaluationWorker.PATH_TO_H2O_DATABASE, null, true);
 
     }
 
@@ -22,6 +30,21 @@ public class WorkerTests {
 
         DeleteDbFiles.execute(EvaluationWorker.PATH_TO_H2O_DATABASE, null, true);
 
+        if (worker != null) {
+            try {
+                worker.terminateH2OInstance();
+            }
+            catch (final Exception e) { //Will happen if an H2O instance isn't running.
+            }
+        }
+
+        if (worker2 != null) {
+            try {
+                worker2.terminateH2OInstance();
+            }
+            catch (final Exception e) { //Will happen if an H2O instance isn't running.
+            }
+        }
     }
 
     /**
@@ -31,7 +54,7 @@ public class WorkerTests {
     @Test
     public void testStartupH2O() throws Exception {
 
-        final IWorker worker = new EvaluationWorker();
+        worker = new EvaluationWorker();
 
         worker.deleteH2OInstanceState();
 
@@ -54,10 +77,10 @@ public class WorkerTests {
     @Test
     public void testStartupMultipleWorkers() throws Exception {
 
-        final IWorker worker1 = new EvaluationWorker();
-        final IWorker worker2 = new EvaluationWorker();
+        worker = new EvaluationWorker();
+        worker2 = new EvaluationWorker();
 
-        worker1.deleteH2OInstanceState();
+        worker.deleteH2OInstanceState();
         worker2.deleteH2OInstanceState();
 
         final H2OLocator locator = new H2OLocator("evaluationDB", 34000, true, EvaluationWorker.PATH_TO_H2O_DATABASE);
@@ -67,10 +90,11 @@ public class WorkerTests {
         final H2OPropertiesWrapper descriptorFile = H2OPropertiesWrapper.getWrapper(databaseDescriptorLocation);
         descriptorFile.loadProperties();
 
-        worker1.startH2OInstance(descriptorFile);
+        worker.startH2OInstance(descriptorFile);
+        Thread.sleep(5000);
         worker2.startH2OInstance(descriptorFile);
 
-        worker1.terminateH2OInstance();
+        worker.terminateH2OInstance();
         worker2.terminateH2OInstance();
     }
 
@@ -78,10 +102,11 @@ public class WorkerTests {
      * Test that the worker prevents multiple instances of the H2O process from being started at once.
      * @throws Exception Expect a startup exception to be thrown attempting to start the second instance.
      */
+    @Ignore
     @Test(expected = StartupException.class)
     public void startInstanceTwice() throws Exception {
 
-        final IWorker worker = new EvaluationWorker();
+        worker = new EvaluationWorker();
 
         worker.deleteH2OInstanceState();
 
@@ -96,5 +121,33 @@ public class WorkerTests {
         worker.startH2OInstance(descriptorFile);
 
         worker.terminateH2OInstance();
+    }
+
+    /**
+     * Tests the ability to tell the database to shut down.
+     * @throws Exception Not expected.
+     */
+    @Ignore
+    @Test
+    public void testStop() throws Exception {
+
+        worker = new EvaluationWorker();
+
+        worker.deleteH2OInstanceState();
+
+        final H2OLocator locator = new H2OLocator("evaluationDB", 34000, true, EvaluationWorker.PATH_TO_H2O_DATABASE);
+
+        final String databaseDescriptorLocation = locator.start();
+
+        final H2OPropertiesWrapper descriptorFile = H2OPropertiesWrapper.getWrapper(databaseDescriptorLocation);
+        descriptorFile.loadProperties();
+
+        worker.startH2OInstance(descriptorFile);
+
+        worker.stopH2OInstance();
+
+        Thread.sleep(5000); //wait a while for the H2O instance to shutdown.
+
+        assertFalse(worker.isH2OInstanceRunning());
     }
 }

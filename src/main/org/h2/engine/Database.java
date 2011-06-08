@@ -380,7 +380,7 @@ public class Database implements DataHandler, Observer, ISystemStatus {
 
         compareMode = new CompareMode(null, null, 0);
         systemTableRef = new SystemTableReference(this);
-        databaseRemote = new ChordRemote(localMachineLocation, systemTableRef);
+        databaseRemote = new ChordRemote(localMachineLocation, systemTableRef, this);
 
         persistent = ci.isPersistent();
         filePasswordHash = ci.getFilePasswordHash();
@@ -1090,11 +1090,9 @@ public class Database implements DataHandler, Observer, ISystemStatus {
 
         database_instance_server = new DatabaseInstanceServer(getLocalDatabaseInstance(), preferredDatabaseInstancePort, getRemoteInterface().getApplicationRegistryIDForLocalDatabase());
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, getID() + ": Database instance server started on port " + preferredDatabaseInstancePort);
-
         try {
             database_instance_server.start(true); // true means: allow registry entry for this database ID to be overwritten
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Database Instance Server started for database " + getID() + " on port " + preferredDatabaseInstancePort + ".");
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Database Instance Server started for database " + getID() + " on port " + preferredDatabaseInstancePort + ".");
         }
         catch (final Exception e) {
             ErrorHandling.hardExceptionError(e, "Couldn't start database instance server.");

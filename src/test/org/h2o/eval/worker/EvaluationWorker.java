@@ -80,9 +80,76 @@ public class EvaluationWorker implements IWorker {
 
         connection = MultiProcessTestBase.createConnectionToDatabase(connectionString);
 
-        checkDatabaseIsActive(); //throws StartupException if it isn't.
+        final boolean isRunning = checkDatabaseIsActive();
+
+        if (!isRunning) { throw new StartupException("New H2O process couldn't be contacted once it had been created."); }
 
     }
+
+    @Override
+    public void stopH2OInstance() throws RemoteException, ShutdownException {
+
+        if (h2oProcess == null) { throw new ShutdownException("Couldn't stop H2O process because the reference to it was null."); }
+
+        try {
+            final Statement stat = connection.createStatement();
+            stat.executeUpdate("SHUTDOWN IMMEDIATELY;");
+        }
+        catch (final SQLException e) {
+            throw new ShutdownException("The SHUTDOWN query attempting to shutdown the database instance failed: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void terminateH2OInstance() throws RemoteException, ShutdownException {
+
+        if (h2oProcess == null) { throw new ShutdownException("Couldn't terminate H2O process because the reference to it was null."); }
+
+        h2oProcess.destroy();
+    }
+
+    @Override
+    public void deleteH2OInstanceState() throws RemoteException, ShutdownException {
+
+        try {
+            DeleteDbFiles.execute(EvaluationWorker.PATH_TO_H2O_DATABASE, null, true);
+        }
+        catch (final SQLException e) {
+            throw new ShutdownException("Failed to delete database files: " + e.getMessage());
+        }
+
+    }
+
+    @Override
+    public boolean isH2OInstanceRunning() throws RemoteException {
+
+        return checkDatabaseIsActive();
+    }
+
+    @Override
+    public boolean startWorkload(final IWorkload workload) throws RemoteException {
+
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean stopWorkload(final IWorkload workload) throws RemoteException {
+
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean isWorkloadRunning(final IWorkload workload) throws RemoteException {
+
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    /*
+     * H2O Utility Methods.
+     */
 
     /**
      * Start a new H2O instance locally, with the provided command line arguments.
@@ -105,14 +172,18 @@ public class EvaluationWorker implements IWorker {
      * query fails a startup exception is thrown because the database is not active.
      * @throws StartupException If the database does not respond correctly to the query.
      */
-    public void checkDatabaseIsActive() throws StartupException {
+    public boolean checkDatabaseIsActive() {
 
         try {
+
+            if (connection == null) { return false; }
+
             final Statement createStatement = connection.createStatement();
             createStatement.executeQuery("SELECT * FROM INFORMATION_SCHEMA.USERS");
+            return true;
         }
         catch (final SQLException e) {
-            throw new StartupException("New H2O process couldn't be contacted once it had been created.");
+            return false;
         }
     }
 
@@ -159,62 +230,6 @@ public class EvaluationWorker implements IWorker {
         catch (final IOException e1) {
             ErrorHandling.exceptionErrorNoEvent(e1, "Couldn't save descriptor file locally.");
         }
-    }
-
-    @Override
-    public void stopH2OInstance() throws RemoteException, ShutdownException {
-
-        if (h2oProcess == null) { throw new ShutdownException("Couldn't stop H2O process because the reference to it was null."); }
-
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    public void terminateH2OInstance() throws RemoteException, ShutdownException {
-
-        if (h2oProcess == null) { throw new ShutdownException("Couldn't terminate H2O process because the reference to it was null."); }
-
-        h2oProcess.destroy();
-    }
-
-    @Override
-    public void deleteH2OInstanceState() throws RemoteException, ShutdownException {
-
-        try {
-            DeleteDbFiles.execute(EvaluationWorker.PATH_TO_H2O_DATABASE, null, true);
-        }
-        catch (final SQLException e) {
-            throw new ShutdownException("Failed to delete database files: " + e.getMessage());
-        }
-
-    }
-
-    @Override
-    public boolean isH2OInstanceRunning() throws RemoteException {
-
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public boolean startWorkload(final IWorkload workload) throws RemoteException {
-
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public boolean stopWorkload(final IWorkload workload) throws RemoteException {
-
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public boolean isWorkloadRunning(final IWorkload workload) throws RemoteException {
-
-        // TODO Auto-generated method stub
-        return false;
     }
 
 }
