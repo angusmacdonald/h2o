@@ -7,7 +7,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.SortedSet;
@@ -60,8 +62,6 @@ public class H2OMarshaller extends Marshaller {
     private static final String NETWORK = "network";
     private static final String MEMORY = "memory";
     private static final String CPU = "cpu";
-    private static final String IMMEDIATE_DISK_SPACE = "immediateDiskSpace";
-    private static final String EXPECTED_TIME_TO_COMPLETION = "expectedTimeToCompletion";
     private static final String ACTIVE = "active";
     private static final String DATABASE_INSTANCE = "databaseInstance";
     private static final String PRIMARY_LOCATION = "primaryLocation";
@@ -576,15 +576,45 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public void serializeCollectionDatabaseInstanceWrapper(final Collection<DatabaseInstanceWrapper> source, final JSONWriter writer) throws JSONException, RPCException {
+    public void serializeCollectionDatabaseInstanceWrapper(final Collection<DatabaseInstanceWrapper> set, final JSONWriter writer) throws JSONException, RPCException {
 
-        if (source == null) {
+        if (set == null) {
             writer.value(null);
         }
         else {
             writer.array();
-            for (final DatabaseInstanceWrapper instance : source) {
+            for (final DatabaseInstanceWrapper instance : set) {
                 serializeDatabaseInstanceWrapper(instance, writer);
+            }
+            writer.endArray();
+        }
+
+    }
+
+    public void serializeCollectionKeyDatabaseInstanceWrapper(final Set<Entry<DatabaseInstanceWrapper, Integer>> set, final JSONWriter writer) throws JSONException, RPCException {
+
+        if (set == null) {
+            writer.value(null);
+        }
+        else {
+            writer.array();
+            for (final Entry<DatabaseInstanceWrapper, ?> instance : set) {
+                serializeDatabaseInstanceWrapper(instance.getKey(), writer);
+            }
+            writer.endArray();
+        }
+
+    }
+
+    public void serializeMapValueDatabaseInstanceWrapper(final Set<Entry<DatabaseID, DatabaseInstanceWrapper>> set, final JSONWriter writer) throws JSONException, RPCException {
+
+        if (set == null) {
+            writer.value(null);
+        }
+        else {
+            writer.array();
+            for (final Entry<DatabaseID, DatabaseInstanceWrapper> instance : set) {
+                serializeDatabaseInstanceWrapper(instance.getValue(), writer);
             }
             writer.endArray();
         }
@@ -599,6 +629,26 @@ public class H2OMarshaller extends Marshaller {
 
             reader.array();
             final Set<DatabaseInstanceWrapper> result = new HashSet<DatabaseInstanceWrapper>();
+            while (!reader.have(JSONReader.ENDARRAY)) {
+                result.add(deserializeDatabaseInstanceWrapper(reader));
+            }
+
+            reader.endArray();
+            return result;
+        }
+        catch (final Exception e) {
+            throw new DeserializationException(e);
+        }
+    }
+
+    public List<DatabaseInstanceWrapper> deserializeListDatabaseInstanceWrapper(final JSONReader reader) throws DeserializationException {
+
+        try {
+
+            if (reader.checkNull()) { return null; }
+
+            reader.array();
+            final List<DatabaseInstanceWrapper> result = new LinkedList<DatabaseInstanceWrapper>();
             while (!reader.have(JSONReader.ENDARRAY)) {
                 result.add(deserializeDatabaseInstanceWrapper(reader));
             }
@@ -661,9 +711,9 @@ public class H2OMarshaller extends Marshaller {
             writer.object();
 
             writer.key(KEYS);
-            serializeSetDatabaseID(source.keySet(), writer);
+            serializeSetKeyDatabaseID(source.entrySet(), writer);
             writer.key(VALUES);
-            serializeCollectionDatabaseInstanceWrapper(source.values(), writer);
+            serializeMapValueDatabaseInstanceWrapper(source.entrySet(), writer);
             writer.endObject();
         }
     }
@@ -674,7 +724,7 @@ public class H2OMarshaller extends Marshaller {
             if (reader.checkNull()) { return null; }
             reader.object();
             reader.key(KEYS);
-            final Set<DatabaseID> keys = deserializeSetDatabaseID(reader);
+            final List<DatabaseID> keys = deserializeListDatabaseID(reader);
             reader.key(VALUES);
             final Collection<DatabaseInstanceWrapper> values = deserializeCollectionDatabaseInstanceWrapper(reader);
 
@@ -709,9 +759,9 @@ public class H2OMarshaller extends Marshaller {
             writer.object();
 
             writer.key(KEYS);
-            serializeSetTableInfo(source.keySet(), writer);
+            serializeSetKeyTableInfo(source.entrySet(), writer);
             writer.key(VALUES);
-            serializeCollectionTableManagerWrapper(source.values(), writer);
+            serializeCollectionTableManagerWrapper(source.entrySet(), writer);
             writer.endObject();
         }
     }
@@ -725,7 +775,7 @@ public class H2OMarshaller extends Marshaller {
 
             reader.key(KEYS);
 
-            final Set<TableInfo> keys = deserializeSetTableInfo(reader);
+            final List<TableInfo> keys = deserializeListTableInfo(reader);
 
             reader.key(VALUES);
 
@@ -753,16 +803,16 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private void serializeCollectionTableManagerWrapper(final Collection<TableManagerWrapper> source, final JSONWriter writer) throws JSONException {
+    private void serializeCollectionTableManagerWrapper(final Set<Entry<TableInfo, TableManagerWrapper>> set, final JSONWriter writer) throws JSONException {
 
-        if (source == null) {
+        if (set == null) {
             writer.value(null);
         }
         else {
 
             writer.array();
-            for (final TableManagerWrapper instance : source) {
-                serializeTableManagerWrapper(instance, writer);
+            for (final Entry<TableInfo, TableManagerWrapper> instance : set) {
+                serializeTableManagerWrapper(instance.getValue(), writer);
             }
             writer.endArray();
         }
@@ -801,9 +851,9 @@ public class H2OMarshaller extends Marshaller {
             writer.object();
 
             writer.key(KEYS);
-            serializeSetTableInfo(source.keySet(), writer);
+            serializeSetKeyTableInfoDatabaseIDSet(source.entrySet(), writer);
             writer.key(VALUES);
-            serializeCollectionSetDatabaseID(source.values(), writer);
+            serializeCollectionValueSetDatabaseID(source.entrySet(), writer);
             writer.endObject();
         }
     }
@@ -817,7 +867,7 @@ public class H2OMarshaller extends Marshaller {
 
             reader.key(KEYS);
 
-            final Set<TableInfo> keys = deserializeSetTableInfo(reader);
+            final List<TableInfo> keys = deserializeListTableInfo(reader);
 
             reader.key(VALUES);
             final Collection<Set<DatabaseID>> values = deserializeCollectionSetDatabaseID(reader);
@@ -889,10 +939,25 @@ public class H2OMarshaller extends Marshaller {
             writer.object();
 
             writer.key(KEYS);
-            serializeSetTableInfo(source.keySet(), writer);
+            serializeSetKeyTableInfoDatabaseID(source.entrySet(), writer);
             writer.key(VALUES);
-            serializeCollectionDatabaseID(source.values(), writer);
+            serializeCollectionDatabaseID(source.entrySet(), writer);
             writer.endObject();
+        }
+    }
+
+    private void serializeSetKeyTableInfoDatabaseID(final Set<Entry<TableInfo, DatabaseID>> set, final JSONWriter writer) throws JSONException {
+
+        if (set == null) {
+            writer.value(null);
+        }
+        else {
+
+            writer.array();
+            for (final Entry<TableInfo, DatabaseID> instance : set) {
+                serializeTableInfo(instance.getKey(), writer);
+            }
+            writer.endArray();
         }
     }
 
@@ -905,7 +970,7 @@ public class H2OMarshaller extends Marshaller {
 
             reader.key(KEYS);
 
-            final Set<TableInfo> keys = deserializeSetTableInfo(reader);
+            final List<TableInfo> keys = deserializeListTableInfo(reader);
 
             reader.key(VALUES);
             final Collection<DatabaseID> values = deserializeCollectionDatabaseID(reader);
@@ -1031,22 +1096,23 @@ public class H2OMarshaller extends Marshaller {
             writer.object();
 
             writer.key(KEYS);
-            serializeCollectionDatabaseInstanceWrapper(source.keySet(), writer);
+            serializeCollectionKeyDatabaseInstanceWrapper(source.entrySet(), writer);
             writer.key(VALUES);
-            serializeCollectionInteger(source.values(), writer);
+            serializeCollectionValueInteger(source.entrySet(), writer);
             writer.endObject();
         }
     }
 
     public Map<DatabaseInstanceWrapper, Integer> deserializeMapDatabaseInstanceWrapperInteger(final JSONReader reader) throws DeserializationException {
 
+        //TODO fix.
         try {
 
             if (reader.checkNull()) { return null; }
             reader.object();
 
             reader.key(KEYS);
-            final Set<DatabaseInstanceWrapper> keys = deserializeSetDatabaseInstanceWrapper(reader);
+            final List<DatabaseInstanceWrapper> keys = deserializeListDatabaseInstanceWrapper(reader);
 
             reader.key(VALUES);
             final Collection<Integer> values = deserializeCollectionInteger(reader);
@@ -1071,16 +1137,16 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private void serializeCollectionInteger(final Collection<Integer> source, final JSONWriter writer) throws JSONException {
+    private void serializeCollectionValueInteger(final Set<Entry<DatabaseInstanceWrapper, Integer>> set, final JSONWriter writer) throws JSONException {
 
-        if (source == null) {
+        if (set == null) {
             writer.value(null);
         }
         else {
 
             writer.array();
-            for (final Integer instance : source) {
-                writer.value(instance);
+            for (final Entry<DatabaseInstanceWrapper, Integer> instance : set) {
+                writer.value(instance.getValue());
             }
             writer.endArray();
         }
@@ -1121,6 +1187,21 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
+    private void serializeSetKeyDatabaseID(final Set<Entry<DatabaseID, DatabaseInstanceWrapper>> set, final JSONWriter writer) throws JSONException {
+
+        if (set == null) {
+            writer.value(null);
+        }
+        else {
+
+            writer.array();
+            for (final Entry<DatabaseID, ?> instance : set) {
+                serializeDatabaseID(instance.getKey(), writer);
+            }
+            writer.endArray();
+        }
+    }
+
     private Set<DatabaseID> deserializeSetDatabaseID(final JSONReader reader) throws DeserializationException {
 
         try {
@@ -1129,6 +1210,25 @@ public class H2OMarshaller extends Marshaller {
             reader.array();
 
             final Set<DatabaseID> result = new HashSet<DatabaseID>();
+            while (!reader.have(JSONReader.ENDARRAY)) {
+                result.add(deserializeDatabaseID(reader));
+            }
+            reader.endArray();
+            return result;
+        }
+        catch (final Exception e) {
+            throw new DeserializationException(e);
+        }
+    }
+
+    private List<DatabaseID> deserializeListDatabaseID(final JSONReader reader) throws DeserializationException {
+
+        try {
+
+            if (reader.checkNull()) { return null; }
+            reader.array();
+
+            final List<DatabaseID> result = new LinkedList<DatabaseID>();
             while (!reader.have(JSONReader.ENDARRAY)) {
                 result.add(deserializeDatabaseID(reader));
             }
@@ -1157,6 +1257,36 @@ public class H2OMarshaller extends Marshaller {
         }
     }
 
+    private void serializeSetKeyTableInfo(final Set<Entry<TableInfo, TableManagerWrapper>> set, final JSONWriter writer) throws JSONException {
+
+        if (set == null) {
+            writer.value(null);
+        }
+        else {
+
+            writer.array();
+            for (final Entry<TableInfo, ?> instance : set) {
+                serializeTableInfo(instance.getKey(), writer);
+            }
+            writer.endArray();
+        }
+    }
+
+    private void serializeSetKeyTableInfoDatabaseIDSet(final Set<Entry<TableInfo, Set<DatabaseID>>> set, final JSONWriter writer) throws JSONException {
+
+        if (set == null) {
+            writer.value(null);
+        }
+        else {
+
+            writer.array();
+            for (final Entry<TableInfo, ?> instance : set) {
+                serializeTableInfo(instance.getKey(), writer);
+            }
+            writer.endArray();
+        }
+    }
+
     private Set<TableInfo> deserializeSetTableInfo(final JSONReader reader) throws DeserializationException {
 
         try {
@@ -1165,6 +1295,25 @@ public class H2OMarshaller extends Marshaller {
             reader.array();
 
             final Set<TableInfo> result = new HashSet<TableInfo>();
+            while (!reader.have(JSONReader.ENDARRAY)) {
+                result.add(deserializeTableInfo(reader));
+            }
+            reader.endArray();
+            return result;
+        }
+        catch (final Exception e) {
+            throw new DeserializationException(e);
+        }
+    }
+
+    private List<TableInfo> deserializeListTableInfo(final JSONReader reader) throws DeserializationException {
+
+        try {
+
+            if (reader.checkNull()) { return null; }
+            reader.array();
+
+            final List<TableInfo> result = new LinkedList<TableInfo>();
             while (!reader.have(JSONReader.ENDARRAY)) {
                 result.add(deserializeTableInfo(reader));
             }
@@ -1188,6 +1337,21 @@ public class H2OMarshaller extends Marshaller {
             writer.array();
             for (final Set<DatabaseID> instance : source) {
                 serializeSetDatabaseID(instance, writer);
+            }
+            writer.endArray();
+        }
+    }
+
+    private void serializeCollectionValueSetDatabaseID(final Set<Entry<TableInfo, Set<DatabaseID>>> source, final JSONWriter writer) throws JSONException {
+
+        if (source == null) {
+            writer.value(null);
+        }
+        else {
+
+            writer.array();
+            for (final Entry<TableInfo, Set<DatabaseID>> instance : source) {
+                serializeSetDatabaseID(instance.getValue(), writer);
             }
             writer.endArray();
         }
@@ -1234,16 +1398,16 @@ public class H2OMarshaller extends Marshaller {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private void serializeCollectionDatabaseID(final Collection<DatabaseID> source, final JSONWriter writer) throws JSONException {
+    private void serializeCollectionDatabaseID(final Set<Entry<TableInfo, DatabaseID>> set, final JSONWriter writer) throws JSONException {
 
-        if (source == null) {
+        if (set == null) {
             writer.value(null);
         }
         else {
 
             writer.array();
-            for (final DatabaseID instance : source) {
-                serializeDatabaseID(instance, writer);
+            for (final Entry<TableInfo, DatabaseID> instance : set) {
+                serializeDatabaseID(instance.getValue(), writer);
             }
             writer.endArray();
         }

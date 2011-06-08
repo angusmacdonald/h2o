@@ -10,7 +10,6 @@ import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.StartupException;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class WorkerTests {
@@ -102,7 +101,7 @@ public class WorkerTests {
      * Test that the worker prevents multiple instances of the H2O process from being started at once.
      * @throws Exception Expect a startup exception to be thrown attempting to start the second instance.
      */
-    @Ignore
+
     @Test(expected = StartupException.class)
     public void startInstanceTwice() throws Exception {
 
@@ -127,7 +126,7 @@ public class WorkerTests {
      * Tests the ability to tell the database to shut down.
      * @throws Exception Not expected.
      */
-    @Ignore
+
     @Test
     public void testStop() throws Exception {
 
