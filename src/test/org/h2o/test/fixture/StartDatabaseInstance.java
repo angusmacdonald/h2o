@@ -87,7 +87,7 @@ public class StartDatabaseInstance extends Thread {
     @Override
     public void run() {
 
-        final H2O newDatabase = new H2O(databaseName, databaseInstanceIdentifier, databaseDirectoryPath, databaseDescriptorLocation, DiagnosticLevel.FULL);
+        final H2O newDatabase = new H2O(databaseName, databaseInstanceIdentifier, databaseDirectoryPath, databaseDescriptorLocation, DiagnosticLevel.FULL, 0);
 
         try {
 

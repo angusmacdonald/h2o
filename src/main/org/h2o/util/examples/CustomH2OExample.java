@@ -38,7 +38,7 @@ public class CustomH2OExample {
         // The location of the database descriptor file.
         final String descriptorLocation = "db_data" + File.separator + "MyFirstDatabase.h2od";
 
-        final H2O db = new H2O(databaseName, null, rootFolder, descriptorLocation, DiagnosticLevel.NONE);
+        final H2O db = new H2O(databaseName, null, rootFolder, descriptorLocation, DiagnosticLevel.NONE, 0);
         db.startDatabase();
     }
 }

@@ -90,7 +90,7 @@ public class H2O {
     private static final DiagnosticLevel DEFAULT_DIAGNOSTIC_LEVEL = DiagnosticLevel.FINAL;
 
     private String databaseSystemName;
-    private final int tcpPort = DEFAULT_TCP_PORT;
+    private int tcpPort = DEFAULT_TCP_PORT;
     private int webPort;
 
     private String databaseDescriptorLocation;
@@ -123,6 +123,7 @@ public class H2O {
      *            <li><em>-f<directory></em>. Optional. Specifies the directory containing the persistent database state. The default is the current working directory.</li>
      *            <li><em>-D<level></em>. Optional. Specifies a diagnostic level from 0 (most detailed) to 6 (least detailed).</li>
      *            <li><em>-M</em>. Optional. Specifies an in-memory database. If specified, the -p, -w and -f flags are ignored.</li>
+     *            <li><em>-p</em>. Optional. The TCP port to use. If this port isn't free another port will be used instead. If '0' is specified, the default port, 9090, will be used.</li>
      *            <li><em>-o</em>. Optional. Specifies where System.out messages should be redirected, if they should be redirected at all.</li>
      *            <li><em>-e</em>. Optional. Specifies where System.err messages should be redirected, if they should be redirected at all.</li>
      *            </ul>
@@ -156,9 +157,9 @@ public class H2O {
      * @param databaseDirectoryPath the directory in which database files are stored
      * @param databaseDescriptorLocation the location (file path or URL) of the database descriptor file
      */
-    public H2O(final String databaseName, final String databaseInstanceIdentifier, final String databaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel, final String sysOutLocation, final String sysErrLocation) {
+    public H2O(final String databaseName, final String databaseInstanceIdentifier, final String databaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel, final String sysOutLocation, final String sysErrLocation, final int tcpPort) {
 
-        init(databaseName, databaseInstanceIdentifier, 0, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel, sysOutLocation, sysErrLocation);
+        init(databaseName, databaseInstanceIdentifier, 0, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel, sysOutLocation, sysErrLocation, tcpPort);
     }
 
     /**
@@ -170,9 +171,9 @@ public class H2O {
      * @param webPort the port for this database's web interface
      * @param databaseDirectoryPath the directory in which database files are stored
      */
-    public H2O(final String databaseName, final String databaseInstanceIdentifier, final int webPort, final String databaseDirectoryPath, final DiagnosticLevel diagnosticLevel, final String sysOutLocation, final String sysErrLocation) {
+    public H2O(final String databaseName, final String databaseInstanceIdentifier, final int webPort, final int tcpPort, final String databaseDirectoryPath, final DiagnosticLevel diagnosticLevel, final String sysOutLocation, final String sysErrLocation) {
 
-        init(databaseName, databaseInstanceIdentifier, webPort, databaseDirectoryPath, null, diagnosticLevel, sysOutLocation, sysErrLocation);
+        init(databaseName, databaseInstanceIdentifier, webPort, databaseDirectoryPath, null, diagnosticLevel, sysOutLocation, sysErrLocation, tcpPort);
     }
 
     public H2O(final String[] args) throws StartupException {
@@ -197,14 +198,14 @@ public class H2O {
         init(databaseName, databaseInstanceIdentifier, databaseDescriptorLocation, diagnosticLevel);
     }
 
-    public H2O(final String databaseName, final String databaseInstanceIdentifier, final int webPort, final String databaseDirectoryPath, final DiagnosticLevel diagnosticLevel) {
+    public H2O(final String databaseName, final String databaseInstanceIdentifier, final int webPort, final int tcpPort, final String databaseDirectoryPath, final DiagnosticLevel diagnosticLevel) {
 
-        this(databaseName, databaseInstanceIdentifier, webPort, databaseDirectoryPath, diagnosticLevel, null, null);
+        this(databaseName, databaseInstanceIdentifier, webPort, tcpPort, databaseDirectoryPath, diagnosticLevel, null, null);
     }
 
-    public H2O(final String databaseName, final String databaseInstanceIdentifier, final String databaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel) {
+    public H2O(final String databaseName, final String databaseInstanceIdentifier, final String databaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel, final int tcpPort) {
 
-        this(databaseName, databaseInstanceIdentifier, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel, null, null);
+        this(databaseName, databaseInstanceIdentifier, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel, null, null, tcpPort);
     }
 
     // -------------------------------------------------------------------------------------------------------
@@ -219,12 +220,20 @@ public class H2O {
      * @param databaseDescriptorLocation the location (file path or URL) of the database descriptor file
      * @param sysErrLocation Location where System.err messages should be redirected.
      * @param sysOutLocation Location where System.out messages should be redirected.
+     * @param tcpPort2 
      */
-    private void init(final String databaseSystemName, final String databaseInstanceIdentifier, final int webPort, final String databaseBaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel, final String sysOutLocation, final String sysErrLocation) {
+    private void init(final String databaseSystemName, final String databaseInstanceIdentifier, final int webPort, final String databaseBaseDirectoryPath, final String databaseDescriptorLocation, final DiagnosticLevel diagnosticLevel, final String sysOutLocation, final String sysErrLocation,
+                    final int tcpPort) {
 
         this.databaseSystemName = databaseSystemName;
         this.databaseInstanceIdentifier = databaseInstanceIdentifier;
         this.webPort = webPort;
+        if (tcpPort <= 0) {
+            this.tcpPort = DEFAULT_TCP_PORT;
+        }
+        else {
+            this.tcpPort = tcpPort;
+        }
         this.databaseBaseDirectoryPath = databaseBaseDirectoryPath;
         this.databaseDescriptorLocation = databaseDescriptorLocation;
         this.diagnosticLevel = diagnosticLevel;
@@ -265,7 +274,13 @@ public class H2O {
         final String databaseDirectoryPath = processDatabaseDirectoryPath(arguments.get("-f"));
 
         final String databaseDescriptorLocation = processDatabaseDescriptorLocation(arguments.get("-d"));
-        final int webPort = processWebPort(arguments.get("-w"));
+        final int webPort = processPort(arguments.get("-w"));
+        int tcpPort = DEFAULT_TCP_PORT;
+
+        if (arguments.containsKey("-p")) {
+            tcpPort = processPort(arguments.get("-p"));
+        }
+
         final DiagnosticLevel diagnosticLevel = DiagnosticLevel.getDiagnosticLevelFromCommandLineArg(arguments.get("-D"), DEFAULT_DIAGNOSTIC_LEVEL);
 
         final String sysOutLocation = removeQuotes(arguments.get("-o"));
@@ -281,7 +296,7 @@ public class H2O {
             }
             case DISK: {
 
-                init(databaseSystemName, databaseInstanceIdentifier, webPort, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel, sysOutLocation, sysErrLocation);
+                init(databaseSystemName, databaseInstanceIdentifier, webPort, databaseDirectoryPath, databaseDescriptorLocation, diagnosticLevel, sysOutLocation, sysErrLocation, tcpPort);
                 break;
             }
             default: {
@@ -379,7 +394,7 @@ public class H2O {
         return arg == null ? null : removeQuotes(arg);
     }
 
-    private int processWebPort(final String arg) throws StartupException {
+    private int processPort(final String arg) throws StartupException {
 
         try {
             return arg == null ? 0 : Integer.parseInt(arg);
