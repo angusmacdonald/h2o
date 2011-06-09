@@ -1,5 +1,6 @@
 package org.h2o.eval.interfaces;
 
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 import org.h2o.util.H2OPropertiesWrapper;
@@ -7,13 +8,20 @@ import org.h2o.util.exceptions.ShutdownException;
 import org.h2o.util.exceptions.StartupException;
 
 /**
- * Worker classes register with a central co-ordinator (implementing {@link ICoordinator}) 
+ * Worker classes register with a central co-ordinator (implementing {@link ICoordinatorRemote}) 
  * and accept requests to start/stop a local H2O instance, and to start/stop workloads which query these instances.
  * 
  *
  * @author Angus Macdonald (angus.macdonald@st-andrews.ac.uk)
  */
-public interface IWorker {
+public interface IWorker extends Remote {
+
+    /**
+     * Allows a remote {@link ICoordinatorRemote} to connect to the worker and provide a reference back to itself,
+     * so that the results of workloads can be returned to the coordinator.
+     * @param remoteCoordinator A remote reference back to the coordinator.
+     */
+    public void initiateConnection(ICoordinatorRemote remoteCoordinator) throws RemoteException;
 
     /*
      * H2O Instance-Related Methods.
@@ -75,4 +83,5 @@ public interface IWorker {
      * @return True if the workload is running, false it it isn't.
      */
     public boolean isWorkloadRunning(IWorkload workload) throws RemoteException;
+
 }

@@ -3,7 +3,11 @@ package org.h2o.eval.worker;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.rmi.AlreadyBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -14,6 +18,7 @@ import org.h2.tools.DeleteDbFiles;
 import org.h2.util.NetUtils;
 import org.h2o.H2O;
 import org.h2o.db.id.DatabaseURL;
+import org.h2o.eval.interfaces.ICoordinatorRemote;
 import org.h2o.eval.interfaces.IWorker;
 import org.h2o.eval.interfaces.IWorkload;
 import org.h2o.test.fixture.MultiProcessTestBase;
@@ -28,6 +33,8 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
 public class EvaluationWorker implements IWorker {
 
     public static final String PATH_TO_H2O_DATABASE = "eval";
+
+    public static final String REGISTRY_PREFIX = "H2O_WORKER::";
 
     /**
      * Handle on the H2O process this worker is running.
@@ -54,10 +61,54 @@ public class EvaluationWorker implements IWorker {
      */
     private static int instanceCount = 0;
 
-    public EvaluationWorker() {
+    private ICoordinatorRemote remoteCoordinator;
+
+    public EvaluationWorker() throws RemoteException, AlreadyBoundException {
 
         //Name the h2o instance after the machine it is being run on + a static counter number to enable same machine testing.
         h2oInstanceName = NetUtils.getLocalAddress().replaceAll("-", "").replaceAll("\\.", "") + instanceCount++;
+
+        Registry registry = null;
+
+        try {
+            registry = LocateRegistry.createRegistry(1099);
+        }
+        catch (final Exception e) {
+            registry = LocateRegistry.getRegistry();
+        }
+
+        registry.bind(REGISTRY_PREFIX + h2oInstanceName, UnicastRemoteObject.exportObject(this, 0));
+
+    }
+
+    @Override
+    public void initiateConnection(final ICoordinatorRemote remoteCoordinator) throws RemoteException {
+
+        this.remoteCoordinator = remoteCoordinator;
+
+    }
+
+    @Override
+    public int hashCode() {
+
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (connectionString == null ? 0 : connectionString.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+
+        if (this == obj) { return true; }
+        if (obj == null) { return false; }
+        if (getClass() != obj.getClass()) { return false; }
+        final EvaluationWorker other = (EvaluationWorker) obj;
+        if (connectionString == null) {
+            if (other.connectionString != null) { return false; }
+        }
+        else if (!connectionString.equals(other.connectionString)) { return false; }
+        return true;
     }
 
     @Override
@@ -75,8 +126,7 @@ public class EvaluationWorker implements IWorker {
 
         sleep(5000);// wait for the database to start up.
 
-        final int jdbc_port = H2O.getDatabasesJDBCPort(PATH_TO_H2O_DATABASE + "/" + DatabaseURL.getPropertiesFileName(PATH_TO_H2O_DATABASE) + "_" + h2oInstanceName + ".properties");
-        connectionString = "jdbc:h2:tcp://" + NetUtils.getLocalAddress() + ":" + jdbc_port + "/" + PATH_TO_H2O_DATABASE + "/" + h2oInstanceName;
+        createConnectionString();
 
         connection = MultiProcessTestBase.createConnectionToDatabase(connectionString);
 
@@ -84,6 +134,15 @@ public class EvaluationWorker implements IWorker {
 
         if (!isRunning) { throw new StartupException("New H2O process couldn't be contacted once it had been created."); }
 
+    }
+
+    /**
+     * Create the JDBC connection string needed to connect to the H2O instance that has been started locally.
+     */
+    public void createConnectionString() {
+
+        final int jdbc_port = H2O.getDatabasesJDBCPort(PATH_TO_H2O_DATABASE + "/" + DatabaseURL.getPropertiesFileName(PATH_TO_H2O_DATABASE) + "_" + h2oInstanceName + ".properties");
+        connectionString = "jdbc:h2:tcp://" + NetUtils.getLocalAddress() + ":" + jdbc_port + "/" + PATH_TO_H2O_DATABASE + "/" + h2oInstanceName;
     }
 
     @Override
