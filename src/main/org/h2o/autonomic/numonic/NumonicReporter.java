@@ -2,6 +2,7 @@ package org.h2o.autonomic.numonic;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Observer;
@@ -296,6 +297,20 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
 
         // TODO Auto-generated method stub
         return null;
+    }
+
+    @Override
+    public void reportSystemIPChange(final String machine_id, final String new_IP, final String new_host, final String new_gateway) throws SQLException {
+
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void updateSystemInfo(final SystemInfoData data) throws Exception {
+
+        // TODO Auto-generated method stub
+
     }
 
 }
