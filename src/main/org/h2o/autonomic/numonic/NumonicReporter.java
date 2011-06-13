@@ -286,13 +286,6 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
     }
 
     @Override
-    public List<String> getKnownHosts() throws Exception {
-
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
     public List<SystemInfoData> getSystemInfo() throws Exception {
 
         // TODO Auto-generated method stub
@@ -308,6 +301,27 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
 
     @Override
     public void updateSystemInfo(final SystemInfoData data) throws Exception {
+
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public List<String> getActiveKnownHosts() throws Exception {
+
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public List<String> getPassiveKnownHosts() throws Exception {
+
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void setHostPassive(final String hostname) throws SQLException {
 
         // TODO Auto-generated method stub
 
