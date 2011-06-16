@@ -165,6 +165,9 @@ public class MultiProcessTestBase extends TestBase {
             catch (final TimeoutException e) {
                 ErrorHandling.error("unexpected exception on local host");
             }
+            catch (final InterruptedException e) {
+                ErrorHandling.error("unexpected exception on local host");
+            }
             catch (final UnknownPlatformException e) {
                 ErrorHandling.error("unexpected exception on local host");
             }
@@ -642,7 +645,6 @@ public class MultiProcessTestBase extends TestBase {
     protected void createConnectionsToDatabase(final int i) throws StartupException {
 
         connections[i] = createConnectionToDatabase(fullDbName[i]);
-
     }
 
     /**

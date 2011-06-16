@@ -133,6 +133,9 @@ public class WrapperTests {
             catch (final TimeoutException e) {
                 ErrorHandling.error("unexpected exception on local host");
             }
+            catch (final InterruptedException e) {
+                ErrorHandling.error("unexpected exception on local host");
+            }
             catch (final UnknownPlatformException e) {
                 ErrorHandling.error("unexpected exception on local host");
             }
