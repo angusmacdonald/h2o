@@ -1,5 +1,6 @@
 package org.h2o.eval.coordinator;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
@@ -7,6 +8,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -17,6 +19,7 @@ import org.h2o.eval.interfaces.IWorkload;
 import org.h2o.eval.worker.EvaluationWorker;
 import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.StartupException;
+import org.h2o.util.exceptions.WorkloadParseException;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
@@ -101,20 +104,19 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
     }
 
     /**
-     * Go through the set of worker locations and look for active worker instances.
+     * Go through the set of worker hosts and look for active worker instances in the registry on each host. In testing in particular there may
+     * be multiple workers on each host.
      * @param pWorkerLocations IP addresses or hostnames of machines which are running worker nodes. You can provide the {@link #workerLocations} field
      * as a parameter, or something else.
      */
-    public void scanForWorkerNodes(final String[] pWorkerLocations) {
+    private void scanForWorkerNodes(final String[] pWorkerLocations) {
 
         for (final String location : pWorkerLocations) {
 
             try {
                 final Registry remoteRegistry = LocateRegistry.getRegistry(location);
 
-                final String[] remoteEntries = remoteRegistry.list();
-
-                findActiveWorkersAtThisLocation(location, remoteRegistry, remoteEntries);
+                findActiveWorkersAtThisLocation(remoteRegistry);
             }
             catch (final Exception e) {
                 ErrorHandling.exceptionError(e, "Failed to connect to a registry at '" + location + "'.");
@@ -123,7 +125,16 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
         }
     }
 
-    public void findActiveWorkersAtThisLocation(final String location, final Registry remoteRegistry, final String[] remoteEntries) throws RemoteException, AccessException {
+    /**
+     * Find workers that exist at the registry located at the specified location.
+
+     * @param remoteRegistry
+     * @throws RemoteException
+     * @throws AccessException
+     */
+    private void findActiveWorkersAtThisLocation(final Registry remoteRegistry) throws RemoteException, AccessException {
+
+        final String[] remoteEntries = remoteRegistry.list();
 
         for (final String entry : remoteEntries) {
             if (entry.startsWith(EvaluationWorker.REGISTRY_PREFIX)) {
@@ -171,6 +182,52 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
 
         locatorServerStarted = true;
 
+    }
+
+    @Override
+    public void executeWorkload(final String workloadFileLocation) throws StartupException {
+
+        final IWorker worker = getActiveWorker();
+
+        IWorkload workload;
+        try {
+            workload = new Workload(workloadFileLocation);
+        }
+        catch (final FileNotFoundException e) {
+            ErrorHandling.exceptionError(e, "Couldn't find the workload file specified: " + workloadFileLocation);
+            throw new StartupException("Couldn't find the workload file specified: " + workloadFileLocation);
+        }
+        catch (final IOException e) {
+            ErrorHandling.exceptionError(e, "Couldn't read from the workload file specified: " + workloadFileLocation);
+            throw new StartupException("Couldn't read from the workload file specified: " + workloadFileLocation);
+        }
+
+        try {
+            worker.startWorkload(workload);
+        }
+        catch (final RemoteException e) {
+            ErrorHandling.exceptionError(e, "Couldn't connect to remote worker instance.");
+            throw new StartupException("Couldn't connect to remote worker instance.");
+        }
+        catch (final WorkloadParseException e) {
+            ErrorHandling.exceptionError(e, "Error parsing workload in " + workloadFileLocation);
+        }
+        catch (final SQLException e) {
+            ErrorHandling.exceptionError(e, "Error creating SQL statement for workload execution. Workload was never started.");
+        }
+    }
+
+    /**
+     * Get an active worker from the set of active workers.
+     * @return null if there are no active workers.
+     */
+    private IWorker getActiveWorker() {
+
+        for (final IWorker worker : activeWorkers) {
+            return worker;
+        }
+
+        return null;
     }
 
 }

@@ -4,13 +4,18 @@ import static org.junit.Assert.assertFalse;
 
 import org.h2.tools.DeleteDbFiles;
 import org.h2o.H2OLocator;
+import org.h2o.eval.coordinator.Workload;
 import org.h2o.eval.interfaces.IWorker;
+import org.h2o.eval.interfaces.IWorkload;
 import org.h2o.eval.worker.EvaluationWorker;
 import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.StartupException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 public class WorkerTests {
 
@@ -19,6 +24,8 @@ public class WorkerTests {
 
     @Before
     public void setUp() throws Exception {
+
+        Diagnostic.setLevel(DiagnosticLevel.FULL);
 
         DeleteDbFiles.execute(EvaluationWorker.PATH_TO_H2O_DATABASE, null, true);
 
@@ -148,5 +155,32 @@ public class WorkerTests {
         Thread.sleep(5000); //wait a while for the H2O instance to shutdown.
 
         assertFalse(worker.isH2OInstanceRunning());
+    }
+
+    /**
+     * Test that the {@link EvaluationWorker} class is able to start up and query an H2O instance.
+     * @throws Exception Not expected.
+     */
+    @Test
+    public void testRunWorkload() throws Exception {
+
+        worker = new EvaluationWorker();
+
+        worker.deleteH2OInstanceState();
+
+        final H2OLocator locator = new H2OLocator("evaluationDB", 34000, true, EvaluationWorker.PATH_TO_H2O_DATABASE);
+
+        final String databaseDescriptorLocation = locator.start();
+
+        final H2OPropertiesWrapper descriptorFile = H2OPropertiesWrapper.getWrapper(databaseDescriptorLocation);
+        descriptorFile.loadProperties();
+
+        worker.startH2OInstance(descriptorFile);
+
+        final IWorkload workload = new Workload("src/test/org/h2o/eval/workloads/test.workload");
+
+        worker.startWorkload(workload);
+
+        worker.terminateH2OInstance();
     }
 }

@@ -2,10 +2,12 @@ package org.h2o.eval.interfaces;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.sql.SQLException;
 
 import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.ShutdownException;
 import org.h2o.util.exceptions.StartupException;
+import org.h2o.util.exceptions.WorkloadParseException;
 
 /**
  * Worker classes register with a central co-ordinator (implementing {@link ICoordinatorRemote}) 
@@ -67,8 +69,10 @@ public interface IWorker extends Remote {
      * Start the given workload on this worker by executing it against the local H2O instance.
      * @param workload Workload to be executed against the local H2O instance.
      * @return true if the workload was started successfully.
+     * @throws WorkloadParseException Thrown when the workload being executed contains a syntactic error.
+     * @throws SQLException Thrown when an SQL statement cannot initially be created. Errors on individual queries while executing this workload do not throw exceptions, but log failure.
      */
-    public boolean startWorkload(IWorkload workload) throws RemoteException;
+    public boolean startWorkload(IWorkload workload) throws RemoteException, WorkloadParseException, SQLException;
 
     /**
      * Stop the given workload from executing on this worker node.

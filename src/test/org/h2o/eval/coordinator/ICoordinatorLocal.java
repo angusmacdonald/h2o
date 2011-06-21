@@ -22,4 +22,10 @@ public interface ICoordinatorLocal {
      */
     public int startH2OInstances(int numberToStart) throws StartupException;
 
+    /**
+     * Initiate execution of a specified workload.
+     * @param workloadFileLocation  The location of the file containing the workload to be executed.
+     * @throws StartupException
+     */
+    public void executeWorkload(String workloadFileLocation) throws StartupException;
 }

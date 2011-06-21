@@ -25,6 +25,7 @@ import org.h2o.test.fixture.MultiProcessTestBase;
 import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.ShutdownException;
 import org.h2o.util.exceptions.StartupException;
+import org.h2o.util.exceptions.WorkloadParseException;
 
 import uk.ac.standrews.cs.nds.madface.HostDescriptor;
 import uk.ac.standrews.cs.nds.madface.JavaProcessDescriptor;
@@ -186,9 +187,9 @@ public class EvaluationWorker implements IWorker {
     }
 
     @Override
-    public boolean startWorkload(final IWorkload workload) throws RemoteException {
+    public boolean startWorkload(final IWorkload workload) throws RemoteException, WorkloadParseException, SQLException {
 
-        // TODO Auto-generated method stub
+        workload.execute(connection);
         return false;
     }
 
