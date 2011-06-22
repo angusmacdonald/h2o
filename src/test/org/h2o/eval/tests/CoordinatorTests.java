@@ -14,6 +14,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+
 /**
  * Tests of the H2O co-ordinator class, {@link EvaluationCoordinator}.
  *
@@ -21,11 +24,12 @@ import org.junit.Test;
  */
 public class CoordinatorTests {
 
-    private IWorker worker = null;
-    private IWorker worker2 = null;
+    private IWorker[] workers = null;
 
     @Before
     public void setUp() throws Exception {
+
+        Diagnostic.setLevel(DiagnosticLevel.FULL);
 
         DeleteDbFiles.execute(EvaluationWorker.PATH_TO_H2O_DATABASE, null, true);
     }
@@ -35,19 +39,14 @@ public class CoordinatorTests {
 
         DeleteDbFiles.execute(EvaluationWorker.PATH_TO_H2O_DATABASE, null, true);
 
-        if (worker != null) {
-            try {
-                worker.terminateH2OInstance();
-            }
-            catch (final Exception e) { //Will happen if an H2O instance isn't running.
-            }
-        }
+        for (final IWorker worker : workers) {
 
-        if (worker2 != null) {
-            try {
-                worker2.terminateH2OInstance();
-            }
-            catch (final Exception e) { //Will happen if an H2O instance isn't running.
+            if (worker != null) {
+                try {
+                    worker.terminateH2OInstance();
+                }
+                catch (final Exception e) { //Will happen if an H2O instance isn't running.
+                }
             }
         }
 
@@ -62,7 +61,8 @@ public class CoordinatorTests {
     @Test
     public void startOneWorker() throws Exception {
 
-        worker = new EvaluationWorker();
+        workers = new IWorker[1];
+        workers[0] = new EvaluationWorker();
 
         final ICoordinatorLocal eval = new EvaluationCoordinator("evalDatabase", "eigg");
 
@@ -74,13 +74,46 @@ public class CoordinatorTests {
     @Test
     public void startTwoWorkers() throws Exception {
 
-        worker = new EvaluationWorker();
-        worker2 = new EvaluationWorker();
+        workers = new IWorker[2];
+        workers[0] = new EvaluationWorker();
+        workers[1] = new EvaluationWorker();
 
         final ICoordinatorLocal eval = new EvaluationCoordinator("evalDatabase", "eigg");
 
         eval.startLocatorServer(34000);
 
         assertEquals(2, eval.startH2OInstances(2));
+    }
+
+    @Test
+    public void startThreeWorkers() throws Exception {
+
+        workers = new IWorker[3];
+        for (int i = 0; i < workers.length; i++) {
+            workers[i] = new EvaluationWorker();
+        }
+
+        final ICoordinatorLocal eval = new EvaluationCoordinator("evalDatabase", "eigg");
+
+        eval.startLocatorServer(34000);
+
+        assertEquals(3, eval.startH2OInstances(3));
+    }
+
+    @Test
+    public void runWorkloadOnWorker() throws Exception {
+
+        workers = new IWorker[1];
+        workers[0] = new EvaluationWorker();
+
+        final ICoordinatorLocal eval = new EvaluationCoordinator("evalDatabase", "eigg");
+
+        eval.startLocatorServer(34000);
+
+        assertEquals(1, eval.startH2OInstances(1));
+
+        eval.executeWorkload("src/test/org/h2o/eval/workloads/test.workload");
+
+        eval.blockUntilWorkloadsComplete();
     }
 }

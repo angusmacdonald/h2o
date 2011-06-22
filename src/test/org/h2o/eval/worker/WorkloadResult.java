@@ -68,4 +68,9 @@ public class WorkloadResult implements Serializable {
         return worker;
     }
 
+    public Throwable getException() {
+
+        return exception;
+    }
+
 }

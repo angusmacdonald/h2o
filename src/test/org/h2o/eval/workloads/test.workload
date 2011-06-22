@@ -1,0 +1,4 @@
+CREATE TABLE test (id int);
+<loop iterations="300">
+INSERT INTO test VALUES (<loop-counter/>);
+</loop>

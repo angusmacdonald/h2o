@@ -1,6 +1,7 @@
 package org.h2o.eval.coordinator;
 
 import java.io.IOException;
+import java.rmi.RemoteException;
 
 import org.h2o.util.exceptions.StartupException;
 
@@ -22,4 +23,16 @@ public interface ICoordinatorLocal {
      */
     public int startH2OInstances(int numberToStart) throws StartupException;
 
+    /**
+     * Initiate execution of a specified workload.
+     * @param workloadFileLocation  The location of the file containing the workload to be executed.
+     * @throws StartupException
+     */
+    public void executeWorkload(String workloadFileLocation) throws StartupException;
+
+    /**
+     * Method returns when all workloads that have been started by this co-ordinator terminate (doesn't matter whether they terminate successfully or via an exception).
+     * @throws RemoteException Thrown if, while checking whether workloads have finished on remote workers, there was a loss of communication to the remote worker.
+     */
+    public void blockUntilWorkloadsComplete() throws RemoteException;
 }
