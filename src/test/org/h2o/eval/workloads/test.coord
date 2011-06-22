@@ -1,0 +1,5 @@
+{0} CREATE TABLE test (id int);
+{1} CREATE TABLE test3 (id int);
+{2} CREATE TABLE test3 (id int);
+{0} {execute_workload="src/test/org/h2o/eval/workloads/test.workload"}
+{1} {execute_workload="src/test/org/h2o/eval/workloads/test.workload"}

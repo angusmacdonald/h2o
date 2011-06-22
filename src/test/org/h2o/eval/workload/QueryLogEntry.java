@@ -25,6 +25,8 @@ public class QueryLogEntry implements Serializable {
      */
     public long timeToExecute;
 
+    public long timeOfLogEntry;
+
     /**
      * Whether the query executed successfully.
      */
@@ -38,6 +40,7 @@ public class QueryLogEntry implements Serializable {
      */
     public QueryLogEntry(final boolean successfulExecution, final long timeToExecute, final QueryType queryType, final String tableInvolved) {
 
+        timeOfLogEntry = System.currentTimeMillis();
         this.successfulExecution = successfulExecution;
         this.timeToExecute = timeToExecute;
         this.queryType = queryType;

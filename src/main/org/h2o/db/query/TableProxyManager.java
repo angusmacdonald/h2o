@@ -219,7 +219,7 @@ public class TableProxyManager {
     public void finishTransaction(final boolean commit, final boolean h2oCommit, final Database db) throws SQLException {
 
         try {
-            final Map<DatabaseInstanceWrapper, Integer> replicasInvolvedInTransaction = getReplicasFromTableProxies(); //TODO preserve the update id's from 'allreplicas'
+            final Map<DatabaseInstanceWrapper, Integer> replicasInvolvedInTransaction = getReplicasFromTableProxies();
 
             if (getTableManagersThatHoldLocks().size() == 0 && replicasInvolvedInTransaction.size() > 0 && h2oCommit) {
 
