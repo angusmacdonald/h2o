@@ -1,5 +1,6 @@
 package org.h2o.eval.interfaces;
 
+import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
@@ -21,9 +22,11 @@ public interface IWorker extends Remote {
     /**
      * Allows a remote {@link ICoordinatorRemote} to connect to the worker and provide a reference back to itself,
      * so that the results of workloads can be returned to the coordinator.
-     * @param remoteCoordinator A remote reference back to the coordinator.
+     * @param hostname The host on which the co-ordinator is running. The worker can find the co-ordinator through the registry on this instance.
+     * @param bindName The name by which this co-ordinator is bound to its registry.
+     * @throws NotBoundException If the co-ordinator could not be found at the specified registry.
      */
-    public void initiateConnection(ICoordinatorRemote remoteCoordinator) throws RemoteException;
+    public void initiateConnection(String hostname, String bindName) throws RemoteException, NotBoundException;
 
     /*
      * H2O Instance-Related Methods.
@@ -66,9 +69,9 @@ public interface IWorker extends Remote {
      */
 
     /**
-     * Start the given workload on this worker by executing it against the local H2O instance.
+     * Start the given workload on this worker in a new thread by executing it against the local H2O instance.
      * @param workload Workload to be executed against the local H2O instance.
-     * @return true if the workload was started successfully.
+     * @return true if the workload was started successfully. <em>This method returns once the workload has started, not when it has finished.</em>
      * @throws WorkloadParseException Thrown when the workload being executed contains a syntactic error.
      * @throws SQLException Thrown when an SQL statement cannot initially be created. Errors on individual queries while executing this workload do not throw exceptions, but log failure.
      */
@@ -84,8 +87,19 @@ public interface IWorker extends Remote {
     /**
      * Whether the specified workload is running on this worker.
      * @param workload The workload that this method tests for.
-     * @return True if the workload is running, false it it isn't.
+     * @return True if the workload is running, false if it isn't.
      */
     public boolean isWorkloadRunning(IWorkload workload) throws RemoteException;
+
+    /**
+     * Whether any workload is running on this worker.
+     * @return True if a workload is running, false if none are running.
+     */
+    public boolean isWorkloadRunning() throws RemoteException;
+
+    /**
+     * Stop the checker thread which runs and checks whether any workloads have finished executing.
+     */
+    public void stopWorkloadChecker() throws RemoteException;
 
 }

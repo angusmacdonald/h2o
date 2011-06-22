@@ -6,7 +6,6 @@ import org.h2.tools.DeleteDbFiles;
 import org.h2o.H2OLocator;
 import org.h2o.eval.coordinator.Workload;
 import org.h2o.eval.interfaces.IWorker;
-import org.h2o.eval.interfaces.IWorkload;
 import org.h2o.eval.worker.EvaluationWorker;
 import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.StartupException;
@@ -39,6 +38,7 @@ public class WorkerTests {
         if (worker != null) {
             try {
                 worker.terminateH2OInstance();
+                worker.stopWorkloadChecker();
             }
             catch (final Exception e) { //Will happen if an H2O instance isn't running.
             }
@@ -47,6 +47,7 @@ public class WorkerTests {
         if (worker2 != null) {
             try {
                 worker2.terminateH2OInstance();
+                worker2.stopWorkloadChecker();
             }
             catch (final Exception e) { //Will happen if an H2O instance isn't running.
             }
@@ -177,7 +178,7 @@ public class WorkerTests {
 
         worker.startH2OInstance(descriptorFile);
 
-        final IWorkload workload = new Workload("src/test/org/h2o/eval/workloads/test.workload");
+        final Workload workload = new Workload("src/test/org/h2o/eval/workloads/test.workload");
 
         worker.startWorkload(workload);
 

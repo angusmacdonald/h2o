@@ -4,19 +4,22 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.h2.util.NetUtils;
 import org.h2o.H2OLocator;
 import org.h2o.eval.interfaces.ICoordinatorRemote;
 import org.h2o.eval.interfaces.IWorker;
-import org.h2o.eval.interfaces.IWorkload;
 import org.h2o.eval.worker.EvaluationWorker;
+import org.h2o.eval.worker.WorkloadResult;
 import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.StartupException;
 import org.h2o.util.exceptions.WorkloadParseException;
@@ -39,6 +42,8 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
     private final String[] workerLocations;
     private final Set<IWorker> workerNodes = new HashSet<IWorker>();
     private final Set<IWorker> activeWorkers = new HashSet<IWorker>();
+
+    private final Set<IWorker> workersWithActiveWorkloads = Collections.synchronizedSet(new HashSet<IWorker>());
 
     /*
      * Locator server fields.
@@ -64,7 +69,8 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
         try {
             registry = LocateRegistry.getRegistry();
 
-            registry.bind(REGISTRY_BIND_NAME, UnicastRemoteObject.exportObject(registry, 0));
+            final Remote stub = UnicastRemoteObject.exportObject(this, 0);
+            registry.bind(REGISTRY_BIND_NAME, stub);
         }
         catch (final Exception e) {
             e.printStackTrace();
@@ -144,7 +150,7 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
                     if (workerNode != null) {
                         try {
 
-                            workerNode.initiateConnection(null);
+                            workerNode.initiateConnection(NetUtils.getLocalAddress(), REGISTRY_BIND_NAME);
 
                             workerNodes.add(workerNode);
                         }
@@ -165,9 +171,10 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
      */
 
     @Override
-    public void collateMonitoringResults(final IWorkload workload, final long workloadLength, final long numAttemptedTransactions, final long numSuccessfulTransactions, final String[] eventHistory) throws RemoteException {
+    public void collateMonitoringResults(final WorkloadResult workloadResult) throws RemoteException {
 
-        // TODO Auto-generated method stub
+        workersWithActiveWorkloads.remove(workloadResult.getWorkloadID());
+        System.out.println(workloadResult);
 
     }
 
@@ -189,7 +196,7 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
 
         final IWorker worker = getActiveWorker();
 
-        IWorkload workload;
+        Workload workload;
         try {
             workload = new Workload(workloadFileLocation);
         }
@@ -215,6 +222,8 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
         catch (final SQLException e) {
             ErrorHandling.exceptionError(e, "Error creating SQL statement for workload execution. Workload was never started.");
         }
+
+        workersWithActiveWorkloads.add(worker);
     }
 
     /**
@@ -228,6 +237,20 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
         }
 
         return null;
+    }
+
+    @Override
+    public void blockUntilWorkloadsComplete() throws RemoteException {
+
+        while (workersWithActiveWorkloads.size() > 0) {
+
+            try {
+                Thread.sleep(1000);
+            }
+            catch (final InterruptedException e) {
+            }
+
+        };
     }
 
 }

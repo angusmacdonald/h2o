@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.rmi.AlreadyBoundException;
+import java.rmi.NotBoundException;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -13,6 +15,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
 import org.h2.tools.DeleteDbFiles;
 import org.h2.util.NetUtils;
@@ -31,11 +38,13 @@ import uk.ac.standrews.cs.nds.madface.HostDescriptor;
 import uk.ac.standrews.cs.nds.madface.JavaProcessDescriptor;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
-public class EvaluationWorker implements IWorker {
+public class EvaluationWorker extends Thread implements IWorker {
 
     public static final String PATH_TO_H2O_DATABASE = "eval";
 
     public static final String REGISTRY_PREFIX = "H2O_WORKER::";
+
+    private static final long CHECKER_SLEEP_TIME = 2000;
 
     /**
      * Handle on the H2O process this worker is running.
@@ -62,7 +71,59 @@ public class EvaluationWorker implements IWorker {
      */
     private static int instanceCount = 0;
 
+    private static ExecutorService workloadExecutor = Executors.newCachedThreadPool(new WorkloadThreadFactory() {
+
+        @Override
+        public Thread newThread(final Runnable r) {
+
+            return new Thread(r);
+        }
+    });
+
     private ICoordinatorRemote remoteCoordinator;
+
+    private List<FutureTask<WorkloadResult>> executingWorkloads = new LinkedList<FutureTask<WorkloadResult>>();
+
+    private boolean running = true;
+
+    @Override
+    public void run() {
+
+        final List<FutureTask<WorkloadResult>> toRemove = new LinkedList<FutureTask<WorkloadResult>>();
+
+        while (isRunning()) {
+
+            for (final FutureTask<WorkloadResult> workloadTask : executingWorkloads) {
+
+                if (workloadTask.isDone()) {
+
+                    try {
+                        remoteCoordinator.collateMonitoringResults(workloadTask.get());
+                        toRemove.add(workloadTask);
+                    }
+                    catch (final InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    catch (final ExecutionException e) {
+                        e.printStackTrace();
+                    }
+                    catch (final RemoteException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            executingWorkloads.removeAll(toRemove);
+            toRemove.clear();
+
+            try {
+                Thread.sleep(CHECKER_SLEEP_TIME);
+            }
+            catch (final InterruptedException e) {
+            }
+        }
+    }
 
     public EvaluationWorker() throws RemoteException, AlreadyBoundException {
 
@@ -80,12 +141,17 @@ public class EvaluationWorker implements IWorker {
 
         registry.bind(REGISTRY_PREFIX + h2oInstanceName, UnicastRemoteObject.exportObject(this, 0));
 
+        start();
     }
 
     @Override
-    public void initiateConnection(final ICoordinatorRemote remoteCoordinator) throws RemoteException {
+    public void initiateConnection(final String hostname, final String bindName) throws RemoteException, NotBoundException {
 
-        this.remoteCoordinator = remoteCoordinator;
+        final Registry remoteRegistry = LocateRegistry.getRegistry(hostname);
+
+        final Remote remoteCoordinatorAsRemote = remoteRegistry.lookup(bindName);
+
+        remoteCoordinator = (ICoordinatorRemote) remoteCoordinatorAsRemote;
 
     }
 
@@ -189,8 +255,23 @@ public class EvaluationWorker implements IWorker {
     @Override
     public boolean startWorkload(final IWorkload workload) throws RemoteException, WorkloadParseException, SQLException {
 
-        workload.execute(connection);
-        return false;
+        workload.initialiseOnWorker(connection, this);
+
+        final FutureTask<WorkloadResult> future = new FutureTask<WorkloadResult>(new Callable<WorkloadResult>() {
+
+            @Override
+            public WorkloadResult call() {
+
+                return workload.executeWorkload();
+            }
+        });
+
+        executingWorkloads = new LinkedList<FutureTask<WorkloadResult>>();
+        executingWorkloads.add(future);
+
+        workloadExecutor.execute(future);
+
+        return true;
     }
 
     @Override
@@ -205,6 +286,22 @@ public class EvaluationWorker implements IWorker {
 
         // TODO Auto-generated method stub
         return false;
+    }
+
+    @Override
+    public boolean isWorkloadRunning() throws RemoteException {
+
+        for (final FutureTask<WorkloadResult> workloadTask : executingWorkloads) {
+            if (!workloadTask.isDone()) { return true; }
+        }
+
+        return false;
+    }
+
+    @Override
+    public void stopWorkloadChecker() throws RemoteException {
+
+        setRunning(false);
     }
 
     /*
@@ -290,6 +387,16 @@ public class EvaluationWorker implements IWorker {
         catch (final IOException e1) {
             ErrorHandling.exceptionErrorNoEvent(e1, "Couldn't save descriptor file locally.");
         }
+    }
+
+    public synchronized void setRunning(final boolean running) {
+
+        this.running = running;
+    }
+
+    public synchronized boolean isRunning() {
+
+        return running;
     }
 
 }

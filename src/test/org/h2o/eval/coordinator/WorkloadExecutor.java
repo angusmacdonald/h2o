@@ -5,6 +5,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 
+import org.h2o.eval.interfaces.IWorker;
+import org.h2o.eval.worker.WorkloadResult;
 import org.h2o.util.exceptions.WorkloadParseException;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -25,9 +27,12 @@ public class WorkloadExecutor {
     private static final String LOOP_COUNTER_PLACEHOLDER = "<loop-counter/>";
     private static final String LOOP_END_TAG = "</loop>";
 
-    public static void execute(final Connection connection, final ArrayList<String> queries) throws SQLException, WorkloadParseException {
+    public static WorkloadResult execute(final Connection connection, final ArrayList<String> queries, final IWorker worker) throws SQLException, WorkloadParseException {
 
         final Statement stat = connection.createStatement();
+
+        long successfullyExecutedTransactions = 0;
+        long attemptedTransactions = 0;
 
         int loopCounter = -1; //the current iteration of the loop in this workload [nested loops are not supported].
         int loopStartPos = -1; //where the loop starts in this list of queries.
@@ -85,20 +90,25 @@ public class WorkloadExecutor {
             }
             else { //It's an SQL query. Execute it.
 
+                attemptedTransactions++;
+
                 query = query.replaceAll(LOOP_COUNTER_PLACEHOLDER, loopCounter + "");
 
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing query: " + query);
 
                 try {
                     stat.execute(query);
+                    successfullyExecutedTransactions++;
                 }
                 catch (final SQLException e) {
                     Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to execute '" + query + "'. Error: " + e.getMessage());
-
                 }
             }
 
         }
+
+        final WorkloadResult result = new WorkloadResult(successfullyExecutedTransactions, attemptedTransactions, worker);
+        return result;
 
     }
 }

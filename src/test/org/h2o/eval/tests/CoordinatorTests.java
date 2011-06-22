@@ -14,6 +14,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+
 /**
  * Tests of the H2O co-ordinator class, {@link EvaluationCoordinator}.
  *
@@ -25,6 +28,8 @@ public class CoordinatorTests {
 
     @Before
     public void setUp() throws Exception {
+
+        Diagnostic.setLevel(DiagnosticLevel.FULL);
 
         DeleteDbFiles.execute(EvaluationWorker.PATH_TO_H2O_DATABASE, null, true);
     }
@@ -93,5 +98,22 @@ public class CoordinatorTests {
         eval.startLocatorServer(34000);
 
         assertEquals(3, eval.startH2OInstances(3));
+    }
+
+    @Test
+    public void runWorkloadOnWorker() throws Exception {
+
+        workers = new IWorker[1];
+        workers[0] = new EvaluationWorker();
+
+        final ICoordinatorLocal eval = new EvaluationCoordinator("evalDatabase", "eigg");
+
+        eval.startLocatorServer(34000);
+
+        assertEquals(1, eval.startH2OInstances(1));
+
+        eval.executeWorkload("src/test/org/h2o/eval/workloads/test.workload");
+
+        eval.blockUntilWorkloadsComplete();
     }
 }
