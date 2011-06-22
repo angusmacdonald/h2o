@@ -4,9 +4,9 @@ import static org.junit.Assert.assertFalse;
 
 import org.h2.tools.DeleteDbFiles;
 import org.h2o.H2OLocator;
-import org.h2o.eval.coordinator.Workload;
 import org.h2o.eval.interfaces.IWorker;
 import org.h2o.eval.worker.EvaluationWorker;
+import org.h2o.eval.workload.Workload;
 import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.StartupException;
 import org.junit.After;
