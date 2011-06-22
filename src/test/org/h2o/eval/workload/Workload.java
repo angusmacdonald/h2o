@@ -1,4 +1,4 @@
-package org.h2o.eval.coordinator;
+package org.h2o.eval.workload;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import org.h2o.eval.interfaces.IWorker;
 import org.h2o.eval.interfaces.IWorkload;
 import org.h2o.eval.worker.EvaluationWorker;
-import org.h2o.eval.worker.WorkloadResult;
 
 import uk.ac.standrews.cs.nds.util.FileUtil;
 

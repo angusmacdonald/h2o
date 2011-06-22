@@ -19,12 +19,14 @@ import org.h2o.H2OLocator;
 import org.h2o.eval.interfaces.ICoordinatorRemote;
 import org.h2o.eval.interfaces.IWorker;
 import org.h2o.eval.worker.EvaluationWorker;
-import org.h2o.eval.worker.WorkloadResult;
+import org.h2o.eval.workload.Workload;
+import org.h2o.eval.workload.WorkloadResult;
 import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.StartupException;
 import org.h2o.util.exceptions.WorkloadParseException;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
@@ -175,6 +177,8 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
 
         workersWithActiveWorkloads.remove(workloadResult.getWorkloadID());
         System.out.println(workloadResult);
+
+        System.out.println(PrettyPrinter.toString(workloadResult.getQueryLog()));
 
         if (workloadResult.getException() != null) {
             workloadResult.getException().printStackTrace();

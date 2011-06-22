@@ -2,3 +2,11 @@ CREATE TABLE test (id int);
 <loop iterations="300">
 INSERT INTO test VALUES (<loop-counter/>);
 </loop>
+<loop iterations="200">
+DELETE FROM test WHERE id=<loop-counter/>;
+</loop>
+DROP TABLE test;
+CREATE TABLE test (id int);
+<loop iterations="10">
+INSERT INTO test VALUES (<loop-counter/>);
+</loop>

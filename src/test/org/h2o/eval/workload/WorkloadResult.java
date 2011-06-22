@@ -1,6 +1,7 @@
-package org.h2o.eval.worker;
+package org.h2o.eval.workload;
 
 import java.io.Serializable;
+import java.util.List;
 
 import org.h2o.eval.interfaces.IWorker;
 
@@ -31,6 +32,8 @@ public class WorkloadResult implements Serializable {
 
     private IWorker worker;
 
+    private final List<QueryLogEntry> queryLog;
+
     /**
      * Called when a workload has not successfully initiated.
      * @param e Either an SQLException, thrown because a database connection could not be created, or a WorkloadParseException, because the workload script
@@ -40,9 +43,10 @@ public class WorkloadResult implements Serializable {
 
         successfullyStarted = false;
         exception = e;
+        queryLog = null;
     }
 
-    public WorkloadResult(final long successfullyExecutedTransactions, final long totalAttemptedTransactions, final IWorker worker) {
+    public WorkloadResult(final List<QueryLogEntry> queryLog, final long successfullyExecutedTransactions, final long totalAttemptedTransactions, final IWorker worker) {
 
         successfullyStarted = true;
         exception = null;
@@ -50,6 +54,7 @@ public class WorkloadResult implements Serializable {
         this.successfullyExecutedTransactions = successfullyExecutedTransactions;
         this.totalAttemptedTransactions = totalAttemptedTransactions;
         this.worker = worker;
+        this.queryLog = queryLog;
     }
 
     @Override
@@ -71,6 +76,11 @@ public class WorkloadResult implements Serializable {
     public Throwable getException() {
 
         return exception;
+    }
+
+    public List<QueryLogEntry> getQueryLog() {
+
+        return queryLog;
     }
 
 }

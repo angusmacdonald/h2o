@@ -1,12 +1,14 @@
-package org.h2o.eval.coordinator;
+package org.h2o.eval.workload;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.h2o.eval.interfaces.IWorker;
-import org.h2o.eval.worker.WorkloadResult;
+import org.h2o.eval.workload.QueryLogEntry.QueryType;
 import org.h2o.util.exceptions.WorkloadParseException;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -37,6 +39,8 @@ public class WorkloadExecutor {
         int loopCounter = -1; //the current iteration of the loop in this workload [nested loops are not supported].
         int loopStartPos = -1; //where the loop starts in this list of queries.
         int loopIterations = 1; //how many iterations of the loop are to be executed.
+
+        final List<QueryLogEntry> queryLog = new LinkedList<QueryLogEntry>();
 
         for (int i = 0; i < queries.size(); i++) {
 
@@ -96,19 +100,54 @@ public class WorkloadExecutor {
 
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing query: " + query);
 
+                boolean successfullyExecuted = true;
+                final long timeBeforeQueryExecution = System.currentTimeMillis();
+
                 try {
                     stat.execute(query);
                     successfullyExecutedTransactions++;
                 }
                 catch (final SQLException e) {
                     Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to execute '" + query + "'. Error: " + e.getMessage());
+                    successfullyExecuted = false;
                 }
-            }
 
+                final long timeAfterQueryExecution = System.currentTimeMillis();
+
+                queryLog.add(getQueryLogEntry(query, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
+
+            }
         }
 
-        final WorkloadResult result = new WorkloadResult(successfullyExecutedTransactions, attemptedTransactions, worker);
+        final WorkloadResult result = new WorkloadResult(queryLog, successfullyExecutedTransactions, attemptedTransactions, worker);
         return result;
+
+    }
+
+    private static QueryLogEntry getQueryLogEntry(final String query, final boolean successfullyExecuted, final long timeToExecute) {
+
+        QueryType queryType = QueryType.UNKNOWN;
+        String tableInvolved = "Unknown";
+
+        if (query.contains("INSERT INTO")) {
+            queryType = QueryType.INSERT;
+
+            tableInvolved = query.substring("INSERT INTO ".length(), query.indexOf(" VALUES ("));
+        }
+        else if (query.contains("DELETE FROM")) {
+            queryType = QueryType.DELETE;
+            tableInvolved = query.substring("DELETE FROM ".length(), query.indexOf(" WHERE"));
+        }
+        else if (query.contains("CREATE TABLE")) {
+            queryType = QueryType.CREATE;
+            tableInvolved = query.substring("CREATE TABLE ".length(), query.indexOf(" ("));
+        }
+        else if (query.contains("DROP TABLE")) {
+            queryType = QueryType.DROP;
+            tableInvolved = query.substring("DROP TABLE ".length(), query.indexOf(";"));
+        }
+
+        return new QueryLogEntry(successfullyExecuted, timeToExecute, queryType, tableInvolved);
 
     }
 }

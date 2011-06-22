@@ -1,4 +1,4 @@
-package org.h2o.eval.worker;
+package org.h2o.eval.workload;
 
 import java.util.concurrent.ThreadFactory;
 

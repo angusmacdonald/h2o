@@ -28,6 +28,8 @@ import org.h2o.db.id.DatabaseURL;
 import org.h2o.eval.interfaces.ICoordinatorRemote;
 import org.h2o.eval.interfaces.IWorker;
 import org.h2o.eval.interfaces.IWorkload;
+import org.h2o.eval.workload.WorkloadResult;
+import org.h2o.eval.workload.WorkloadThreadFactory;
 import org.h2o.test.fixture.MultiProcessTestBase;
 import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.ShutdownException;
@@ -320,6 +322,7 @@ public class EvaluationWorker extends Thread implements IWorker {
             return new HostDescriptor().getProcessManager().runProcess(new JavaProcessDescriptor().classToBeInvoked(H2O.class).args(args));
         }
         catch (final Exception e) {
+            e.printStackTrace();
             throw new StartupException("Failed to create new H2O process: " + e.getMessage());
         }
     }
