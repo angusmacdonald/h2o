@@ -38,6 +38,7 @@ import uk.ac.standrews.cs.nds.madface.HostDescriptor;
 import uk.ac.standrews.cs.nds.madface.JavaProcessDescriptor;
 import uk.ac.standrews.cs.nds.madface.PlatformDescriptor;
 import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
+import uk.ac.standrews.cs.nds.madface.exceptions.UnsupportedPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -151,7 +152,7 @@ public class MultiProcessTestBase extends TestBase {
         Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
-    private void killExistingProcessesIfNotOnWindows() throws IOException {
+    private void killExistingProcessesIfNotOnWindows() throws IOException, UnsupportedPlatformException {
 
         final HostDescriptor host_descriptor = new HostDescriptor();
 

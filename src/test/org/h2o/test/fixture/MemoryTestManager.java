@@ -26,17 +26,13 @@ package org.h2o.test.fixture;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.concurrent.TimeoutException;
 
 import org.h2.util.NetUtils;
 import org.h2o.H2O;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
 
-import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.rpc.AbstractConnectionPool;
-
-import com.mindbright.ssh2.SSH2Exception;
 
 /**
  * Test manager that abstracts over the details of instantiating and cleaning up a set of in-memory database instances.
@@ -62,7 +58,7 @@ public class MemoryTestManager extends TestManager {
     // -------------------------------------------------------------------------------------------------------
 
     @Override
-    public void setUp() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
+    public void setUp() throws Exception {
 
         super.setUp();
 

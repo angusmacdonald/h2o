@@ -1,17 +1,10 @@
 package org.h2o.test.fixture;
 
-import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
 import org.junit.Before;
-
-import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
-import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
-
-import com.mindbright.ssh2.SSH2Exception;
 
 public abstract class H2OTestBase {
 
@@ -22,16 +15,10 @@ public abstract class H2OTestBase {
     /**
      * Sets up the test.
      *
-     * @throws SQLException if fixture setup fails
-     * @throws IOException if fixture setup fails
-     * @throws UnknownPlatformException
-     * @throws UndefinedDiagnosticLevelException
-     * @throws TimeoutException
-     * @throws SSH2Exception
-     * @throws InterruptedException 
+     * @throws Exception if fixture setup fails
      */
     @Before
-    public void setUp() throws SQLException, IOException, UnknownPlatformException, UndefinedDiagnosticLevelException, SSH2Exception, TimeoutException, InterruptedException {
+    public void setUp() throws Exception {
 
         getTestManager().setUp();
     }
@@ -49,7 +36,7 @@ public abstract class H2OTestBase {
 
     // -------------------------------------------------------------------------------------------------------
 
-    public void startup() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
+    public void startup() throws Exception {
 
         getTestManager().startup();
     }

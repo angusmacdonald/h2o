@@ -24,24 +24,16 @@
  ***************************************************************************/
 package org.h2o.test.fixture;
 
-import java.io.IOException;
 import java.sql.SQLException;
-import java.util.concurrent.TimeoutException;
-
-import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
-
-import com.mindbright.ssh2.SSH2Exception;
 
 public interface ITestManager {
 
     /**
      * Sets up the test.
      *
-     * @throws IOException if fixture setup fails
-     * @throws UnknownPlatformException  if fixture setup fails
-     * @throws InterruptedException 
+     * @throws Exception if fixture setup fails
      */
-    void setUp() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException;
+    void setUp() throws Exception;
 
     /**
      * Tears down the test, removing persistent state.
@@ -50,7 +42,7 @@ public interface ITestManager {
      */
     void tearDown() throws SQLException;
 
-    void startup() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException;
+    void startup() throws Exception;
 
     void shutdown();
 

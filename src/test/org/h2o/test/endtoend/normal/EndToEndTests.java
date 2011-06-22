@@ -68,15 +68,10 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
     /**
      * Checks that data can be inserted during one instantiation of a database and read in another.
      *
-     * @throws SQLException if the test fails
-     * @throws IOException if the test fails
-     * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
-     * @throws TimeoutException
-     * @throws SSH2Exception
-     * @throws InterruptedException 
+     * @throws Exception if the test fails
      */
     @Test
-    public void persistence() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
+    public void persistence() throws Exception {
 
         Diagnostic.trace();
 
@@ -122,15 +117,10 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
      * A table is created and populated in the first instantiation of the database. The second instantiation tries to access the table,
      * which should fail since the transaction creating it did not commit.
      *
-     * @throws SQLException if the test fails
-     * @throws IOException if the test fails
-     * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
-     * @throws TimeoutException
-     * @throws SSH2Exception
-     * @throws InterruptedException 
+     * @throws Exception if the test fails
      */
     @Test
-    public void rollbackWithoutAutoCommit() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
+    public void rollbackWithoutAutoCommit() throws Exception {
 
         Diagnostic.trace();
 
@@ -153,15 +143,10 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
     /**
      * Checks that data can be inserted during one instantiation of a database and read in another, with auto-commit disabled and using explicit commit.
      *
-     * @throws SQLException if the test fails
-     * @throws IOException if the test fails
-     * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
-     * @throws TimeoutException
-     * @throws SSH2Exception
-     * @throws InterruptedException 
+     * @throws Exception if the test fails
      */
     @Test
-    public void explicitCommit() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
+    public void explicitCommit() throws Exception {
 
         Diagnostic.trace();
 
@@ -186,15 +171,10 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
     /**
      * Checks that an attempt to recreate an existing table fails as expected.
      *
-     * @throws SQLException if the test fails
-     * @throws IOException if the test fails
-     * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
-     * @throws TimeoutException
-     * @throws SSH2Exception
-     * @throws InterruptedException 
+     * @throws Exception if the test fails
      */
     @Test
-    public void tableCantBeCreatedTwice() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
+    public void tableCantBeCreatedTwice() throws Exception {
 
         Diagnostic.trace();
 
@@ -216,7 +196,7 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
     /**
      * Checks that an attempt to recreate an existing table is successful when guarded by "IF NOT EXISTS".
      *
-     * @throws SQLException if the test fails
+     * @throws Exception if the test fails
      * @throws IOException if the test fails
      * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
      * @throws TimeoutException
@@ -224,7 +204,7 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
      * @throws InterruptedException 
      */
     @Test
-    public void createIfNotExists() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
+    public void createIfNotExists() throws Exception {
 
         Diagnostic.trace();
 
@@ -246,15 +226,10 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
     /**
      * Checks that a series of values can be inserted during one instantiation of a database and read in another, with auto-commit disabled and using explicit commit.
      *
-     * @throws SQLException if the test fails
-     * @throws IOException if the test fails
-     * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
-     * @throws TimeoutException
-     * @throws SSH2Exception
-     * @throws InterruptedException 
+     * @throws Exception if the test fails
      */
     @Test
-    public void multipleInserts() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
+    public void multipleInserts() throws Exception {
 
         Diagnostic.trace();
 
@@ -285,15 +260,10 @@ public abstract class EndToEndTests extends EndToEndTestsCommon {
      * The test currently fails due to an "unexpected code path" error. When that is fixed the test should be changed to make the update threads retry on
      * error, since it's legitimate for an update to fail due to not being able to obtain locks.
      *
-     * @throws SQLException if the test fails
-     * @throws IOException if the test fails
-     * @throws UnknownPlatformException if the database processes cannot be started due to the local platform being unknown
-     * @throws TimeoutException
-     * @throws SSH2Exception
-     * @throws InterruptedException 
+     * @throws Exception if the test fails
      */
     @Test
-    public void concurrentUpdates() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
+    public void concurrentUpdates() throws Exception {
 
         Diagnostic.trace();
 

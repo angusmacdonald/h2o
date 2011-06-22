@@ -13,6 +13,7 @@ import org.h2o.db.id.DatabaseURL;
 import uk.ac.standrews.cs.nds.madface.HostDescriptor;
 import uk.ac.standrews.cs.nds.madface.JavaProcessDescriptor;
 import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
+import uk.ac.standrews.cs.nds.madface.exceptions.UnsupportedPlatformException;
 
 import com.mindbright.ssh2.SSH2Exception;
 
@@ -42,7 +43,7 @@ public class DiskTestManager extends TestManager {
     // -------------------------------------------------------------------------------------------------------
 
     @Override
-    public void startup() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
+    public void startup() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException, UnsupportedPlatformException {
 
         super.startup();
 
@@ -100,7 +101,7 @@ public class DiskTestManager extends TestManager {
 
     // -------------------------------------------------------------------------------------------------------
 
-    private void startupDatabaseProcesses() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
+    private void startupDatabaseProcesses() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException, UnsupportedPlatformException {
 
         db_processes = new Process[database_base_directory_paths.length];
         databaseNames = new String[database_base_directory_paths.length];

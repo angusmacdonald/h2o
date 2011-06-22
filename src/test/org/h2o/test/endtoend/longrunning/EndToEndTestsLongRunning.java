@@ -8,12 +8,9 @@
  */
 package org.h2o.test.endtoend.longrunning;
 
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeoutException;
 
 import org.h2o.test.endtoend.fixture.EndToEndConnectionDriver;
 import org.h2o.test.endtoend.fixture.EndToEndTestsCommon;
@@ -23,10 +20,7 @@ import org.h2o.test.fixture.IDiskConnectionDriverFactory;
 import org.h2o.test.fixture.ITestManager;
 import org.junit.Test;
 
-import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
-
-import com.mindbright.ssh2.SSH2Exception;
 
 /**
  * User-centric tests.
@@ -48,15 +42,10 @@ public class EndToEndTestsLongRunning extends EndToEndTestsCommon {
     /**
      * A generalised version of {@link #concurrentUpdates()} with multiple threads each inserting multiple values via its own connection.
      *
-     * @throws SQLException if the test fails
-     * @throws IOException if the test fails
-     * @throws UnknownPlatformException
-     * @throws TimeoutException
-     * @throws SSH2Exception
-     * @throws InterruptedException 
+     * @throws Exception if the test fails
      */
     @Test
-    public void multipleThreads1() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
+    public void multipleThreads1() throws Exception {
 
         Diagnostic.trace();
 
@@ -71,15 +60,10 @@ public class EndToEndTestsLongRunning extends EndToEndTestsCommon {
     /**
      * A generalised version of {@link #concurrentUpdates()} with multiple threads each inserting multiple values via its own connection.
      *
-     * @throws SQLException if the test fails
-     * @throws IOException if the test fails
-     * @throws UnknownPlatformException
-     * @throws TimeoutException
-     * @throws SSH2Exception
-     * @throws InterruptedException 
+     * @throws Exception if the test fails
      */
     @Test
-    public void multipleThreads2() throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
+    public void multipleThreads2() throws Exception {
 
         Diagnostic.trace();
 
@@ -91,7 +75,7 @@ public class EndToEndTestsLongRunning extends EndToEndTestsCommon {
         multipleThreads(number_of_values, number_of_threads, delay, number_of_columns);
     }
 
-    private void multipleThreads(final int number_of_values, final int number_of_threads, final int delay, final int number_of_columns) throws SQLException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
+    private void multipleThreads(final int number_of_values, final int number_of_threads, final int delay, final int number_of_columns) throws Exception {
 
         final EndToEndConnectionDriver driver1 = makeSpecificConnectionDriver();
 

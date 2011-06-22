@@ -43,6 +43,7 @@ import org.h2o.H2OLocator;
 import uk.ac.standrews.cs.nds.madface.HostDescriptor;
 import uk.ac.standrews.cs.nds.madface.JavaProcessDescriptor;
 import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
+import uk.ac.standrews.cs.nds.madface.exceptions.UnsupportedPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
@@ -153,7 +154,7 @@ public abstract class TestManager implements ITestManager {
     // -------------------------------------------------------------------------------------------------------
 
     @Override
-    public void setUp() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
+    public void setUp() throws Exception {
 
         Diagnostic.setLevel(DIAGNOSTIC_LEVEL);
         Diagnostic.setTimestampFlag(true);
@@ -182,7 +183,7 @@ public abstract class TestManager implements ITestManager {
     }
 
     @Override
-    public void startup() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
+    public void startup() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException, UnsupportedPlatformException {
 
         connections_to_be_closed = new HashSet<Connection>();
     }
@@ -201,7 +202,7 @@ public abstract class TestManager implements ITestManager {
 
     // -------------------------------------------------------------------------------------------------------
 
-    protected void startupLocator() throws UnknownPlatformException, IOException, SSH2Exception, TimeoutException, InterruptedException {
+    protected void startupLocator() throws UnknownPlatformException, IOException, SSH2Exception, TimeoutException, InterruptedException, UnsupportedPlatformException {
 
         if (locator_process == null) {
 

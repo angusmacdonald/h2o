@@ -35,6 +35,7 @@ import uk.ac.standrews.cs.nds.madface.HostDescriptor;
 import uk.ac.standrews.cs.nds.madface.JavaProcessDescriptor;
 import uk.ac.standrews.cs.nds.madface.PlatformDescriptor;
 import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
+import uk.ac.standrews.cs.nds.madface.exceptions.UnsupportedPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -66,7 +67,7 @@ public class WrapperTests {
     }
 
     @Test
-    public void startSingleDatabaseInstance() throws InterruptedException, IOException, UnknownPlatformException, SSH2Exception, TimeoutException {
+    public void startSingleDatabaseInstance() throws Exception {
 
         killExistingProcessesIfNotOnWindows();
 
@@ -114,7 +115,7 @@ public class WrapperTests {
         }
     }
 
-    private void killExistingProcessesIfNotOnWindows() {
+    private void killExistingProcessesIfNotOnWindows() throws UnsupportedPlatformException {
 
         final HostDescriptor host_descriptor = new HostDescriptor();
         if (!host_descriptor.getPlatform().getName().equals(PlatformDescriptor.NAME_WINDOWS)) {
@@ -195,7 +196,7 @@ public class WrapperTests {
      * @throws IOException
      * @throws InterruptedException 
      */
-    private void startDatabaseInSeparateProcess() throws IOException, UnknownPlatformException, SSH2Exception, TimeoutException, InterruptedException {
+    private void startDatabaseInSeparateProcess() throws Exception {
 
         /*
          * Start the database instance.

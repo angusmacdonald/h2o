@@ -9,7 +9,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.sql.BatchUpdateException;
 import java.sql.CallableStatement;
@@ -19,7 +18,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.concurrent.TimeoutException;
 
 import org.h2o.test.fixture.DiskConnectionDriverFactory;
 import org.h2o.test.fixture.DiskTestManager;
@@ -29,11 +27,7 @@ import org.h2o.test.fixture.ITestManager;
 import org.junit.Before;
 import org.junit.Test;
 
-import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
-import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
-
-import com.mindbright.ssh2.SSH2Exception;
 
 /**
  * Test for batch updates.
@@ -68,7 +62,7 @@ public class H2TestBatchUpdates extends H2OTestBase {
 
     @Override
     @Before
-    public void setUp() throws SQLException, IOException, UnknownPlatformException, UndefinedDiagnosticLevelException, SSH2Exception, TimeoutException, InterruptedException {
+    public void setUp() throws Exception {
 
         super.setUp();
 

@@ -11,11 +11,9 @@ package org.h2o.test;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.concurrent.TimeoutException;
 
 import org.h2.engine.Constants;
 import org.h2o.test.fixture.ConnectionDriver;
@@ -28,11 +26,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import uk.ac.standrews.cs.nds.madface.exceptions.UnknownPlatformException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
-import uk.ac.standrews.cs.nds.util.UndefinedDiagnosticLevelException;
-
-import com.mindbright.ssh2.SSH2Exception;
 
 /**
  * Tests on multiple databases.
@@ -58,7 +52,7 @@ public class ChordTestsDiskDBFailingSporadically extends H2OTestBase {
 
     @Override
     @Before
-    public void setUp() throws SQLException, IOException, UnknownPlatformException, UndefinedDiagnosticLevelException, SSH2Exception, TimeoutException, InterruptedException {
+    public void setUp() throws Exception {
 
         super.setUp();
 
