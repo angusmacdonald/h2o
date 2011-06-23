@@ -1,9 +1,12 @@
 package org.h2o.eval.coordinator;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.sql.SQLException;
 
 import org.h2o.util.exceptions.StartupException;
+import org.h2o.util.exceptions.WorkloadParseException;
 
 /**
  * Interface for issuing commands to the evaluation coordinator.
@@ -29,6 +32,17 @@ public interface ICoordinatorLocal {
      * @throws StartupException
      */
     public void executeWorkload(String workloadFileLocation) throws StartupException;
+
+    /**
+     * Execute a co-ordinator script on this co-ordinator.
+     * @param configFileLocation Location of the co-ordinator script file.
+     * @throws FileNotFoundException If the co-ordinator script file does not exist where specified.
+     * @throws WorkloadParseException If the script file contains invalid syntax.
+     * @throws StartupException If an H2O instance could not be started as requested.
+     * @throws SQLException If a query could not be executed as requested.
+     * @throws IOException If there was a problem accessing the co-ordinator script file.
+     */
+    public void executeCoordinatorScript(String configFileLocation) throws RemoteException, FileNotFoundException, WorkloadParseException, StartupException, SQLException, IOException;
 
     /**
      * Method returns when all workloads that have been started by this co-ordinator terminate (doesn't matter whether they terminate successfully or via an exception).

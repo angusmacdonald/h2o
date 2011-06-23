@@ -32,6 +32,7 @@ import org.h2o.util.exceptions.StartupException;
 import org.h2o.util.exceptions.WorkloadParseException;
 
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.FileUtil;
 import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLocal {
@@ -302,6 +303,13 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
             }
 
         };
+    }
+
+    @Override
+    public void executeCoordinatorScript(final String configFileLocation) throws RemoteException, FileNotFoundException, WorkloadParseException, StartupException, SQLException, IOException {
+
+        executeCoordinationScript(FileUtil.readAllLines(configFileLocation));
+
     }
 
     public void executeCoordinationScript(final List<String> script) throws WorkloadParseException, RemoteException, StartupException, SQLException {
