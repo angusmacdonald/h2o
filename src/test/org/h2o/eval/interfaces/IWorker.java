@@ -102,4 +102,11 @@ public interface IWorker extends Remote {
      */
     public void stopWorkloadChecker() throws RemoteException;
 
+    /**
+     * Execute a single SQL query on the worker's H2O instance.
+     * @param query Query to be executed.
+     * @throws SQLException If the query was not successfully executed.
+     */
+    public void executeQuery(String query) throws RemoteException, SQLException;
+
 }

@@ -11,11 +11,17 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.h2.util.NetUtils;
 import org.h2o.H2OLocator;
+import org.h2o.eval.coordinator.instructions.Instruction;
+import org.h2o.eval.coordinator.instructions.StartMachineInstruction;
 import org.h2o.eval.interfaces.ICoordinatorRemote;
 import org.h2o.eval.interfaces.IWorker;
 import org.h2o.eval.worker.EvaluationWorker;
@@ -42,8 +48,14 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
      * Worker Fields
      */
     private final String[] workerLocations;
-    private final Set<IWorker> workerNodes = new HashSet<IWorker>();
+    private final List<IWorker> inactiveWorkers = new LinkedList<IWorker>();
     private final Set<IWorker> activeWorkers = new HashSet<IWorker>();
+
+    /**
+     * Mapping from an integer ID to worker node for H2O instances that have been started through
+     * a co-ordination script.
+     */
+    private final Map<Integer, IWorker> scriptedInstances = new HashMap<Integer, IWorker>();
 
     private final Set<IWorker> workersWithActiveWorkloads = Collections.synchronizedSet(new HashSet<IWorker>());
 
@@ -85,17 +97,19 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
     @Override
     public int startH2OInstances(final int numberToStart) throws StartupException {
 
+        //TODO this mechanism for starting instances does not assign IDs to instances.
+
         if (!locatorServerStarted) { throw new StartupException("The locator server has not yet been started."); }
 
         if (numberToStart <= 0) { return 0; }
 
         scanForWorkerNodes(workerLocations);
 
-        if (workerNodes.size() == 0) { return 0; }
+        if (inactiveWorkers.size() == 0) { return 0; }
 
         int numberStarted = 0;
 
-        for (final IWorker worker : workerNodes) {
+        for (final IWorker worker : inactiveWorkers) {
             try {
                 worker.startH2OInstance(descriptorFile);
 
@@ -108,7 +122,23 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
             }
         }
 
+        inactiveWorkers.removeAll(activeWorkers);
+
         return numberStarted;
+    }
+
+    private IWorker startH2OInstance() throws StartupException, RemoteException {
+
+        if (inactiveWorkers.size() == 0) { throw new StartupException("Could not instantiated another H2O instance."); }
+
+        final IWorker worker = inactiveWorkers.get(0);
+
+        worker.startH2OInstance(descriptorFile);
+
+        inactiveWorkers.remove(worker);
+        activeWorkers.add(worker);
+
+        return worker;
     }
 
     /**
@@ -149,12 +179,12 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
                 try {
                     final IWorker workerNode = (IWorker) remoteRegistry.lookup(entry);
 
-                    if (workerNode != null) {
+                    if (workerNode != null && !activeWorkers.contains(workerNode)) {
                         try {
 
                             workerNode.initiateConnection(NetUtils.getLocalAddress(), REGISTRY_BIND_NAME);
 
-                            workerNodes.add(workerNode);
+                            inactiveWorkers.add(workerNode);
                         }
                         catch (final RemoteException e) {
                             ErrorHandling.exceptionError(e, "Failed to connect to worker at " + workerNode + ".");
@@ -202,6 +232,20 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
     public void executeWorkload(final String workloadFileLocation) throws StartupException {
 
         final IWorker worker = getActiveWorker();
+
+        executeWorkload(worker, workloadFileLocation);
+
+    }
+
+    private void executeWorkload(final String id, final String workloadFileLocation) throws StartupException {
+
+        final IWorker worker = scriptedInstances.get(Integer.valueOf(id));
+
+        executeWorkload(worker, workloadFileLocation);
+
+    }
+
+    private void executeWorkload(final IWorker worker, final String workloadFileLocation) throws StartupException {
 
         Workload workload;
         try {
@@ -258,6 +302,45 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
             }
 
         };
+    }
+
+    public void executeCoordinationScript(final List<String> script) throws WorkloadParseException, RemoteException, StartupException, SQLException {
+
+        for (final String action : script) {
+            if (action.startsWith("{start_machine")) {
+                final StartMachineInstruction parseStartMachine = CoordinationScriptExecutor.parseStartMachine(action);
+
+                final IWorker worker = startH2OInstance();
+
+                scriptedInstances.put(parseStartMachine.id, worker);
+            }
+            else if (action.startsWith("{sleep=")) {
+                final int sleepTime = CoordinationScriptExecutor.parseSleepOperation(action);
+
+                try {
+                    Thread.sleep(sleepTime);
+                }
+                catch (final InterruptedException e) {
+                }
+            }
+            else {
+                final Instruction instruction = CoordinationScriptExecutor.parseQuery(action);
+
+                if (instruction.isWorkload()) {
+                    executeWorkload(instruction.id, instruction.getData());
+                }
+                else {
+                    executeQuery(instruction.id, instruction.getData());
+                }
+            }
+        }
+    }
+
+    private void executeQuery(final String workerID, final String query) throws RemoteException, SQLException {
+
+        final IWorker worker = scriptedInstances.get(Integer.valueOf(workerID));
+
+        worker.executeQuery(query);
     }
 
 }

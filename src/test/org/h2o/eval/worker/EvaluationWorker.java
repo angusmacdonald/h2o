@@ -402,4 +402,12 @@ public class EvaluationWorker extends Thread implements IWorker {
         return running;
     }
 
+    @Override
+    public void executeQuery(final String query) throws RemoteException, SQLException {
+
+        final Statement stat = connection.createStatement();
+        stat.execute(query);
+
+    }
+
 }
