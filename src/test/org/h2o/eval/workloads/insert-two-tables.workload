@@ -1,0 +1,9 @@
+SET AUTOCOMMIT OFF;
+<loop iterations="300">
+INSERT INTO test VALUES (<loop-counter/>);
+INSERT INTO test2 VALUES (<loop-counter/>);
+<increment/>
+INSERT INTO test VALUES (<loop-counter/>);
+INSERT INTO test2 VALUES (<loop-counter/>);
+COMMIT;
+</loop>

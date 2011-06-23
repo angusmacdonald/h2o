@@ -178,7 +178,7 @@ public class WorkerTests {
 
         worker.startH2OInstance(descriptorFile);
 
-        final Workload workload = new Workload("src/test/org/h2o/eval/workloads/test.workload");
+        final Workload workload = new Workload("src/test/org/h2o/eval/workloads/test.workload", 0);
 
         worker.startWorkload(workload);
 

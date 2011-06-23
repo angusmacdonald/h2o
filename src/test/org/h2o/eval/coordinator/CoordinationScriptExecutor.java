@@ -16,7 +16,7 @@ public class CoordinationScriptExecutor {
         //format: {start_machine id="<machine-id>" fail-after=<time_to_failure>}
         //example format: {start_machine id="0" fail-after="30000"}
 
-        final Pattern p = Pattern.compile("\\{start_machine id=\"(\\d+)\"(?: fail-after=\"(\\d+)\")?\\}");
+        final Pattern p = Pattern.compile("\\{start_machine id=\"(\\d+)\"(?:\\s+fail-after=\"(\\d+)\")?\\}");
 
         final Matcher matcher = p.matcher(action);
 
@@ -68,15 +68,15 @@ public class CoordinationScriptExecutor {
 
         //example format: {0} {execute_workload="src/test/org/h2o/eval/workloads/test.workload"}
 
-        final Pattern p = Pattern.compile("\\{execute_workload=\"([^\"]*)\"(?: duration=\"(\\d+)\")?\\}");
+        final Pattern p = Pattern.compile("\\{execute_workload=\"([^\"]*)\"(?:\\s+duration=\"(\\d+)\")?\\}");
 
         final Matcher matcher = p.matcher(query);
         String workloadFile = null;
-        String duration = null;
+        Long duration = null;
 
         if (matcher.matches()) {
             workloadFile = matcher.group(1);
-            duration = matcher.group(2);
+            duration = Long.valueOf(matcher.group(2));
         }
         else {
             throw new WorkloadParseException("Invalid syntax in : " + query);

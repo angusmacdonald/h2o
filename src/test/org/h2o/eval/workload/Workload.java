@@ -25,8 +25,14 @@ public class Workload extends Thread implements IWorkload {
 
     private IWorker worker;
 
-    public Workload(final String workloadFileLocation) throws FileNotFoundException, IOException {
+    /**
+     * Duration for which the workload should be executed.
+     */
+    private final long duration;
 
+    public Workload(final String workloadFileLocation, final long duration) throws FileNotFoundException, IOException {
+
+        this.duration = duration;
         final File workloadFile = new File(workloadFileLocation);
 
         if (!workloadFile.exists()) { throw new FileNotFoundException("Workload file doesn't exist."); }
@@ -47,7 +53,7 @@ public class Workload extends Thread implements IWorkload {
     public WorkloadResult executeWorkload() {
 
         try {
-            return WorkloadExecutor.execute(connection, queries, worker);
+            return WorkloadExecutor.execute(connection, queries, worker, duration);
         }
         catch (final Exception e) {
             return new WorkloadResult(e);

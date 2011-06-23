@@ -29,118 +29,155 @@ public class WorkloadExecutor {
     private static final String LOOP_COUNTER_PLACEHOLDER = "<loop-counter/>";
     private static final String INCREMENT_COUNTER_TAG = "<increment/>";
     private static final String LOOP_END_TAG = "</loop>";
+    private static final long MAX_WORKLOAD_DURATION = 60 * 60;
 
-    public static WorkloadResult execute(final Connection connection, final ArrayList<String> queries, final IWorker worker) throws SQLException, WorkloadParseException {
+    /**
+     * 
+     * @param connection
+     * @param queries
+     * @param worker
+     * @param duration How long this workload should execute for. '0' if it should just run to completion then terminate (up to a limit of 1 hour).
+     * @return
+     * @throws SQLException
+     * @throws WorkloadParseException
+     */
+    public static WorkloadResult execute(final Connection connection, final ArrayList<String> queries, final IWorker worker, long duration) throws SQLException, WorkloadParseException {
+
+        final long workloadStartTime = System.currentTimeMillis();
+
+        if (duration <= 0) { //if no duration is specified, 'timeout' after a specified period.
+            duration = MAX_WORKLOAD_DURATION;
+        }
+
+        final long workloadEndTime = workloadStartTime + duration;
 
         final Statement stat = connection.createStatement();
 
         long successfullyExecutedTransactions = 0;
         long attemptedTransactions = 0;
 
-        int loopCounter = -1; //the current iteration of the loop in this workload [nested loops are not supported].
-        int loopStartPos = -1; //where the loop starts in this list of queries.
-        int loopIterations = 1; //how many iterations of the loop are to be executed.
-
-        boolean autoCommitEnabled = true;
+        long uniqueCounter = 0; //incremented alongside loopCounter, but not reset when workload restarts.
 
         final List<QueryLogEntry> queryLog = new LinkedList<QueryLogEntry>();
 
-        for (int i = 0; i < queries.size(); i++) {
+        timeLoop: while (System.currentTimeMillis() < workloadEndTime) {
 
-            String query = queries.get(i);
+            stat.execute("SET AUTOCOMMIT ON;");
 
-            if (query.startsWith(COMMENT)) {
-                continue; //it's a comment. Ignore.
-            }
-            else if (query.startsWith(SLEEP_OPEN_TAG)) { //Sleep for a specified number of seconds.
+            int loopCounter = -1; //the current iteration of the loop in this workload [nested loops are not supported].
+            int loopStartPos = -1; //where the loop starts in this list of queries.
+            int loopIterations = 1; //how many iterations of the loop are to be executed.
 
-                try {
-                    final int sleepTime = Integer.valueOf(query.substring(SLEEP_OPEN_TAG.length(), query.indexOf(SLEEP_CLOSE_TAG)));
+            boolean autoCommitEnabled = true;
+
+            for (int i = 0; i < queries.size(); i++) {
+
+                String query = queries.get(i);
+
+                if (query.startsWith(COMMENT)) {
+                    continue; //it's a comment. Ignore.
+                }
+                else if (query.startsWith(SLEEP_OPEN_TAG)) { //Sleep for a specified number of seconds.
+
                     try {
-                        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Sleeping for " + sleepTime + " seconds.");
-                        Thread.sleep(sleepTime);
+                        final int sleepTime = Integer.valueOf(query.substring(SLEEP_OPEN_TAG.length(), query.indexOf(SLEEP_CLOSE_TAG)));
+                        try {
+                            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Sleeping for " + sleepTime + " seconds.");
+                            Thread.sleep(sleepTime);
+                        }
+                        catch (final InterruptedException e) {
+                        }
                     }
-                    catch (final InterruptedException e) {
+                    catch (final NumberFormatException e) {
+                        throw new WorkloadParseException("Incorrectly formatted workload request: " + query);
                     }
                 }
-                catch (final NumberFormatException e) {
-                    throw new WorkloadParseException("Incorrectly formatted workload request: " + query);
-                }
-            }
-            else if (query.startsWith(LOOP_START_OPEN_TAG)) { //We have reached the start of a loop.
+                else if (query.startsWith(LOOP_START_OPEN_TAG)) { //We have reached the start of a loop.
 
-                try {
-                    loopIterations = Integer.valueOf(query.substring(query.indexOf("iterations=\"") + "iterations=\"".length(), query.lastIndexOf("\">")));
-                }
-                catch (final Exception e) {
-                    throw new WorkloadParseException("Incorrectly formatted workload request: " + query + " (exception: " + e.getMessage() + ").");
-                }
+                    try {
+                        loopIterations = Integer.valueOf(query.substring(query.indexOf("iterations=\"") + "iterations=\"".length(), query.lastIndexOf("\">")));
+                    }
+                    catch (final Exception e) {
+                        throw new WorkloadParseException("Incorrectly formatted workload request: " + query + " (exception: " + e.getMessage() + ").");
+                    }
 
-                if (loopIterations < 0) { throw new WorkloadParseException("The number of loop iterations must be positive."); }
+                    if (loopIterations < 0) { throw new WorkloadParseException("The number of loop iterations must be positive."); }
 
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Starting loop for " + loopIterations + " iterations.");
-                loopCounter = 0;
-                loopStartPos = i;
-                continue;
-            }
-            else if (query.startsWith(LOOP_END_TAG)) { //We have reached the end of the loop.
-
-                if (loopCounter >= loopIterations) {
-                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Ending loop at " + loopCounter + ".");
-                    continue; //break out of loop
-                }
-                else {
-                    i = loopStartPos;
-                    loopCounter++;
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Starting loop for " + loopIterations + " iterations.");
+                    loopCounter = 0;
+                    loopStartPos = i;
                     continue;
                 }
-            }
-            else if (query.startsWith(INCREMENT_COUNTER_TAG)) { //We have reached the end of the loop.
+                else if (query.startsWith(LOOP_END_TAG)) { //We have reached the end of the loop.
 
-                loopCounter++;
-                continue;
-            }
-            else { //It's an SQL query. Execute it.
-
-                if (query.startsWith("SET AUTOCOMMIT OFF;")) {
-                    autoCommitEnabled = false;
-                }
-                else if (query.startsWith("SET AUTCOMMIT ON;")) {
-                    autoCommitEnabled = true;
-                }
-
-                if (autoCommitEnabled || query.startsWith("COMMIT")) {
-                    attemptedTransactions++;
-                }
-
-                query = query.replaceAll(LOOP_COUNTER_PLACEHOLDER, loopCounter + "");
-
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing query: " + query);
-
-                boolean successfullyExecuted = true;
-                final long timeBeforeQueryExecution = System.currentTimeMillis();
-
-                try {
-                    stat.execute(query);
-                    if (autoCommitEnabled || query.startsWith("COMMIT")) {
-                        successfullyExecutedTransactions++;
+                    if (loopCounter >= loopIterations) {
+                        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Ending loop at " + loopCounter + ".");
+                        continue; //break out of loop
+                    }
+                    else {
+                        i = loopStartPos;
+                        loopCounter++;
+                        uniqueCounter++;
+                        continue;
                     }
                 }
-                catch (final SQLException e) {
-                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to execute '" + query + "'. Error: " + e.getMessage());
-                    successfullyExecuted = false;
+                else if (query.startsWith(INCREMENT_COUNTER_TAG)) { //We have reached the end of the loop.
+
+                    loopCounter++;
+                    uniqueCounter++;
+                    continue;
                 }
+                else { //It's an SQL query. Execute it.
 
-                final long timeAfterQueryExecution = System.currentTimeMillis();
+                    if (query.startsWith("SET AUTOCOMMIT OFF;")) {
+                        autoCommitEnabled = false;
+                    }
+                    else if (query.startsWith("SET AUTCOMMIT ON;")) {
+                        autoCommitEnabled = true;
+                    }
 
-                queryLog.add(getQueryLogEntry(query, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
+                    if (autoCommitEnabled || query.startsWith("COMMIT")) {
+                        attemptedTransactions++;
+                    }
 
+                    query = query.replaceAll(LOOP_COUNTER_PLACEHOLDER, uniqueCounter + "");
+
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing query: " + query);
+
+                    boolean successfullyExecuted = true;
+                    final long timeBeforeQueryExecution = System.currentTimeMillis();
+
+                    try {
+                        stat.execute(query);
+                        if (autoCommitEnabled || query.startsWith("COMMIT")) {
+                            successfullyExecutedTransactions++;
+                        }
+                    }
+                    catch (final SQLException e) {
+                        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to execute '" + query + "'. Error: " + e.getMessage());
+                        successfullyExecuted = false;
+                    }
+
+                    final long timeAfterQueryExecution = System.currentTimeMillis();
+
+                    queryLog.add(getQueryLogEntry(query, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
+
+                    if (System.currentTimeMillis() > workloadEndTime) {
+                        try {
+                            stat.execute("ROLLBACK;");
+                        }
+                        catch (final Exception e) {
+                            //May throw an exception is there is nothing to roll back.
+                        }
+                        break timeLoop; // End the workload here.
+                    }
+                }
             }
+
         }
 
         final WorkloadResult result = new WorkloadResult(queryLog, successfullyExecutedTransactions, attemptedTransactions, worker);
         return result;
-
     }
 
     private static QueryLogEntry getQueryLogEntry(final String query, final boolean successfullyExecuted, final long timeToExecute) {

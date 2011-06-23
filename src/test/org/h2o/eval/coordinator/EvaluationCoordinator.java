@@ -22,6 +22,7 @@ import org.h2.util.NetUtils;
 import org.h2o.H2OLocator;
 import org.h2o.eval.coordinator.instructions.Instruction;
 import org.h2o.eval.coordinator.instructions.StartMachineInstruction;
+import org.h2o.eval.coordinator.instructions.WorkloadInstruction;
 import org.h2o.eval.interfaces.ICoordinatorRemote;
 import org.h2o.eval.interfaces.IWorker;
 import org.h2o.eval.worker.EvaluationWorker;
@@ -31,6 +32,8 @@ import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.StartupException;
 import org.h2o.util.exceptions.WorkloadParseException;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.FileUtil;
 import uk.ac.standrews.cs.nds.util.PrettyPrinter;
@@ -130,7 +133,11 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
 
     private IWorker startH2OInstance() throws StartupException, RemoteException {
 
-        if (inactiveWorkers.size() == 0) { throw new StartupException("Could not instantiated another H2O instance."); }
+        if (inactiveWorkers.size() == 0) {
+            scanForWorkerNodes(workerLocations);
+
+            if (inactiveWorkers.size() == 0) { throw new StartupException("Could not instantiated another H2O instance."); }
+        }
 
         final IWorker worker = inactiveWorkers.get(0);
 
@@ -234,23 +241,23 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
 
         final IWorker worker = getActiveWorker();
 
-        executeWorkload(worker, workloadFileLocation);
+        executeWorkload(worker, workloadFileLocation, 0);
 
     }
 
-    private void executeWorkload(final String id, final String workloadFileLocation) throws StartupException {
+    private void executeWorkload(final String id, final String workloadFileLocation, final long duration) throws StartupException {
 
         final IWorker worker = scriptedInstances.get(Integer.valueOf(id));
 
-        executeWorkload(worker, workloadFileLocation);
+        executeWorkload(worker, workloadFileLocation, duration);
 
     }
 
-    private void executeWorkload(final IWorker worker, final String workloadFileLocation) throws StartupException {
+    private void executeWorkload(final IWorker worker, final String workloadFileLocation, final long duration) throws StartupException {
 
         Workload workload;
         try {
-            workload = new Workload(workloadFileLocation);
+            workload = new Workload(workloadFileLocation, duration);
         }
         catch (final FileNotFoundException e) {
             ErrorHandling.exceptionError(e, "Couldn't find the workload file specified: " + workloadFileLocation);
@@ -308,19 +315,17 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
     @Override
     public void executeCoordinatorScript(final String configFileLocation) throws RemoteException, FileNotFoundException, WorkloadParseException, StartupException, SQLException, IOException {
 
-        executeCoordinationScript(FileUtil.readAllLines(configFileLocation));
-
-    }
-
-    public void executeCoordinationScript(final List<String> script) throws WorkloadParseException, RemoteException, StartupException, SQLException {
+        final List<String> script = FileUtil.readAllLines(configFileLocation);
 
         for (final String action : script) {
             if (action.startsWith("{start_machine")) {
+
                 final StartMachineInstruction parseStartMachine = CoordinationScriptExecutor.parseStartMachine(action);
 
                 final IWorker worker = startH2OInstance();
 
                 scriptedInstances.put(parseStartMachine.id, worker);
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Starting machine with ID '" + parseStartMachine.id + "'");
             }
             else if (action.startsWith("{sleep=")) {
                 final int sleepTime = CoordinationScriptExecutor.parseSleepOperation(action);
@@ -330,18 +335,32 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
                 }
                 catch (final InterruptedException e) {
                 }
+
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Sleeping for '" + sleepTime + "'");
+
             }
             else {
                 final Instruction instruction = CoordinationScriptExecutor.parseQuery(action);
 
                 if (instruction.isWorkload()) {
-                    executeWorkload(instruction.id, instruction.getData());
+                    final WorkloadInstruction wi = (WorkloadInstruction) instruction;
+                    executeWorkload(wi.id, wi.workloadFile, wi.duration);
+
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Executing workload '" + wi.workloadFile + "' for '" + wi.duration + "', on '" + wi.id + "'.");
+
                 }
                 else {
                     executeQuery(instruction.id, instruction.getData());
+
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Executing query '" + instruction.getData() + "' on '" + instruction.id + "'.");
+
                 }
             }
         }
+    }
+
+    public void executeCoordinationScript(final List<String> script) throws WorkloadParseException, RemoteException, StartupException, SQLException {
+
     }
 
     private void executeQuery(final String workerID, final String query) throws RemoteException, SQLException {

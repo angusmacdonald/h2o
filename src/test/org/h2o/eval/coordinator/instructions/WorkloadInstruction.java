@@ -12,14 +12,14 @@ public class WorkloadInstruction extends Instruction {
     /**
      * How long the workload should be executed for.
      */
-    public final String duration;
+    public final Long duration;
 
-    public WorkloadInstruction(final String id, final String workloadFile, final String duration) {
+    public WorkloadInstruction(final String id, final String workloadFile, final Long duration) {
 
         super(id, true);
 
         this.workloadFile = workloadFile;
-        this.duration = duration;
+        this.duration = duration == null ? 0 : duration;
 
     }
 

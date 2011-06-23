@@ -116,4 +116,21 @@ public class CoordinatorTests {
 
         eval.blockUntilWorkloadsComplete();
     }
+
+    @Test
+    public void runCoordinationScript() throws Exception {
+
+        workers = new IWorker[3];
+        for (int i = 0; i < workers.length; i++) {
+            workers[i] = new EvaluationWorker();
+        }
+
+        final ICoordinatorLocal eval = new EvaluationCoordinator("evalDatabase", "eigg");
+
+        eval.startLocatorServer(34000);
+
+        eval.executeCoordinatorScript("src/test/org/h2o/eval/workloads/test.coord");
+
+        eval.blockUntilWorkloadsComplete();
+    }
 }
