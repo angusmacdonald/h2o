@@ -263,7 +263,7 @@ public class AsynchronousQueryExecutor {
                 final CommitResult commitResult = new CommitResult(true, asyncResult.getWrapper(), asyncResult.getUpdateID(), expectedUpdateID, tableName);
                 recentlyCompletedQueries.add(commitResult);
 
-                ErrorHandling.errorNoEvent(asyncResult.getException().getMessage());
+                ErrorHandling.errorNoEvent(tableName + ", " + asyncResult.getException().getMessage());
                 //                try {
                 //                    database.getSystemTableReference().suspectInstanceOfFailure(asyncResult.getWrapper().getURL());
                 //                    database.getSystemTableReference().getSystemTable().recreateTableManager(tableName);

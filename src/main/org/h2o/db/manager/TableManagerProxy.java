@@ -634,7 +634,7 @@ public class TableManagerProxy extends StreamProxy implements ITableManagerRemot
     }
 
     @Override
-    public String getFullTableName() throws RPCException {
+    public String getFullTableName() {
 
         return tableName;
     }

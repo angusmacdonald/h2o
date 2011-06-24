@@ -518,6 +518,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
             }
             else {
                 replicaLocations = replicaManager.getAllReplicas(); // The update could be sent to any or all machines holding the given table.
+
             }
 
             return replicaLocations;
@@ -943,7 +944,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
     }
 
     @Override
-    public String getFullTableName() throws RPCException {
+    public String getFullTableName() {
 
         return tableInfo.getFullTableName();
     }

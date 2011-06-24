@@ -110,7 +110,7 @@ public interface ITableManagerRemote extends IH2ORemote, IMigratable {
      * @return
      * @throws RPCException
      */
-    public String getFullTableName() throws RPCException;
+    public String getFullTableName();
 
     /**
      * The Information about this table
