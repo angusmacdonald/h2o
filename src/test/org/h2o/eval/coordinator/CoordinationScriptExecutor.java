@@ -4,14 +4,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.h2o.eval.coordinator.instructions.Instruction;
+import org.h2o.eval.coordinator.instructions.MachineInstruction;
 import org.h2o.eval.coordinator.instructions.QueryInstruction;
-import org.h2o.eval.coordinator.instructions.StartMachineInstruction;
 import org.h2o.eval.coordinator.instructions.WorkloadInstruction;
 import org.h2o.util.exceptions.WorkloadParseException;
 
 public class CoordinationScriptExecutor {
 
-    protected static StartMachineInstruction parseStartMachine(final String action) throws WorkloadParseException {
+    protected static MachineInstruction parseStartMachine(final String action) throws WorkloadParseException {
 
         //format: {start_machine id="<machine-id>" fail-after=<time_to_failure>}
         //example format: {start_machine id="0" fail-after="30000"}
@@ -20,18 +20,40 @@ public class CoordinationScriptExecutor {
 
         final Matcher matcher = p.matcher(action);
 
-        String fail_after = null;
+        Long fail_after = null;
         Integer id = null;
 
         if (matcher.matches()) {
             id = Integer.valueOf(matcher.group(1));
-            fail_after = matcher.group(2);
+            final String failAfterString = matcher.group(2);
+            fail_after = failAfterString != null ? Long.valueOf(failAfterString) : null;
         }
         else {
             throw new WorkloadParseException("Invalid syntax in : " + action);
         }
 
-        return new StartMachineInstruction(id, fail_after);
+        return new MachineInstruction(id, fail_after);
+    }
+
+    public static MachineInstruction parseTerminateMachine(final String action) throws WorkloadParseException {
+
+        //example format: {terminate_machine id="0"}
+
+        final Pattern p = Pattern.compile("\\{terminate_machine id=\"(\\d+)\"\\}");
+
+        final Matcher matcher = p.matcher(action);
+
+        Integer id = null;
+
+        if (matcher.matches()) {
+            id = Integer.valueOf(matcher.group(1));
+
+        }
+        else {
+            throw new WorkloadParseException("Invalid syntax in : " + action);
+        }
+
+        return new MachineInstruction(id, null);
     }
 
     protected static Instruction parseQuery(final String action) throws WorkloadParseException {
@@ -104,4 +126,5 @@ public class CoordinationScriptExecutor {
 
         return Integer.valueOf(sleepTime);
     }
+
 }

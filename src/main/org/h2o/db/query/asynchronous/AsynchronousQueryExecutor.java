@@ -263,8 +263,19 @@ public class AsynchronousQueryExecutor {
                 final CommitResult commitResult = new CommitResult(true, asyncResult.getWrapper(), asyncResult.getUpdateID(), expectedUpdateID, tableName);
                 recentlyCompletedQueries.add(commitResult);
 
-                asyncResult.getException().printStackTrace();
-
+                ErrorHandling.errorNoEvent(asyncResult.getException().getMessage());
+                //                try {
+                //                    database.getSystemTableReference().suspectInstanceOfFailure(asyncResult.getWrapper().getURL());
+                //                    database.getSystemTableReference().getSystemTable().recreateTableManager(tableName);
+                //                }
+                //                catch (final RPCException e) {
+                //                    // TODO Auto-generated catch block
+                //                    e.printStackTrace();
+                //                }
+                //                catch (final MovedException e) {
+                //                    // TODO Auto-generated catch block
+                //                    e.printStackTrace();
+                //                }
                 returnValues[pos] = -1; //error.
             }
 

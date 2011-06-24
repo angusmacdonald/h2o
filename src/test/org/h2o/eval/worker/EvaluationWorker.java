@@ -372,6 +372,7 @@ public class EvaluationWorker extends Thread implements IWorker {
         args.add("-f" + PATH_TO_H2O_DATABASE);
 
         args.add("-d" + descriptorFileLocation);
+        args.add("-D0");
 
         return args;
     }

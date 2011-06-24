@@ -402,19 +402,45 @@ public class TableProxyManager {
      */
     public void releaseLocksAndUpdateReplicaState(final Set<CommitResult> committedQueries, final boolean commit) throws SQLException {
 
+        final Set<ITableManagerRemote> uncontactableTableManagers = new HashSet<ITableManagerRemote>();
+
         try {
             for (final ITableManagerRemote tableManagerProxy : getTableManagersThatHoldLocks()) {
+
+                uncontactableTableManagers.add(tableManagerProxy);
                 tableManagerProxy.releaseLockAndUpdateReplicaState(commit, requestingDatabase, committedQueries, false);
+                uncontactableTableManagers.remove(tableManagerProxy);
             }
         }
         catch (final RPCException e) {
-            ErrorHandling.exceptionError(e, "Failed to release lock - couldn't contact the Table Manager");
+            ErrorHandling.errorNoEvent("Failed to release lock - couldn't contact the Table Manager");
+
         }
         catch (final MovedException e) {
             ErrorHandling.exceptionError(e, "This should never happen - migrating process should hold the lock.");
         }
         finally {
             hasCommitted = true;
+
+            try {
+                for (final ITableManagerRemote possiblyFailedTableManager : uncontactableTableManagers) {
+                    System.err.println("Attempting to recreate table manager...");
+                    session.getDatabase().getSystemTable().recreateTableManager(new TableInfo(possiblyFailedTableManager.getFullTableName()));
+                }
+            }
+            catch (final RPCException e) {
+                ErrorHandling.errorNoEvent("Failed to contact system table when attempting to recover from failed Table Manager.");
+                try {
+                    session.getDatabase().getSystemTableReference().failureRecovery();
+                }
+                catch (final Exception e1) {
+                    ErrorHandling.errorNoEvent("Exception thrown trying to recreate the System Table: " + e1.getMessage());
+                }
+            }
+            catch (final MovedException e) {
+                session.getDatabase().getSystemTableReference().handleMovedException(e);
+            }
+
         }
     }
 

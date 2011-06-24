@@ -21,7 +21,7 @@ import java.util.Set;
 import org.h2.util.NetUtils;
 import org.h2o.H2OLocator;
 import org.h2o.eval.coordinator.instructions.Instruction;
-import org.h2o.eval.coordinator.instructions.StartMachineInstruction;
+import org.h2o.eval.coordinator.instructions.MachineInstruction;
 import org.h2o.eval.coordinator.instructions.WorkloadInstruction;
 import org.h2o.eval.interfaces.ICoordinatorRemote;
 import org.h2o.eval.interfaces.IWorker;
@@ -29,6 +29,7 @@ import org.h2o.eval.worker.EvaluationWorker;
 import org.h2o.eval.workload.Workload;
 import org.h2o.eval.workload.WorkloadResult;
 import org.h2o.util.H2OPropertiesWrapper;
+import org.h2o.util.exceptions.ShutdownException;
 import org.h2o.util.exceptions.StartupException;
 import org.h2o.util.exceptions.WorkloadParseException;
 
@@ -36,7 +37,6 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.FileUtil;
-import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
@@ -69,6 +69,7 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
     private boolean locatorServerStarted = false;
     private H2OLocator locatorServer;
     private H2OPropertiesWrapper descriptorFile;
+    private KillMonitorThread killMonitor;
 
     /**
      * 
@@ -216,7 +217,7 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
         workersWithActiveWorkloads.remove(workloadResult.getWorkloadID());
         System.out.println(workloadResult);
 
-        System.out.println(PrettyPrinter.toString(workloadResult.getQueryLog()));
+        //System.out.println(PrettyPrinter.toString(workloadResult.getQueryLog()));
 
         if (workloadResult.getException() != null) {
             workloadResult.getException().printStackTrace();
@@ -310,6 +311,10 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
             }
 
         };
+
+        if (killMonitor != null) {
+            killMonitor.setRunning(false);
+        }
     }
 
     @Override
@@ -317,15 +322,41 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
 
         final List<String> script = FileUtil.readAllLines(configFileLocation);
 
+        killMonitor = new KillMonitorThread(this);
+
+        if (killMonitor.isRunning()) {
+            killMonitor.setRunning(false);
+            killMonitor = new KillMonitorThread(this);
+        }
+
+        killMonitor.start();
+
         for (final String action : script) {
             if (action.startsWith("{start_machine")) {
 
-                final StartMachineInstruction parseStartMachine = CoordinationScriptExecutor.parseStartMachine(action);
+                final MachineInstruction startInstruction = CoordinationScriptExecutor.parseStartMachine(action);
 
                 final IWorker worker = startH2OInstance();
 
-                scriptedInstances.put(parseStartMachine.id, worker);
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Starting machine with ID '" + parseStartMachine.id + "'");
+                scriptedInstances.put(startInstruction.id, worker);
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Starting machine with ID '" + startInstruction.id + "'");
+
+                if (startInstruction.fail_after != null) {
+                    killMonitor.addKillOrder(startInstruction.id, System.currentTimeMillis() + startInstruction.fail_after);
+                }
+            }
+            else if (action.startsWith("{terminate_machine")) {
+
+                final MachineInstruction terminateInstruction = CoordinationScriptExecutor.parseTerminateMachine(action);
+
+                try {
+                    killInstance(terminateInstruction.id);
+                }
+                catch (final ShutdownException e) {
+                    ErrorHandling.exceptionError(e, "Failed to shutdown instance with ID " + terminateInstruction.id + ".");
+                }
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Terminated machine with ID '" + terminateInstruction.id + "'");
+
             }
             else if (action.startsWith("{sleep=")) {
                 final int sleepTime = CoordinationScriptExecutor.parseSleepOperation(action);
@@ -368,6 +399,13 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
         final IWorker worker = scriptedInstances.get(Integer.valueOf(workerID));
 
         worker.executeQuery(query);
+    }
+
+    public void killInstance(final Integer workerID) throws RemoteException, ShutdownException {
+
+        final IWorker worker = scriptedInstances.get(Integer.valueOf(workerID));
+
+        worker.terminateH2OInstance();
     }
 
 }
