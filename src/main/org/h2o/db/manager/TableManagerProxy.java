@@ -653,4 +653,20 @@ public class TableManagerProxy extends StreamProxy implements ITableManagerRemot
         jw.value(tableName);
     }
 
+    @Override
+    public void notifyOfFailure(final DatabaseID failedMachine) throws RPCException {
+
+        try {
+            final Connection connection = (Connection) startCall("notifyOfFailure");
+            final JSONWriter jw = connection.getJSONwriter();
+            setUpJSONArrayForRMI(jw);
+            marshaller.serializeDatabaseID(failedMachine, jw);
+            handleVoidCall(makeCall(connection));
+            finishCall(connection);
+        }
+        catch (final Exception e) {
+            dealWithException(e);
+        }
+    }
+
 }

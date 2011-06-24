@@ -176,4 +176,11 @@ public interface ITableManagerRemote extends IH2ORemote, IMigratable {
      */
     public void persistToCompleteStartup(TableInfo ti) throws RPCException, StartupException;
 
+    /**
+     * Notify the table manager that the machine with the specified address has failed.
+     * @param failedMachine Machine that has failed.
+     * @throws RPCException 
+     */
+    public void notifyOfFailure(DatabaseID failedMachine) throws RPCException;
+
 }

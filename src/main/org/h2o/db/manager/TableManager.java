@@ -555,7 +555,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
     public void releaseLockAndUpdateReplicaState(final boolean commit, final LockRequest lockRequest, final Collection<CommitResult> committedQueries, final boolean asynchronousCommit) throws RPCException, MovedException, SQLException {
 
         try {
-            // If it's not a commit (on a CREATE TABLE request) nothing needs to be persisted.
+            // If it's not a commit on a CREATE TABLE request nothing needs to be persisted.
             if (!tableAlreadyExists && commit) {
                 // This commit is the first commit of this table, so we must update the System Table.
                 completeCreationByUpdatingSystemTable();
@@ -568,8 +568,11 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
             // Update the set of 'active replicas' and their update IDs.
             if (commit) {
-                //If this is a rollback it shouldn't affect the 'current' active set.
+                //The method call below changes update IDs which is why rollbacks don't call it.
                 updateActiveReplicaSet(commit, committedQueries, asynchronousCommit, lockType);
+            }
+            else {
+                //TODO Mark replicas as inactive if they are no longer accessible?
             }
 
         }
@@ -947,5 +950,12 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
     public String getFullTableName() {
 
         return tableInfo.getFullTableName();
+    }
+
+    @Override
+    public void notifyOfFailure(final DatabaseID failedMachine) throws RPCException {
+
+        replicaManager.removeFromActiveSet(failedMachine);
+
     }
 }

@@ -264,18 +264,7 @@ public class AsynchronousQueryExecutor {
                 recentlyCompletedQueries.add(commitResult);
 
                 ErrorHandling.errorNoEvent(tableName + ", " + asyncResult.getException().getMessage());
-                //                try {
-                //                    database.getSystemTableReference().suspectInstanceOfFailure(asyncResult.getWrapper().getURL());
-                //                    database.getSystemTableReference().getSystemTable().recreateTableManager(tableName);
-                //                }
-                //                catch (final RPCException e) {
-                //                    // TODO Auto-generated catch block
-                //                    e.printStackTrace();
-                //                }
-                //                catch (final MovedException e) {
-                //                    // TODO Auto-generated catch block
-                //                    e.printStackTrace();
-                //                }
+
                 returnValues[pos] = -1; //error.
             }
 

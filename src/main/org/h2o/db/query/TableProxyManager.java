@@ -33,6 +33,8 @@ import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -308,6 +310,8 @@ public class TableProxyManager {
 
     private void commitAndReleaseLocks(final boolean commit, final boolean h2oCommit, final Database db, final Set<CommitResult> committedQueries) throws SQLException {
 
+        System.err.println("Committing transaction: " + commit);
+
         boolean commitActionSuccessful = false;
 
         try {
@@ -405,10 +409,7 @@ public class TableProxyManager {
         hasCommitted = true;
         for (final ITableManagerRemote tableManagerProxy : getTableManagersThatHoldLocks()) {
             try {
-                System.err.println("Contacting " + tableManagerProxy.getFullTableName() + " table manager at " + tableManagerProxy.getAddress());
-
                 tableManagerProxy.releaseLockAndUpdateReplicaState(commit, requestingDatabase, committedQueries, false);
-
             }
             catch (final RPCException e) {
                 ErrorHandling.errorNoEvent("Failed to release lock - couldn't contact the Table Manager for " + tableManagerProxy.getFullTableName());
@@ -424,12 +425,17 @@ public class TableProxyManager {
 
     }
 
+    /**
+     * When a call to a table manager fails, this method is called to contact the system table and attempt to recreate it somewhere else. If it is recreated
+     * it won't fix the current transaction, but it will hopefully be corrected for future transactions.
+     * @param tableManagerProxy
+     * @throws SQLException
+     */
     public void alertSysTableToFailedTableManager(final ITableManagerRemote tableManagerProxy) throws SQLException {
 
         try {
-            System.err.println("Attempting to recreate table manager...");
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "The table manager for " + tableManagerProxy.getFullTableName() + " at " + tableManagerProxy.getAddress() + " is suspected of failure. Recreating somewhere else.");
             session.getDatabase().getSystemTable().recreateTableManager(new TableInfo(tableManagerProxy.getFullTableName()));
-
         }
         catch (final RPCException e) {
             ErrorHandling.errorNoEvent("Failed to contact system table when attempting to recover from failed Table Manager.");

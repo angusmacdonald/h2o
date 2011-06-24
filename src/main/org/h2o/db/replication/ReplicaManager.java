@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.query.asynchronous.CommitResult;
@@ -451,4 +452,8 @@ public class ReplicaManager {
         return primaryLocation;
     }
 
+    public void removeFromActiveSet(final DatabaseID failedMachine) {
+
+        activeReplicas.remove(new DatabaseInstanceWrapper(failedMachine, null, false));
+    }
 }

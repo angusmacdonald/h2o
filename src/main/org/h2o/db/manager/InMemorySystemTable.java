@@ -475,7 +475,17 @@ public final class InMemorySystemTable implements ISystemTable {
 
         final TableManagerWrapper tableManager = tableManagers.get(tableInfo);
 
+        final DatabaseID oldLocation = tableManager.getURL();
+
         recreateTableManagerIfNotAlive(tableManager);
+
+        try {
+            suspectInstanceOfFailure(oldLocation);
+        }
+        catch (final Exception e) {
+            //Won't throw an exception because this is a local call.
+            e.printStackTrace();
+        }
 
         return tableManagers.get(tableInfo).getTableManager();
     }
@@ -682,6 +692,24 @@ public final class InMemorySystemTable implements ISystemTable {
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "The database instance " + suspectedDbURL + " is no longer active. Removing from membership set.");
                 databasesInSystem.remove(suspectedDbURL);
                 checkTableManagerAccessibility(suspectedDbURL);
+                informTableManagersOfMachineFailure(suspectedDbURL);
+            }
+        }
+
+    }
+
+    /**
+     * Send a message to every table manager informing them that a machine (which possibly holds one of their replicas) has failed.
+     * @param failedMachine The machine that has failed.
+     */
+    private void informTableManagersOfMachineFailure(final DatabaseID failedMachine) {
+
+        for (final TableManagerWrapper tableManagerWrapper : tableManagers.values()) {
+            try {
+                tableManagerWrapper.getTableManager().notifyOfFailure(failedMachine);
+            }
+            catch (final RPCException e) {
+                //Don't do anything here.
             }
         }
 

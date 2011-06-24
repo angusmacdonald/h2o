@@ -339,5 +339,17 @@ public class TableManagerServer extends ApplicationServer {
 
             }
         });
+
+        handler_map.put("notifyOfFailure", new IHandler() {
+
+            @Override
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
+
+                final DatabaseID p0 = marshaller.deserializeDatabaseID(args);
+                table_manager.notifyOfFailure(p0);
+                writer.value("");
+            }
+        });
+
     }
 }
