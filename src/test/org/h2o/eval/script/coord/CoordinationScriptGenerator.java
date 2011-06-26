@@ -1,5 +1,10 @@
 package org.h2o.eval.script.coord;
 
+import java.util.Set;
+
+import org.h2o.eval.script.coord.specification.TableClustering;
+import org.h2o.eval.script.coord.specification.WorkloadType;
+
 public class CoordinationScriptGenerator {
 
     private static final String TABLE_NAME_PREFIX = "test";
@@ -7,15 +12,15 @@ public class CoordinationScriptGenerator {
     private static int nextMachineID = 0;
     private static int nextTableID = 0;
 
-    public static String generateCoordinationScript(final long runtime, final double probabilityOfFailure, final double frequencyOfFailure, final int numberOfMachines, final int numberOfTables) {
+    public static String generateCoordinationScript(final long runtime, final double probabilityOfFailure, final double frequencyOfFailure, final int numberOfMachines, final int numberOfTables, final TableClustering clusteringSpec, final Set<WorkloadType> workloadSpecs) {
 
         final StringBuilder script = new StringBuilder();
 
         startMachines(numberOfMachines, script);
 
-        createTables(numberOfTables, script);
+        createTables(numberOfTables, clusteringSpec, numberOfMachines, script);
 
-        specifyWorkloadsToExecute(runtime, script);
+        specifyWorkloadsToExecute(runtime, workloadSpecs, script);
 
         //TODO how do you specify the tables and workloads you want to create.
 
@@ -25,19 +30,69 @@ public class CoordinationScriptGenerator {
     /**
      * Specify what workloads will run on what machines.
      * @param runtime How long the workloads should run for.
+     * @param workloadSpec 
      * @param script
      */
-    private static void specifyWorkloadsToExecute(final long runtime, final StringBuilder script) {
+    private static void specifyWorkloadsToExecute(final long runtime, final Set<WorkloadType> workloadSpecs, final StringBuilder script) {
 
-        // TODO Auto-generated method stub
+        final int machineToRunWorkloadOn = 0; //TODO integrate with clustering spec, or provide other spec. mechanism?
+
+        for (final WorkloadType workloadSpec : workloadSpecs) {
+            final String workloadFileLocation = createWorkload(workloadSpec);
+            script.append(SyntaxGenerator.executeWorkloadCommand(machineToRunWorkloadOn, workloadFileLocation, runtime));
+        }
 
     }
 
-    public static void createTables(final int numberOfTables, final StringBuilder script) {
+    private static String createWorkload(final WorkloadType workloadSpec) {
+
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public static void createTables(final int numberOfTables, final TableClustering clustering, final int numberOfMachines, final StringBuilder script) {
+
+        int tableLocation = 0;
 
         for (int i = 0; i < numberOfTables; i++) { //creates all tables on the first machine.
-            script.append(createTableCommand(0, sqlSimpleCreateTable(TABLE_NAME_PREFIX + nextTableID())));
+
+            tableLocation = decideWhereToLocateTable(clustering, numberOfMachines, i, tableLocation);
+            script.append(SyntaxGenerator.createTableCommand(tableLocation, SyntaxGenerator.sqlSimpleCreateTable(TABLE_NAME_PREFIX + nextTableID())));
         }
+    }
+
+    /**
+     * Decide where to locate a new table based on the type of clustering (of tables) that is requested, and where tables have already been created.
+     * @param clustering            Type of clustering to be employed.
+     * @param numberOfMachines      The number of machines available.
+     * @param tablesCreatedSoFar    The number of machines created so far.
+     * @param lastTableLocation     The last machine to be assigned a table (indexed from 0, also initialized to 0).
+     * @return
+     */
+    public static int decideWhereToLocateTable(final TableClustering clustering, final int numberOfMachines, final int tablesCreatedSoFar, int lastTableLocation) {
+
+        int newTableLocation = 0;
+
+        if (clustering.getClustering().equals(TableClustering.Clustering.COLOCATED)) {
+            lastTableLocation = 0; //co-locate on the first machine.
+        }
+        else if (clustering.getClustering().equals(TableClustering.Clustering.GROUPED)) {
+            if (tablesCreatedSoFar > 0 && tablesCreatedSoFar % clustering.getGroupSize() == 2) {
+                newTableLocation = lastTableLocation + 1;
+
+                if (newTableLocation > numberOfMachines - 1) {
+                    newTableLocation = 0;
+                }
+            }
+        }
+        else if (clustering.getClustering().equals(TableClustering.Clustering.SPREAD)) {
+            newTableLocation = tablesCreatedSoFar;
+
+            if (newTableLocation > numberOfMachines - 1) {
+                newTableLocation = 0;
+            }
+        }
+        return newTableLocation;
     }
 
     public static void startMachines(final int numberOfMachines, final StringBuilder script) {
@@ -45,11 +100,6 @@ public class CoordinationScriptGenerator {
         for (int i = 0; i < numberOfMachines; i++) {
             script.append(createStartMachineCommand(nextMachineID(), i == 0));
         }
-    }
-
-    private static String createStartMachineCommand(final int id) {
-
-        return createStartMachineCommand(id, false);
     }
 
     /**
@@ -63,36 +113,10 @@ public class CoordinationScriptGenerator {
         String startMachineCommand = "{start_machine id=\"" + id + "\"}";
 
         if (sleepAfterStart) {
-            startMachineCommand += "\n" + createSleepCommand(3000);
+            startMachineCommand += "\n" + SyntaxGenerator.createSleepCommand(3000);
         }
 
         return startMachineCommand;
-    }
-
-    private static String createSleepCommand(final long sleepTime) {
-
-        return "{sleep=\"" + sleepTime + "\"}";
-    }
-
-    private static String createTableCommand(final int id, final String sql) {
-
-        return "{" + id + "} " + sql;
-    }
-
-    private static String executeWorkloadCommand(final int id, final String workloadLocation, final long duration) {
-
-        return "{" + id + "} {execute_workload=\"" + workloadLocation + "\" duration=\"" + duration + "\"}";
-
-    }
-
-    private static String sqlSimpleCreateTable(final String tableName) {
-
-        return "CREATE TABLE " + tableName + " (id int);";
-    }
-
-    private static String terminateMachineCommand(final int id) {
-
-        return "{terminate_machine id=\"" + id + "\"}";
     }
 
     private static int nextMachineID() {
