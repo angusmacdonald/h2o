@@ -24,6 +24,8 @@ import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.query.asynchronous.CommitResult;
 import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.util.exceptions.MovedException;
+import org.h2o.util.filter.CollectionFilter;
+import org.h2o.util.filter.PredicateWithoutParameter;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -450,15 +452,19 @@ public class ReplicaManager {
 
     public Map<DatabaseInstanceWrapper, Integer> getAllReplicasOnActiveMachines() {
 
-        final Map<DatabaseInstanceWrapper, Integer> allReplicasOnActiveMachines = new HashMap<DatabaseInstanceWrapper, Integer>();
+        /*
+         * Create an interator to go through and check whether a given Table Manager is local to the specified machine.
+         */
+        final PredicateWithoutParameter<DatabaseInstanceWrapper> isActive = new PredicateWithoutParameter<DatabaseInstanceWrapper>() {
 
-        for (final Entry<DatabaseInstanceWrapper, Integer> entry : allReplicas.entrySet()) {
-            if (entry.getKey().isActive()) {
-                allReplicasOnActiveMachines.put(entry.getKey(), entry.getValue());
+            @Override
+            public boolean apply(final DatabaseInstanceWrapper wrapper) {
+
+                return wrapper.isActive();
             }
-        }
+        };
 
-        return allReplicasOnActiveMachines;
+        return CollectionFilter.filter(allReplicas, isActive);
     }
 
     public DatabaseInstanceWrapper getManagerLocation() {

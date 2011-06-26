@@ -9,7 +9,10 @@
 package org.h2o.util.filter;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -18,28 +21,52 @@ import java.util.Set;
 public class CollectionFilter {
 
     /**
-     * 
+     * Filter elements from a collection by checking a predicate against the key of each value.
      * @param <T>
      *            The type of the objects being iterated over.
      * @param <P>
      *            The parameter to be passed in as part of a test.
      * @param target
-     *            The target of this collection filter. A collection of obejcts of type T.
+     *            The target of this collection filter. A collection of objects of type T.
      * @param predicate
      *            The function to apply to each object in the connection.
      * @param parameter
      *            The parameter to be used as part of the test.
      * @return The set of elements of target which meet the requirements of the predicate function.
      */
-    public static <T, P> Set<T> filter(Collection<T> target, Predicate<T, P> predicate, P parameter) {
+    public static <T, P> Set<T> filter(final Collection<T> target, final PredicateWithParameter<T, P> predicate, final P parameter) {
 
-        Set<T> result = new HashSet<T>();
+        final Set<T> result = new HashSet<T>();
 
-        for (T element : target) {
+        for (final T element : target) {
             if (predicate.apply(element, parameter)) {
                 result.add(element);
             }
         }
+        return result;
+    }
+
+    /**
+     * Filter elements from a Map by checking a predicate against the key of each value.
+     * @param <K> The type of the map's key.
+     * @param <V> They type of the map's value.
+     *            The type of the objects being iterated over.
+     * @param target
+     *            The target of this collection filter. A collection of objects of type T.
+     * @param predicate
+     *            The function to apply to each object in the connection.
+     * @return The set of elements of target which meet the requirements of the predicate function.
+     */
+    public static <K, V> Map<K, V> filter(final Map<K, V> target, final PredicateWithoutParameter<K> predicate) {
+
+        final Map<K, V> result = new HashMap<K, V>();
+
+        for (final Entry<K, V> entry : target.entrySet()) {
+            if (predicate.apply(entry.getKey())) {
+                result.put(entry.getKey(), entry.getValue());
+            }
+        }
+
         return result;
     }
 

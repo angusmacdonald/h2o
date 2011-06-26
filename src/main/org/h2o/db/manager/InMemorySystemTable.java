@@ -28,7 +28,7 @@ import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
 import org.h2o.util.exceptions.MovedException;
 import org.h2o.util.filter.CollectionFilter;
-import org.h2o.util.filter.Predicate;
+import org.h2o.util.filter.PredicateWithParameter;
 import org.h2o.viewer.H2OEventBus;
 import org.h2o.viewer.gwt.client.DatabaseStates;
 import org.h2o.viewer.gwt.client.H2OEvent;
@@ -627,7 +627,7 @@ public final class InMemorySystemTable implements ISystemTable {
         /*
          * Create an interator to go through and check whether a given Table Manager is local to the specified machine.
          */
-        final Predicate<TableManagerWrapper, DatabaseID> isLocal = new Predicate<TableManagerWrapper, DatabaseID>() {
+        final PredicateWithParameter<TableManagerWrapper, DatabaseID> isLocal = new PredicateWithParameter<TableManagerWrapper, DatabaseID>() {
 
             @Override
             public boolean apply(final TableManagerWrapper wrapper, final DatabaseID databaseInstance) {

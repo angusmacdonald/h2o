@@ -4,6 +4,6 @@
 {sleep="10000"}
 {0} CREATE TABLE test (id int);
 {1} CREATE TABLE test2 (id int);
-{0} {execute_workload="src/test/org/h2o/eval/workloads/insert-two-tables.workload" duration="20000"}
-{sleep="10000"}
+{0} {execute_workload="src/test/org/h2o/eval/workloads/insert-two-tables.workload" duration="10000"}
+{sleep="5000"}
 {terminate_machine id="1"}

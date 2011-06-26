@@ -9,9 +9,11 @@
 package org.h2o.util.filter;
 
 /**
- * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
+ * 
+ *
+ * @author Angus Macdonald (angus.macdonald@st-andrews.ac.uk)
  */
-public interface Predicate<T, P> {
+public interface PredicateWithParameter<T, P> {
 
     boolean apply(T type, P parameter);
 
