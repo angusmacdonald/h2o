@@ -1,7 +1,5 @@
 {start_machine id="0"}
-{sleep="10000"}
 {start_machine id="1"}
-{sleep="10000"}
 {0} CREATE TABLE test (id int);
 {1} CREATE TABLE test2 (id int);
 {0} {execute_workload="src/test/org/h2o/eval/workloads/insert-two-tables.workload" duration="10000"}
