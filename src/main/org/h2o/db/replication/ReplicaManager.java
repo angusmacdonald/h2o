@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.h2o.db.id.DatabaseID;
@@ -447,6 +448,19 @@ public class ReplicaManager {
         return allReplicas;
     }
 
+    public Map<DatabaseInstanceWrapper, Integer> getAllReplicasOnActiveMachines() {
+
+        final Map<DatabaseInstanceWrapper, Integer> allReplicasOnActiveMachines = new HashMap<DatabaseInstanceWrapper, Integer>();
+
+        for (final Entry<DatabaseInstanceWrapper, Integer> entry : allReplicas.entrySet()) {
+            if (entry.getKey().isActive()) {
+                allReplicasOnActiveMachines.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        return allReplicasOnActiveMachines;
+    }
+
     public DatabaseInstanceWrapper getManagerLocation() {
 
         return primaryLocation;
@@ -454,6 +468,28 @@ public class ReplicaManager {
 
     public void removeFromActiveSet(final DatabaseID failedMachine) {
 
-        activeReplicas.remove(new DatabaseInstanceWrapper(failedMachine, null, false));
+        final DatabaseInstanceWrapper key = new DatabaseInstanceWrapper(failedMachine, null, false);
+        DatabaseInstanceWrapper newEntry = null;
+        Integer updateID = null;
+        if (allReplicas.containsKey(key)) {
+
+            /*
+             * The equality comparison on the wrapper is based solely on DatabaseID, so while the 'key' object is enough to figure
+             * out whether the wrapper exists, we have to iterate through allReplicas to get the actual copy of the wrapper with
+             * an up-to-date reference to the instance server.
+             */
+
+            for (final Entry<DatabaseInstanceWrapper, Integer> entry : allReplicas.entrySet()) {
+                if (entry.getKey().equals(key)) {
+                    newEntry = entry.getKey();
+                    updateID = entry.getValue();
+                    break;
+                }
+            }
+
+            newEntry.setActive(false);
+            allReplicas.put(newEntry, updateID);
+        }
+
     }
 }

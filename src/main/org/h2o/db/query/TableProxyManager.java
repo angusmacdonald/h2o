@@ -310,8 +310,6 @@ public class TableProxyManager {
 
     private void commitAndReleaseLocks(final boolean commit, final boolean h2oCommit, final Database db, final Set<CommitResult> committedQueries) throws SQLException {
 
-        System.err.println("Committing transaction: " + commit);
-
         boolean commitActionSuccessful = false;
 
         try {

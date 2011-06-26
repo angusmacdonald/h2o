@@ -517,7 +517,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
                 }
             }
             else {
-                replicaLocations = replicaManager.getAllReplicas(); // The update could be sent to any or all machines holding the given table.
+                replicaLocations = replicaManager.getAllReplicasOnActiveMachines(); // The update could be sent to any or all machines holding the given table.
 
             }
 
