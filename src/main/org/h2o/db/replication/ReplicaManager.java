@@ -40,8 +40,6 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  */
 public class ReplicaManager {
 
-    private static final long serialVersionUID = 6064010173578943054L;
-
     /**
      * Set of databases which hold replicas for this table. All replica locations are held here.
      * 
@@ -61,6 +59,18 @@ public class ReplicaManager {
      * The database instance which is running this Table Manager.
      */
     private DatabaseInstanceWrapper primaryLocation;
+
+    /**
+     * Collection filter to get only active database instance wrappers.
+     */
+    private final PredicateWithoutParameter<DatabaseInstanceWrapper> isActive = new PredicateWithoutParameter<DatabaseInstanceWrapper>() {
+
+        @Override
+        public boolean apply(final DatabaseInstanceWrapper wrapper) {
+
+            return wrapper.isActive();
+        }
+    };
 
     public ReplicaManager() {
 
@@ -451,18 +461,6 @@ public class ReplicaManager {
     }
 
     public Map<DatabaseInstanceWrapper, Integer> getAllReplicasOnActiveMachines() {
-
-        /*
-         * Create an interator to go through and check whether a given Table Manager is local to the specified machine.
-         */
-        final PredicateWithoutParameter<DatabaseInstanceWrapper> isActive = new PredicateWithoutParameter<DatabaseInstanceWrapper>() {
-
-            @Override
-            public boolean apply(final DatabaseInstanceWrapper wrapper) {
-
-                return wrapper.isActive();
-            }
-        };
 
         return CollectionFilter.filter(allReplicas, isActive);
     }
