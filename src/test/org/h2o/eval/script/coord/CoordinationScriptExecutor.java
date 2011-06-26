@@ -1,17 +1,17 @@
-package org.h2o.eval.coordinator;
+package org.h2o.eval.script.coord;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.h2o.eval.coordinator.instructions.Instruction;
-import org.h2o.eval.coordinator.instructions.MachineInstruction;
-import org.h2o.eval.coordinator.instructions.QueryInstruction;
-import org.h2o.eval.coordinator.instructions.WorkloadInstruction;
+import org.h2o.eval.script.coord.instructions.Instruction;
+import org.h2o.eval.script.coord.instructions.MachineInstruction;
+import org.h2o.eval.script.coord.instructions.QueryInstruction;
+import org.h2o.eval.script.coord.instructions.WorkloadInstruction;
 import org.h2o.util.exceptions.WorkloadParseException;
 
 public class CoordinationScriptExecutor {
 
-    protected static MachineInstruction parseStartMachine(final String action) throws WorkloadParseException {
+    public static MachineInstruction parseStartMachine(final String action) throws WorkloadParseException {
 
         //format: {start_machine id="<machine-id>" fail-after=<time_to_failure>}
         //example format: {start_machine id="0" fail-after="30000"}
@@ -56,7 +56,7 @@ public class CoordinationScriptExecutor {
         return new MachineInstruction(id, null);
     }
 
-    protected static Instruction parseQuery(final String action) throws WorkloadParseException {
+    public static Instruction parseQuery(final String action) throws WorkloadParseException {
 
         //format: {<machine-id>} [query | execute workload operation]
         //example format: {0} CREATE TABLE test (id int);
@@ -108,7 +108,7 @@ public class CoordinationScriptExecutor {
 
     }
 
-    protected static int parseSleepOperation(final String action) throws WorkloadParseException {
+    public static int parseSleepOperation(final String action) throws WorkloadParseException {
 
         //example format: {sleep=5000}
 

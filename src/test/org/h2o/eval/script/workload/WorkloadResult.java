@@ -1,4 +1,4 @@
-package org.h2o.eval.workload;
+package org.h2o.eval.script.workload;
 
 import java.io.Serializable;
 import java.util.List;

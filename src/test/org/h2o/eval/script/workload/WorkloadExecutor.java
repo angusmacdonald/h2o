@@ -1,4 +1,4 @@
-package org.h2o.eval.workload;
+package org.h2o.eval.script.workload;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -8,7 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.h2o.eval.interfaces.IWorker;
-import org.h2o.eval.workload.QueryLogEntry.QueryType;
+import org.h2o.eval.script.workload.QueryLogEntry.QueryType;
 import org.h2o.util.exceptions.WorkloadParseException;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;

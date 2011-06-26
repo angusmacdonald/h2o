@@ -1,4 +1,4 @@
-package org.h2o.eval.coordinator.instructions;
+package org.h2o.eval.script.coord.instructions;
 
 public class QueryInstruction extends Instruction {
 

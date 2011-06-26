@@ -3,7 +3,7 @@ package org.h2o.eval.interfaces;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
-import org.h2o.eval.workload.WorkloadResult;
+import org.h2o.eval.script.workload.WorkloadResult;
 
 /**
  * Implemented by the class co-ordinating H2O evaluations -- the class that initiates evaluations, sends out requests to run/stop H2O instances and run/stop benchmarks on worker nodes.

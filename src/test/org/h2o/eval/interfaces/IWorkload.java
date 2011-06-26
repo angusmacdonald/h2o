@@ -4,8 +4,8 @@ import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import org.h2o.eval.script.workload.WorkloadResult;
 import org.h2o.eval.worker.EvaluationWorker;
-import org.h2o.eval.workload.WorkloadResult;
 
 /**
  * Workload to be run on a worker node.
