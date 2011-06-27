@@ -54,7 +54,7 @@ public class WorkloadGenerator {
                 tablesInWorkload.addAll(tablesInGroup);
             }
 
-            final String workloadLocation = createWorkload(spec, tablesInWorkload);
+            final String workloadLocation = createWorkload(spec, tablesInWorkload, "allTables.workload");
 
             newWorkloads.put(workloadLocation, locationToRunWorkload);
         }
@@ -68,9 +68,9 @@ public class WorkloadGenerator {
                     //Create an array list with just a single element so that it can be passed to the createWorkload call.
                     final ArrayList<String> singleTable = new ArrayList<String>();
                     singleTable.add(table);
-                    final String workloadLocation = createWorkload(spec, singleTable);
+                    final String workloadLocation = createWorkload(spec, singleTable, "table-" + table + ".workload");
 
-                    addToCreatedWorkloadsAtLocation(spec, tableGrouping, newWorkloads, groupEntry, workloadLocation);
+                    addToCreatedWorkloadsAtLocation(spec.isQueriesLocalToTables(), tableGrouping.getTotalNumberOfMachines(), newWorkloads, groupEntry, workloadLocation);
                 }
 
             }
@@ -79,9 +79,9 @@ public class WorkloadGenerator {
         else if (spec.getLinkToTableLocation().equals(LinkToTableLocation.GROUPED_WORKLOAD)) {
             for (final Entry<Integer, ArrayList<String>> groupEntry : groupings.entrySet()) { //Loop through each group
 
-                final String workloadLocation = createWorkload(spec, groupEntry.getValue());
+                final String workloadLocation = createWorkload(spec, groupEntry.getValue(), "group" + fileCount++ + ".workload");
 
-                addToCreatedWorkloadsAtLocation(spec, tableGrouping, newWorkloads, groupEntry, workloadLocation);
+                addToCreatedWorkloadsAtLocation(spec.isQueriesLocalToTables(), tableGrouping.getTotalNumberOfMachines(), newWorkloads, groupEntry, workloadLocation);
 
             }
         }
@@ -92,17 +92,22 @@ public class WorkloadGenerator {
         return newWorkloads;
     }
 
-    public void addToCreatedWorkloadsAtLocation(final WorkloadType spec, final TableGrouping tableGrouping, final Map<String, Integer> newWorkloads, final Entry<Integer, ArrayList<String>> groupEntry, final String workloadLocation) {
+    /**
+     * Adds the location of the newly created workload file to the newWorkloads hashmap. Where the workload is set to be run is determined by
+     * the localToTable parameter. If true, it will be run on the same machine as a table; if false, it will be run on another machine.
+     * 
+     */
+    private void addToCreatedWorkloadsAtLocation(final boolean localToTable, final int totalNumberOfMachines, final Map<String, Integer> newWorkloads, final Entry<Integer, ArrayList<String>> groupEntry, final String workloadLocation) {
 
         final Integer machineLocation = groupEntry.getKey();
 
         //Decide whether to run the workload local to a table, or remote from it.
-        if (spec.isQueriesLocalToTables()) {
+        if (localToTable) {
             newWorkloads.put(workloadLocation, machineLocation);
         }
         else {
 
-            final Integer remoteLocation = machineLocation + 1 >= tableGrouping.getTotalNumberOfMachines() ? 0 : machineLocation + 1;
+            final Integer remoteLocation = machineLocation + 1 >= totalNumberOfMachines ? 0 : machineLocation + 1;
             newWorkloads.put(workloadLocation, remoteLocation);
         }
     }
@@ -111,7 +116,7 @@ public class WorkloadGenerator {
      * Create the folder in which workload files will be saved.
      * @throws IOException If the folder could not be created.
      */
-    public void createWorkloadsFolder() throws IOException {
+    private void createWorkloadsFolder() throws IOException {
 
         workloadFolder = new File("generatedWorkloads" + File.separator + dateFormatter.format(System.currentTimeMillis()));
         final boolean successful = workloadFolder.mkdirs();
@@ -126,9 +131,9 @@ public class WorkloadGenerator {
      * @return location of newly created workload file.
      * @throws FileNotFoundException Thrown if it wasn't possible to create the workload file.
      */
-    private String createWorkload(final WorkloadType spec, final ArrayList<String> tablesInWorkload) throws FileNotFoundException {
+    private String createWorkload(final WorkloadType spec, final ArrayList<String> tablesInWorkload, final String fileName) throws FileNotFoundException {
 
-        final String workloadFileLocation = workloadFolder.getAbsolutePath() + File.separator + "workload" + fileCount++ + ".workload";
+        final String workloadFileLocation = workloadFolder.getAbsolutePath() + File.separator + fileName;
 
         if (spec.isQueryAgainstSystemTable()) {
             throw new NotImplementedException();
@@ -147,7 +152,7 @@ public class WorkloadGenerator {
 
     }
 
-    public StringBuilder createTableManagerWorkload(final WorkloadType spec, final ArrayList<String> tablesInWorkload) {
+    private StringBuilder createTableManagerWorkload(final WorkloadType spec, final ArrayList<String> tablesInWorkload) {
 
         final StringBuilder script = new StringBuilder();
 
@@ -156,7 +161,7 @@ public class WorkloadGenerator {
         final boolean autoCommitOff = spec.isMultiQueryTransactionsEnabled();
 
         if (autoCommitOff) {
-            script.append("SET AUTOCOMMIT OFF;");
+            script.append("SET AUTOCOMMIT OFF;\n");
         }
 
         for (int i = 0; i < QUERIES_IN_SCRIPT; i++) {
@@ -166,23 +171,23 @@ public class WorkloadGenerator {
              */
 
             if (r.nextDouble() < spec.getReadWriteRatio()) { //this should be a write.
-                script.append("INSERT INTO " + tablesInWorkload.get(i % tablesInWorkload.size()) + " VALUES (<loop-counter/>);");
+                script.append("INSERT INTO " + tablesInWorkload.get(i % tablesInWorkload.size()) + " VALUES (<loop-counter/>);\n");
             }
             else { //this should be a read.
-                script.append("SELECT * FROM " + tablesInWorkload.get(i % tablesInWorkload.size()) + ";");
+                script.append("SELECT * FROM " + tablesInWorkload.get(i % tablesInWorkload.size()) + ";\n");
             }
 
             if (spec.getSleepTime() > 0) {
-                script.append("<sleep>" + spec.getSleepTime() + "</sleep>");
+                script.append("<sleep>" + spec.getSleepTime() + "</sleep>\n");
             }
 
             if (autoCommitOff && i % spec.getQueriesPerTransaction() == 0) {
-                script.append("COMMIT;");
+                script.append("COMMIT;\n");
             }
         }
 
         if (autoCommitOff) {
-            script.append("SET AUTOCOMMIT ON;");
+            script.append("SET AUTOCOMMIT ON;\n");
         }
         return script;
     }
