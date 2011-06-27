@@ -33,13 +33,20 @@ public class QueryLogEntry implements Serializable {
     public boolean successfulExecution;
 
     /**
+     * When the commit occurred.
+     */
+    public final long timeOfExecution;
+
+    /**
      * @param successfulExecution
      * @param timeToExecute
      * @param queryType
      * @param tableInvolved
+     * @param timeOfExecution 
      */
-    public QueryLogEntry(final boolean successfulExecution, final long timeToExecute, final QueryType queryType, final String tableInvolved) {
+    public QueryLogEntry(final boolean successfulExecution, final long timeToExecute, final QueryType queryType, final String tableInvolved, final long timeOfExecution) {
 
+        this.timeOfExecution = timeOfExecution;
         timeOfLogEntry = System.currentTimeMillis();
         this.successfulExecution = successfulExecution;
         this.timeToExecute = timeToExecute;
@@ -47,10 +54,40 @@ public class QueryLogEntry implements Serializable {
         this.tableInvolved = tableInvolved;
     }
 
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
     @Override
     public String toString() {
 
-        return "QueryLogEntry [queryType=" + queryType + ", tableInvolved=" + tableInvolved + ", timeToExecute=" + timeToExecute + ", successfulExecution=" + successfulExecution + "]";
+        return "QueryLogEntry [queryType=" + queryType + ", tableInvolved=" + tableInvolved + ", timeToExecute=" + timeToExecute + ", timeOfLogEntry=" + timeOfLogEntry + ", successfulExecution=" + successfulExecution + ", timeOfExecution=" + timeOfExecution + "]";
+    }
+
+    public static QueryLogEntry createQueryLogEntry(final String query, final boolean successfullyExecuted, final long timeToExecute) {
+
+        QueryType queryType = QueryType.UNKNOWN;
+        String tableInvolved = "Unknown";
+
+        if (query.contains("INSERT INTO")) {
+            queryType = QueryType.INSERT;
+
+            tableInvolved = query.substring("INSERT INTO ".length(), query.indexOf(" VALUES ("));
+        }
+        else if (query.contains("DELETE FROM")) {
+            queryType = QueryType.DELETE;
+            tableInvolved = query.substring("DELETE FROM ".length(), query.indexOf(" WHERE"));
+        }
+        else if (query.contains("CREATE TABLE")) {
+            queryType = QueryType.CREATE;
+            tableInvolved = query.substring("CREATE TABLE ".length(), query.indexOf(" ("));
+        }
+        else if (query.contains("DROP TABLE")) {
+            queryType = QueryType.DROP;
+            tableInvolved = query.substring("DROP TABLE ".length(), query.indexOf(";"));
+        }
+
+        return new QueryLogEntry(successfullyExecuted, timeToExecute, queryType, tableInvolved, System.currentTimeMillis());
+
     }
 
 }
