@@ -2,7 +2,10 @@ package org.h2o.eval.tests;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.File;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -26,6 +29,8 @@ import uk.ac.standrews.cs.nds.util.PrettyPrinter;
  */
 public class ScriptGenerationTests {
 
+    private static final DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+
     @Test
     public void testSingleWorkloadFile() throws IOException {
 
@@ -34,11 +39,16 @@ public class ScriptGenerationTests {
         final WorkloadType spec = new WorkloadType(0.5, false, 50, true, 5, LinkToTableLocation.ALL_ENCOMPASSING_WORKLOAD, true);
         final TableGrouping tableGrouping = createTestTableGrouping();
 
-        final Map<String, Integer> createWorkloads = gen.createWorkloads(spec, tableGrouping);
+        final Map<String, Integer> createWorkloads = gen.createWorkloads(spec, tableGrouping, createFolderPath());
 
         System.out.println(PrettyPrinter.toString(createWorkloads));
 
         assertEquals(1, createWorkloads.size());
+    }
+
+    public String createFolderPath() {
+
+        return "generatedWorkloads" + File.separator + dateFormatter.format(System.currentTimeMillis());
     }
 
     @Test
@@ -49,7 +59,7 @@ public class ScriptGenerationTests {
         final WorkloadType spec = new WorkloadType(0.5, false, 50, true, 5, LinkToTableLocation.GROUPED_WORKLOAD, true);
         final TableGrouping tableGrouping = createTestTableGrouping();
 
-        final Map<String, Integer> createWorkloads = gen.createWorkloads(spec, tableGrouping);
+        final Map<String, Integer> createWorkloads = gen.createWorkloads(spec, tableGrouping, createFolderPath());
 
         System.out.println(PrettyPrinter.toString(createWorkloads));
 
@@ -64,7 +74,7 @@ public class ScriptGenerationTests {
         final WorkloadType spec = new WorkloadType(0.5, false, 50, true, 5, LinkToTableLocation.WORKLOAD_PER_TABLE, true);
         final TableGrouping tableGrouping = createTestTableGrouping();
 
-        final Map<String, Integer> createWorkloads = gen.createWorkloads(spec, tableGrouping);
+        final Map<String, Integer> createWorkloads = gen.createWorkloads(spec, tableGrouping, createFolderPath());
 
         System.out.println(PrettyPrinter.toString(createWorkloads));
 
@@ -83,7 +93,7 @@ public class ScriptGenerationTests {
         final WorkloadType spec = new WorkloadType(0.5, false, 50, true, 5, LinkToTableLocation.WORKLOAD_PER_TABLE, false);
         final TableGrouping tableGrouping = createTestTableGrouping();
 
-        final Map<String, Integer> createWorkloads = gen.createWorkloads(spec, tableGrouping);
+        final Map<String, Integer> createWorkloads = gen.createWorkloads(spec, tableGrouping, createFolderPath());
 
         System.out.println(PrettyPrinter.toString(createWorkloads));
 

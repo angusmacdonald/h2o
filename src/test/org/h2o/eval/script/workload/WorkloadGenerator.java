@@ -3,9 +3,6 @@ package org.h2o.eval.script.workload;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,11 +15,12 @@ import org.h2o.eval.script.coord.specification.WorkloadType;
 import org.h2o.eval.script.coord.specification.WorkloadType.LinkToTableLocation;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import uk.ac.standrews.cs.nds.util.FileUtil;
 
 public class WorkloadGenerator {
 
     private static final int QUERIES_IN_SCRIPT = 10;
-    private final DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+
     private File workloadFolder;
 
     /**
@@ -36,9 +34,9 @@ public class WorkloadGenerator {
      * @return Location of the newly generated workload file and the machine it is to be run on.
      * @throws IOException 
      */
-    public Map<String, Integer> createWorkloads(final WorkloadType spec, final TableGrouping tableGrouping) throws IOException {
+    public Map<String, Integer> createWorkloads(final WorkloadType spec, final TableGrouping tableGrouping, final String folderPath) throws IOException {
 
-        createWorkloadsFolder();
+        createWorkloadsFolder(folderPath);
 
         final Map<String, Integer> newWorkloads = new HashMap<String, Integer>();
 
@@ -116,9 +114,9 @@ public class WorkloadGenerator {
      * Create the folder in which workload files will be saved.
      * @throws IOException If the folder could not be created.
      */
-    private void createWorkloadsFolder() throws IOException {
+    private void createWorkloadsFolder(final String folderPath) throws IOException {
 
-        workloadFolder = new File("generatedWorkloads" + File.separator + dateFormatter.format(System.currentTimeMillis()));
+        workloadFolder = new File(folderPath);
         final boolean successful = workloadFolder.mkdirs();
 
         if (!successful) { throw new IOException("Failed to create folders in which to store workloads."); }
@@ -142,10 +140,8 @@ public class WorkloadGenerator {
 
             final StringBuilder script = createTableManagerWorkload(spec, tablesInWorkload);
 
-            final PrintWriter writer = new PrintWriter(workloadFileLocation);
-            writer.write(script.toString());
-            writer.flush();
-            writer.close();
+            FileUtil.writeToFile(workloadFileLocation, script.toString());
+
         }
 
         return workloadFileLocation;
