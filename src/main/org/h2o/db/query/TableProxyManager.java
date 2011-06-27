@@ -317,6 +317,8 @@ public class TableProxyManager {
 
             if (!commitActionSuccessful) {
                 ErrorHandling.errorNoEvent("Commit message to replicas was unsuccessful for transaction '" + transactionName + "'.");
+                Diagnostic.printStackTrace();
+                throw new SQLException("Failed to commit transaction to all replicas. Rolling back.");
             }
         }
         finally {

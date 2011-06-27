@@ -205,8 +205,10 @@ public class CommandContainer extends Command {
 
             }
             catch (final SQLException e) {
-                ErrorHandling.errorNoEvent("Transaction not found for query: " + prepared.getSQL());
-                e.printStackTrace();
+                ErrorHandling.errorNoEvent("COMMIT failed to commit to all replicas.");
+                //This could also happen because a transaction isn't found (which would happen if there was a bug in H2O.
+                //But in the regular non-buggy case it can only happen when a transaction couldn't commit to all replicas.
+
                 throw e;
             }
         }

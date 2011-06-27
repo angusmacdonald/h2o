@@ -148,7 +148,15 @@ public class WorkloadExecutor {
                     final long timeBeforeQueryExecution = System.currentTimeMillis();
 
                     try {
-                        stat.execute(query);
+                        final boolean resultSet = stat.execute(query);
+
+                        if (resultSet) {
+
+                        }
+                        else {
+                            if (!query.contains("COMMIT") && stat.getUpdateCount() < 1) { throw new SQLException("Update count was lower than expected."); }
+                        }
+
                         if (autoCommitEnabled || query.startsWith("COMMIT")) {
                             successfullyExecutedTransactions++;
                         }
