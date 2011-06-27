@@ -4,7 +4,7 @@ public class WorkloadType {
 
     public static enum LinkToTableLocation {
         WORKLOAD_PER_TABLE, //creates a single workload for every table in the database. 
-        ALLENCOMPASSING_WORKLOAD, //creates a single workload for the entire database, querying each table in the database.
+        ALL_ENCOMPASSING_WORKLOAD, //creates a single workload for the entire database, querying each table in the database.
         GROUPED_WORKLOAD //creates a number of workloads which each query a distinct group of tables.
     };
 

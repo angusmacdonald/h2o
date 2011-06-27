@@ -1,9 +1,14 @@
 package org.h2o.eval.script.coord;
 
+import java.io.IOException;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.h2o.eval.script.coord.specification.TableClustering;
+import org.h2o.eval.script.coord.specification.TableGrouping;
 import org.h2o.eval.script.coord.specification.WorkloadType;
+import org.h2o.eval.script.workload.WorkloadGenerator;
 
 public class CoordinationScriptGenerator {
 
@@ -12,17 +17,15 @@ public class CoordinationScriptGenerator {
     private static int nextMachineID = 0;
     private static int nextTableID = 0;
 
-    public static String generateCoordinationScript(final long runtime, final double probabilityOfFailure, final double frequencyOfFailure, final int numberOfMachines, final int numberOfTables, final TableClustering clusteringSpec, final Set<WorkloadType> workloadSpecs) {
+    public static String generateCoordinationScript(final long runtime, final double probabilityOfFailure, final double frequencyOfFailure, final int numberOfMachines, final int numberOfTables, final TableClustering clusteringSpec, final Set<WorkloadType> workloadSpecs) throws IOException {
 
         final StringBuilder script = new StringBuilder();
 
         startMachines(numberOfMachines, script);
 
-        createTables(numberOfTables, clusteringSpec, numberOfMachines, script);
+        final TableGrouping tableGrouping = createTables(numberOfTables, clusteringSpec, numberOfMachines, script);
 
-        specifyWorkloadsToExecute(runtime, workloadSpecs, script);
-
-        //TODO how do you specify the tables and workloads you want to create.
+        specifyWorkloadsToExecute(runtime, workloadSpecs, tableGrouping, script);
 
         return script.toString();
     }
@@ -30,35 +33,55 @@ public class CoordinationScriptGenerator {
     /**
      * Specify what workloads will run on what machines.
      * @param runtime How long the workloads should run for.
+     * @param tableGrouping 
      * @param workloadSpec 
      * @param script
+     * @throws IOException Couldn't create folder to store workload files.
      */
-    private static void specifyWorkloadsToExecute(final long runtime, final Set<WorkloadType> workloadSpecs, final StringBuilder script) {
-
-        final int machineToRunWorkloadOn = 0; //TODO integrate with clustering spec, or provide other spec. mechanism?
+    private static void specifyWorkloadsToExecute(final long runtime, final Set<WorkloadType> workloadSpecs, final TableGrouping tableGrouping, final StringBuilder script) throws IOException {
 
         for (final WorkloadType workloadSpec : workloadSpecs) {
-            final String workloadFileLocation = createWorkload(workloadSpec);
-            script.append(SyntaxGenerator.executeWorkloadCommand(machineToRunWorkloadOn, workloadFileLocation, runtime));
+            /*
+             * This has to pass in all of the tables involved in the particular workload, so if it passes in all of tableNames
+             * it will include queries for each table.
+             */
+            Map<String, Integer> workloadFileLocations = null;
+
+            workloadFileLocations = new WorkloadGenerator().createWorkloads(workloadSpec, tableGrouping);
+
+            for (final Entry<String, Integer> workloadEntry : workloadFileLocations.entrySet()) {
+
+                script.append(SyntaxGenerator.executeWorkloadCommand(workloadEntry.getValue(), workloadEntry.getKey(), runtime));
+
+            }
         }
 
     }
 
-    private static String createWorkload(final WorkloadType workloadSpec) {
+    /**
+     * 
+     * @param numberOfTables
+     * @param clustering
+     * @param numberOfMachines
+     * @param script
+     * @return {@link TableGrouping} object which specifies how tables are located/grouped together.
+     */
+    public static TableGrouping createTables(final int numberOfTables, final TableClustering clustering, final int numberOfMachines, final StringBuilder script) {
 
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public static void createTables(final int numberOfTables, final TableClustering clustering, final int numberOfMachines, final StringBuilder script) {
+        final TableGrouping grouping = new TableGrouping();
 
         int tableLocation = 0;
 
         for (int i = 0; i < numberOfTables; i++) { //creates all tables on the first machine.
 
             tableLocation = decideWhereToLocateTable(clustering, numberOfMachines, i, tableLocation);
-            script.append(SyntaxGenerator.createTableCommand(tableLocation, SyntaxGenerator.sqlSimpleCreateTable(TABLE_NAME_PREFIX + nextTableID())));
+            final String tableName = TABLE_NAME_PREFIX + nextTableID();
+
+            grouping.addTable(tableLocation, tableName);
+            script.append(SyntaxGenerator.createTableCommand(tableLocation, SyntaxGenerator.sqlSimpleCreateTable(tableName)));
         }
+
+        return grouping;
     }
 
     /**
