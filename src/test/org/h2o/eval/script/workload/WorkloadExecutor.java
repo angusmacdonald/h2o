@@ -174,7 +174,7 @@ public class WorkloadExecutor {
                     if (autoCommitEnabled) {
                         queryLog.add(QueryLogEntry.createQueryLogEntry(query, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
                     }
-                    else if (!autoCommitEnabled && query.contains("COMMIT")) {
+                    else if (!autoCommitEnabled && query.contains("COMMIT;")) {
                         queryLog.add(QueryLogEntry.createQueryLogEntry(queriesInThisTransaction, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
                         queriesInThisTransaction.clear();
                         timeBeforeQueryExecution = System.currentTimeMillis(); // when auto-commit isn't enabled, the transaction starts after the previous one finishes.

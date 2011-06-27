@@ -263,7 +263,7 @@ public class AsynchronousQueryExecutor {
                 final CommitResult commitResult = new CommitResult(true, asyncResult.getWrapper(), asyncResult.getUpdateID(), expectedUpdateID, tableName);
                 recentlyCompletedQueries.add(commitResult);
 
-                ErrorHandling.errorNoEvent(tableName + ", " + asyncResult.getException().getMessage());
+                ErrorHandling.errorNoEvent("Error message: " + tableName + ", " + asyncResult.getException().getMessage());
 
                 returnValues[pos] = -1; //error.
             }

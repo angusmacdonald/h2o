@@ -67,7 +67,7 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
      */
     private final Map<Integer, IWorker> scriptedInstances = new HashMap<Integer, IWorker>();
 
-    private final Set<IWorker> workersWithActiveWorkloads = Collections.synchronizedSet(new HashSet<IWorker>());
+    private final Map<IWorker, Integer> workersWithActiveWorkloads = Collections.synchronizedMap(new HashMap<IWorker, Integer>());
 
     /*
      * Locator server fields.
@@ -80,6 +80,7 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
     private static final DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
 
     private final Date startDate = new Date();
+    private final List<WorkloadResult> workloadResults = new LinkedList<WorkloadResult>();
 
     /**
      * 
@@ -222,21 +223,28 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
      */
 
     @Override
-    public void collateMonitoringResults(final WorkloadResult workloadResult) throws RemoteException {
+    public synchronized void collateMonitoringResults(final WorkloadResult workloadResult) throws RemoteException {
 
-        workersWithActiveWorkloads.remove(workloadResult.getWorkloadID());
+        removeFromSetOfActiveWorkloads(workloadResult.getWorkloadID());
         System.out.println(workloadResult);
 
-        try {
-            CSVPrinter.printResults("generatedWorkloads" + File.separator + dateFormatter.format(startDate) + "-results.csv", workloadResult);
-        }
-        catch (final FileNotFoundException e) {
-            ErrorHandling.exceptionError(e, "Failed to create file to save results to.");
-        }
+        workloadResults.add(workloadResult);
 
         if (workloadResult.getException() != null) {
             workloadResult.getException().printStackTrace();
         }
+    }
+
+    private synchronized void removeFromSetOfActiveWorkloads(final IWorker worker) {
+
+        Integer count = workersWithActiveWorkloads.get(worker);
+        if (count == 1) {
+            workersWithActiveWorkloads.remove(worker);
+        }
+        else {
+            workersWithActiveWorkloads.put(worker, --count);
+        }
+
     }
 
     @Override
@@ -298,7 +306,18 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
             ErrorHandling.exceptionError(e, "Error creating SQL statement for workload execution. Workload was never started.");
         }
 
-        workersWithActiveWorkloads.add(worker);
+        addWorkloadToRecords(worker);
+    }
+
+    private synchronized void addWorkloadToRecords(final IWorker worker) {
+
+        if (workersWithActiveWorkloads.containsKey(worker)) {
+            Integer currentCount = workersWithActiveWorkloads.get(worker);
+            workersWithActiveWorkloads.put(worker, ++currentCount);
+        }
+        else {
+            workersWithActiveWorkloads.put(worker, 1);
+        }
     }
 
     /**
@@ -317,7 +336,7 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
     @Override
     public void blockUntilWorkloadsComplete() throws RemoteException {
 
-        while (workersWithActiveWorkloads.size() > 0) {
+        while (areThereActiveWorkloads()) {
 
             try {
                 Thread.sleep(1000);
@@ -330,6 +349,18 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
         if (killMonitor != null) {
             killMonitor.setRunning(false);
         }
+
+        try {
+            CSVPrinter.printResults("generatedWorkloads" + File.separator + dateFormatter.format(startDate) + "-results.csv", workloadResults);
+        }
+        catch (final FileNotFoundException e) {
+            ErrorHandling.exceptionError(e, "Failed to create file to save results to.");
+        }
+    }
+
+    private synchronized boolean areThereActiveWorkloads() {
+
+        return workersWithActiveWorkloads.size() > 0;
     }
 
     @Override

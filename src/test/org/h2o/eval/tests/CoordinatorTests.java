@@ -171,7 +171,7 @@ public class CoordinatorTests {
         final TableClustering clusteringSpec = new TableClustering(Clustering.GROUPED, 5);
 
         final Set<WorkloadType> workloadSpecs = new HashSet<WorkloadType>();
-        final WorkloadType spec = new WorkloadType(0.0, false, 0, true, 1000, LinkToTableLocation.GROUPED_WORKLOAD, true);
+        final WorkloadType spec = new WorkloadType(0.0, false, 0, true, 120, LinkToTableLocation.WORKLOAD_PER_TABLE, true);
         workloadSpecs.add(spec);
 
         return CoordinationScriptGenerator.generateCoordinationScript(runtime, probabilityOfFailure, frequencyOfFailure, numberOfMachines, numberOfTables, clusteringSpec, workloadSpecs);

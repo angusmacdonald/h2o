@@ -39,10 +39,10 @@ public class JdbcSQLException extends SQLException {
      * @param cause
      *            the exception that was the reason for this exception
      */
-    public JdbcSQLException(String message, String sql, String state, int errorCode, Throwable cause, String stackTrace) {
+    public JdbcSQLException(final String message, final String sql, final String state, final int errorCode, final Throwable cause, final String stackTrace) {
 
         super(message, state, errorCode);
-        this.originalMessage = message;
+        originalMessage = message;
         this.sql = sql;
         this.cause = cause;
         this.stackTrace = stackTrace;
@@ -52,11 +52,22 @@ public class JdbcSQLException extends SQLException {
         // ## Java 1.4 end ##
     }
 
+    public JdbcSQLException(final String message) {
+
+        super(message);
+
+        stackTrace = null;
+        originalMessage = "Original message lost in JSON reconstruction.";
+        sql = null;
+        cause = null;
+    }
+
     /**
      * Get the detail error message.
      * 
      * @return the message
      */
+    @Override
     public String getMessage() {
 
         return message;
@@ -73,6 +84,7 @@ public class JdbcSQLException extends SQLException {
     /**
      * Prints the stack trace to the standard error stream.
      */
+    @Override
     public void printStackTrace() {
 
         // The default implementation already does that,
@@ -88,7 +100,8 @@ public class JdbcSQLException extends SQLException {
      * @param s
      *            the print writer
      */
-    public void printStackTrace(PrintWriter s) {
+    @Override
+    public void printStackTrace(final PrintWriter s) {
 
         if (s != null) {
             super.printStackTrace(s);
@@ -114,7 +127,8 @@ public class JdbcSQLException extends SQLException {
      * @param s
      *            the print stream
      */
-    public void printStackTrace(PrintStream s) {
+    @Override
+    public void printStackTrace(final PrintStream s) {
 
         if (s != null) {
             super.printStackTrace(s);
@@ -155,7 +169,7 @@ public class JdbcSQLException extends SQLException {
     /**
      * INTERNAL
      */
-    public void setSQL(String sql) {
+    public void setSQL(final String sql) {
 
         this.sql = sql;
         buildMessage();
@@ -163,7 +177,7 @@ public class JdbcSQLException extends SQLException {
 
     private void buildMessage() {
 
-        StringBuilder buff = new StringBuilder(originalMessage == null ? "- " : originalMessage);
+        final StringBuilder buff = new StringBuilder(originalMessage == null ? "- " : originalMessage);
         if (sql != null) {
             buff.append("; SQL statement:\n");
             buff.append(sql);
@@ -181,6 +195,7 @@ public class JdbcSQLException extends SQLException {
      * 
      * @return the string representation
      */
+    @Override
     public String toString() {
 
         if (stackTrace == null) { return super.toString(); }
@@ -203,7 +218,7 @@ public class JdbcSQLException extends SQLException {
      * @param payload
      *            the new payload
      */
-    public void setPayload(Object payload) {
+    public void setPayload(final Object payload) {
 
         this.payload = payload;
     }

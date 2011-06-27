@@ -22,22 +22,39 @@ public class CSVPrinter {
     /**
      * 
      * @param fileLocation The file results are to be written to.
-     * @param workloadResult The results to be written.
+     * @param workloadResults The results to be written.
      * @throws FileNotFoundException If the file could not be created or written to.
      */
-    public static void printResults(final String fileLocation, final WorkloadResult workloadResult) throws FileNotFoundException {
+    public static void printResults(final String fileLocation, final List<WorkloadResult> workloadResults) throws FileNotFoundException {
 
         final StringBuilder csv = new StringBuilder();
 
-        csv.append(printQueryLog(workloadResult.getQueryLog(), workloadResult.getLocationOfExecution()));
+        //  csv.append(printBasicWorkloadDetails(workloadResults));
+
+        csv.append(QueryLogEntry.toCSVHeader());
+
+        for (final WorkloadResult workloadResult : workloadResults) {
+
+            csv.append(printQueryLog(workloadResult.getQueryLog(), workloadResult.getLocationOfExecution()));
+        }
 
         FileUtil.writeToFile(fileLocation, csv.toString());
+    }
+
+    private static StringBuilder printBasicWorkloadDetails(final WorkloadResult workloadResult) {
+
+        final StringBuilder csv = new StringBuilder();
+
+        csv.append("Evaluation results:\n");
+        csv.append("Total attempted transactions:, " + workloadResult.getTotalAttemptedTransactions() + "\n");
+        csv.append("Total successful transactions:, " + workloadResult.getTotalSuccessfulTransactions() + "\n\n");
+
+        return csv;
     }
 
     public static StringBuilder printQueryLog(final List<QueryLogEntry> queryLogList, final String location) {
 
         final StringBuilder csv = new StringBuilder();
-        csv.append(QueryLogEntry.toCSVHeader());
 
         for (final QueryLogEntry queryLog : queryLogList) {
             csv.append(queryLog.toCSV(dateFormatter, location));

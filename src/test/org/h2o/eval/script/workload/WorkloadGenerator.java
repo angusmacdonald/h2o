@@ -177,7 +177,7 @@ public class WorkloadGenerator {
                 script.append("<sleep>" + spec.getSleepTime() + "</sleep>\n");
             }
 
-            if (autoCommitOff && i % spec.getQueriesPerTransaction() == 0) {
+            if (autoCommitOff && i % spec.getQueriesPerTransaction() == 0 && i > 0) {
                 script.append("COMMIT;\n");
             }
         }

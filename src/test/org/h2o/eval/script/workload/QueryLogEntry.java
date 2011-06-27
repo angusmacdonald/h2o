@@ -80,7 +80,7 @@ public class QueryLogEntry implements Serializable {
         for (final String query : queriesInThisTransaction) {
 
             QueryType queryType = QueryType.UNKNOWN;
-            String tableInvolved = "Unknown";
+            String tableInvolved = null;
 
             if (query.contains("INSERT INTO")) {
                 queryType = QueryType.INSERT;
@@ -105,7 +105,9 @@ public class QueryLogEntry implements Serializable {
                 tableInvolved = query.substring("SELECT * FROM ".length(), query.indexOf(";"));
             }
 
-            tablesInvolved.add(tableInvolved);
+            if (tableInvolved != null) {
+                tablesInvolved.add(tableInvolved);
+            }
             queryTypes.add(queryType);
         }
 
@@ -115,11 +117,22 @@ public class QueryLogEntry implements Serializable {
 
     public String toCSV(final DateFormat dateformatter, final String locationOfExecution) {
 
-        return dateformatter.format(new Date(timeOfLogEntry)) + ", " + timeToExecute + ", " + locationOfExecution + ", " + PrettyPrinter.toString(tablesInvolved, ";") + ", " + PrettyPrinter.toString(queryTypes, ";") + "\n";
+        return dateformatter.format(new Date(timeOfLogEntry)) + ", " + timeToExecute + ", " + locationOfExecution + ", " + PrettyPrinter.toString(tablesInvolved, ";", false) + ", " + getNumberOf(QueryType.INSERT) + ", " + getNumberOf(QueryType.SELECT) + "\n";
+    }
+
+    private int getNumberOf(final QueryType type) {
+
+        int count = 0;
+        for (final QueryType singleQueryType : queryTypes) {
+            if (singleQueryType.equals(type)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     public static String toCSVHeader() {
 
-        return "Time of Transaction, Time To Execute, Location of Execution, Tables Involved, Query Types\n";
+        return "Time of Transaction, Time To Execute, Location of Execution, Tables Involved, Insert Queries, Select Queries\n";
     }
 }

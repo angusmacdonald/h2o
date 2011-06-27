@@ -294,8 +294,11 @@ public class H2OMarshaller extends Marshaller {
             final String tableName = reader.stringValue();
 
             reader.key(SCHEMA_NAME);
-            final String schemaName = reader.stringValue();
 
+            String schemaName = null;
+            if (!reader.checkNull()) {
+                schemaName = reader.stringValue();
+            }
             reader.key(MODIFICATION_ID);
             final long modificationID = reader.intValue();
 

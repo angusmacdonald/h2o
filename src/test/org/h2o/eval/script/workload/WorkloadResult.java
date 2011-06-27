@@ -71,7 +71,7 @@ public class WorkloadResult implements Serializable {
         }
     }
 
-    public Object getWorkloadID() {
+    public IWorker getWorkloadID() {
 
         return worker;
     }
@@ -89,6 +89,16 @@ public class WorkloadResult implements Serializable {
     public String getLocationOfExecution() {
 
         return locationOfExecution;
+    }
+
+    public long getTotalAttemptedTransactions() {
+
+        return totalAttemptedTransactions;
+    }
+
+    public long getTotalSuccessfulTransactions() {
+
+        return successfullyExecutedTransactions;
     }
 
 }
