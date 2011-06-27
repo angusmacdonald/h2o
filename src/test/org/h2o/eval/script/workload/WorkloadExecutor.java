@@ -64,6 +64,7 @@ public class WorkloadExecutor {
             stat.execute("SET AUTOCOMMIT ON;");
 
             long timeBeforeQueryExecution = 0; //when a particular transaction started.
+            final List<String> queriesInThisTransaction = new LinkedList<String>();
 
             int loopCounter = -1; //the current iteration of the loop in this workload [nested loops are not supported].
             int loopStartPos = -1; //where the loop starts in this list of queries.
@@ -174,7 +175,11 @@ public class WorkloadExecutor {
                         queryLog.add(QueryLogEntry.createQueryLogEntry(query, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
                     }
                     else if (!autoCommitEnabled && query.contains("COMMIT")) {
-                        queryLog.add(QueryLogEntry.createQueryLogEntry(query, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
+                        queryLog.add(QueryLogEntry.createQueryLogEntry(queriesInThisTransaction, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
+                        queriesInThisTransaction.clear();
+                    }
+                    else {
+                        queriesInThisTransaction.add(query);
                     }
 
                     if (!autoCommitEnabled) {
@@ -183,6 +188,7 @@ public class WorkloadExecutor {
                     if (System.currentTimeMillis() > workloadEndTime) {
                         try {
                             stat.execute("ROLLBACK;");
+                            queriesInThisTransaction.clear();
                         }
                         catch (final Exception e) {
                             //May throw an exception is there is nothing to roll back.

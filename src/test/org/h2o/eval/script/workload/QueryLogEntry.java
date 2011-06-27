@@ -1,6 +1,12 @@
 package org.h2o.eval.script.workload;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 public class QueryLogEntry implements Serializable {
 
@@ -13,12 +19,12 @@ public class QueryLogEntry implements Serializable {
     /**
      * Type of query being performed.
      */
-    public QueryType queryType;
+    public List<QueryType> queryTypes;
 
     /**
      * Name of the table on which this operation was performed.
      */
-    public String tableInvolved;
+    public final Set<String> tablesInvolved;
 
     /**
      * Time taken to execute the query (either successfully, or for it to fail).
@@ -40,18 +46,18 @@ public class QueryLogEntry implements Serializable {
     /**
      * @param successfulExecution
      * @param timeToExecute
-     * @param queryType
-     * @param tableInvolved
+     * @param queryTypes
+     * @param tablesInvolved
      * @param timeOfExecution 
      */
-    public QueryLogEntry(final boolean successfulExecution, final long timeToExecute, final QueryType queryType, final String tableInvolved, final long timeOfExecution) {
+    public QueryLogEntry(final boolean successfulExecution, final long timeToExecute, final List<QueryType> queryTypes, final Set<String> tablesInvolved, final long timeOfExecution) {
 
         this.timeOfExecution = timeOfExecution;
         timeOfLogEntry = System.currentTimeMillis();
         this.successfulExecution = successfulExecution;
         this.timeToExecute = timeToExecute;
-        this.queryType = queryType;
-        this.tableInvolved = tableInvolved;
+        this.queryTypes = queryTypes;
+        this.tablesInvolved = tablesInvolved;
     }
 
     /* (non-Javadoc)
@@ -60,33 +66,50 @@ public class QueryLogEntry implements Serializable {
     @Override
     public String toString() {
 
-        return "QueryLogEntry [queryType=" + queryType + ", tableInvolved=" + tableInvolved + ", timeToExecute=" + timeToExecute + ", timeOfLogEntry=" + timeOfLogEntry + ", successfulExecution=" + successfulExecution + ", timeOfExecution=" + timeOfExecution + "]";
+        return "QueryLogEntry [queryType=" + PrettyPrinter.toString(queryTypes) + ", tableInvolved=" + PrettyPrinter.toString(tablesInvolved) + ", timeToExecute=" + timeToExecute + ", timeOfLogEntry=" + timeOfLogEntry + ", successfulExecution=" + successfulExecution + ", timeOfExecution="
+                        + timeOfExecution + "]";
     }
 
     public static QueryLogEntry createQueryLogEntry(final String query, final boolean successfullyExecuted, final long timeToExecute) {
 
-        QueryType queryType = QueryType.UNKNOWN;
-        String tableInvolved = "Unknown";
+        final List<String> queries = new LinkedList<String>();
+        queries.add(query);
 
-        if (query.contains("INSERT INTO")) {
-            queryType = QueryType.INSERT;
+        return createQueryLogEntry(queries, successfullyExecuted, timeToExecute);
+    }
 
-            tableInvolved = query.substring("INSERT INTO ".length(), query.indexOf(" VALUES ("));
-        }
-        else if (query.contains("DELETE FROM")) {
-            queryType = QueryType.DELETE;
-            tableInvolved = query.substring("DELETE FROM ".length(), query.indexOf(" WHERE"));
-        }
-        else if (query.contains("CREATE TABLE")) {
-            queryType = QueryType.CREATE;
-            tableInvolved = query.substring("CREATE TABLE ".length(), query.indexOf(" ("));
-        }
-        else if (query.contains("DROP TABLE")) {
-            queryType = QueryType.DROP;
-            tableInvolved = query.substring("DROP TABLE ".length(), query.indexOf(";"));
+    public static QueryLogEntry createQueryLogEntry(final List<String> queriesInThisTransaction, final boolean successfullyExecuted, final long timeToExecute) {
+
+        final Set<String> tablesInvolved = new HashSet<String>();
+        final List<QueryType> queryTypes = new LinkedList<QueryLogEntry.QueryType>();
+        for (final String query : queriesInThisTransaction) {
+
+            QueryType queryType = QueryType.UNKNOWN;
+            String tableInvolved = "Unknown";
+
+            if (query.contains("INSERT INTO")) {
+                queryType = QueryType.INSERT;
+
+                tableInvolved = query.substring("INSERT INTO ".length(), query.indexOf(" VALUES ("));
+            }
+            else if (query.contains("DELETE FROM")) {
+                queryType = QueryType.DELETE;
+                tableInvolved = query.substring("DELETE FROM ".length(), query.indexOf(" WHERE"));
+            }
+            else if (query.contains("CREATE TABLE")) {
+                queryType = QueryType.CREATE;
+                tableInvolved = query.substring("CREATE TABLE ".length(), query.indexOf(" ("));
+            }
+            else if (query.contains("DROP TABLE")) {
+                queryType = QueryType.DROP;
+                tableInvolved = query.substring("DROP TABLE ".length(), query.indexOf(";"));
+            }
+
+            tablesInvolved.add(tableInvolved);
+            queryTypes.add(queryType);
         }
 
-        return new QueryLogEntry(successfullyExecuted, timeToExecute, queryType, tableInvolved, System.currentTimeMillis());
+        return new QueryLogEntry(successfullyExecuted, timeToExecute, queryTypes, tablesInvolved, System.currentTimeMillis());
 
     }
 
