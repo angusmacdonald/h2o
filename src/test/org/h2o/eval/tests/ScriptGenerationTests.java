@@ -3,8 +3,13 @@ package org.h2o.eval.tests;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
+import org.h2o.eval.script.coord.CoordinationScriptGenerator;
+import org.h2o.eval.script.coord.specification.TableClustering;
+import org.h2o.eval.script.coord.specification.TableClustering.Clustering;
 import org.h2o.eval.script.coord.specification.TableGrouping;
 import org.h2o.eval.script.coord.specification.WorkloadType;
 import org.h2o.eval.script.coord.specification.WorkloadType.LinkToTableLocation;
@@ -91,6 +96,33 @@ public class ScriptGenerationTests {
         assertEquals(5, createWorkloads.size());
     }
 
+    /**
+     * Creates a test co-ordination script.
+     * @throws IOException
+     */
+    @Test
+    public void testCoordinationScriptGeneration() throws IOException {
+
+        final long runtime = 60000;
+        final double probabilityOfFailure = 0.1;
+        final double frequencyOfFailure = 10000;
+        final int numberOfMachines = 5;
+        final int numberOfTables = 3;
+        final TableClustering clusteringSpec = new TableClustering(Clustering.GROUPED, 2);
+
+        final Set<WorkloadType> workloadSpecs = new HashSet<WorkloadType>();
+        final WorkloadType spec = new WorkloadType(0.5, false, 50, true, 5, LinkToTableLocation.GROUPED_WORKLOAD, true);
+        workloadSpecs.add(spec);
+
+        final String coordinationScriptLocation = CoordinationScriptGenerator.generateCoordinationScript(runtime, probabilityOfFailure, frequencyOfFailure, numberOfMachines, numberOfTables, clusteringSpec, workloadSpecs);
+
+        System.out.println(coordinationScriptLocation);
+
+    }
+
+    /*
+     * Utility methods.
+     */
     private TableGrouping createTestTableGrouping() {
 
         final TableGrouping tableGrouping = new TableGrouping();

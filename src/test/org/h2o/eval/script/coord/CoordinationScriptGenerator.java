@@ -10,6 +10,8 @@ import org.h2o.eval.script.coord.specification.TableGrouping;
 import org.h2o.eval.script.coord.specification.WorkloadType;
 import org.h2o.eval.script.workload.WorkloadGenerator;
 
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
 public class CoordinationScriptGenerator {
 
     private static final String TABLE_NAME_PREFIX = "test";
@@ -92,20 +94,23 @@ public class CoordinationScriptGenerator {
      * @param lastTableLocation     The last machine to be assigned a table (indexed from 0, also initialized to 0).
      * @return
      */
-    public static int decideWhereToLocateTable(final TableClustering clustering, final int numberOfMachines, final int tablesCreatedSoFar, int lastTableLocation) {
+    public static int decideWhereToLocateTable(final TableClustering clustering, final int numberOfMachines, final int tablesCreatedSoFar, final int lastTableLocation) {
 
-        int newTableLocation = 0;
+        int newTableLocation = -1;
 
         if (clustering.getClustering().equals(TableClustering.Clustering.COLOCATED)) {
-            lastTableLocation = 0; //co-locate on the first machine.
+            newTableLocation = 0; //co-locate on the first machine.
         }
         else if (clustering.getClustering().equals(TableClustering.Clustering.GROUPED)) {
-            if (tablesCreatedSoFar > 0 && tablesCreatedSoFar % clustering.getGroupSize() == 2) {
+            if (tablesCreatedSoFar > 0 && tablesCreatedSoFar % clustering.getGroupSize() == 0) {
                 newTableLocation = lastTableLocation + 1;
 
                 if (newTableLocation > numberOfMachines - 1) {
                     newTableLocation = 0;
                 }
+            }
+            else {
+                newTableLocation = lastTableLocation;
             }
         }
         else if (clustering.getClustering().equals(TableClustering.Clustering.SPREAD)) {
@@ -115,31 +120,18 @@ public class CoordinationScriptGenerator {
                 newTableLocation = 0;
             }
         }
+        else {
+            throw new NotImplementedException();
+        }
+
         return newTableLocation;
     }
 
     public static void startMachines(final int numberOfMachines, final StringBuilder script) {
 
         for (int i = 0; i < numberOfMachines; i++) {
-            script.append(createStartMachineCommand(nextMachineID(), i == 0));
+            script.append(SyntaxGenerator.createStartMachineCommand(nextMachineID(), i == 0));
         }
-    }
-
-    /**
-     * 
-     * @param id ID to be assigned to the starting machine.
-     * @param sleepAfterStart Whether to sleep for a short period after starting the machine (can be used to ensure a machine becomes the system table).
-     * @return
-     */
-    private static String createStartMachineCommand(final int id, final boolean sleepAfterStart) {
-
-        String startMachineCommand = "{start_machine id=\"" + id + "\"}";
-
-        if (sleepAfterStart) {
-            startMachineCommand += "\n" + SyntaxGenerator.createSleepCommand(3000);
-        }
-
-        return startMachineCommand;
     }
 
     private static int nextMachineID() {
