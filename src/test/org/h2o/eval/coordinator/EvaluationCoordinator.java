@@ -38,6 +38,7 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.FileUtil;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
@@ -218,7 +219,7 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
         workersWithActiveWorkloads.remove(workloadResult.getWorkloadID());
         System.out.println(workloadResult);
 
-        //System.out.println(PrettyPrinter.toString(workloadResult.getQueryLog()));
+        System.out.println(PrettyPrinter.toString(workloadResult.getQueryLog()));
 
         if (workloadResult.getException() != null) {
             workloadResult.getException().printStackTrace();

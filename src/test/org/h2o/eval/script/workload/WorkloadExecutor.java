@@ -64,6 +64,8 @@ public class WorkloadExecutor {
 
             stat.execute("SET AUTOCOMMIT ON;");
 
+            long timeBeforeQueryExecution = 0; //when a particular transaction started.
+
             int loopCounter = -1; //the current iteration of the loop in this workload [nested loops are not supported].
             int loopStartPos = -1; //where the loop starts in this list of queries.
             int loopIterations = 1; //how many iterations of the loop are to be executed.
@@ -131,9 +133,11 @@ public class WorkloadExecutor {
 
                     if (query.startsWith("SET AUTOCOMMIT OFF;")) {
                         autoCommitEnabled = false;
+                        timeBeforeQueryExecution = System.currentTimeMillis();
                     }
                     else if (query.startsWith("SET AUTCOMMIT ON;")) {
                         autoCommitEnabled = true;
+                        timeBeforeQueryExecution = System.currentTimeMillis();
                     }
 
                     if (autoCommitEnabled || query.startsWith("COMMIT")) {
@@ -145,7 +149,6 @@ public class WorkloadExecutor {
                     Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing query: " + query);
 
                     boolean successfullyExecuted = true;
-                    final long timeBeforeQueryExecution = System.currentTimeMillis();
 
                     try {
                         final boolean resultSet = stat.execute(query);
@@ -168,8 +171,16 @@ public class WorkloadExecutor {
 
                     final long timeAfterQueryExecution = System.currentTimeMillis();
 
-                    queryLog.add(getQueryLogEntry(query, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
+                    if (autoCommitEnabled) {
+                        queryLog.add(getQueryLogEntry(query, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
+                    }
+                    else if (!autoCommitEnabled && query.contains("COMMIT")) {
+                        queryLog.add(getQueryLogEntry(query, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
+                    }
 
+                    if (!autoCommitEnabled) {
+                        timeBeforeQueryExecution = System.currentTimeMillis(); // when auto-commit isn't enabled, the transaction starts after the previous one finishes.
+                    }
                     if (System.currentTimeMillis() > workloadEndTime) {
                         try {
                             stat.execute("ROLLBACK;");
