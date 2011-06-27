@@ -14,23 +14,17 @@ import org.h2o.eval.script.coord.specification.TableGrouping;
 import org.h2o.eval.script.coord.specification.WorkloadType;
 import org.h2o.eval.script.coord.specification.WorkloadType.LinkToTableLocation;
 import org.h2o.eval.script.workload.WorkloadGenerator;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
+/**
+ * Tests of script generation. NOTE: these tests do very little checking of the contents of generated scripts, 
+ * so a visual inspection of the output is currently needed to confirm their correctness. //TODO fix this.
+ *
+ * @author Angus Macdonald (angus.macdonald@st-andrews.ac.uk)
+ */
 public class ScriptGenerationTests {
-
-    @Before
-    public void setUp() throws Exception {
-
-    }
-
-    @After
-    public void tearDown() throws Exception {
-
-    }
 
     @Test
     public void testSingleWorkloadFile() throws IOException {
