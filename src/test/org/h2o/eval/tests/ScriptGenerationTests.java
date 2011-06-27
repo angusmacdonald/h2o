@@ -17,6 +17,7 @@ import org.h2o.eval.script.coord.specification.TableGrouping;
 import org.h2o.eval.script.coord.specification.WorkloadType;
 import org.h2o.eval.script.coord.specification.WorkloadType.LinkToTableLocation;
 import org.h2o.eval.script.workload.WorkloadGenerator;
+import org.junit.After;
 import org.junit.Test;
 
 import uk.ac.standrews.cs.nds.util.PrettyPrinter;
@@ -28,6 +29,19 @@ import uk.ac.standrews.cs.nds.util.PrettyPrinter;
  * @author Angus Macdonald (angus.macdonald@st-andrews.ac.uk)
  */
 public class ScriptGenerationTests {
+
+    File folderToDelete = null;
+
+    @After
+    public void tearDown() {
+
+        if (folderToDelete != null) {
+            System.out.println("Deleting " + folderToDelete);
+            folderToDelete.delete();
+        }
+
+        folderToDelete = null;
+    }
 
     private static final DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
 
@@ -44,11 +58,8 @@ public class ScriptGenerationTests {
         System.out.println(PrettyPrinter.toString(createWorkloads));
 
         assertEquals(1, createWorkloads.size());
-    }
 
-    public String createFolderPath() {
-
-        return "generatedWorkloads" + File.separator + dateFormatter.format(System.currentTimeMillis());
+        setFolderToDelete(createWorkloads);
     }
 
     @Test
@@ -64,6 +75,8 @@ public class ScriptGenerationTests {
         System.out.println(PrettyPrinter.toString(createWorkloads));
 
         assertEquals(2, createWorkloads.size());
+
+        setFolderToDelete(createWorkloads);
     }
 
     @Test
@@ -79,6 +92,8 @@ public class ScriptGenerationTests {
         System.out.println(PrettyPrinter.toString(createWorkloads));
 
         assertEquals(5, createWorkloads.size());
+
+        setFolderToDelete(createWorkloads);
     }
 
     /**
@@ -98,6 +113,8 @@ public class ScriptGenerationTests {
         System.out.println(PrettyPrinter.toString(createWorkloads));
 
         assertEquals(5, createWorkloads.size());
+
+        setFolderToDelete(createWorkloads);
     }
 
     /**
@@ -122,10 +139,38 @@ public class ScriptGenerationTests {
 
         System.out.println(coordinationScriptLocation);
 
+        folderToDelete = new File(coordinationScriptLocation.substring(0, coordinationScriptLocation.lastIndexOf(File.separator)));
+    }
+
+    /**
+     * Creates a test co-ordination script.
+     * @throws IOException
+     */
+    @Test
+    public void testLargeCoordinationScriptGeneration() throws IOException {
+
+        final long runtime = 60000;
+        final double probabilityOfFailure = 0.05;
+        final double frequencyOfFailure = 10000;
+        final int numberOfMachines = 15;
+        final int numberOfTables = 17;
+        final TableClustering clusteringSpec = new TableClustering(Clustering.GROUPED, 4);
+
+        final Set<WorkloadType> workloadSpecs = new HashSet<WorkloadType>();
+        final WorkloadType spec = new WorkloadType(0.5, false, 50, true, 10, LinkToTableLocation.GROUPED_WORKLOAD, true);
+        workloadSpecs.add(spec);
+
+        final String coordinationScriptLocation = CoordinationScriptGenerator.generateCoordinationScript(runtime, probabilityOfFailure, frequencyOfFailure, numberOfMachines, numberOfTables, clusteringSpec, workloadSpecs);
+
+        System.out.println(coordinationScriptLocation);
+
+        folderToDelete = new File(coordinationScriptLocation.substring(0, coordinationScriptLocation.lastIndexOf(File.separator)));
     }
 
     /*
+     * ##################################################################
      * Utility methods.
+     * ##################################################################
      */
     private TableGrouping createTestTableGrouping() {
 
@@ -137,5 +182,16 @@ public class ScriptGenerationTests {
         tableGrouping.addTable(1, "test3");
         tableGrouping.addTable(1, "test4");
         return tableGrouping;
+    }
+
+    private void setFolderToDelete(final Map<String, Integer> createWorkloads) {
+
+        final String fileInFolder = createWorkloads.keySet().toArray(new String[0])[0];
+        folderToDelete = new File(fileInFolder).getParentFile();
+    }
+
+    private String createFolderPath() {
+
+        return "generatedWorkloads" + File.separator + dateFormatter.format(System.currentTimeMillis());
     }
 }
