@@ -32,6 +32,7 @@ public class WorkloadResult implements Serializable {
 
     private IWorker worker;
 
+    private String locationOfExecution;
     private final List<QueryLogEntry> queryLog;
 
     /**
@@ -55,6 +56,8 @@ public class WorkloadResult implements Serializable {
         this.totalAttemptedTransactions = totalAttemptedTransactions;
         this.worker = worker;
         this.queryLog = queryLog;
+
+        locationOfExecution = worker.toString();
     }
 
     @Override
@@ -81,6 +84,11 @@ public class WorkloadResult implements Serializable {
     public List<QueryLogEntry> getQueryLog() {
 
         return queryLog;
+    }
+
+    public String getLocationOfExecution() {
+
+        return locationOfExecution;
     }
 
 }

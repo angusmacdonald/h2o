@@ -1,6 +1,8 @@
 package org.h2o.eval.script.workload;
 
 import java.io.Serializable;
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -13,7 +15,7 @@ public class QueryLogEntry implements Serializable {
     private static final long serialVersionUID = 6421309505616188993L;
 
     public enum QueryType {
-        CREATE, DROP, INSERT, DELETE, UNKNOWN
+        CREATE, DROP, INSERT, DELETE, UNKNOWN, SELECT
     };
 
     /**
@@ -39,20 +41,14 @@ public class QueryLogEntry implements Serializable {
     public boolean successfulExecution;
 
     /**
-     * When the commit occurred.
-     */
-    public final long timeOfExecution;
-
-    /**
      * @param successfulExecution
      * @param timeToExecute
      * @param queryTypes
      * @param tablesInvolved
      * @param timeOfExecution 
      */
-    public QueryLogEntry(final boolean successfulExecution, final long timeToExecute, final List<QueryType> queryTypes, final Set<String> tablesInvolved, final long timeOfExecution) {
+    public QueryLogEntry(final boolean successfulExecution, final long timeToExecute, final List<QueryType> queryTypes, final Set<String> tablesInvolved) {
 
-        this.timeOfExecution = timeOfExecution;
         timeOfLogEntry = System.currentTimeMillis();
         this.successfulExecution = successfulExecution;
         this.timeToExecute = timeToExecute;
@@ -66,8 +62,7 @@ public class QueryLogEntry implements Serializable {
     @Override
     public String toString() {
 
-        return "QueryLogEntry [queryType=" + PrettyPrinter.toString(queryTypes) + ", tableInvolved=" + PrettyPrinter.toString(tablesInvolved) + ", timeToExecute=" + timeToExecute + ", timeOfLogEntry=" + timeOfLogEntry + ", successfulExecution=" + successfulExecution + ", timeOfExecution="
-                        + timeOfExecution + "]";
+        return "QueryLogEntry [queryType=" + PrettyPrinter.toString(queryTypes) + ", tableInvolved=" + PrettyPrinter.toString(tablesInvolved) + ", timeToExecute=" + timeToExecute + ", timeOfLogEntry=" + timeOfLogEntry + ", successfulExecution=" + successfulExecution + "]";
     }
 
     public static QueryLogEntry createQueryLogEntry(final String query, final boolean successfullyExecuted, final long timeToExecute) {
@@ -105,12 +100,26 @@ public class QueryLogEntry implements Serializable {
                 tableInvolved = query.substring("DROP TABLE ".length(), query.indexOf(";"));
             }
 
+            else if (query.contains("SELECT * FROM ")) {
+                queryType = QueryType.SELECT;
+                tableInvolved = query.substring("SELECT * FROM ".length(), query.indexOf(";"));
+            }
+
             tablesInvolved.add(tableInvolved);
             queryTypes.add(queryType);
         }
 
-        return new QueryLogEntry(successfullyExecuted, timeToExecute, queryTypes, tablesInvolved, System.currentTimeMillis());
+        return new QueryLogEntry(successfullyExecuted, timeToExecute, queryTypes, tablesInvolved);
 
     }
 
+    public String toCSV(final DateFormat dateformatter, final String locationOfExecution) {
+
+        return dateformatter.format(new Date(timeOfLogEntry)) + ", " + timeToExecute + ", " + locationOfExecution + ", " + PrettyPrinter.toString(tablesInvolved, ";") + ", " + PrettyPrinter.toString(queryTypes, ";") + "\n";
+    }
+
+    public static String toCSVHeader() {
+
+        return "Time of Transaction, Time To Execute, Location of Execution, Tables Involved, Query Types\n";
+    }
 }

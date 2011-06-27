@@ -2,13 +2,21 @@ package org.h2o.eval.tests;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.IOException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.h2.tools.DeleteDbFiles;
 import org.h2o.eval.coordinator.EvaluationCoordinator;
 import org.h2o.eval.coordinator.ICoordinatorLocal;
 import org.h2o.eval.interfaces.IWorker;
+import org.h2o.eval.script.coord.CoordinationScriptGenerator;
+import org.h2o.eval.script.coord.specification.TableClustering;
+import org.h2o.eval.script.coord.specification.TableClustering.Clustering;
+import org.h2o.eval.script.coord.specification.WorkloadType;
+import org.h2o.eval.script.coord.specification.WorkloadType.LinkToTableLocation;
 import org.h2o.eval.worker.EvaluationWorker;
 import org.junit.After;
 import org.junit.Before;
@@ -132,5 +140,40 @@ public class CoordinatorTests {
         eval.executeCoordinatorScript("src/test/org/h2o/eval/workloads/test.coord");
 
         eval.blockUntilWorkloadsComplete();
+    }
+
+    @Test
+    public void generateThenRunCoordinationScript() throws Exception {
+
+        final String coordScriptLocation = generateCoordinationScript();
+
+        workers = new IWorker[3];
+        for (int i = 0; i < workers.length; i++) {
+            workers[i] = new EvaluationWorker();
+        }
+
+        final ICoordinatorLocal eval = new EvaluationCoordinator("evalDatabase", "eigg");
+
+        eval.startLocatorServer(34000);
+
+        eval.executeCoordinatorScript(coordScriptLocation);
+
+        eval.blockUntilWorkloadsComplete();
+    }
+
+    public String generateCoordinationScript() throws IOException {
+
+        final long runtime = 60000;
+        final double probabilityOfFailure = 0.0;
+        final long frequencyOfFailure = 60000;
+        final int numberOfMachines = 2;
+        final int numberOfTables = 10;
+        final TableClustering clusteringSpec = new TableClustering(Clustering.GROUPED, 5);
+
+        final Set<WorkloadType> workloadSpecs = new HashSet<WorkloadType>();
+        final WorkloadType spec = new WorkloadType(0.0, false, 0, true, 1000, LinkToTableLocation.GROUPED_WORKLOAD, true);
+        workloadSpecs.add(spec);
+
+        return CoordinationScriptGenerator.generateCoordinationScript(runtime, probabilityOfFailure, frequencyOfFailure, numberOfMachines, numberOfTables, clusteringSpec, workloadSpecs);
     }
 }

@@ -177,14 +177,12 @@ public class WorkloadExecutor {
                     else if (!autoCommitEnabled && query.contains("COMMIT")) {
                         queryLog.add(QueryLogEntry.createQueryLogEntry(queriesInThisTransaction, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
                         queriesInThisTransaction.clear();
+                        timeBeforeQueryExecution = System.currentTimeMillis(); // when auto-commit isn't enabled, the transaction starts after the previous one finishes.
                     }
                     else {
                         queriesInThisTransaction.add(query);
                     }
 
-                    if (!autoCommitEnabled) {
-                        timeBeforeQueryExecution = System.currentTimeMillis(); // when auto-commit isn't enabled, the transaction starts after the previous one finishes.
-                    }
                     if (System.currentTimeMillis() > workloadEndTime) {
                         try {
                             stat.execute("ROLLBACK;");

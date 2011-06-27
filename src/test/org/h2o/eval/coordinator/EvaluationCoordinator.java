@@ -1,5 +1,6 @@
 package org.h2o.eval.coordinator;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.rmi.AccessException;
@@ -10,7 +11,10 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -22,6 +26,7 @@ import org.h2.util.NetUtils;
 import org.h2o.H2OLocator;
 import org.h2o.eval.interfaces.ICoordinatorRemote;
 import org.h2o.eval.interfaces.IWorker;
+import org.h2o.eval.printing.CSVPrinter;
 import org.h2o.eval.script.coord.CoordinationScriptExecutor;
 import org.h2o.eval.script.coord.instructions.Instruction;
 import org.h2o.eval.script.coord.instructions.MachineInstruction;
@@ -38,7 +43,6 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.FileUtil;
-import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
@@ -72,6 +76,10 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
     private H2OLocator locatorServer;
     private H2OPropertiesWrapper descriptorFile;
     private KillMonitorThread killMonitor;
+
+    private static final DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
+
+    private final Date startDate = new Date();
 
     /**
      * 
@@ -219,7 +227,12 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
         workersWithActiveWorkloads.remove(workloadResult.getWorkloadID());
         System.out.println(workloadResult);
 
-        System.out.println(PrettyPrinter.toString(workloadResult.getQueryLog()));
+        try {
+            CSVPrinter.printResults("generatedWorkloads" + File.separator + dateFormatter.format(startDate) + "-results.csv", workloadResult);
+        }
+        catch (final FileNotFoundException e) {
+            ErrorHandling.exceptionError(e, "Failed to create file to save results to.");
+        }
 
         if (workloadResult.getException() != null) {
             workloadResult.getException().printStackTrace();

@@ -19,7 +19,7 @@ import uk.ac.standrews.cs.nds.util.FileUtil;
 
 public class WorkloadGenerator {
 
-    private static final int QUERIES_IN_SCRIPT = 10;
+    private static final int QUERIES_IN_SCRIPT = 100;
 
     private File workloadFolder;
 
@@ -160,13 +160,13 @@ public class WorkloadGenerator {
             script.append("SET AUTOCOMMIT OFF;\n");
         }
 
-        for (int i = 0; i < QUERIES_IN_SCRIPT; i++) {
+        for (int i = 0; i < Math.max(spec.getQueriesPerTransaction() * 10, QUERIES_IN_SCRIPT); i++) {
             /*
              * In this loop i is used to determine which table is to be queried next ('i % tablesInWorkload.size()') and
              * when the next commit statement needs to be added ('i % spec.getQueriesPerTransaction() == 0')
              */
 
-            if (r.nextDouble() < spec.getReadWriteRatio()) { //this should be a write.
+            if (r.nextDouble() > spec.getReadWriteRatio()) { //this should be a write.
                 script.append("INSERT INTO " + tablesInWorkload.get(i % tablesInWorkload.size()) + " VALUES (<loop-counter/>);\n");
             }
             else { //this should be a read.
