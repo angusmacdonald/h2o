@@ -316,14 +316,14 @@ public class TableProxyManager {
             commitActionSuccessful = sendCommitMessagesToReplicas(commit, h2oCommit, db, committedQueries);
 
             if (!commitActionSuccessful) {
-                ErrorHandling.errorNoEvent("Commit message to replicas was unsuccessful for transaction '" + transactionName + "'.");
-
-                throw new SQLException("Failed to commit transaction to all replicas. Rolling back.");
+                ErrorHandling.errorNoEvent("Commit message to some replicas was unsuccessful for transaction '" + transactionName + "'. Some have committed.");
 
                 /*
-                 * This should now issue rollback commands to remaining replicas. Is it possible that throwing an exception here causes inconsistent state?
-                 * i.e. is may be correct behaviour to throw an error message but allow the commit on other replicas.
+                 * Is it possible that throwing an exception here causes inconsistent state?
+                 * i.e. it may be correct behaviour to throw an error message but allow the commit on other replicas, as per 2PC.
                  */
+                //throw new SQLException("Failed to commit transaction to all replicas. Rolling back.");
+
             }
         }
         finally {
