@@ -72,6 +72,25 @@ public class ScriptGenerationTests {
         assertEquals(5, createWorkloads.size());
     }
 
+    /**
+     * Tests that workloads aren't to be located on the same machine as the table they are querying.
+     * @throws IOException
+     */
+    @Test
+    public void testNonLocalWorkloadFile() throws IOException {
+
+        final WorkloadGenerator gen = new WorkloadGenerator();
+
+        final WorkloadType spec = new WorkloadType(0.5, false, 50, true, 5, LinkToTableLocation.WORKLOAD_PER_TABLE, false);
+        final TableGrouping tableGrouping = createTestTableGrouping();
+
+        final Map<String, Integer> createWorkloads = gen.createWorkloads(spec, tableGrouping);
+
+        System.out.println(PrettyPrinter.toString(createWorkloads));
+
+        assertEquals(5, createWorkloads.size());
+    }
+
     private TableGrouping createTestTableGrouping() {
 
         final TableGrouping tableGrouping = new TableGrouping();

@@ -2,16 +2,18 @@ package org.h2o.eval.script.coord.specification;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class TableGrouping {
 
     private final Map<Integer, ArrayList<String>> groupings = new HashMap<Integer, ArrayList<String>>();
-    private int totalNumberOfMachines = 0;
+    private final Set<Integer> totalNumberOfMachines = new HashSet<Integer>();
 
     public void addTable(final int locationId, final String tableName) {
 
-        totalNumberOfMachines++;
+        totalNumberOfMachines.add(locationId);
 
         if (groupings.containsKey(locationId)) {
             final ArrayList<String> existingNames = groupings.get(locationId);
@@ -33,6 +35,6 @@ public class TableGrouping {
 
     public int getTotalNumberOfMachines() {
 
-        return totalNumberOfMachines;
+        return totalNumberOfMachines.size();
     }
 }
