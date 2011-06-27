@@ -126,7 +126,7 @@ public class ScriptGenerationTests {
 
         final long runtime = 60000;
         final double probabilityOfFailure = 0.1;
-        final double frequencyOfFailure = 10000;
+        final long frequencyOfFailure = 10000;
         final int numberOfMachines = 5;
         final int numberOfTables = 3;
         final TableClustering clusteringSpec = new TableClustering(Clustering.GROUPED, 2);
@@ -151,7 +151,7 @@ public class ScriptGenerationTests {
 
         final long runtime = 60000;
         final double probabilityOfFailure = 0.05;
-        final double frequencyOfFailure = 10000;
+        final long frequencyOfFailure = 10000;
         final int numberOfMachines = 15;
         final int numberOfTables = 17;
         final TableClustering clusteringSpec = new TableClustering(Clustering.GROUPED, 4);
