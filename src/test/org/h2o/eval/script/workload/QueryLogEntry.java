@@ -2,6 +2,7 @@ package org.h2o.eval.script.workload;
 
 import java.io.Serializable;
 import java.text.DateFormat;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -115,9 +116,23 @@ public class QueryLogEntry implements Serializable {
 
     }
 
-    public String toCSV(final DateFormat dateformatter, final String locationOfExecution) {
+    public String toCSV(final DateFormat dateformatter, final String locationOfExecution, final Collection<String> tableNames) {
 
-        return dateformatter.format(new Date(timeOfLogEntry)) + ", " + timeToExecute + ", " + locationOfExecution + ", " + PrettyPrinter.toString(tablesInvolved, ";", false) + ", " + getNumberOf(QueryType.INSERT) + ", " + getNumberOf(QueryType.SELECT) + "\n";
+        final String tablesInvolvedString = PrettyPrinter.toString(tablesInvolved, ";", false);
+        String row = dateformatter.format(new Date(timeOfLogEntry)) + ", " + timeToExecute + ", " + locationOfExecution + ", " + tablesInvolvedString + ", " + getNumberOf(QueryType.INSERT) + ", " + getNumberOf(QueryType.SELECT) + ", ";
+
+        for (final String tableName : tableNames) {
+            if (tableName.equals(tablesInvolvedString)) {
+                row += timeToExecute;
+            }
+
+            row += ", ";
+        }
+
+        row += "\n";
+
+        return row;
+
     }
 
     private int getNumberOf(final QueryType type) {
@@ -131,8 +146,16 @@ public class QueryLogEntry implements Serializable {
         return count;
     }
 
-    public static String toCSVHeader() {
+    public static String toCSVHeader(final Collection<String> tableNames) {
 
-        return "Time of Transaction, Time To Execute, Location of Execution, Tables Involved, Insert Queries, Select Queries\n";
+        String header = "Time of Transaction, Time To Execute, Location of Execution, Tables Involved, Insert Queries, Select Queries, ";
+
+        for (final String tableName : tableNames) {
+            header += tableName + ", ";
+        }
+
+        header += "\n";
+
+        return header;
     }
 }

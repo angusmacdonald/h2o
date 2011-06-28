@@ -167,7 +167,7 @@ public class CoordinatorTests {
         final double probabilityOfFailure = 0.0;
         final long frequencyOfFailure = 60000;
         final int numberOfMachines = 2;
-        final int numberOfTables = 10;
+        final int numberOfTables = 4;
         final TableClustering clusteringSpec = new TableClustering(Clustering.GROUPED, 5);
 
         final Set<WorkloadType> workloadSpecs = new HashSet<WorkloadType>();

@@ -84,7 +84,7 @@ public class EvaluationWorker extends Thread implements IWorker {
 
     private ICoordinatorRemote remoteCoordinator;
 
-    private List<FutureTask<WorkloadResult>> executingWorkloads = new LinkedList<FutureTask<WorkloadResult>>();
+    private final List<FutureTask<WorkloadResult>> executingWorkloads = new LinkedList<FutureTask<WorkloadResult>>();
 
     private boolean running = true;
 
@@ -114,6 +114,7 @@ public class EvaluationWorker extends Thread implements IWorker {
                         e.printStackTrace();
                     }
                 }
+
             }
 
             executingWorkloads.removeAll(toRemove);
@@ -268,7 +269,6 @@ public class EvaluationWorker extends Thread implements IWorker {
             }
         });
 
-        executingWorkloads = new LinkedList<FutureTask<WorkloadResult>>();
         executingWorkloads.add(future);
 
         workloadExecutor.execute(future);
