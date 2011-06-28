@@ -164,8 +164,8 @@ public class CoordinatorTests {
     public String generateCoordinationScript() throws IOException {
 
         final long runtime = 60000;
-        final double probabilityOfFailure = 0.0;
-        final long frequencyOfFailure = 60000;
+        final double probabilityOfFailure = 0.5;
+        final long frequencyOfFailure = 30000;
         final int numberOfMachines = 2;
         final int numberOfTables = 4;
         final TableClustering clusteringSpec = new TableClustering(Clustering.GROUPED, 5);
