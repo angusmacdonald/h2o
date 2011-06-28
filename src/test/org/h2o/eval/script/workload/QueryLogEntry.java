@@ -125,6 +125,9 @@ public class QueryLogEntry implements Serializable {
             if (tableName.equals(tablesInvolvedString)) {
                 row += timeToExecute;
             }
+            else {
+                row += "=NA()";
+            }
 
             row += ", ";
         }
