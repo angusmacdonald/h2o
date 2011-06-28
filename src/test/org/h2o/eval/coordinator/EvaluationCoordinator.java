@@ -393,6 +393,8 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
             }
             else if (action.startsWith("{terminate_machine")) {
 
+                System.err.println("TERMINATING MACHINE.");
+
                 final MachineInstruction terminateInstruction = CoordinationScriptExecutor.parseTerminateMachine(action);
 
                 try {

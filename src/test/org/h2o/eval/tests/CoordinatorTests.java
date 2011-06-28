@@ -143,6 +143,23 @@ public class CoordinatorTests {
     }
 
     @Test
+    public void runStaticGeneratedCoordinationScript() throws Exception {
+
+        workers = new IWorker[2];
+        for (int i = 0; i < workers.length; i++) {
+            workers[i] = new EvaluationWorker();
+        }
+
+        final ICoordinatorLocal eval = new EvaluationCoordinator("evalDatabase", "eigg");
+
+        eval.startLocatorServer(34000);
+
+        eval.executeCoordinatorScript("generatedWorkloads\\2011-06-28-15-27-10\\coordinator.coord");
+
+        eval.blockUntilWorkloadsComplete();
+    }
+
+    @Test
     public void generateThenRunCoordinationScript() throws Exception {
 
         final String coordScriptLocation = generateCoordinationScript();
@@ -167,11 +184,11 @@ public class CoordinatorTests {
         final double probabilityOfFailure = 0.5;
         final long frequencyOfFailure = 30000;
         final int numberOfMachines = 2;
-        final int numberOfTables = 4;
+        final int numberOfTables = 1;
         final TableClustering clusteringSpec = new TableClustering(Clustering.GROUPED, 5);
 
         final Set<WorkloadType> workloadSpecs = new HashSet<WorkloadType>();
-        final WorkloadType spec = new WorkloadType(0.0, false, 0, true, 120, LinkToTableLocation.WORKLOAD_PER_TABLE, true);
+        final WorkloadType spec = new WorkloadType(0.0, false, 0, true, 120, LinkToTableLocation.WORKLOAD_PER_TABLE, false);
         workloadSpecs.add(spec);
 
         return CoordinationScriptGenerator.generateCoordinationScript(runtime, probabilityOfFailure, frequencyOfFailure, numberOfMachines, numberOfTables, clusteringSpec, workloadSpecs);

@@ -3,7 +3,6 @@ package org.h2o.eval.script.workload;
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -116,10 +115,10 @@ public class QueryLogEntry implements Serializable {
 
     }
 
-    public String toCSV(final DateFormat dateformatter, final String locationOfExecution, final Collection<String> tableNames) {
+    public String toCSV(final DateFormat dateformatter, final String locationOfExecution, final Collection<String> tableNames, final long startTime) {
 
         final String tablesInvolvedString = PrettyPrinter.toString(tablesInvolved, ";", false);
-        String row = dateformatter.format(new Date(timeOfLogEntry)) + "," + timeToExecute + "," + locationOfExecution + "," + tablesInvolvedString + "," + getNumberOf(QueryType.INSERT) + "," + getNumberOf(QueryType.SELECT) + ",";
+        String row = timeOfLogEntry - startTime + "," + timeToExecute + "," + locationOfExecution + "," + tablesInvolvedString + "," + getNumberOf(QueryType.INSERT) + "," + getNumberOf(QueryType.SELECT) + ",";
 
         for (final String tableName : tableNames) {
             if (tableName.equals(tablesInvolvedString)) {

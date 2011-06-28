@@ -32,6 +32,8 @@ public class CSVPrinter {
 
         final Set<String> tableNames = getAllTableNames(workloadResults);
 
+        final long startTime = getStartTime(workloadResults);
+
         final StringBuilder csv = new StringBuilder();
 
         //  csv.append(printBasicWorkloadDetails(workloadResults));
@@ -40,10 +42,27 @@ public class CSVPrinter {
 
         for (final WorkloadResult workloadResult : workloadResults) {
 
-            csv.append(printQueryLog(workloadResult.getQueryLog(), workloadResult.getLocationOfExecution(), tableNames));
+            csv.append(printQueryLog(workloadResult.getQueryLog(), workloadResult.getLocationOfExecution(), tableNames, startTime));
         }
 
         FileUtil.writeToFile(fileLocation, csv.toString());
+    }
+
+    /**
+     * Get the time when the first benchmark started.
+     * @param workloadResults
+     * @return unix time.
+     */
+    private static long getStartTime(final List<WorkloadResult> workloadResults) {
+
+        long min = Long.MAX_VALUE;
+
+        for (final WorkloadResult workloadResult : workloadResults) {
+
+            min = Math.min(min, workloadResult.getStartTime());
+
+        }
+        return min;
     }
 
     private static Set<String> getAllTableNames(final List<WorkloadResult> workloadResults) {
@@ -70,12 +89,12 @@ public class CSVPrinter {
         return csv;
     }
 
-    public static StringBuilder printQueryLog(final List<QueryLogEntry> queryLogList, final String location, final Collection<String> tableNames) {
+    public static StringBuilder printQueryLog(final List<QueryLogEntry> queryLogList, final String location, final Collection<String> tableNames, final long startTime) {
 
         final StringBuilder csv = new StringBuilder();
 
         for (final QueryLogEntry queryLog : queryLogList) {
-            csv.append(queryLog.toCSV(dateFormatter, location, tableNames));
+            csv.append(queryLog.toCSV(dateFormatter, location, tableNames, startTime));
         }
 
         return csv;

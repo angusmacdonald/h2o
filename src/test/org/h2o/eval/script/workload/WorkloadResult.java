@@ -101,4 +101,9 @@ public class WorkloadResult implements Serializable {
         return successfullyExecutedTransactions;
     }
 
+    public long getStartTime() {
+
+        return queryLog.get(0).timeOfLogEntry;
+    }
+
 }
