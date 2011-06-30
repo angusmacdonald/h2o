@@ -57,21 +57,19 @@ public class WorkerManager implements IApplicationManager {
     @Override
     public List<ISingleHostScanner> getSingleScanners() {
 
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public List<IGlobalHostScanner> getGlobalScanners() {
 
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public void shutdown() {
 
-        // TODO Auto-generated method stub
+        // Nothing to shut down, I think.
 
     }
 
