@@ -22,6 +22,7 @@ public interface IWorker extends Remote {
     /**
      * Allows a remote {@link ICoordinatorRemote} to connect to the worker and provide a reference back to itself,
      * so that the results of workloads can be returned to the coordinator.
+     * <p>This method can be called any number of times.
      * @param hostname The host on which the co-ordinator is running. The worker can find the co-ordinator through the registry on this instance.
      * @param bindName The name by which this co-ordinator is bound to its registry.
      * @throws NotBoundException If the co-ordinator could not be found at the specified registry.
