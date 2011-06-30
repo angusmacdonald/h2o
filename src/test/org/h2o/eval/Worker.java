@@ -182,7 +182,7 @@ public class Worker extends Thread implements IWorker {
     }
 
     @Override
-    public void startH2OInstance(final H2OPropertiesWrapper descriptor) throws RemoteException, StartupException {
+    public String startH2OInstance(final H2OPropertiesWrapper descriptor) throws RemoteException, StartupException {
 
         if (h2oProcess != null) {
             //Check if its still running.
@@ -204,6 +204,7 @@ public class Worker extends Thread implements IWorker {
 
         if (!isRunning) { throw new StartupException("New H2O process couldn't be contacted once it had been created."); }
 
+        return connectionString;
     }
 
     /**
@@ -429,7 +430,7 @@ public class Worker extends Thread implements IWorker {
      */
     public static void main(final String[] args) throws RemoteException, AlreadyBoundException {
 
-        final Worker w = new Worker();
+        new Worker();
     }
 
     @Override

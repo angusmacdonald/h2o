@@ -159,10 +159,11 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     /**
      * Start a single instance on a worker at the specified hostname.
      * @param hostname Where the H2O instance should be started.
-     * @return true if an instance was started successfully.
+     * @param createConnectionPropertiesFile Whether to create a benchmarkSQL properties file specifying how to connect to this instance.
+     * @return the JDBC connections string for the recently started database, or null if it wasn't successfully started.
      * @throws StartupException
      */
-    public boolean startH2OInstances(final String hostname) throws StartupException {
+    public String startH2OInstance(final String hostname) throws StartupException {
 
         if (!locatorServerStarted) { throw new StartupException("The locator server has not yet been started."); }
 
@@ -170,9 +171,8 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         for (final IWorker worker : getAllWorkers()) {
             try {
-                if (worker.getHostname().equals(NetUtils.getLocalAddress())) {
-                    worker.startH2OInstance(descriptorFile);
-                    return true;
+                if (worker.getHostname().equals(hostname)) { return worker.startH2OInstance(descriptorFile);
+
                 }
 
                 swapWorkerToActiveSet(worker);
@@ -182,7 +182,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
                 ErrorHandling.exceptionError(e, "Failed to start instance " + worker);
             }
         }
-        return false;
+        return null;
     }
 
     /**
@@ -547,8 +547,9 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      *            <li><em>-p<name></em>. Optional. The path/name of the properties file to create stating how to connect to the system table.</li>
      *            </ul>
      * @throws StartupException Thrown if a required parameter was not specified.
+     * @throws FileNotFoundException 
      */
-    public static void main(final String[] args) throws StartupException {
+    public static void main(final String[] args) throws StartupException, FileNotFoundException {
 
         final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
 
@@ -565,7 +566,36 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
             coord.obliterateExtantInstances();
         }
 
-        coord.startH2OInstances(h2oInstancesToStart);
+        final String connectionString = coord.startH2OInstance(NetUtils.getLocalAddress()); //start an instance locally as the system table.
+
+        if (connectionString != null) { throw new StartupException("Failed to start the local H2O instance that is intended to become the System Table."); }
+
+        final int started = coord.startH2OInstances(h2oInstancesToStart - 1);
+
+        if (started != h2oInstancesToStart - 1) { throw new StartupException("Failed to start the correct number of instances. Started " + started + 1 + ", but needed to start " + h2oInstancesToStart + "."); }
+
+        if (connectionPropertiesFile != null) {
+            writeConnectionStringToPropertiesFile(connectionString, connectionPropertiesFile);
+        }
+    }
+
+    /**
+     * Writes the connection string to a properties file formatted for benchmarkSQL.
+     * @param connectionString
+     * @param propertiesFileLocation 
+     * @throws FileNotFoundException 
+     */
+    private static void writeConnectionStringToPropertiesFile(final String connectionString, final String propertiesFileLocation) throws FileNotFoundException {
+
+        final StringBuilder prop = new StringBuilder();
+
+        prop.append("name=H2O\n");
+        prop.append("driver=org.h2.Driver\n");
+        prop.append("conn=" + connectionString + "\n");
+        prop.append("user=sa");
+        prop.append("password=");
+
+        FileUtil.writeToFile(propertiesFileLocation, prop.toString());
     }
 
     private static boolean processTerminatesExistingInstances(final String arg) {

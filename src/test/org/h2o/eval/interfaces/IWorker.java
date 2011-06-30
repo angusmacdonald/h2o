@@ -37,10 +37,10 @@ public interface IWorker extends Remote {
      * Start a new H2O instance which will connect to the database system described by the database descriptor file provided.
      * <p>Blocks until the instance has started.
      * @param descriptorFileLocation Serialized version of the descriptor file.
-     * @return true if an H2O instance was successfully started.
+     * @return The JDBC connection string for this recently started database.
      * @throws StartupException If the instance couln't be started.
      */
-    public void startH2OInstance(final H2OPropertiesWrapper descriptorFileLocation) throws RemoteException, StartupException;
+    public String startH2OInstance(final H2OPropertiesWrapper descriptorFileLocation) throws RemoteException, StartupException;
 
     /**
      * Gracefully shutdown the H2O instance that this worker is running (by sending it a shutdown request).
