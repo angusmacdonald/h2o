@@ -6,9 +6,9 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.util.ArrayList;
 
+import org.h2o.eval.Worker;
 import org.h2o.eval.interfaces.IWorker;
 import org.h2o.eval.interfaces.IWorkload;
-import org.h2o.eval.worker.EvaluationWorker;
 
 import uk.ac.standrews.cs.nds.util.FileUtil;
 
@@ -42,7 +42,7 @@ public class Workload extends Thread implements IWorkload {
     }
 
     @Override
-    public void initialiseOnWorker(final Connection connection, final EvaluationWorker worker) {
+    public void initialiseOnWorker(final Connection connection, final Worker worker) {
 
         this.connection = connection;
         this.worker = worker;

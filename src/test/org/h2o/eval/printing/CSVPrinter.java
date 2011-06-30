@@ -78,6 +78,7 @@ public class CSVPrinter {
         return allNames;
     }
 
+    @SuppressWarnings("unused")
     private static StringBuilder printBasicWorkloadDetails(final WorkloadResult workloadResult) {
 
         final StringBuilder csv = new StringBuilder();

@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.h2o.eval.Coordinator;
+
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -21,11 +23,11 @@ public class KillMonitorThread extends Thread {
     private static int threadCount = 0;
 
     Map<Integer, Long> killOrders = Collections.synchronizedMap(new HashMap<Integer, Long>());
-    private final EvaluationCoordinator evaluationCoordinator;
+    private final Coordinator evaluationCoordinator;
 
     private boolean running = true;
 
-    public KillMonitorThread(final EvaluationCoordinator evaluationCoordinator) {
+    public KillMonitorThread(final Coordinator evaluationCoordinator) {
 
         setName("killMonitorThread" + threadCount++);
 

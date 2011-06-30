@@ -9,15 +9,15 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.h2.tools.DeleteDbFiles;
-import org.h2o.eval.coordinator.EvaluationCoordinator;
-import org.h2o.eval.coordinator.ICoordinatorLocal;
+import org.h2o.eval.Coordinator;
+import org.h2o.eval.Worker;
+import org.h2o.eval.interfaces.ICoordinatorLocal;
 import org.h2o.eval.interfaces.IWorker;
 import org.h2o.eval.script.coord.CoordinationScriptGenerator;
 import org.h2o.eval.script.coord.specification.TableClustering;
 import org.h2o.eval.script.coord.specification.TableClustering.Clustering;
 import org.h2o.eval.script.coord.specification.WorkloadType;
 import org.h2o.eval.script.coord.specification.WorkloadType.LinkToTableLocation;
-import org.h2o.eval.worker.EvaluationWorker;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,7 +26,7 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
- * Tests of the H2O co-ordinator class, {@link EvaluationCoordinator}.
+ * Tests of the H2O co-ordinator class, {@link Coordinator}.
  *
  * @author Angus Macdonald (angus.macdonald@st-andrews.ac.uk)
  */
@@ -39,13 +39,13 @@ public class CoordinatorTests {
 
         Diagnostic.setLevel(DiagnosticLevel.FULL);
 
-        DeleteDbFiles.execute(EvaluationWorker.PATH_TO_H2O_DATABASE, null, true);
+        DeleteDbFiles.execute(Worker.PATH_TO_H2O_DATABASE, null, true);
     }
 
     @After
     public void tearDown() throws Exception {
 
-        DeleteDbFiles.execute(EvaluationWorker.PATH_TO_H2O_DATABASE, null, true);
+        DeleteDbFiles.execute(Worker.PATH_TO_H2O_DATABASE, null, true);
 
         for (final IWorker worker : workers) {
 
@@ -70,9 +70,9 @@ public class CoordinatorTests {
     public void startOneWorker() throws Exception {
 
         workers = new IWorker[1];
-        workers[0] = new EvaluationWorker();
+        workers[0] = new Worker();
 
-        final ICoordinatorLocal eval = new EvaluationCoordinator("evalDatabase", "eigg");
+        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
 
         eval.startLocatorServer(34000);
 
@@ -83,10 +83,10 @@ public class CoordinatorTests {
     public void startTwoWorkers() throws Exception {
 
         workers = new IWorker[2];
-        workers[0] = new EvaluationWorker();
-        workers[1] = new EvaluationWorker();
+        workers[0] = new Worker();
+        workers[1] = new Worker();
 
-        final ICoordinatorLocal eval = new EvaluationCoordinator("evalDatabase", "eigg");
+        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
 
         eval.startLocatorServer(34000);
 
@@ -98,10 +98,10 @@ public class CoordinatorTests {
 
         workers = new IWorker[3];
         for (int i = 0; i < workers.length; i++) {
-            workers[i] = new EvaluationWorker();
+            workers[i] = new Worker();
         }
 
-        final ICoordinatorLocal eval = new EvaluationCoordinator("evalDatabase", "eigg");
+        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
 
         eval.startLocatorServer(34000);
 
@@ -112,9 +112,9 @@ public class CoordinatorTests {
     public void runWorkloadOnWorker() throws Exception {
 
         workers = new IWorker[1];
-        workers[0] = new EvaluationWorker();
+        workers[0] = new Worker();
 
-        final ICoordinatorLocal eval = new EvaluationCoordinator("evalDatabase", "eigg");
+        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
 
         eval.startLocatorServer(34000);
 
@@ -130,10 +130,10 @@ public class CoordinatorTests {
 
         workers = new IWorker[3];
         for (int i = 0; i < workers.length; i++) {
-            workers[i] = new EvaluationWorker();
+            workers[i] = new Worker();
         }
 
-        final ICoordinatorLocal eval = new EvaluationCoordinator("evalDatabase", "eigg");
+        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
 
         eval.startLocatorServer(34000);
 
@@ -147,10 +147,10 @@ public class CoordinatorTests {
 
         workers = new IWorker[2];
         for (int i = 0; i < workers.length; i++) {
-            workers[i] = new EvaluationWorker();
+            workers[i] = new Worker();
         }
 
-        final ICoordinatorLocal eval = new EvaluationCoordinator("evalDatabase", "eigg");
+        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
 
         eval.startLocatorServer(34000);
 
@@ -166,10 +166,10 @@ public class CoordinatorTests {
 
         workers = new IWorker[3];
         for (int i = 0; i < workers.length; i++) {
-            workers[i] = new EvaluationWorker();
+            workers[i] = new Worker();
         }
 
-        final ICoordinatorLocal eval = new EvaluationCoordinator("evalDatabase", "eigg");
+        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
 
         eval.startLocatorServer(34000);
 

@@ -4,8 +4,8 @@ import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import org.h2o.eval.Worker;
 import org.h2o.eval.script.workload.WorkloadResult;
-import org.h2o.eval.worker.EvaluationWorker;
 
 /**
  * Workload to be run on a worker node.
@@ -19,7 +19,7 @@ public interface IWorkload extends Serializable {
      * @param connection Connection to be used to execute workload.
      * @param worker The worker managing the execution of this workload.
      */
-    public void initialiseOnWorker(Connection connection, EvaluationWorker worker);
+    public void initialiseOnWorker(Connection connection, Worker worker);
 
     /**
      * Start executing the workload of this IWorkload instance, using the database connection given.

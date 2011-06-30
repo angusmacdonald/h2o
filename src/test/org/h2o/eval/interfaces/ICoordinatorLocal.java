@@ -1,4 +1,4 @@
-package org.h2o.eval.coordinator;
+package org.h2o.eval.interfaces;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

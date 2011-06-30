@@ -1,4 +1,4 @@
-package org.h2o.eval.worker;
+package org.h2o.eval;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -40,7 +40,7 @@ import uk.ac.standrews.cs.nds.madface.HostDescriptor;
 import uk.ac.standrews.cs.nds.madface.JavaProcessDescriptor;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
-public class EvaluationWorker extends Thread implements IWorker {
+public class Worker extends Thread implements IWorker {
 
     public static final String PATH_TO_H2O_DATABASE = "eval";
 
@@ -128,7 +128,7 @@ public class EvaluationWorker extends Thread implements IWorker {
         }
     }
 
-    public EvaluationWorker() throws RemoteException, AlreadyBoundException {
+    public Worker() throws RemoteException, AlreadyBoundException {
 
         //Name the h2o instance after the machine it is being run on + a static counter number to enable same machine testing.
         h2oInstanceName = NetUtils.getLocalAddress().replaceAll("-", "").replaceAll("\\.", "") + instanceCount++;
@@ -173,7 +173,7 @@ public class EvaluationWorker extends Thread implements IWorker {
         if (this == obj) { return true; }
         if (obj == null) { return false; }
         if (getClass() != obj.getClass()) { return false; }
-        final EvaluationWorker other = (EvaluationWorker) obj;
+        final Worker other = (Worker) obj;
         if (connectionString == null) {
             if (other.connectionString != null) { return false; }
         }
@@ -241,7 +241,7 @@ public class EvaluationWorker extends Thread implements IWorker {
     public void deleteH2OInstanceState() throws RemoteException, ShutdownException {
 
         try {
-            DeleteDbFiles.execute(EvaluationWorker.PATH_TO_H2O_DATABASE, null, true);
+            DeleteDbFiles.execute(Worker.PATH_TO_H2O_DATABASE, null, true);
         }
         catch (final SQLException e) {
             throw new ShutdownException("Failed to delete database files: " + e.getMessage());

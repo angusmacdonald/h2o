@@ -4,9 +4,9 @@ import static org.junit.Assert.assertFalse;
 
 import org.h2.tools.DeleteDbFiles;
 import org.h2o.H2OLocator;
+import org.h2o.eval.Worker;
 import org.h2o.eval.interfaces.IWorker;
 import org.h2o.eval.script.workload.Workload;
-import org.h2o.eval.worker.EvaluationWorker;
 import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.StartupException;
 import org.junit.After;
@@ -26,14 +26,14 @@ public class WorkerTests {
 
         Diagnostic.setLevel(DiagnosticLevel.FULL);
 
-        DeleteDbFiles.execute(EvaluationWorker.PATH_TO_H2O_DATABASE, null, true);
+        DeleteDbFiles.execute(Worker.PATH_TO_H2O_DATABASE, null, true);
 
     }
 
     @After
     public void tearDown() throws Exception {
 
-        DeleteDbFiles.execute(EvaluationWorker.PATH_TO_H2O_DATABASE, null, true);
+        DeleteDbFiles.execute(Worker.PATH_TO_H2O_DATABASE, null, true);
 
         if (worker != null) {
             try {
@@ -55,17 +55,17 @@ public class WorkerTests {
     }
 
     /**
-     * Test that the {@link EvaluationWorker} class is able to start up and query an H2O instance.
+     * Test that the {@link Worker} class is able to start up and query an H2O instance.
      * @throws Exception Not expected.
      */
     @Test
     public void testStartupH2O() throws Exception {
 
-        worker = new EvaluationWorker();
+        worker = new Worker();
 
         worker.deleteH2OInstanceState();
 
-        final H2OLocator locator = new H2OLocator("evaluationDB", 34000, true, EvaluationWorker.PATH_TO_H2O_DATABASE);
+        final H2OLocator locator = new H2OLocator("evaluationDB", 34000, true, Worker.PATH_TO_H2O_DATABASE);
 
         final String databaseDescriptorLocation = locator.start();
 
@@ -78,19 +78,19 @@ public class WorkerTests {
     }
 
     /**
-     * Test that multiple instances of the {@link EvaluationWorker} class are able to start up and query an H2O instance.
+     * Test that multiple instances of the {@link Worker} class are able to start up and query an H2O instance.
      * @throws Exception Not expected.
      */
     @Test
     public void testStartupMultipleWorkers() throws Exception {
 
-        worker = new EvaluationWorker();
-        worker2 = new EvaluationWorker();
+        worker = new Worker();
+        worker2 = new Worker();
 
         worker.deleteH2OInstanceState();
         worker2.deleteH2OInstanceState();
 
-        final H2OLocator locator = new H2OLocator("evaluationDB", 34000, true, EvaluationWorker.PATH_TO_H2O_DATABASE);
+        final H2OLocator locator = new H2OLocator("evaluationDB", 34000, true, Worker.PATH_TO_H2O_DATABASE);
 
         final String databaseDescriptorLocation = locator.start();
 
@@ -113,11 +113,11 @@ public class WorkerTests {
     @Test(expected = StartupException.class)
     public void startInstanceTwice() throws Exception {
 
-        worker = new EvaluationWorker();
+        worker = new Worker();
 
         worker.deleteH2OInstanceState();
 
-        final H2OLocator locator = new H2OLocator("evaluationDB", 34000, true, EvaluationWorker.PATH_TO_H2O_DATABASE);
+        final H2OLocator locator = new H2OLocator("evaluationDB", 34000, true, Worker.PATH_TO_H2O_DATABASE);
 
         final String databaseDescriptorLocation = locator.start();
 
@@ -138,11 +138,11 @@ public class WorkerTests {
     @Test
     public void testStop() throws Exception {
 
-        worker = new EvaluationWorker();
+        worker = new Worker();
 
         worker.deleteH2OInstanceState();
 
-        final H2OLocator locator = new H2OLocator("evaluationDB", 34000, true, EvaluationWorker.PATH_TO_H2O_DATABASE);
+        final H2OLocator locator = new H2OLocator("evaluationDB", 34000, true, Worker.PATH_TO_H2O_DATABASE);
 
         final String databaseDescriptorLocation = locator.start();
 
@@ -159,17 +159,17 @@ public class WorkerTests {
     }
 
     /**
-     * Test that the {@link EvaluationWorker} class is able to start up and query an H2O instance.
+     * Test that the {@link Worker} class is able to start up and query an H2O instance.
      * @throws Exception Not expected.
      */
     @Test
     public void testRunWorkload() throws Exception {
 
-        worker = new EvaluationWorker();
+        worker = new Worker();
 
         worker.deleteH2OInstanceState();
 
-        final H2OLocator locator = new H2OLocator("evaluationDB", 34000, true, EvaluationWorker.PATH_TO_H2O_DATABASE);
+        final H2OLocator locator = new H2OLocator("evaluationDB", 34000, true, Worker.PATH_TO_H2O_DATABASE);
 
         final String databaseDescriptorLocation = locator.start();
 

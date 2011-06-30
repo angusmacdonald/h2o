@@ -1,4 +1,4 @@
-package org.h2o.eval.coordinator;
+package org.h2o.eval;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -24,6 +24,8 @@ import java.util.Set;
 
 import org.h2.util.NetUtils;
 import org.h2o.H2OLocator;
+import org.h2o.eval.coordinator.KillMonitorThread;
+import org.h2o.eval.interfaces.ICoordinatorLocal;
 import org.h2o.eval.interfaces.ICoordinatorRemote;
 import org.h2o.eval.interfaces.IWorker;
 import org.h2o.eval.printing.CSVPrinter;
@@ -33,7 +35,6 @@ import org.h2o.eval.script.coord.instructions.MachineInstruction;
 import org.h2o.eval.script.coord.instructions.WorkloadInstruction;
 import org.h2o.eval.script.workload.Workload;
 import org.h2o.eval.script.workload.WorkloadResult;
-import org.h2o.eval.worker.EvaluationWorker;
 import org.h2o.util.H2OPropertiesWrapper;
 import org.h2o.util.exceptions.ShutdownException;
 import org.h2o.util.exceptions.StartupException;
@@ -44,7 +45,7 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.FileUtil;
 
-public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLocal {
+public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
     /*
      * Registry fields.
@@ -87,7 +88,7 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
      * @param databaseName Name of the evaluation database system this coordinator will create.
      * @param workerLocations IP addresses or hostnames of machines which are running worker nodes.
      */
-    public EvaluationCoordinator(final String databaseName, final String... workerLocations) {
+    public Coordinator(final String databaseName, final String... workerLocations) {
 
         this.databaseName = databaseName;
         this.workerLocations = workerLocations;
@@ -195,7 +196,7 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
         final String[] remoteEntries = remoteRegistry.list();
 
         for (final String entry : remoteEntries) {
-            if (entry.startsWith(EvaluationWorker.REGISTRY_PREFIX)) {
+            if (entry.startsWith(Worker.REGISTRY_PREFIX)) {
                 try {
                     final IWorker workerNode = (IWorker) remoteRegistry.lookup(entry);
 
@@ -250,7 +251,7 @@ public class EvaluationCoordinator implements ICoordinatorRemote, ICoordinatorLo
     @Override
     public void startLocatorServer(final int locatorPort) throws IOException {
 
-        locatorServer = new H2OLocator(databaseName, locatorPort, true, EvaluationWorker.PATH_TO_H2O_DATABASE);
+        locatorServer = new H2OLocator(databaseName, locatorPort, true, Worker.PATH_TO_H2O_DATABASE);
         final String descriptorFileLocation = locatorServer.start();
 
         descriptorFile = H2OPropertiesWrapper.getWrapper(descriptorFileLocation);
