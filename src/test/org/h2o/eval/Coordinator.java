@@ -13,6 +13,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -40,6 +41,7 @@ import org.h2o.util.exceptions.ShutdownException;
 import org.h2o.util.exceptions.StartupException;
 import org.h2o.util.exceptions.WorkloadParseException;
 
+import uk.ac.standrews.cs.nds.util.CommandLineArgs;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -58,7 +60,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     /*
      * Worker Fields
      */
-    private final String[] workerLocations;
+    private final Set<String> workerLocations;
     private final List<IWorker> inactiveWorkers = new LinkedList<IWorker>();
     private final Set<IWorker> activeWorkers = new HashSet<IWorker>();
 
@@ -79,9 +81,11 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     private KillMonitorThread killMonitor;
 
     private static final DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
+    private static final String DEFAULT_DATABASE_NAME = "MY_EVALUATION_DATABASE";
 
     private final Date startDate = new Date();
     private final List<WorkloadResult> workloadResults = new LinkedList<WorkloadResult>();
+    private String connectionPropertiesFile = null;
 
     /**
      * 
@@ -90,8 +94,16 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      */
     public Coordinator(final String databaseName, final String... workerLocations) {
 
+        this(databaseName, null, workerLocations);
+    }
+
+    public Coordinator(final String databaseName, final String connectionPropertiesFile, final String[] workerLocations) {
+
         this.databaseName = databaseName;
-        this.workerLocations = workerLocations;
+        this.connectionPropertiesFile = connectionPropertiesFile;
+        this.workerLocations = new HashSet<String>();
+        this.workerLocations.addAll(Arrays.asList(workerLocations));
+        this.workerLocations.add(NetUtils.getLocalAddress());
         bindToRegistry();
     }
 
@@ -144,6 +156,29 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         return numberStarted;
     }
 
+    /**
+     * Connect to all known workers and terminate any active H2O instances. Also remove the state of those instances.
+     */
+    private void obliterateExtantInstances() {
+
+        scanForWorkerNodes(workerLocations);
+
+        final Set<IWorker> allWorkers = new HashSet<IWorker>();
+        allWorkers.addAll(activeWorkers);
+        allWorkers.addAll(inactiveWorkers);
+
+        for (final IWorker worker : allWorkers) {
+            try {
+                worker.terminateH2OInstance();
+                worker.deleteH2OInstanceState();
+            }
+            catch (final Exception e) {
+                ErrorHandling.exceptionError(e, "Failed to terminate instance " + worker);
+            }
+        }
+
+    }
+
     private IWorker startH2OInstance() throws StartupException, RemoteException {
 
         if (inactiveWorkers.size() == 0) {
@@ -165,12 +200,12 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     /**
      * Go through the set of worker hosts and look for active worker instances in the registry on each host. In testing in particular there may
      * be multiple workers on each host.
-     * @param pWorkerLocations IP addresses or hostnames of machines which are running worker nodes. You can provide the {@link #workerLocations} field
+     * @param workerLocationsLocal IP addresses or hostnames of machines which are running worker nodes. You can provide the {@link #workerLocations} field
      * as a parameter, or something else.
      */
-    private void scanForWorkerNodes(final String[] pWorkerLocations) {
+    private void scanForWorkerNodes(final Set<String> workerLocationsLocal) {
 
-        for (final String location : pWorkerLocations) {
+        for (final String location : workerLocationsLocal) {
 
             try {
                 final Registry remoteRegistry = LocateRegistry.getRegistry(location);
@@ -455,6 +490,75 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         final IWorker worker = scriptedInstances.get(Integer.valueOf(workerID));
 
         worker.terminateH2OInstance();
+    }
+
+    /**
+     * 
+     * @param args
+     *            <ul>
+     *            <li><em>-n<name></em>. The name of the database system (i.e. the name of the database in the descriptor file, the global system).</li>
+     *            <li><em>-w<name></em>. A list of all the locations where worker nodes may be running, delimited by a semi-colon (e.g. "hostname1;hostname2;hostname3"). It is assumed that
+     *            an instance will be started on the local instance, so this hostname does not need to be included.</li>
+     *            <li><em>-c<name></em>. The number of H2O instances that are to be started. This number must be less than or equal to the number of active worker instances.</li>
+     *            <li><em>-t<name></em>. Optional. Whether to terminate any existing instances running at all workers (including stored state), before doing anything else.</li>
+     *            <li><em>-p<name></em>. Optional. The path/name of the properties file to create stating how to connect to the system table.</li>
+     *            </ul>
+     * @throws StartupException Thrown if a required parameter was not specified.
+     */
+    public static void main(final String[] args) throws StartupException {
+
+        final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
+
+        final String databaseName = processDatabaseName(arguments.get("-n"));
+        final String[] workerLocations = processWorkerLocations(arguments.get("-w"));
+        final int h2oInstancesToStart = processNumberOfInstances(arguments.get("-c"));
+
+        final boolean obliterateExistingInstances = processTerminatesExistingInstances(arguments.get("-t"));
+        final String connectionPropertiesFile = arguments.get("-p");
+
+        final Coordinator coord = new Coordinator(databaseName, connectionPropertiesFile, workerLocations);
+
+        if (obliterateExistingInstances) {
+            coord.obliterateExtantInstances();
+        }
+
+        coord.startH2OInstances(h2oInstancesToStart);
+    }
+
+    private static boolean processTerminatesExistingInstances(final String arg) {
+
+        return arg == null ? false : Boolean.valueOf(arg);
+    }
+
+    private static int processNumberOfInstances(final String numberOfInstances) throws StartupException {
+
+        if (numberOfInstances != null) {
+            return Integer.parseInt(numberOfInstances);
+        }
+        else {
+            throw new StartupException("Number of instances to start was not specified.");
+        }
+    }
+
+    /**
+     * 
+     * @param locations Delimited by semi-colons.
+     * @return
+     * @throws StartupException 
+     */
+    private static String[] processWorkerLocations(final String locations) throws StartupException {
+
+        if (locations != null) {
+            return locations.split(";");
+        }
+        else {
+            throw new StartupException("The locations of worker instances were not specified.");
+        }
+    }
+
+    private static String processDatabaseName(final String arg) {
+
+        return arg == null ? DEFAULT_DATABASE_NAME : arg;
     }
 
 }

@@ -421,4 +421,15 @@ public class Worker extends Thread implements IWorker {
         return "ID:" + h2oInstanceName;
     }
 
+    /**
+     * Start an evaluation worker.
+     * @param args
+     * @throws RemoteException The worker fails to contact the local RMI registry.
+     * @throws AlreadyBoundException The worker tries to bind itself to the local RMI registry and fails.
+     */
+    public static void main(final String[] args) throws RemoteException, AlreadyBoundException {
+
+        final Worker w = new Worker();
+    }
+
 }
