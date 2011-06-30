@@ -157,17 +157,52 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     }
 
     /**
+     * Start a single instance on a worker at the specified hostname.
+     * @param hostname Where the H2O instance should be started.
+     * @return true if an instance was started successfully.
+     * @throws StartupException
+     */
+    public boolean startH2OInstances(final String hostname) throws StartupException {
+
+        if (!locatorServerStarted) { throw new StartupException("The locator server has not yet been started."); }
+
+        scanForWorkerNodes(workerLocations);
+
+        for (final IWorker worker : getAllWorkers()) {
+            try {
+                if (worker.getHostname().equals(NetUtils.getLocalAddress())) {
+                    worker.startH2OInstance(descriptorFile);
+                    return true;
+                }
+
+                swapWorkerToActiveSet(worker);
+
+            }
+            catch (final Exception e) {
+                ErrorHandling.exceptionError(e, "Failed to start instance " + worker);
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Add a worker to the set of active workers, and removed it from the set of inactive workers.
+     * @param worker
+     */
+    public void swapWorkerToActiveSet(final IWorker worker) {
+
+        activeWorkers.add(worker);
+        inactiveWorkers.removeAll(activeWorkers);
+    }
+
+    /**
      * Connect to all known workers and terminate any active H2O instances. Also remove the state of those instances.
      */
     private void obliterateExtantInstances() {
 
         scanForWorkerNodes(workerLocations);
 
-        final Set<IWorker> allWorkers = new HashSet<IWorker>();
-        allWorkers.addAll(activeWorkers);
-        allWorkers.addAll(inactiveWorkers);
-
-        for (final IWorker worker : allWorkers) {
+        for (final IWorker worker : getAllWorkers()) {
             try {
                 worker.terminateH2OInstance();
                 worker.deleteH2OInstanceState();
@@ -177,6 +212,14 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
             }
         }
 
+    }
+
+    public Set<IWorker> getAllWorkers() {
+
+        final Set<IWorker> allWorkers = new HashSet<IWorker>();
+        allWorkers.addAll(activeWorkers);
+        allWorkers.addAll(inactiveWorkers);
+        return allWorkers;
     }
 
     private IWorker startH2OInstance() throws StartupException, RemoteException {

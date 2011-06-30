@@ -35,6 +35,7 @@ public interface IWorker extends Remote {
 
     /**
      * Start a new H2O instance which will connect to the database system described by the database descriptor file provided.
+     * <p>Blocks until the instance has started.
      * @param descriptorFileLocation Serialized version of the descriptor file.
      * @return true if an H2O instance was successfully started.
      * @throws StartupException If the instance couln't be started.
@@ -110,4 +111,10 @@ public interface IWorker extends Remote {
      */
     public void executeQuery(String query) throws RemoteException, SQLException;
 
+    /**
+     * Get the local hostname on which this worker is running.
+     * @return
+     * @throws RemoteException
+     */
+    public String getHostname() throws RemoteException;
 }

@@ -432,4 +432,10 @@ public class Worker extends Thread implements IWorker {
         final Worker w = new Worker();
     }
 
+    @Override
+    public String getHostname() throws RemoteException {
+
+        return NetUtils.getLocalAddress();
+    }
+
 }
