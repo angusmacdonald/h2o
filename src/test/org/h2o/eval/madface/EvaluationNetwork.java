@@ -1,7 +1,7 @@
 package org.h2o.eval.madface;
 
+import java.util.Arrays;
 import java.util.SortedSet;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.h2o.util.exceptions.StartupException;
 
@@ -78,12 +78,7 @@ public class EvaluationNetwork {
 
         final String[] hostnames = parseHostnamesArray(args[0]);
 
-        final SortedSet<HostDescriptor> node_descriptors = new ConcurrentSkipListSet<HostDescriptor>();
-
-        for (final String hostname : hostnames) {
-            final HostDescriptor hostDescriptor = new HostDescriptor(hostname);
-            node_descriptors.add(hostDescriptor);
-        }
+        final SortedSet<HostDescriptor> node_descriptors = HostDescriptor.createDescriptorsUsingPublicKey(Arrays.asList(hostnames), true);
 
         final IApplicationManager workerManager = new WorkerManager();
 
