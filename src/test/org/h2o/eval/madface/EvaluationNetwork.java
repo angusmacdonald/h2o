@@ -1,6 +1,9 @@
 package org.h2o.eval.madface;
 
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.SortedSet;
 
 import org.h2o.util.exceptions.StartupException;
@@ -8,6 +11,7 @@ import org.h2o.util.exceptions.StartupException;
 import uk.ac.standrews.cs.nds.madface.HostDescriptor;
 import uk.ac.standrews.cs.nds.madface.HostState;
 import uk.ac.standrews.cs.nds.madface.MadfaceManagerFactory;
+import uk.ac.standrews.cs.nds.madface.URL;
 import uk.ac.standrews.cs.nds.madface.interfaces.IApplicationManager;
 import uk.ac.standrews.cs.nds.madface.interfaces.IMadfaceManager;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -38,6 +42,10 @@ public class EvaluationNetwork {
             madface_manager.add(new_node_descriptor);
         }
 
+        final Set<URL> application_urls = getH2OApplicationURLs();
+
+        madface_manager.configureApplication(application_urls);
+
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Sent kill command to all nodes.");
 
         madface_manager.killAll(true); //blocks until it thinks it's killed everything.
@@ -62,6 +70,32 @@ public class EvaluationNetwork {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Madface manager has been successfully shut down.");
 
+    }
+
+    public Set<URL> getH2OApplicationURLs() throws IOException {
+
+        final Set<URL> application_urls = new HashSet<URL>();
+
+        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/bin/h2o.jar"));
+
+        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/json.jar"));
+        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/sigar.jar"));
+        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/mindterm.jar"));
+        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/log4j.jar"));
+        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/slf4j-api-1.5.0.jar"));
+        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/org.osgi.core-1.2.0.jar"));
+        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/servlet-api-2.4.jar"));
+
+        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/libsigar-amd64-linux.so"));
+        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/libsigar-universal-macosx.dylib"));
+        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/libsigar-x86-linux.so"));
+        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/libsigar-universal64-macosx.dylib"));
+        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/sigar-x86-winnt.dll"));
+        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/sigar-x86-winnt.lib"));
+        application_urls.add(new URL(""));
+        application_urls.add(new URL(""));
+        application_urls.add(new URL(""));
+        return application_urls;
     }
 
     /**
