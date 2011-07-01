@@ -135,7 +135,7 @@ public class ResourceSpec {
         final long memory_total = memoryCapacity;
         final long swap_total = swapCapacity;
 
-        return new SystemInfoData(dbName, "SimOS", "7", "localhost", "127.0.0.1", "255.255.255.255", "SimVendor", "SimModel", number_of_cores, number_of_cpus, cpu_clock_speed, -1, memory_total, swap_total, "true");
+        return new SystemInfoData(dbName, "SimOS", "7", "localhost", "127.0.0.1", "255.255.255.255", "MAC", "SimVendor", "SimModel", number_of_cores, number_of_cpus, cpu_clock_speed, -1, memory_total, swap_total, "true");
 
     }
 

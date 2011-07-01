@@ -109,7 +109,6 @@ public class H2OMarshaller extends Marshaller {
     private static final String OS_VERSION = "os_version";
     private static final String HOSTNAME = "hostname";
     private static final String PRIMARY_IP = "primary_ip";
-    private static final String DEFAULT_GATEWAY = "default_gateway";
     private static final String CPU_VENDOR = "cpu_vendor";
     private static final String CPU_MODEL = "cpu_model";
     private static final String NUMBER_OF_CORES = "number_of_cores";
@@ -124,6 +123,8 @@ public class H2OMarshaller extends Marshaller {
     private static final String SWAP = "swap";
     private static final String NETWORK_READ = "networkRead";
     private static final String NETWORK_WRITE = "networkWrite";
+    private static final String DEFAULT_GATEWAY_IP = "DEFAULT_GATEWAY_IP";
+    private static final String DEFAULT_GATEWAY_MAC = "DEFAULT_GATEWAY_MAC";
 
     private final ChordRemoteMarshaller chord_marshaller;
 
@@ -1774,8 +1775,10 @@ public class H2OMarshaller extends Marshaller {
             writer.value(source.hostname);
             writer.key(PRIMARY_IP);
             writer.value(source.primary_ip);
-            writer.key(DEFAULT_GATEWAY);
-            writer.value(source.default_gateway);
+            writer.key(DEFAULT_GATEWAY_IP);
+            writer.value(source.default_gateway_ip);
+            writer.key(DEFAULT_GATEWAY_MAC);
+            writer.value(source.default_gateway_mac);
             writer.key(CPU_VENDOR);
             writer.value(source.cpu_vendor);
             writer.key(CPU_MODEL);
@@ -1817,8 +1820,10 @@ public class H2OMarshaller extends Marshaller {
             final String hostname = reader.stringValue();
             reader.key(PRIMARY_IP);
             final String primary_ip = reader.stringValue();
-            reader.key(DEFAULT_GATEWAY);
-            final String default_gateway = reader.stringValue();
+            reader.key(DEFAULT_GATEWAY_IP);
+            final String default_gateway_ip = reader.stringValue();
+            reader.key(DEFAULT_GATEWAY_MAC);
+            final String default_gateway_mac = reader.stringValue();
 
             // CPU Info.
             reader.key(CPU_VENDOR);
@@ -1842,7 +1847,7 @@ public class H2OMarshaller extends Marshaller {
 
             reader.endObject();
 
-            final SystemInfoData fsd = new SystemInfoData(machine_id, os_name, os_version, hostname, primary_ip, default_gateway, cpu_vendor, cpu_model, number_of_cores, number_of_cpus, cpu_clock_speed, cpu_cache_size, memory_total, swap_total, "true");
+            final SystemInfoData fsd = new SystemInfoData(machine_id, os_name, os_version, hostname, primary_ip, default_gateway_ip, default_gateway_mac, cpu_vendor, cpu_model, number_of_cores, number_of_cpus, cpu_clock_speed, cpu_cache_size, memory_total, swap_total, "true");
 
             return fsd;
         }

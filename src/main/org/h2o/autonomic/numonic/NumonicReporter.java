@@ -327,4 +327,18 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
 
     }
 
+    @Override
+    public boolean closeConnection() throws Exception {
+
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean resetConnection() throws Exception {
+
+        // TODO Auto-generated method stub
+        return false;
+    }
+
 }
