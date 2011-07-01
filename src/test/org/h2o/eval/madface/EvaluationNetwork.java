@@ -8,6 +8,8 @@ import uk.ac.standrews.cs.nds.madface.HostState;
 import uk.ac.standrews.cs.nds.madface.MadfaceManagerFactory;
 import uk.ac.standrews.cs.nds.madface.interfaces.IApplicationManager;
 import uk.ac.standrews.cs.nds.madface.interfaces.IMadfaceManager;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 public class EvaluationNetwork {
 
@@ -19,18 +21,39 @@ public class EvaluationNetwork {
 
         madface_manager.setHostScanning(true); //XXX does this need to be enabled?
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Set host scanning to true.");
+
         madface_manager.configureApplication(workerManager);
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Configured application.");
+
         for (final HostDescriptor new_node_descriptor : host_descriptors) {
+
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Added host descriptor: " + new_node_descriptor.getHost());
 
             madface_manager.add(new_node_descriptor);
         }
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Sent kill command to all nodes.");
+
         madface_manager.killAll(true); //blocks until it thinks it's killed everything.
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Kill command executed on all nodes");
+
         madface_manager.deployAll();
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "System deployed successfully on all nodes.");
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Waiting for all nodes to start up.");
+
         madface_manager.waitForAllToReachState(HostState.RUNNING);
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "All nodes have started.");
+
         madface_manager.setHostScanning(false);
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Host scanning disabled, Evaluation Network complete.");
+
     }
 
     /**
@@ -39,6 +62,8 @@ public class EvaluationNetwork {
      * @throws Exception
      */
     public static void main(final String[] args) throws Exception {
+
+        Diagnostic.setLevel(DiagnosticLevel.FULL);
 
         final SortedSet<HostDescriptor> node_descriptors = new ConcurrentSkipListSet<HostDescriptor>();
 
