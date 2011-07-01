@@ -74,7 +74,7 @@ public class EvaluationNetwork {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "List of machines passed in: " + PrettyPrinter.toString(args));
 
-        if (args.length != 0) { throw new StartupException("No hostnames were passed to the program, so it cannot startup an evaluation network."); }
+        if (args.length != 1) { throw new StartupException("No hostnames were passed to the program, so it cannot startup an evaluation network."); }
 
         final String[] hostnames = parseHostnamesArray(args[0]);
 
