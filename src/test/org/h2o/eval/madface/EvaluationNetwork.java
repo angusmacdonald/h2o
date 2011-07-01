@@ -3,6 +3,8 @@ package org.h2o.eval.madface;
 import java.util.SortedSet;
 import java.util.concurrent.ConcurrentSkipListSet;
 
+import org.h2o.util.exceptions.StartupException;
+
 import uk.ac.standrews.cs.nds.madface.HostDescriptor;
 import uk.ac.standrews.cs.nds.madface.HostState;
 import uk.ac.standrews.cs.nds.madface.MadfaceManagerFactory;
@@ -10,6 +12,7 @@ import uk.ac.standrews.cs.nds.madface.interfaces.IApplicationManager;
 import uk.ac.standrews.cs.nds.madface.interfaces.IMadfaceManager;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 public class EvaluationNetwork {
 
@@ -68,6 +71,10 @@ public class EvaluationNetwork {
     public static void main(final String[] args) throws Exception {
 
         Diagnostic.setLevel(DiagnosticLevel.FULL);
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "List of machines passed in: " + PrettyPrinter.toString(args));
+
+        if (args.length == 0) { throw new StartupException("No hostnames were passed to the program, so it cannot startup an evaluation network."); }
 
         final SortedSet<HostDescriptor> node_descriptors = new ConcurrentSkipListSet<HostDescriptor>();
 
