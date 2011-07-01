@@ -54,6 +54,10 @@ public class EvaluationNetwork {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Host scanning disabled, Evaluation Network complete.");
 
+        madface_manager.shutdown();
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Madface manager has been successfully shut down.");
+
     }
 
     /**
