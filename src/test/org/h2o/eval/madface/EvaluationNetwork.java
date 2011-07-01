@@ -93,7 +93,7 @@ public class EvaluationNetwork {
     private static String[] parseHostnamesArray(final String hostnames) throws StartupException {
 
         if (hostnames != null) {
-            return hostnames.split(";");
+            return hostnames.split(" ");
         }
         else {
             throw new StartupException("No hostnames were passed to the program, so it cannot startup an evaluation network.");
