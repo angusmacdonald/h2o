@@ -92,9 +92,7 @@ public class EvaluationNetwork {
         application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/libsigar-universal64-macosx.dylib"));
         application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/sigar-x86-winnt.dll"));
         application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/sigar-x86-winnt.lib"));
-        application_urls.add(new URL(""));
-        application_urls.add(new URL(""));
-        application_urls.add(new URL(""));
+
         return application_urls;
     }
 
