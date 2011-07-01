@@ -16,6 +16,7 @@ import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 public class EvaluationNetwork {
 
+    private static final String SPLIT_CHARACTER = " ";
     private final IMadfaceManager madface_manager;
 
     public EvaluationNetwork(final SortedSet<HostDescriptor> host_descriptors, final IApplicationManager workerManager) throws Exception {
@@ -78,21 +79,35 @@ public class EvaluationNetwork {
 
         final String[] hostnames = parseHostnamesArray(args[0]);
 
-        final SortedSet<HostDescriptor> node_descriptors = HostDescriptor.createDescriptorsUsingPublicKey(Arrays.asList(hostnames), true);
+        final SortedSet<HostDescriptor> node_descriptors = HostDescriptor.createDescriptorsUsingPassword(Arrays.asList(hostnames), true);
 
         final IApplicationManager workerManager = new WorkerManager();
 
         new EvaluationNetwork(node_descriptors, workerManager); //returns when remote hosts have started.
     }
 
-    private static String[] parseHostnamesArray(final String hostnames) throws StartupException {
+    private static String[] parseHostnamesArray(String hostnames) throws StartupException {
+
+        hostnames = removeSurroundingBrackets(hostnames);
 
         if (hostnames != null) {
-            return hostnames.split(" ");
+            return hostnames.split(SPLIT_CHARACTER);
         }
         else {
             throw new StartupException("No hostnames were passed to the program, so it cannot startup an evaluation network.");
         }
+    }
+
+    public static String removeSurroundingBrackets(String hostnames) {
+
+        if (hostnames.startsWith("'") || hostnames.startsWith("\"")) {
+            hostnames = hostnames.substring(1);
+        }
+
+        if (hostnames.endsWith("'") || hostnames.startsWith("\"")) {
+            hostnames = hostnames.substring(0, hostnames.length() - 1);
+        }
+        return hostnames;
     }
 
 }
