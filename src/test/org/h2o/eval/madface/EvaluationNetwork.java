@@ -74,11 +74,13 @@ public class EvaluationNetwork {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "List of machines passed in: " + PrettyPrinter.toString(args));
 
-        if (args.length == 0) { throw new StartupException("No hostnames were passed to the program, so it cannot startup an evaluation network."); }
+        if (args.length != 0) { throw new StartupException("No hostnames were passed to the program, so it cannot startup an evaluation network."); }
+
+        final String[] hostnames = parseHostnamesArray(args[0]);
 
         final SortedSet<HostDescriptor> node_descriptors = new ConcurrentSkipListSet<HostDescriptor>();
 
-        for (final String hostname : args) {
+        for (final String hostname : hostnames) {
             final HostDescriptor hostDescriptor = new HostDescriptor(hostname);
             node_descriptors.add(hostDescriptor);
         }
@@ -86,6 +88,16 @@ public class EvaluationNetwork {
         final IApplicationManager workerManager = new WorkerManager();
 
         new EvaluationNetwork(node_descriptors, workerManager); //returns when remote hosts have started.
+    }
+
+    private static String[] parseHostnamesArray(final String hostnames) throws StartupException {
+
+        if (hostnames != null) {
+            return hostnames.split(";");
+        }
+        else {
+            throw new StartupException("No hostnames were passed to the program, so it cannot startup an evaluation network.");
+        }
     }
 
 }
