@@ -357,6 +357,8 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     @Override
     public void startLocatorServer(final int locatorPort) throws IOException, StartupException {
 
+        if (locatorProcess != null) { throw new StartupException("Locator server has already been started. It cannot be started twice."); }
+
         final List<String> args = getLocatorArgs(locatorPort);
 
         try {
