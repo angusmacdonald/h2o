@@ -55,6 +55,8 @@ public class Worker extends Thread implements IWorker {
 
     private static final long CHECKER_SLEEP_TIME = 2000;
 
+    private static String LOG_FILE_LOCATION;
+
     /**
      * Handle on the H2O process this worker is running.
      */
@@ -144,6 +146,10 @@ public class Worker extends Thread implements IWorker {
 
     public Worker() throws RemoteException, AlreadyBoundException, UnknownHostException {
 
+        final String platform_name = System.getProperty("os.name");
+
+        setLogFileLocation(platform_name);
+
         /*
          * Generate ID for this worker.
          */
@@ -165,6 +171,16 @@ public class Worker extends Thread implements IWorker {
         registry.bind(REGISTRY_PREFIX + h2oInstanceName, UnicastRemoteObject.exportObject(this, 0));
 
         start();
+    }
+
+    public void setLogFileLocation(final String platform_name) {
+
+        if (platform_name.startsWith(PlatformDescriptor.NAME_WINDOWS)) {
+            LOG_FILE_LOCATION = "/tmp";
+        }
+        else {
+            LOG_FILE_LOCATION = "/tmp";
+        }
     }
 
     @Override
@@ -390,6 +406,9 @@ public class Worker extends Thread implements IWorker {
         args.add("-f" + PATH_TO_H2O_DATABASE);
 
         args.add("-d" + descriptorFileLocation);
+
+        args.add("-o" + LOG_FILE_LOCATION + File.separator + "h2o-stdout.log");
+        args.add("-e" + LOG_FILE_LOCATION + File.separator + "h2o-stderr.log");
 
         args.add("-D0");
 
