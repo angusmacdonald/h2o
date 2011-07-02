@@ -688,7 +688,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         prop.append("name=H2O\n");
         prop.append("driver=org.h2.Driver\n");
         prop.append("conn=" + connectionString + "\n");
-        prop.append("user=sa");
+        prop.append("user=sa\n");
         prop.append("password=");
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Writing to properties file at: " + propertiesFileLocation);
