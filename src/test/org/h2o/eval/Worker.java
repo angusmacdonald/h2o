@@ -17,6 +17,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -94,6 +95,13 @@ public class Worker extends Thread implements IWorker {
 
     private boolean running = true;
 
+    /**
+     * ID fields (used in hashCode and equals).
+     */
+    private final InetAddress hostname;
+
+    private final long randomID;
+
     @Override
     public void run() {
 
@@ -134,10 +142,16 @@ public class Worker extends Thread implements IWorker {
         }
     }
 
-    public Worker() throws RemoteException, AlreadyBoundException {
+    public Worker() throws RemoteException, AlreadyBoundException, UnknownHostException {
+
+        /*
+         * Generate ID for this worker.
+         */
+        hostname = NetworkUtil.getLocalIPv4Address();
+        randomID = new Random(System.currentTimeMillis()).nextLong();
 
         //Name the h2o instance after the machine it is being run on + a static counter number to enable same machine testing.
-        h2oInstanceName = NetUtils.getLocalAddress().replaceAll("-", "").replaceAll("\\.", "") + instanceCount++;
+        h2oInstanceName = hostname.getHostName().replaceAll("-", "").replaceAll("\\.", "") + instanceCount++;
 
         Registry registry = null;
 
@@ -162,29 +176,6 @@ public class Worker extends Thread implements IWorker {
 
         remoteCoordinator = (ICoordinatorRemote) remoteCoordinatorAsRemote;
 
-    }
-
-    @Override
-    public int hashCode() {
-
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + (connectionString == null ? 0 : connectionString.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-
-        if (this == obj) { return true; }
-        if (obj == null) { return false; }
-        if (getClass() != obj.getClass()) { return false; }
-        final Worker other = (Worker) obj;
-        if (connectionString == null) {
-            if (other.connectionString != null) { return false; }
-        }
-        else if (!connectionString.equals(other.connectionString)) { return false; }
-        return true;
     }
 
     @Override
@@ -448,28 +439,48 @@ public class Worker extends Thread implements IWorker {
         return "ID:" + h2oInstanceName;
     }
 
+    @Override
+    public InetAddress getHostname() throws RemoteException {
+
+        return hostname;
+
+    }
+
+    @Override
+    public int hashCode() {
+
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (hostname == null ? 0 : hostname.hashCode());
+        result = prime * result + (int) (randomID ^ randomID >>> 32);
+        return result;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+
+        if (this == obj) { return true; }
+        if (obj == null) { return false; }
+        if (getClass() != obj.getClass()) { return false; }
+        final Worker other = (Worker) obj;
+        if (hostname == null) {
+            if (other.hostname != null) { return false; }
+        }
+        else if (!hostname.equals(other.hostname)) { return false; }
+        if (randomID != other.randomID) { return false; }
+        return true;
+    }
+
     /**
      * Start an evaluation worker.
-     * @param args
+     * @param args N/A.
      * @throws RemoteException The worker fails to contact the local RMI registry.
      * @throws AlreadyBoundException The worker tries to bind itself to the local RMI registry and fails.
+     * @throws UnknownHostException 
      */
-    public static void main(final String[] args) throws RemoteException, AlreadyBoundException {
+    public static void main(final String[] args) throws RemoteException, AlreadyBoundException, UnknownHostException {
 
         Diagnostic.setLevel(DiagnosticLevel.FULL);
         new Worker();
     }
-
-    @Override
-    public InetAddress getHostname() throws RemoteException {
-
-        try {
-            return NetworkUtil.getLocalIPv4Address();
-        }
-        catch (final UnknownHostException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
 }

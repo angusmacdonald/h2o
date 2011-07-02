@@ -24,6 +24,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.h2.util.NetUtils;
 import org.h2o.H2OLocator;
@@ -64,7 +66,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      * Worker Fields
      */
     private final Set<String> workerLocations;
-    private final List<IWorker> inactiveWorkers = new LinkedList<IWorker>();
+    private final SortedSet<IWorker> inactiveWorkers = new TreeSet<IWorker>();
     private final Set<IWorker> activeWorkers = new HashSet<IWorker>();
 
     /**
@@ -195,7 +197,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     public void swapWorkerToActiveSet(final IWorker worker) {
 
         activeWorkers.add(worker);
-        inactiveWorkers.removeAll(activeWorkers);
+        inactiveWorkers.remove(worker);
     }
 
     /**
@@ -233,12 +235,11 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
             if (inactiveWorkers.size() == 0) { throw new StartupException("Could not instantiated another H2O instance."); }
         }
 
-        final IWorker worker = inactiveWorkers.get(0);
+        final IWorker worker = inactiveWorkers.first();
 
         worker.startH2OInstance(descriptorFile);
 
-        inactiveWorkers.remove(worker);
-        activeWorkers.add(worker);
+        swapWorkerToActiveSet(worker);
 
         return worker;
     }
