@@ -253,7 +253,7 @@ public class Worker extends Thread implements IWorker {
             if (platform_name.startsWith(PlatformDescriptor.NAME_LINUX)) {
                 try {
 
-                    final String killH2OInstance = "/usr/bin/pkill -9 -f '" + H2O.class.getCanonicalName() + "'";
+                    final String killH2OInstance = "/usr/bin/pkill -9 -f '.*" + H2O.class.getCanonicalName() + ".*'";
                     Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Killing H2O instance: " + killH2OInstance);
                     Runtime.getRuntime().exec(killH2OInstance);
                 }
