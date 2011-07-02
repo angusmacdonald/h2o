@@ -606,7 +606,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         final String connectionString = coord.startH2OInstance(host); //start an instance locally as the system table.
 
-        if (connectionString != null) { throw new StartupException("Failed to start the local H2O instance that is intended to become the System Table."); }
+        if (connectionString == null) { throw new StartupException("Failed to start the local H2O instance that is intended to become the System Table."); }
 
         final int started = coord.startH2OInstances(h2oInstancesToStart - 1);
 
