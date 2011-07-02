@@ -15,7 +15,13 @@ import org.h2o.util.exceptions.WorkloadParseException;
  */
 public interface ICoordinatorLocal {
 
-    public void startLocatorServer(int locatorPort) throws IOException;
+    /**
+     * 
+     * @param locatorPort
+     * @throws IOException
+     * @throws StartupException If the locator server could not be started in a new process.
+     */
+    public void startLocatorServer(int locatorPort) throws IOException, StartupException;
 
     /**
      * Start H2O instances at the specified locations.

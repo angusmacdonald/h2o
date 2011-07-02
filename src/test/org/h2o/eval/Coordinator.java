@@ -43,6 +43,8 @@ import org.h2o.util.exceptions.ShutdownException;
 import org.h2o.util.exceptions.StartupException;
 import org.h2o.util.exceptions.WorkloadParseException;
 
+import uk.ac.standrews.cs.nds.madface.HostDescriptor;
+import uk.ac.standrews.cs.nds.madface.JavaProcessDescriptor;
 import uk.ac.standrews.cs.nds.util.CommandLineArgs;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
@@ -88,6 +90,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
     private final Date startDate = new Date();
     private final List<WorkloadResult> workloadResults = new LinkedList<WorkloadResult>();
+    private Process locatorProcess;
 
     /**
      * 
@@ -352,16 +355,36 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     }
 
     @Override
-    public void startLocatorServer(final int locatorPort) throws IOException {
+    public void startLocatorServer(final int locatorPort) throws IOException, StartupException {
 
-        locatorServer = new H2OLocator(databaseName, locatorPort, true, Worker.PATH_TO_H2O_DATABASE);
-        final String descriptorFileLocation = locatorServer.start();
+        final List<String> args = getLocatorArgs(locatorPort);
+
+        try {
+            locatorProcess = new HostDescriptor().getProcessManager().runProcess(new JavaProcessDescriptor().classToBeInvoked(H2OLocator.class).args(args));
+        }
+        catch (final Exception e) {
+            e.printStackTrace();
+            throw new StartupException("Failed to create new H2O locator process: " + e.getMessage());
+        }
+
+        final String descriptorFileLocation = Worker.PATH_TO_H2O_DATABASE + File.separator + databaseName + ".h2od";
 
         descriptorFile = H2OPropertiesWrapper.getWrapper(descriptorFileLocation);
         descriptorFile.loadProperties();
 
         locatorServerStarted = true;
 
+    }
+
+    public List<String> getLocatorArgs(final int locatorPort) {
+
+        final List<String> args = new LinkedList<String>();
+
+        args.add("-n" + databaseName);
+        args.add("-p" + locatorPort);
+        args.add("-dtrue");
+        args.add("-f" + Worker.PATH_TO_H2O_DATABASE);
+        return args;
     }
 
     @Override
