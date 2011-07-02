@@ -407,8 +407,8 @@ public class Worker extends Thread implements IWorker {
 
         args.add("-d" + descriptorFileLocation);
 
-        //        args.add("-o" + LOG_FILE_LOCATION + File.separator + "h2o-stdout.log");
-        //        args.add("-e" + LOG_FILE_LOCATION + File.separator + "h2o-stderr.log");
+        args.add("-o" + LOG_FILE_LOCATION + File.separator + "h2o-stdout.log");
+        args.add("-e" + LOG_FILE_LOCATION + File.separator + "h2o-stderr.log");
 
         args.add("-D0");
 
