@@ -33,6 +33,10 @@ public class EvaluationNetwork {
 
         madface_manager.configureApplication(workerManager);
 
+        final Set<URL> application_urls = getH2OApplicationURLs();
+
+        madface_manager.configureApplication(application_urls);
+
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Configured application.");
 
         for (final HostDescriptor new_node_descriptor : host_descriptors) {
@@ -41,10 +45,6 @@ public class EvaluationNetwork {
 
             madface_manager.add(new_node_descriptor);
         }
-
-        final Set<URL> application_urls = getH2OApplicationURLs();
-
-        madface_manager.configureApplication(application_urls);
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Sent kill command to all nodes.");
 
