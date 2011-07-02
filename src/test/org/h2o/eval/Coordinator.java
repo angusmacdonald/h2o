@@ -151,6 +151,14 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         int numberStarted = 0;
 
         for (final IWorker worker : inactiveWorkers) {
+
+            try {
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Starting H2O instance on worker at " + worker.getHostname());
+            }
+            catch (final RemoteException e2) {
+                //Doesn't matter because it's just a diagnostic. Handle the exception on a proper call to the worker.
+            }
+
             try {
                 worker.startH2OInstance(descriptorFile);
 
@@ -209,7 +217,11 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     public void swapWorkerToActiveSet(final IWorker worker) {
 
         activeWorkers.add(worker);
-        inactiveWorkers.remove(worker);
+        final boolean removed = inactiveWorkers.remove(worker);
+
+        if (!removed) {
+            ErrorHandling.errorNoEvent("Worker was not correctly removed from the list of active workers.");
+        }
     }
 
     /**
