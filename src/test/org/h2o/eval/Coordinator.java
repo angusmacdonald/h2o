@@ -303,7 +303,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
                 try {
                     final IWorker workerNode = (IWorker) remoteRegistry.lookup(entry);
 
-                    if (workerNode != null && !activeWorkers.contains(workerNode)) {
+                    if (workerNode != null && !activeWorkers.contains(workerNode) && !inactiveWorkers.contains(workerNode)) {
                         try {
 
                             workerNode.initiateConnection(NetUtils.getLocalAddress(), REGISTRY_BIND_NAME);
@@ -631,11 +631,13 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         final List<InetAddress> inetAddresses = new LinkedList<InetAddress>();
 
         for (final String hostname : hostnames) {
-            try {
-                inetAddresses.add(InetAddress.getByName(hostname));
-            }
-            catch (final UnknownHostException e) {
-                ErrorHandling.errorNoEvent("Failed to convert from hostname '" + hostname + "' to InetAddress: " + e.getMessage());
+            if (hostname != null && !hostname.equals("")) {
+                try {
+                    inetAddresses.add(InetAddress.getByName(hostname));
+                }
+                catch (final UnknownHostException e) {
+                    ErrorHandling.errorNoEvent("Failed to convert from hostname '" + hostname + "' to InetAddress: " + e.getMessage());
+                }
             }
         }
 
