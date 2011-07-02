@@ -648,8 +648,9 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
             writeConnectionStringToPropertiesFile(connectionString, connectionPropertiesFile);
         }
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Started H2O instances on worker nodes. Terminating co-ordinator.");
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Successfully started H2O instances on worker nodes. Terminating co-ordinator.");
 
+        System.exit(0);
     }
 
     private static List<InetAddress> convertFromStringToInetAddress(final String[] hostnames) {
