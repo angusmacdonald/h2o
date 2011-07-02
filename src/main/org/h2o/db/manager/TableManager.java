@@ -235,7 +235,10 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
         queryMonitor = new TableManagerMonitor();
 
         getDB().getTableManagerServer().exportObject(this);
-        getDB().getNumonic().addObserver(this);
+
+        if (getDB().getNumonic() != null) {
+            getDB().getNumonic().addObserver(this);
+        }
     }
 
     public static String getMetaTableName(final String databaseName, final String tablePostfix) {
