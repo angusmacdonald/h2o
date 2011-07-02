@@ -81,7 +81,6 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      * Locator server fields.
      */
     private boolean locatorServerStarted = false;
-    private H2OLocator locatorServer;
     private H2OPropertiesWrapper descriptorFile;
     private KillMonitorThread killMonitor;
 
@@ -90,7 +89,6 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
     private final Date startDate = new Date();
     private final List<WorkloadResult> workloadResults = new LinkedList<WorkloadResult>();
-    private Process locatorProcess;
 
     /**
      * 
@@ -357,12 +355,13 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     @Override
     public void startLocatorServer(final int locatorPort) throws IOException, StartupException {
 
-        if (locatorProcess != null) { throw new StartupException("Locator server has already been started. It cannot be started twice."); }
+        if (locatorServerStarted) { throw new StartupException("Locator server has already been started. It cannot be started twice."); }
 
         final List<String> args = getLocatorArgs(locatorPort);
 
         try {
-            locatorProcess = new HostDescriptor().getProcessManager().runProcess(new JavaProcessDescriptor().classToBeInvoked(H2OLocator.class).args(args));
+            new HostDescriptor().getProcessManager().runProcess(new JavaProcessDescriptor().classToBeInvoked(H2OLocator.class).args(args));
+
         }
         catch (final Exception e) {
             e.printStackTrace();
@@ -373,7 +372,6 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         descriptorFile = H2OPropertiesWrapper.getWrapper(descriptorFileLocation);
         descriptorFile.loadProperties();
-
         locatorServerStarted = true;
 
     }
@@ -649,6 +647,9 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         if (connectionPropertiesFile != null) {
             writeConnectionStringToPropertiesFile(connectionString, connectionPropertiesFile);
         }
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Started H2O instances on worker nodes. Terminating co-ordinator.");
+
     }
 
     private static List<InetAddress> convertFromStringToInetAddress(final String[] hostnames) {
