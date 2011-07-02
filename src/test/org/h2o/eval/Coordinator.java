@@ -159,7 +159,12 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
                 numberStarted++;
             }
             catch (final Exception e) {
-                ErrorHandling.exceptionError(e, "Failed to start instance " + worker);
+                try {
+                    ErrorHandling.exceptionError(e, "Failed to start instance on worker at " + worker.getHostname());
+                }
+                catch (final RemoteException e1) {
+                    ErrorHandling.exceptionError(e, "Failed to start instance on worker " + worker);
+                }
             }
         }
 

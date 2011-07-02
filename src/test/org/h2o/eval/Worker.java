@@ -191,7 +191,7 @@ public class Worker extends Thread implements IWorker {
 
         h2oProcess = startH2OProcess(setupBootstrapArgs(descriptorFileLocation));
 
-        sleep(5000);// wait for the database to start up.
+        sleep(10000);// wait for the database to start up.
 
         createConnectionString();
 
