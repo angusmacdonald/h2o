@@ -192,7 +192,7 @@ public class Worker extends Thread implements IWorker {
 
         if (h2oProcess != null) {
             //Check if its still running.
-            throw new StartupException("Couldn't start H2O instance. Another instance is already running.");
+            throw new StartupException("Couldn't start H2O instance. Another instance is already running at " + getHostname().getHostName());
         }
 
         final String descriptorFileLocation = PATH_TO_H2O_DATABASE + File.separator + "descriptor.h2od";
