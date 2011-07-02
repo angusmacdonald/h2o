@@ -50,7 +50,7 @@ public interface IWorker extends Remote {
 
     /**
      * Abruptly terminate the H2O instance that is running locally (by issuing a kill command on the process).
-     * @exception ShutdownException If the H2O instance couldn't be stopped, or if it wasn't running.
+     * @exception ShutdownException If the H2O instance couldn't be stopped.
     */
     public void terminateH2OInstance() throws RemoteException, ShutdownException;
 

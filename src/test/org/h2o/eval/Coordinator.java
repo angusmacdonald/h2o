@@ -551,6 +551,8 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      */
     public static void main(final String[] args) throws StartupException, FileNotFoundException {
 
+        Diagnostic.setLevel(DiagnosticLevel.FULL);
+
         final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
 
         final String databaseName = processDatabaseName(arguments.get("-n"));
@@ -566,7 +568,11 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
             coord.obliterateExtantInstances();
         }
 
-        final String connectionString = coord.startH2OInstance(NetUtils.getLocalAddress()); //start an instance locally as the system table.
+        final String localAddress = NetUtils.getLocalAddress();
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Starting H2O instance on " + localAddress);
+
+        final String connectionString = coord.startH2OInstance(localAddress); //start an instance locally as the system table.
 
         if (connectionString != null) { throw new StartupException("Failed to start the local H2O instance that is intended to become the System Table."); }
 

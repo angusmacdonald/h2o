@@ -38,6 +38,9 @@ import org.h2o.util.exceptions.WorkloadParseException;
 
 import uk.ac.standrews.cs.nds.madface.HostDescriptor;
 import uk.ac.standrews.cs.nds.madface.JavaProcessDescriptor;
+import uk.ac.standrews.cs.nds.madface.PlatformDescriptor;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 public class Worker extends Thread implements IWorker {
@@ -233,7 +236,26 @@ public class Worker extends Thread implements IWorker {
     @Override
     public void terminateH2OInstance() throws RemoteException, ShutdownException {
 
-        if (h2oProcess == null) { throw new ShutdownException("Couldn't terminate H2O process because the reference to it was null."); }
+        if (h2oProcess == null) {
+
+            final String platform_name = System.getProperty("os.name");
+
+            if (platform_name.startsWith(PlatformDescriptor.NAME_LINUX)) {
+                try {
+
+                    final String killH2OInstance = "/usr/bin/pkill -9 -f '" + H2O.class.getCanonicalName() + "'";
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Killing H2O instance: " + killH2OInstance);
+                    Runtime.getRuntime().exec(killH2OInstance);
+                }
+                catch (final IOException e) {
+                    throw new ShutdownException(e.getMessage());
+                }
+            }
+            else {
+                //There is nothing else we can do.
+                throw new ShutdownException("Couldn't terminate H2O process because the reference to it was null.");
+            }
+        }
 
         h2oProcess.destroy();
     }
@@ -430,6 +452,7 @@ public class Worker extends Thread implements IWorker {
      */
     public static void main(final String[] args) throws RemoteException, AlreadyBoundException {
 
+        Diagnostic.setLevel(DiagnosticLevel.FULL);
         new Worker();
     }
 
