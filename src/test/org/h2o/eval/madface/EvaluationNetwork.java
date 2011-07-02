@@ -46,10 +46,6 @@ public class EvaluationNetwork {
             madface_manager.add(new_node_descriptor);
         }
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Sent kill command to all nodes.");
-
-        madface_manager.killAll(true); //blocks until it thinks it's killed everything.
-
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Kill command executed on all nodes");
 
         madface_manager.deployAll();
