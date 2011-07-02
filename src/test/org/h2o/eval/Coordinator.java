@@ -88,7 +88,6 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
     private final Date startDate = new Date();
     private final List<WorkloadResult> workloadResults = new LinkedList<WorkloadResult>();
-    private String connectionPropertiesFile = null;
 
     /**
      * 
@@ -97,23 +96,17 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      */
     public Coordinator(final String databaseName, final InetAddress... workerLocations) {
 
-        this(databaseName, null, Arrays.asList(workerLocations));
+        this(databaseName, Arrays.asList(workerLocations));
     }
 
     public Coordinator(final String databaseName, final String... workerLocationsStr) {
 
-        this(databaseName, null, convertFromStringToInetAddress(workerLocationsStr));
+        this(databaseName, convertFromStringToInetAddress(workerLocationsStr));
     }
 
     public Coordinator(final String databaseName, final List<InetAddress> workerLocations) {
 
-        this(databaseName, null, workerLocations);
-    }
-
-    public Coordinator(final String databaseName, final String connectionPropertiesFile, final List<InetAddress> workerLocations) {
-
         this.databaseName = databaseName;
-        this.connectionPropertiesFile = connectionPropertiesFile;
         this.workerLocations = new HashSet<InetAddress>();
         this.workerLocations.addAll(workerLocations);
         bindToRegistry();
@@ -594,7 +587,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         final boolean obliterateExistingInstances = processTerminatesExistingInstances(arguments.get("-t"));
         final String connectionPropertiesFile = arguments.get("-p");
 
-        final Coordinator coord = new Coordinator(databaseName, connectionPropertiesFile, workerLocationsInet);
+        final Coordinator coord = new Coordinator(databaseName, workerLocationsInet);
 
         if (obliterateExistingInstances) {
             coord.obliterateExtantInstances();
