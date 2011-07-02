@@ -189,11 +189,15 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         for (final IWorker worker : getAllWorkers()) {
             try {
-                if (worker.getHostname().equals(hostname)) { return worker.startH2OInstance(descriptorFile);
+                if (worker.getHostname().equals(hostname)) {
+
+                    final String jdbcConnectionString = worker.startH2OInstance(descriptorFile);
+
+                    swapWorkerToActiveSet(worker);
+
+                    return jdbcConnectionString;
 
                 }
-
-                swapWorkerToActiveSet(worker);
 
             }
             catch (final Exception e) {
