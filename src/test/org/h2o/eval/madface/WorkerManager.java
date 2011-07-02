@@ -35,7 +35,7 @@ public class WorkerManager implements IApplicationManager {
 
         final Registry r = LocateRegistry.getRegistry(host_descriptor.getHost());
 
-        r.lookup("doesn't matter"); // will fail if there isn't a registry running.
+        r.list(); // will fail if there isn't a registry running.
     }
 
     @Override
