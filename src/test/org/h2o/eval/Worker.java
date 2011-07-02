@@ -55,6 +55,8 @@ public class Worker extends Thread implements IWorker {
 
     private static final long CHECKER_SLEEP_TIME = 2000;
 
+    private static final boolean LOGGING_TO_FILE_ENABLED = true;
+
     private static String LOG_FILE_LOCATION;
 
     /**
@@ -407,8 +409,10 @@ public class Worker extends Thread implements IWorker {
 
         args.add("-d" + descriptorFileLocation);
 
-        args.add("-o" + LOG_FILE_LOCATION + File.separator + "h2o-stdout.log");
-        args.add("-e" + LOG_FILE_LOCATION + File.separator + "h2o-stderr.log");
+        if (LOGGING_TO_FILE_ENABLED) {
+            args.add("-o" + LOG_FILE_LOCATION + File.separator + "h2o-stdout.log");
+            args.add("-e" + LOG_FILE_LOCATION + File.separator + "h2o-stderr.log");
+        }
 
         args.add("-D0");
 
