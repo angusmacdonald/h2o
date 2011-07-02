@@ -63,7 +63,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     /*
      * Worker Fields
      */
-    private final Set<String> workerLocations;
+    private final Set<InetAddress> workerLocations;
     private final List<IWorker> inactiveWorkers = new LinkedList<IWorker>();
     private final Set<IWorker> activeWorkers = new HashSet<IWorker>();
 
@@ -95,18 +95,27 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      * @param databaseName Name of the evaluation database system this coordinator will create.
      * @param workerLocations IP addresses or hostnames of machines which are running worker nodes.
      */
-    public Coordinator(final String databaseName, final String... workerLocations) {
+    public Coordinator(final String databaseName, final InetAddress... workerLocations) {
+
+        this(databaseName, null, Arrays.asList(workerLocations));
+    }
+
+    public Coordinator(final String databaseName, final String... workerLocationsStr) {
+
+        this(databaseName, null, convertFromStringToInetAddress(workerLocationsStr));
+    }
+
+    public Coordinator(final String databaseName, final List<InetAddress> workerLocations) {
 
         this(databaseName, null, workerLocations);
     }
 
-    public Coordinator(final String databaseName, final String connectionPropertiesFile, final String[] workerLocations) {
+    public Coordinator(final String databaseName, final String connectionPropertiesFile, final List<InetAddress> workerLocations) {
 
         this.databaseName = databaseName;
         this.connectionPropertiesFile = connectionPropertiesFile;
-        this.workerLocations = new HashSet<String>();
-        this.workerLocations.addAll(Arrays.asList(workerLocations));
-        this.workerLocations.add(NetUtils.getLocalAddress());
+        this.workerLocations = new HashSet<InetAddress>();
+        this.workerLocations.addAll(workerLocations);
         bindToRegistry();
     }
 
@@ -248,12 +257,12 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      * @param workerLocationsLocal IP addresses or hostnames of machines which are running worker nodes. You can provide the {@link #workerLocations} field
      * as a parameter, or something else.
      */
-    private void scanForWorkerNodes(final Set<String> workerLocationsLocal) {
+    private void scanForWorkerNodes(final Set<InetAddress> workerLocationsLocal) {
 
-        for (final String location : workerLocationsLocal) {
+        for (final InetAddress location : workerLocationsLocal) {
 
             try {
-                final Registry remoteRegistry = LocateRegistry.getRegistry(location);
+                final Registry remoteRegistry = LocateRegistry.getRegistry(location.getHostName());
 
                 findActiveWorkersAtThisLocation(remoteRegistry);
             }
@@ -558,13 +567,17 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
 
         final String databaseName = processDatabaseName(arguments.get("-n"));
-        final String[] workerLocations = processWorkerLocations(arguments.get("-w"));
+        final String[] workerLocationsStr = processWorkerLocations(arguments.get("-w"));
+
+        final List<InetAddress> workerLocationsInet = convertFromStringToInetAddress(workerLocationsStr);
+        workerLocationsInet.add(NetworkUtil.getLocalIPv4Address());
+
         final int h2oInstancesToStart = processNumberOfInstances(arguments.get("-c"));
 
         final boolean obliterateExistingInstances = processTerminatesExistingInstances(arguments.get("-t"));
         final String connectionPropertiesFile = arguments.get("-p");
 
-        final Coordinator coord = new Coordinator(databaseName, connectionPropertiesFile, workerLocations);
+        final Coordinator coord = new Coordinator(databaseName, connectionPropertiesFile, workerLocationsInet);
 
         if (obliterateExistingInstances) {
             coord.obliterateExtantInstances();
@@ -597,6 +610,22 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         if (connectionPropertiesFile != null) {
             writeConnectionStringToPropertiesFile(connectionString, connectionPropertiesFile);
         }
+    }
+
+    private static List<InetAddress> convertFromStringToInetAddress(final String[] hostnames) {
+
+        final List<InetAddress> inetAddresses = new LinkedList<InetAddress>();
+
+        for (final String hostname : hostnames) {
+            try {
+                inetAddresses.add(InetAddress.getByName(hostname));
+            }
+            catch (final UnknownHostException e) {
+                ErrorHandling.errorNoEvent("Failed to convert from hostname '" + hostname + "' to InetAddress: " + e.getMessage());
+            }
+        }
+
+        return inetAddresses;
     }
 
     /**
