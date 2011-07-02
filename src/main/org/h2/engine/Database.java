@@ -480,10 +480,12 @@ public class Database implements DataHandler, Observer, ISystemStatus {
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Started database at " + getID());
 
             try {
-                final String fileSystemName = getFileSystemName(databaseName);
-                numonic = new NumonicReporter(databaseSettings.get("NUMONIC_MONITORING_FILE_LOCATION"), fileSystemName, getID(), systemTableRef, this, databaseSettings.get("NUMONIC_THRESHOLDS_FILE_LOCATION"));
 
                 if (Boolean.parseBoolean(databaseSettings.get("NUMONIC_MONITORING_ENABLED"))) {
+
+                    final String fileSystemName = getFileSystemName(databaseName);
+                    numonic = new NumonicReporter(databaseSettings.get("NUMONIC_MONITORING_FILE_LOCATION"), fileSystemName, getID(), systemTableRef, this, databaseSettings.get("NUMONIC_THRESHOLDS_FILE_LOCATION"));
+
                     numonic.start();
                 }
             }
