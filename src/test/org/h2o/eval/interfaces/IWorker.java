@@ -1,5 +1,6 @@
 package org.h2o.eval.interfaces;
 
+import java.net.InetAddress;
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -116,5 +117,5 @@ public interface IWorker extends Remote {
      * @return
      * @throws RemoteException
      */
-    public String getHostname() throws RemoteException;
+    public InetAddress getHostname() throws RemoteException;
 }

@@ -3,6 +3,8 @@ package org.h2o.eval;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
@@ -42,6 +44,7 @@ import uk.ac.standrews.cs.nds.madface.PlatformDescriptor;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.NetworkUtil;
 
 public class Worker extends Thread implements IWorker {
 
@@ -458,9 +461,15 @@ public class Worker extends Thread implements IWorker {
     }
 
     @Override
-    public String getHostname() throws RemoteException {
+    public InetAddress getHostname() throws RemoteException {
 
-        return NetUtils.getLocalAddress();
+        try {
+            return NetworkUtil.getLocalIPv4Address();
+        }
+        catch (final UnknownHostException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
 }

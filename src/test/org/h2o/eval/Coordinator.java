@@ -3,6 +3,8 @@ package org.h2o.eval;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
@@ -46,6 +48,7 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.FileUtil;
+import uk.ac.standrews.cs.nds.util.NetworkUtil;
 
 public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
@@ -163,7 +166,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      * @return the JDBC connections string for the recently started database, or null if it wasn't successfully started.
      * @throws StartupException
      */
-    public String startH2OInstance(final String hostname) throws StartupException {
+    public String startH2OInstance(final InetAddress hostname) throws StartupException {
 
         if (!locatorServerStarted) { throw new StartupException("The locator server has not yet been started."); }
 
@@ -547,9 +550,9 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      *            <li><em>-p<name></em>. Optional. The path/name of the properties file to create stating how to connect to the system table.</li>
      *            </ul>
      * @throws StartupException Thrown if a required parameter was not specified.
-     * @throws FileNotFoundException 
+     * @throws IOException 
      */
-    public static void main(final String[] args) throws StartupException, FileNotFoundException {
+    public static void main(final String[] args) throws StartupException, IOException {
 
         Diagnostic.setLevel(DiagnosticLevel.FULL);
 
@@ -568,11 +571,23 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
             coord.obliterateExtantInstances();
         }
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Starting locator server.");
+
+        coord.startLocatorServer(34000);
+
         final String localAddress = NetUtils.getLocalAddress();
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Starting H2O instance on " + localAddress);
 
-        final String connectionString = coord.startH2OInstance(localAddress); //start an instance locally as the system table.
+        InetAddress host = null;
+        try {
+            host = NetworkUtil.getLocalIPv4Address();
+        }
+        catch (final UnknownHostException e1) {
+            throw new StartupException("Couldn't create local InetAddress.");
+        }
+
+        final String connectionString = coord.startH2OInstance(host); //start an instance locally as the system table.
 
         if (connectionString != null) { throw new StartupException("Failed to start the local H2O instance that is intended to become the System Table."); }
 
