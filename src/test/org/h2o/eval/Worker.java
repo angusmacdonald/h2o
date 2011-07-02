@@ -256,8 +256,9 @@ public class Worker extends Thread implements IWorker {
                 throw new ShutdownException("Couldn't terminate H2O process because the reference to it was null.");
             }
         }
-
-        h2oProcess.destroy();
+        else {
+            h2oProcess.destroy();
+        }
     }
 
     @Override
