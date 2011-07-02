@@ -679,6 +679,10 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      */
     private static void writeConnectionStringToPropertiesFile(final String connectionString, final String propertiesFileLocation) throws FileNotFoundException {
 
+        final File f = new File(propertiesFileLocation);
+
+        f.getParentFile().mkdirs();
+
         final StringBuilder prop = new StringBuilder();
 
         prop.append("name=H2O\n");
@@ -686,6 +690,8 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         prop.append("conn=" + connectionString + "\n");
         prop.append("user=sa");
         prop.append("password=");
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Writing to properties file at: " + propertiesFileLocation);
 
         FileUtil.writeToFile(propertiesFileLocation, prop.toString());
     }
