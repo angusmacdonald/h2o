@@ -70,6 +70,8 @@ public class EvaluationNetwork {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Madface manager has been successfully shut down.");
 
+        System.exit(0); // Kill off the process successfully. The current Madface version doesn't successfully shut down scanner threads, etc., on its own.
+
     }
 
     public Set<URL> getH2OApplicationURLs() throws IOException {
