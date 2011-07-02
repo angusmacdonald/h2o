@@ -136,7 +136,7 @@ public class EvaluationNetwork {
             hostnames = hostnames.substring(1);
         }
 
-        if (hostnames.endsWith("'") || hostnames.startsWith("\"")) {
+        if (hostnames.endsWith("'") || hostnames.endsWith("\"")) {
             hostnames = hostnames.substring(0, hostnames.length() - 1);
         }
         return hostnames;
