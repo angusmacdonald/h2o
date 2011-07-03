@@ -368,6 +368,12 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
             throw new StartupException("Failed to create new H2O locator process: " + e.getMessage());
         }
 
+        try {
+            Thread.sleep(3000); //wait for locator to start up.
+        }
+        catch (final InterruptedException e) {
+        }
+
         final String descriptorFileLocation = Worker.PATH_TO_H2O_DATABASE + File.separator + databaseName + ".h2od";
 
         descriptorFile = H2OPropertiesWrapper.getWrapper(descriptorFileLocation);
