@@ -174,7 +174,7 @@ public class Settings {
         /*
          * Whether asynchronous replication is enabled.
          */
-        defaults.setProperty("ASYNCHRONOUS_REPLICATION_ENABLED", "true");
+        defaults.setProperty("ASYNCHRONOUS_REPLICATION_ENABLED", "false");
 
         /*
          * If true this delays the commit of an insert query. This should always be false unless you are testing asynchronous updates.

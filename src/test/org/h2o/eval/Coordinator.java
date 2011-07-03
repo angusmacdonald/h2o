@@ -599,6 +599,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      *            <li><em>-c<name></em>. The number of H2O instances that are to be started. This number must be less than or equal to the number of active worker instances.</li>
      *            <li><em>-t<name></em>. Optional. Whether to terminate any existing instances running at all workers (including stored state), before doing anything else.</li>
      *            <li><em>-p<name></em>. Optional. The path/name of the properties file to create stating how to connect to the system table.</li>
+     *            <li><em>-r<name></em>. Optional. The system-wide replication factor for user tables..</li>
      *            </ul>
      * @throws StartupException Thrown if a required parameter was not specified.
      * @throws IOException 
@@ -619,6 +620,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         final boolean obliterateExistingInstances = processTerminatesExistingInstances(arguments.get("-t"));
         final String connectionPropertiesFile = arguments.get("-p");
+        final int replicationFactor = processReplicationFactor(arguments.get("-r"));
 
         final Coordinator coord = new Coordinator(databaseName, workerLocationsInet);
 
@@ -630,6 +632,10 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         coord.startLocatorServer(34000);
 
+        if (replicationFactor > 0) {
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Setting system-wide replication factor to " + replicationFactor);
+            coord.setReplicationFactor(replicationFactor);
+        }
         final String localAddress = NetUtils.getLocalAddress();
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Starting H2O instance on " + localAddress);
@@ -657,6 +663,33 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Successfully started H2O instances on worker nodes. Terminating co-ordinator.");
 
         System.exit(0);
+    }
+
+    /**
+     * 
+     * @param replicationFactorStr
+     * @return returns -1 if the replication factor was not specified.
+     */
+    private static int processReplicationFactor(final String replicationFactorStr) {
+
+        if (replicationFactorStr != null) {
+            return Integer.parseInt(replicationFactorStr);
+        }
+        else {
+            return -1;
+        }
+    }
+
+    /**
+     * Sets the desired replication factor in the database descriptor file. This will only be used if it is set before a database is started up.
+     * @param replicationFactor How many copies of each table the system should aim to create.
+     * @throws StartupException 
+     */
+    private void setReplicationFactor(final int replicationFactor) throws StartupException {
+
+        if (descriptorFile == null) { throw new StartupException("Descriptor file has not been create yet. Call startLocatorServer() first."); }
+
+        descriptorFile.setProperty("RELATION_REPLICATION_FACTOR", replicationFactor + "");
     }
 
     private static List<InetAddress> convertFromStringToInetAddress(final String[] hostnames) {
