@@ -72,6 +72,10 @@ public class ReplicaManager {
         }
     };
 
+    private Map<DatabaseInstanceWrapper, Integer> onActiveMachines = null;
+
+    private boolean updatedSinceLastCache = true;
+
     public ReplicaManager() {
 
         allReplicas = new HashMap<DatabaseInstanceWrapper, Integer>();
@@ -122,6 +126,7 @@ public class ReplicaManager {
 
     private Integer addToAllReplicas(final DatabaseInstanceWrapper replicaLocation, final Integer newUpdateID) {
 
+        updatedSinceLastCache = true;
         return getAllReplicas().put(replicaLocation, newUpdateID);
     }
 
@@ -176,6 +181,7 @@ public class ReplicaManager {
      */
     public void remove(final DatabaseInstanceWrapper dbInstance) {
 
+        updatedSinceLastCache = true;
         getAllReplicas().remove(dbInstance);
         activeReplicas.remove(dbInstance);
     }
@@ -288,6 +294,7 @@ public class ReplicaManager {
                                  */
                                 activeReplicas.remove(wrapper);
                                 getAllReplicas().remove(wrapper);
+                                updatedSinceLastCache = true;
                             }
                         }
 
@@ -462,7 +469,11 @@ public class ReplicaManager {
 
     public Map<DatabaseInstanceWrapper, Integer> getAllReplicasOnActiveMachines() {
 
-        return CollectionFilter.filter(allReplicas, isActive);
+        if (updatedSinceLastCache) {
+            onActiveMachines = CollectionFilter.filter(allReplicas, isActive);
+        }
+
+        return onActiveMachines;
     }
 
     public DatabaseInstanceWrapper getManagerLocation() {
@@ -470,7 +481,7 @@ public class ReplicaManager {
         return primaryLocation;
     }
 
-    public void removeFromActiveSet(final DatabaseID failedMachine) {
+    public void markMachineAsFailed(final DatabaseID failedMachine) {
 
         final DatabaseInstanceWrapper key = new DatabaseInstanceWrapper(failedMachine, null, false);
         DatabaseInstanceWrapper newEntry = null;
@@ -493,6 +504,7 @@ public class ReplicaManager {
 
             newEntry.setActive(false);
             allReplicas.put(newEntry, updateID);
+            updatedSinceLastCache = true;
         }
 
     }

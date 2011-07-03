@@ -958,7 +958,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
     @Override
     public void notifyOfFailure(final DatabaseID failedMachine) throws RPCException {
 
-        replicaManager.removeFromActiveSet(failedMachine);
+        replicaManager.markMachineAsFailed(failedMachine);
 
     }
 }
