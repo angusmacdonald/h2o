@@ -620,7 +620,6 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         final boolean obliterateExistingInstances = processTerminatesExistingInstances(arguments.get("-t"));
         final String connectionPropertiesFile = arguments.get("-p");
-        final int replicationFactor = processReplicationFactor(arguments.get("-r"));
 
         final Coordinator coord = new Coordinator(databaseName, workerLocationsInet);
 
@@ -632,10 +631,9 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         coord.startLocatorServer(34000);
 
-        if (replicationFactor > 0) {
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Setting system-wide replication factor to " + replicationFactor);
-            coord.setReplicationFactor(replicationFactor);
-        }
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Setting system-wide replication factor to " + h2oInstancesToStart);
+        coord.setReplicationFactor(h2oInstancesToStart);
+
         final String localAddress = NetUtils.getLocalAddress();
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Starting H2O instance on " + localAddress);
@@ -663,21 +661,6 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Successfully started H2O instances on worker nodes. Terminating co-ordinator.");
 
         System.exit(0);
-    }
-
-    /**
-     * 
-     * @param replicationFactorStr
-     * @return returns -1 if the replication factor was not specified.
-     */
-    private static int processReplicationFactor(final String replicationFactorStr) {
-
-        if (replicationFactorStr != null) {
-            return Integer.parseInt(replicationFactorStr);
-        }
-        else {
-            return -1;
-        }
     }
 
     /**
