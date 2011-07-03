@@ -117,6 +117,8 @@ public class MadfaceWorkerStarter {
 
         final String[] hostnames = parseHostnamesArray(args[0]);
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Creating workers on hosts: " + PrettyPrinter.toString(hostnames));
+
         final Credentials cred = new Credentials(Credentials.constructJSONString(SSH_USER, SSH_PUBLIC_KEY_PATH, SSH_PUBLIC_KEY_PASSWORD));
 
         final SortedSet<HostDescriptor> node_descriptors = HostDescriptor.createDescriptorsUsingPublicKey(Arrays.asList(hostnames), cred);

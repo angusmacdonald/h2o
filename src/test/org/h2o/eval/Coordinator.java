@@ -146,6 +146,10 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         for (final IWorker worker : inactiveWorkers) {
 
+            if (numberStarted == numberToStart) {
+                break;
+            }
+
             try {
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Starting H2O instance on worker at " + worker.getHostname());
             }
