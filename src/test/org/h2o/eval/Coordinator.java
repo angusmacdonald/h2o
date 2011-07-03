@@ -132,7 +132,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     @Override
     public int startH2OInstances(final int numberToStart) throws StartupException {
 
-        //TODO this mechanism for starting instances does not assign IDs to instances.
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "About to start H2O instance on " + numberToStart + " workers.");
 
         if (!locatorServerStarted) { throw new StartupException("The locator server has not yet been started."); }
 
@@ -634,9 +634,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Setting system-wide replication factor to " + h2oInstancesToStart);
         coord.setReplicationFactor(h2oInstancesToStart);
 
-        final String localAddress = NetUtils.getLocalAddress();
-
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Starting H2O instance on " + localAddress);
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Starting primary H2O instance on " + NetworkUtil.getLocalIPv4Address().getHostName());
 
         InetAddress host = null;
         try {

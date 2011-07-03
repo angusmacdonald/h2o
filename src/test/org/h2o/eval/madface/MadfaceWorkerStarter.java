@@ -19,7 +19,7 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
-public class EvaluationNetwork {
+public class MadfaceWorkerStarter {
 
     private static final String SPLIT_CHARACTER = " ";
     private final IMadfaceManager madface_manager;
@@ -31,7 +31,7 @@ public class EvaluationNetwork {
     private static final String SSH_PUBLIC_KEY_PATH = "/root/.ssh/id_dsa";
     private static final String SSH_PUBLIC_KEY_PASSWORD = "";
 
-    public EvaluationNetwork(final SortedSet<HostDescriptor> host_descriptors, final IApplicationManager workerManager) throws Exception {
+    public MadfaceWorkerStarter(final SortedSet<HostDescriptor> host_descriptors, final IApplicationManager workerManager) throws Exception {
 
         madface_manager = MadfaceManagerFactory.makeMadfaceManager();
 
@@ -123,7 +123,7 @@ public class EvaluationNetwork {
 
         final IApplicationManager workerManager = new WorkerManager();
 
-        new EvaluationNetwork(node_descriptors, workerManager); //returns when remote hosts have started.
+        new MadfaceWorkerStarter(node_descriptors, workerManager); //returns when remote hosts have started.
     }
 
     private static String[] parseHostnamesArray(String hostnames) throws StartupException {
