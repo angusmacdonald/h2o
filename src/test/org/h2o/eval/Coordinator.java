@@ -286,7 +286,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
                 findActiveWorkersAtThisLocation(remoteRegistry);
             }
             catch (final Exception e) {
-                ErrorHandling.exceptionError(e, "Failed to connect to a registry at '" + location + "'.");
+                ErrorHandling.errorNoEvent("Failed to connect to a registry at '" + location + "'.");
             }
 
         }
