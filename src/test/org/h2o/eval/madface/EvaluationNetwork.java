@@ -109,7 +109,7 @@ public class EvaluationNetwork {
 
         final String[] hostnames = parseHostnamesArray(args[0]);
 
-        final SortedSet<HostDescriptor> node_descriptors = HostDescriptor.createDescriptorsUsingPassword(Arrays.asList(hostnames), true);
+        final SortedSet<HostDescriptor> node_descriptors = HostDescriptor.createDescriptorsUsingPublicKey(Arrays.asList(hostnames), true);
 
         final IApplicationManager workerManager = new WorkerManager();
 
