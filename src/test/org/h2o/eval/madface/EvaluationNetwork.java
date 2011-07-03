@@ -8,6 +8,7 @@ import java.util.SortedSet;
 
 import org.h2o.util.exceptions.StartupException;
 
+import uk.ac.standrews.cs.nds.madface.Credentials;
 import uk.ac.standrews.cs.nds.madface.HostDescriptor;
 import uk.ac.standrews.cs.nds.madface.HostState;
 import uk.ac.standrews.cs.nds.madface.MadfaceManagerFactory;
@@ -22,6 +23,13 @@ public class EvaluationNetwork {
 
     private static final String SPLIT_CHARACTER = " ";
     private final IMadfaceManager madface_manager;
+
+    /*
+     * Connection information.
+     */
+    private static final String SSH_USER = "root";
+    private static final String SSH_PUBLIC_KEY_PATH = "/root/.ssh/id_dsa";
+    private static final String SSH_PUBLIC_KEY_PASSWORD = "";
 
     public EvaluationNetwork(final SortedSet<HostDescriptor> host_descriptors, final IApplicationManager workerManager) throws Exception {
 
@@ -109,7 +117,9 @@ public class EvaluationNetwork {
 
         final String[] hostnames = parseHostnamesArray(args[0]);
 
-        final SortedSet<HostDescriptor> node_descriptors = HostDescriptor.createDescriptorsUsingPublicKey(Arrays.asList(hostnames), true);
+        final Credentials cred = new Credentials(Credentials.constructJSONString(SSH_USER, SSH_PUBLIC_KEY_PATH, SSH_PUBLIC_KEY_PASSWORD));
+
+        final SortedSet<HostDescriptor> node_descriptors = HostDescriptor.createDescriptorsUsingPublicKey(Arrays.asList(hostnames), cred);
 
         final IApplicationManager workerManager = new WorkerManager();
 
