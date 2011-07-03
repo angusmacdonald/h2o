@@ -109,7 +109,7 @@ public class MadfaceWorkerStarter {
      */
     public static void main(final String[] args) throws Exception {
 
-        Diagnostic.setLevel(DiagnosticLevel.FULL);
+        Diagnostic.setLevel(DiagnosticLevel.FINAL);
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "List of machines passed in: " + PrettyPrinter.toString(args));
 

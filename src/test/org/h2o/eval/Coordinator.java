@@ -51,6 +51,7 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.FileUtil;
 import uk.ac.standrews.cs.nds.util.NetworkUtil;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
@@ -286,7 +287,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
                 findActiveWorkersAtThisLocation(remoteRegistry);
             }
             catch (final Exception e) {
-                ErrorHandling.errorNoEvent("Failed to connect to a registry at '" + location + "'.");
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to connect to a registry at '" + location + "'.");
             }
 
         }
@@ -394,6 +395,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         args.add("-p" + locatorPort);
         args.add("-dtrue");
         args.add("-f" + Worker.PATH_TO_H2O_DATABASE);
+        args.add("-D6");
         return args;
     }
 
@@ -610,7 +612,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      */
     public static void main(final String[] args) throws StartupException, IOException {
 
-        Diagnostic.setLevel(DiagnosticLevel.FULL);
+        Diagnostic.setLevel(DiagnosticLevel.FINAL);
 
         final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
 
@@ -631,14 +633,14 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
             coord.obliterateExtantInstances();
         }
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Starting locator server.");
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting locator server.");
 
         coord.startLocatorServer(34000);
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Setting system-wide replication factor to " + h2oInstancesToStart);
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Setting system-wide replication factor to " + h2oInstancesToStart);
         coord.setReplicationFactor(h2oInstancesToStart);
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Starting primary H2O instance on " + NetworkUtil.getLocalIPv4Address().getHostName());
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting primary H2O instance on " + NetworkUtil.getLocalIPv4Address().getHostName());
 
         InetAddress host = null;
         try {
@@ -648,6 +650,8 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
             throw new StartupException("Couldn't create local InetAddress.");
         }
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting secondary H2O instances on " + h2oInstancesToStart + " of the following nodes: " + PrettyPrinter.toString(workerLocationsStr));
+
         final String connectionString = coord.startH2OInstance(host); //start an instance locally as the system table.
 
         if (connectionString == null) { throw new StartupException("Failed to start the local H2O instance that is intended to become the System Table."); }
@@ -656,11 +660,14 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         if (started != h2oInstancesToStart - 1) { throw new StartupException("Failed to start the correct number of instances. Started " + started + 1 + ", but needed to start " + h2oInstancesToStart + "."); }
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Started " + h2oInstancesToStart + " H2O instances.");
+
         if (connectionPropertiesFile != null) {
             writeConnectionStringToPropertiesFile(connectionString, connectionPropertiesFile);
         }
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Successfully started H2O instances on worker nodes. Terminating co-ordinator.");
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "BenchmarkSQL connection information successfully written to '" + connectionPropertiesFile + "'.");
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Stopping co-ordinator.");
 
         System.exit(0);
     }
