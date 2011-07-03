@@ -650,7 +650,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
             throw new StartupException("Couldn't create local InetAddress.");
         }
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting secondary H2O instances on " + h2oInstancesToStart + " of the following nodes: " + PrettyPrinter.toString(workerLocationsStr));
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting secondary H2O instances on " + (h2oInstancesToStart - 1) + " of the following nodes: " + PrettyPrinter.toString(workerLocationsStr));
 
         final String connectionString = coord.startH2OInstance(host); //start an instance locally as the system table.
 
