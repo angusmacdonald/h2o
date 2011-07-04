@@ -49,14 +49,7 @@ public class AsynchronousQueryExecutor {
 
     }
 
-    private static ExecutorService queryExecutor = Executors.newCachedThreadPool(new QueryThreadFactory() {
-
-        @Override
-        public Thread newThread(final Runnable r) {
-
-            return new Thread(r);
-        }
-    });
+    private static ExecutorService queryExecutor = Executors.newCachedThreadPool();
 
     /**
      * Asynchronously executes the query on each database instance that requires the update.
@@ -159,14 +152,16 @@ public class AsynchronousQueryExecutor {
 
         final RemoteQueryExecutor qt = new RemoteQueryExecutor(sql, transactionName, replicaToExecuteQueryOn, updateID, parser, isReplicaLocal, commitOperation, tableInfo);
 
-        final FutureTask<QueryResult> future = new FutureTask<QueryResult>(new Callable<QueryResult>() {
+        final Callable<QueryResult> callableExecuteQuery = new Callable<QueryResult>() {
 
             @Override
             public QueryResult call() {
 
                 return qt.executeQuery();
             }
-        });
+        };
+
+        final FutureTask<QueryResult> future = new FutureTask<QueryResult>(callableExecuteQuery);
 
         executingQueries.add(future);
         queryExecutor.execute(future);
