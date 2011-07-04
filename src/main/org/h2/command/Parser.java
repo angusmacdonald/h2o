@@ -150,6 +150,7 @@ import org.h2.value.ValueLong;
 import org.h2.value.ValueString;
 import org.h2.value.ValueTime;
 import org.h2.value.ValueTimestamp;
+import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.PersistentSystemTable;
@@ -4779,16 +4780,23 @@ public class Parser {
             final ITableManagerRemote tableManager = session.getDatabase().getSystemTableReference().lookup(tableInfo, true);
 
             if (tableManager != null) {
-                final TableProxy tableProxy = getProxyFromTableManager(tableInfo, tableManager);
-
-                replicaLocations.addAll(tableProxy.getReplicaLocations().keySet());
-
-                if (replicaLocations.size() == 0) {
-                    ErrorHandling.errorNoEvent("No active replicas for table: " + tableName);
-                    throw new SQLException("No active replicas for table: " + tableName);
-                }
 
                 tableFound = true;
+
+                if (Settings.CHECK_LOCAL_TABLE_VALIDITY_AT_TABLE_MANAGER) {
+                    final TableProxy tableProxy = getProxyFromTableManager(tableInfo, tableManager);
+
+                    replicaLocations.addAll(tableProxy.getReplicaLocations().keySet());
+
+                    if (replicaLocations.size() == 0) {
+                        ErrorHandling.errorNoEvent("No active replicas for table: " + tableName);
+                        throw new SQLException("No active replicas for table: " + tableName);
+                    }
+                }
+                else {
+                    replicaLocations.add(database.getLocalDatabaseInstanceInWrapper());
+                }
+
             }
             else {
                 // It might be a view. Continue on and check.

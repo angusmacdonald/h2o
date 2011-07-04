@@ -49,8 +49,15 @@ public class Settings {
      * Whether to monitor the types of queries being made to the Table Manager, and the location these queries are
      * coming from.
      */
-    public static final boolean QUERY_MONITORING_ENABLED = true; //TODO make into setting in properties file.
+    public static final boolean QUERY_MONITORING_ENABLED = false; //TODO make into setting in properties file.
 
+    /**
+     * Whether, when parsing a query, to check if the reference to the given table locally (possibly a linked table) is still valid, or if
+     * it contains outdated information.
+     * 
+     * <p>Regarding outdated information, this feature isn't needed if asynchronous queries are disabled.
+     */
+    public static final boolean CHECK_LOCAL_TABLE_VALIDITY_AT_TABLE_MANAGER = false;
     /**
      * The maximum number of samples that a Table Manager may take while query monitoring before monitoring data must be trimmed.
      */
