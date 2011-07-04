@@ -140,7 +140,7 @@ public class TableProxy implements Serializable {
      */
     public int executeUpdate(final String query, final String transactionNameForQuery, final Session session) throws SQLException {
 
-        if ((allReplicas == null || allReplicas.size() == 0) && lockRequested == LockType.CREATE) {
+        if (lockRequested == LockType.CREATE && allReplicas == null || allReplicas.size() == 0) {
 
             // If we don't know of any replicas and this is a CREATE TABLE statement then we just run the query on the local DB instance.
 
