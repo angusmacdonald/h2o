@@ -581,7 +581,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
         }
         finally {
             // Release locks regardless whether the previous operations were successful.
-            if (!asynchronousCommit) {
+            if (!asynchronousCommit && tableAlreadyExists) { // if the table doesn't already exist, an exception was thrown calling completeCreationByUpdatingSystemTable(), and no locks are held.
                 lockingTable.releaseLock(lockRequest);
             }
         }
