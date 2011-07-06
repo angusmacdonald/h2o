@@ -411,19 +411,18 @@ public class TableProxyManager {
      */
     public void releaseLocksAndUpdateReplicaState(final Set<CommitResult> committedQueries, final boolean commit) throws SQLException {
 
-        hasCommitted = true;
+        hasCommitted = false;
         for (final ITableManagerRemote tableManagerProxy : getTableManagersThatHoldLocks()) {
             try {
                 tableManagerProxy.releaseLockAndUpdateReplicaState(commit, requestingDatabase, committedQueries, false);
+                hasCommitted = true;
             }
             catch (final RPCException e) {
                 ErrorHandling.errorNoEvent("Failed to release lock - couldn't contact the Table Manager for " + tableManagerProxy.getFullTableName());
                 alertSysTableToFailedTableManager(tableManagerProxy);
-                hasCommitted = false;
             }
             catch (final MovedException e) {
                 ErrorHandling.exceptionError(e, "This should never happen - migrating process should hold the lock.");
-                hasCommitted = false;
             }
 
         }

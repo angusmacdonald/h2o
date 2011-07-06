@@ -372,7 +372,7 @@ public abstract class PersistentManager {
                 return result.currentRow()[0].getInt();
             }
             else {
-                ErrorHandling.errorNoEvent("No connection ID was found - this shouldn't happen if the system has started correctly.");
+                ErrorHandling.errorNoEvent("No connection ID was found - this shouldn't happen if the system has started correctly. Query: " + sql);
                 return -1;
             }
 

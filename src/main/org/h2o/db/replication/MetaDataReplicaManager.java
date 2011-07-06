@@ -394,7 +394,7 @@ public class MetaDataReplicaManager {
                     sqlQuery.close();
                 }
                 catch (final RPCException e) {
-                    e.printStackTrace();
+                    ErrorHandling.exceptionError(e, "Query: " + query);
                 }
             }
             else {
