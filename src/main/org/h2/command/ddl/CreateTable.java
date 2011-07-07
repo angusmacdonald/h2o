@@ -4,7 +4,6 @@
  */
 package org.h2.command.ddl;
 
-import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Map;
@@ -525,13 +524,6 @@ public class CreateTable extends SchemaCommand {
                 e1.printStackTrace();
             }
 
-            try {
-                // Make Table Manager exportable first.
-                UnicastRemoteObject.exportObject(tableManager, 0);
-            }
-            catch (final Exception e) {
-                // May already be exported.
-            }
             H2OEventBus.publish(new H2OEvent(db.getID().getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
 
             tableProxy = TableProxy.getTableProxyAndLock(tableManager, ti.getFullTableName(), new LockRequest(session), LockType.CREATE, db, false);

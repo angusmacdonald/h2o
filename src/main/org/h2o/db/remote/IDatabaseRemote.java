@@ -8,8 +8,6 @@
  */
 package org.h2o.db.remote;
 
-import java.rmi.NotBoundException;
-
 import org.h2.engine.Session;
 import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.id.DatabaseID;
@@ -87,7 +85,7 @@ public interface IDatabaseRemote {
      * @throws NotBoundException
      *             Thrown if there wasn't a database instance interface exposed on the RMI proxy.
      */
-    IDatabaseInstanceRemote getDatabaseInstanceAt(String hostname, String name) throws RPCException, NotBoundException;
+    IDatabaseInstanceRemote getDatabaseInstanceAt(String hostname, String name) throws RPCException;
 
     /**
      * Find the database instance located at the location given. The parameter is used to get the hostname and RMI port of that chord nodes

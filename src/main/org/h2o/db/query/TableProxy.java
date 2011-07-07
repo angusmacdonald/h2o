@@ -216,10 +216,7 @@ public class TableProxy implements Serializable {
                 return tableManager.getTableProxy(lockType, lockRequest);
             }
         }
-        //        catch (final java.rmi.NoSuchObjectException e) {
-        //            e.printStackTrace();
-        //            throw new SQLException("Table Manager could not be accessed. It may not have been exported to RMI correctly.");
-        //        }
+
         catch (final RPCException e) {
 
             if (!alreadyCalled) {

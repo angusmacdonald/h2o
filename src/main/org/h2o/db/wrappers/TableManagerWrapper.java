@@ -9,7 +9,6 @@
 package org.h2o.db.wrappers;
 
 import java.io.Serializable;
-import java.rmi.Remote;
 
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
@@ -20,7 +19,7 @@ import uk.ac.standrews.cs.nds.rpc.RPCException;
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class TableManagerWrapper implements Serializable, Remote {
+public class TableManagerWrapper implements Serializable {
 
     private static final long serialVersionUID = -7088367740432999328L;
 

@@ -26,8 +26,6 @@
 package org.h2o.db.manager;
 
 import java.net.InetSocketAddress;
-import java.rmi.NoSuchObjectException;
-import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -93,7 +91,7 @@ import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
  * 
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
  */
-public class TableManager extends PersistentManager implements ITableManagerRemote, java.rmi.Remote, Observer {
+public class TableManager extends PersistentManager implements ITableManagerRemote, Observer {
 
     private static final long serialVersionUID = 3347740231310946286L;
 
@@ -677,11 +675,6 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
         H2OEventBus.publish(new H2OEvent(db.getID().getURL(), DatabaseStates.TABLE_MANAGER_SHUTDOWN));
 
-        try {
-            UnicastRemoteObject.unexportObject(this, true);
-        }
-        catch (final NoSuchObjectException e) {
-        }
     }
 
     /*******************************************************

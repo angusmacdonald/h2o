@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.rmi.NotBoundException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
@@ -592,18 +591,12 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
         if (dbID.equals(localMachineLocation)) { return getLocalDatabaseInstance(); }
 
-        try {
-            return getDatabaseInstanceAt(dbID.getHostname(), dbID.getID());
-        }
-        catch (final NotBoundException e) {
-            ErrorHandling.errorNoEvent("Local instance of database " + dbID + " not bound." + " Request made by " + localMachineLocation.getURLwithRMIPort());
-            e.printStackTrace();
-            return null;
-        }
+        return getDatabaseInstanceAt(dbID.getHostname(), dbID.getID());
+
     }
 
     @Override
-    public IDatabaseInstanceRemote getDatabaseInstanceAt(final String hostname, final String databaseName) throws RPCException, NotBoundException {
+    public IDatabaseInstanceRemote getDatabaseInstanceAt(final String hostname, final String databaseName) throws RPCException {
 
         try {
             final IRegistry registry = RegistryFactory.FACTORY.getRegistry(InetAddress.getByName(hostname));
@@ -1119,16 +1112,12 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
         final String lookupHostname = stLocation.getHostname();
         final String databaseName = stLocation.getID();
         IDatabaseInstanceRemote lookupInstance;
-        try {
 
-            lookupInstance = getDatabaseInstanceAt(lookupHostname, databaseName);
+        lookupInstance = getDatabaseInstanceAt(lookupHostname, databaseName);
 
-            actualSystemTableLocation = lookupInstance.getSystemTableURL();
-            systemTableRef.setSystemTableURL(actualSystemTableLocation);
-        }
-        catch (final NotBoundException e) {
-            e.printStackTrace();
-        }
+        actualSystemTableLocation = lookupInstance.getSystemTableURL();
+        systemTableRef.setSystemTableURL(actualSystemTableLocation);
+
         return actualSystemTableLocation;
     }
 
