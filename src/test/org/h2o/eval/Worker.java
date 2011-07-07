@@ -42,6 +42,7 @@ import org.h2o.util.exceptions.WorkloadParseException;
 import uk.ac.standrews.cs.nds.madface.HostDescriptor;
 import uk.ac.standrews.cs.nds.madface.JavaProcessDescriptor;
 import uk.ac.standrews.cs.nds.madface.PlatformDescriptor;
+import uk.ac.standrews.cs.nds.madface.ProcessDescriptor;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -197,7 +198,7 @@ public class Worker extends Thread implements IWorker {
     }
 
     @Override
-    public String startH2OInstance(final H2OPropertiesWrapper descriptor) throws RemoteException, StartupException {
+    public String startH2OInstance(final H2OPropertiesWrapper descriptor, final boolean startInRemoteDebug) throws RemoteException, StartupException {
 
         if (h2oProcess != null) {
             //Check if its still running.
@@ -207,7 +208,7 @@ public class Worker extends Thread implements IWorker {
         final String descriptorFileLocation = PATH_TO_H2O_DATABASE + File.separator + "descriptor.h2od";
         saveDescriptorToDisk(descriptor, descriptorFileLocation);
 
-        h2oProcess = startH2OProcess(setupBootstrapArgs(descriptorFileLocation));
+        h2oProcess = startH2OProcess(setupBootstrapArgs(descriptorFileLocation), startInRemoteDebug);
 
         sleep(10000);// wait for the database to start up.
 
@@ -354,12 +355,30 @@ public class Worker extends Thread implements IWorker {
      */
     public Process startH2OProcess(final List<String> args) throws StartupException {
 
+        return startH2OProcess(args, false);
+    }
+
+    public Process startH2OProcess(final List<String> args, final boolean startInDebug) throws StartupException {
+
         try {
-            return new HostDescriptor().getProcessManager().runProcess(new JavaProcessDescriptor().classToBeInvoked(H2O.class).args(args));
+            final ProcessDescriptor pd = new JavaProcessDescriptor().classToBeInvoked(H2O.class).jvmParams(addDebugParams(startInDebug)).args(args);
+            return new HostDescriptor().getProcessManager().runProcess(pd);
         }
         catch (final Exception e) {
             e.printStackTrace();
             throw new StartupException("Failed to create new H2O process: " + e.getMessage());
+        }
+    }
+
+    public List<String> addDebugParams(final boolean startInDebug) {
+
+        if (startInDebug) {
+            final List<String> jvmParams = new LinkedList<String>();
+            jvmParams.add("-Xdebug -Xrunjdwp:transport=dt_socket,address=8998,server=y");
+            return jvmParams;
+        }
+        else {
+            return null;
         }
     }
 

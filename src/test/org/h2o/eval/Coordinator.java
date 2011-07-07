@@ -159,7 +159,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
             }
 
             try {
-                worker.startH2OInstance(descriptorFile);
+                worker.startH2OInstance(descriptorFile, false);
 
                 activeWorkers.add(worker);
 
@@ -187,7 +187,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      * @return the JDBC connections string for the recently started database, or null if it wasn't successfully started.
      * @throws StartupException
      */
-    public String startH2OInstance(final InetAddress hostname) throws StartupException {
+    public String startH2OInstance(final InetAddress hostname, final boolean startInRemoteDebug) throws StartupException {
 
         if (!locatorServerStarted) { throw new StartupException("The locator server has not yet been started."); }
 
@@ -197,7 +197,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
             try {
                 if (worker.getHostname().equals(hostname)) {
 
-                    final String jdbcConnectionString = worker.startH2OInstance(descriptorFile);
+                    final String jdbcConnectionString = worker.startH2OInstance(descriptorFile, startInRemoteDebug);
 
                     swapWorkerToActiveSet(worker);
 
@@ -264,7 +264,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         final IWorker worker = inactiveWorkers.get(0);
 
-        worker.startH2OInstance(descriptorFile);
+        worker.startH2OInstance(descriptorFile, false);
 
         swapWorkerToActiveSet(worker);
 
@@ -606,6 +606,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      *            <li><em>-t<name></em>. Optional. Whether to terminate any existing instances running at all workers (including stored state), before doing anything else.</li>
      *            <li><em>-p<name></em>. Optional. The path/name of the properties file to create stating how to connect to the system table.</li>
      *            <li><em>-r<name></em>. Optional. The system-wide replication factor for user tables..</li>
+     *            <li><em>-d<name></em>. Optional (true/false). Whether to start the remote instance in Java remote debug mode.</li>
      *            </ul>
      * @throws StartupException Thrown if a required parameter was not specified.
      * @throws IOException 
@@ -624,7 +625,9 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         final int h2oInstancesToStart = processNumberOfInstances(arguments.get("-c"));
 
-        final boolean obliterateExistingInstances = processTerminatesExistingInstances(arguments.get("-t"));
+        final boolean obliterateExistingInstances = processBoolean(arguments.get("-t"));
+        final boolean startInRemoteDebug = processBoolean(arguments.get("-d"));;
+
         final String connectionPropertiesFile = arguments.get("-p");
 
         final Coordinator coord = new Coordinator(databaseName, workerLocationsInet);
@@ -652,7 +655,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting secondary H2O instances on " + (h2oInstancesToStart - 1) + " of the following nodes: " + PrettyPrinter.toString(workerLocationsStr));
 
-        final String connectionString = coord.startH2OInstance(host); //start an instance locally as the system table.
+        final String connectionString = coord.startH2OInstance(host, startInRemoteDebug); //start an instance locally as the system table.
 
         if (connectionString == null) { throw new StartupException("Failed to start the local H2O instance that is intended to become the System Table."); }
 
@@ -727,7 +730,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         FileUtil.writeToFile(propertiesFileLocation, prop.toString());
     }
 
-    private static boolean processTerminatesExistingInstances(final String arg) {
+    private static boolean processBoolean(final String arg) {
 
         return arg == null ? false : Boolean.valueOf(arg);
     }
