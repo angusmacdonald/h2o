@@ -164,7 +164,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
                 activeWorkers.add(worker);
 
                 numberStarted++;
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Incrementing number started: " + numberStarted);
+                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Incrementing number started: " + numberStarted);
             }
             catch (final Exception e) {
                 try {
