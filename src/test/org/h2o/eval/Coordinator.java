@@ -147,12 +147,12 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         for (final IWorker worker : inactiveWorkers) {
 
-            if (numberStarted == numberToStart) {
+            if (numberStarted >= numberToStart) {
                 break;
             }
 
             try {
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Starting H2O instance on worker at " + worker.getHostname());
+                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting H2O instance on worker at " + worker.getHostname());
             }
             catch (final RemoteException e2) {
                 //Doesn't matter because it's just a diagnostic. Handle the exception on a proper call to the worker.
@@ -164,6 +164,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
                 activeWorkers.add(worker);
 
                 numberStarted++;
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Incrementing number started: " + numberStarted);
             }
             catch (final Exception e) {
                 try {
