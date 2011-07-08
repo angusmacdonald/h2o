@@ -661,7 +661,10 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         final int started = coord.startH2OInstances(h2oInstancesToStart - 1);
 
-        if (started != h2oInstancesToStart - 1) { throw new StartupException("Failed to start the correct number of instances. Started " + started + 1 + ", but needed to start " + h2oInstancesToStart + "."); }
+        if (started != h2oInstancesToStart - 1) {
+            System.err.println("Failed to start the correct number of instances. Started " + started + 1 + ", but needed to start " + h2oInstancesToStart + ".");
+            System.exit(1);
+        }
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Started " + h2oInstancesToStart + " H2O instances.");
 
