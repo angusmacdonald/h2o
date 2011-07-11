@@ -39,7 +39,7 @@ public class WorkerManager implements IApplicationManager {
     }
 
     @Override
-    public void deployApplication(final HostDescriptor host_descriptor, final Object... args) throws Exception {
+    public void deployApplication(final HostDescriptor host_descriptor) throws Exception {
 
         host_descriptor.javaBinPath(JAVA_BIN_PATH);
         final ProcessDescriptor java_process_descriptor = new JavaProcessDescriptor().classToBeInvoked(Worker.class).args(new ArrayList<String>());
