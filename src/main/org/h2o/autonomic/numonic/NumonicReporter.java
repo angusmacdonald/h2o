@@ -20,6 +20,7 @@ import uk.ac.standrews.cs.numonic.data.NetworkData;
 import uk.ac.standrews.cs.numonic.data.ProcessData;
 import uk.ac.standrews.cs.numonic.data.SystemInfoData;
 import uk.ac.standrews.cs.numonic.distribution.DistributionCollector;
+import uk.ac.standrews.cs.numonic.event.Event;
 import uk.ac.standrews.cs.numonic.main.Numonic;
 import uk.ac.standrews.cs.numonic.reporting.IReporting;
 import uk.ac.standrews.cs.numonic.sort.data.DistributionData;
@@ -122,7 +123,7 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
     }
 
     @Override
-    public void reportFileSystemData(final MultipleSummary<FileSystemData> fileSystemSummary) throws Exception {
+    public boolean reportFileSystemData(final MultipleSummary<FileSystemData> fileSystemSummary) throws Exception {
 
         /*
          * Only check for thresholds on the file system being used by the database system, and not any others.
@@ -136,6 +137,8 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
                 }
             }
         }
+
+        return true;
 
     }
 
@@ -160,16 +163,20 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
     }
 
     @Override
-    public void reportMachineUtilData(final SingleSummary<MachineUtilisationData> summary) throws Exception {
+    public boolean reportMachineUtilData(final SingleSummary<MachineUtilisationData> summary) throws Exception {
 
         thresholdChecker.analyseNewMonitoringData(summary);
         localDataCollector.collateRankingData(summary);
+
+        return true;
     }
 
     @Override
-    public void reportSystemInfo(final SystemInfoData staticSysInfoData) throws Exception {
+    public boolean reportSystemInfo(final SystemInfoData staticSysInfoData) throws Exception {
 
         localDataCollector.setStaticSystemInfo(staticSysInfoData);
+
+        return true;
     }
 
     /* (non-Javadoc)
@@ -207,100 +214,78 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
         numonic.setRunning(false);
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Methods below are not implemented.
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     @Override
-    public void reportDistributionData(final DistributionCollector<?> machineProbability) throws Exception {
+    public boolean reportDistributionData(final DistributionCollector<?> machineProbability) throws Exception {
 
-        // System.out.println(machineProbability);
-
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override
-    public void reportFileSystemData(final DistributionCollector<FileSystemData> fileSystemSummary) throws Exception {
+    public boolean reportNetworkData(final SingleSummary<NetworkData> summary) throws Exception {
 
-        //Do nothing with data.
-
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override
-    public void reportNetworkData(final SingleSummary<NetworkData> summary) throws Exception {
+    public boolean reportAllNetworkData(final MultipleSummary<NetworkData> allNetworkSummary) throws Exception {
 
-        //Do nothing with data.
-
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override
-    public void reportAllNetworkData(final MultipleSummary<NetworkData> allNetworkSummary) throws Exception {
+    public boolean reportProcessData(final SingleSummary<ProcessData> summary) throws Exception {
 
-        //Do nothing with data.
-
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override
-    public void reportProcessData(final SingleSummary<ProcessData> summary) throws Exception {
+    public boolean reportAllProcessData(final MultipleSummary<ProcessData> summaries) throws Exception {
 
-        //Do nothing with data.
-
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override
-    public void reportAllProcessData(final MultipleSummary<ProcessData> summaries) throws Exception {
+    public boolean reportLatencyAndBandwidthData(final LatencyAndBandwidthData data) throws Exception {
 
-        //Do nothing with data.
-
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override
-    public void reportLatencyAndBandwidthData(final LatencyAndBandwidthData data) throws Exception {
+    public boolean reportEventData(final List<Event> events) throws Exception {
 
-        //Do nothing with data.
-
-    }
-
-    @Override
-    public void reportEventData(final List<uk.ac.standrews.cs.numonic.event.Event> events) throws Exception {
-
-        //Do nothing with data.
-
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override
     public List<FileSystemData> getFileSystemData(final int minutes) throws Exception {
-
-        throw new Exception("This method shouldn't be called. It isn't implemented in H2O."); //$NON-NLS-1$
-    }
-
-    @Override
-    public Collection<DistributionData> getDistributionData(final int minutes) throws Exception {
-
-        throw new Exception("This method shouldn't be called. It isn't implemented in H2O."); //$NON-NLS-1$
-    }
-
-    @Override
-    public Collection<uk.ac.standrews.cs.numonic.event.Event> getEvents(final int minutes) throws Exception {
-
-        throw new Exception("This method shouldn't be called. It isn't implemented in H2O."); //$NON-NLS-1$
-    }
-
-    @Override
-    public List<SystemInfoData> getSystemInfo() throws Exception {
 
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public void reportSystemIPChange(final String machine_id, final String new_IP, final String new_host, final String new_gateway) throws SQLException {
+    public Collection<DistributionData> getDistributionData(final int minutes) throws Exception {
 
         // TODO Auto-generated method stub
-
+        return null;
     }
 
     @Override
-    public void updateSystemInfo(final SystemInfoData data) throws Exception {
+    public Collection<Event> getEvents(final int minutes) throws Exception {
+
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void setMachineID(final String machineID) {
 
         // TODO Auto-generated method stub
 
@@ -314,7 +299,7 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
     }
 
     @Override
-    public List<String> getPassiveKnownHosts() throws Exception {
+    public List<SystemInfoData> getSystemInfo() throws Exception {
 
         // TODO Auto-generated method stub
         return null;
@@ -328,17 +313,14 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
     }
 
     @Override
-    public boolean closeConnection() throws Exception {
+    public boolean setHostActive() throws SQLException {
 
         // TODO Auto-generated method stub
         return false;
     }
 
-    @Override
-    public boolean resetConnection() throws Exception {
-
-        // TODO Auto-generated method stub
-        return false;
-    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Methods below are not implemented.
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }
