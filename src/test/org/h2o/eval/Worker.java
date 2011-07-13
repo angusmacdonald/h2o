@@ -58,6 +58,8 @@ public class Worker extends Thread implements IWorker {
 
     private static final boolean LOGGING_TO_FILE_ENABLED = true;
 
+    private static final int DATABASE_DIAGNOSTIC_LEVEL = 6; // 0 - full, 6 - none.
+
     private static String LOG_FILE_LOCATION;
 
     /**
@@ -433,7 +435,7 @@ public class Worker extends Thread implements IWorker {
             args.add("-e" + LOG_FILE_LOCATION + File.separator + "h2o-stderr.log");
         }
 
-        args.add("-D0");
+        args.add("-D" + DATABASE_DIAGNOSTIC_LEVEL);
 
         return args;
     }
