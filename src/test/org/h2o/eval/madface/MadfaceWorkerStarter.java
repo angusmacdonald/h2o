@@ -82,22 +82,22 @@ public class MadfaceWorkerStarter {
 
         final Set<URL> application_urls = new HashSet<URL>();
 
-        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/bin/h2o.jar"));
+        application_urls.add(new URL("http://www.cs.st-andrews.ac.uk/~angus/eval/h2o.jar"));
 
-        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/json.jar"));
-        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/sigar.jar"));
-        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/mindterm.jar"));
-        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/log4j.jar"));
-        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/slf4j-api-1.5.0.jar"));
-        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/org.osgi.core-1.2.0.jar"));
-        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/servlet-api-2.4.jar"));
+        application_urls.add(new URL("http://www.cs.st-andrews.ac.uk/~angus/eval/json.jar"));
+        application_urls.add(new URL("http://www.cs.st-andrews.ac.uk/~angus/eval/sigar.jar"));
+        application_urls.add(new URL("http://www.cs.st-andrews.ac.uk/~angus/eval/mindterm.jar"));
+        application_urls.add(new URL("http://www.cs.st-andrews.ac.uk/~angus/eval/log4j.jar"));
+        application_urls.add(new URL("http://www.cs.st-andrews.ac.uk/~angus/eval/slf4j-api-1.5.0.jar"));
+        application_urls.add(new URL("http://www.cs.st-andrews.ac.uk/~angus/eval/org.osgi.core-1.2.0.jar"));
+        application_urls.add(new URL("http://www.cs.st-andrews.ac.uk/~angus/eval/servlet-api-2.4.jar"));
 
-        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/libsigar-amd64-linux.so"));
-        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/libsigar-universal-macosx.dylib"));
-        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/libsigar-x86-linux.so"));
-        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/libsigar-universal64-macosx.dylib"));
-        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/sigar-x86-winnt.dll"));
-        application_urls.add(new URL("http://www-systems.cs.st-andrews.ac.uk:8080/hudson/job/h2o/lastSuccessfulBuild/artifact/lib/sigar-x86-winnt.lib"));
+        application_urls.add(new URL("http://www.cs.st-andrews.ac.uk/~angus/eval/libsigar-amd64-linux.so"));
+        application_urls.add(new URL("http://www.cs.st-andrews.ac.uk/~angus/eval/libsigar-universal-macosx.dylib"));
+        application_urls.add(new URL("http://www.cs.st-andrews.ac.uk/~angus/eval/libsigar-x86-linux.so"));
+        application_urls.add(new URL("http://www.cs.st-andrews.ac.uk/~angus/eval/libsigar-universal64-macosx.dylib"));
+        application_urls.add(new URL("http://www.cs.st-andrews.ac.uk/~angus/eval/sigar-x86-winnt.dll"));
+        application_urls.add(new URL("http://www.cs.st-andrews.ac.uk/~angus/eval/sigar-x86-winnt.lib"));
 
         return application_urls;
     }
