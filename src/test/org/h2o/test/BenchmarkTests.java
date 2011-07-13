@@ -22,7 +22,7 @@ import org.h2o.test.fixture.TestBase;
 import org.h2o.test.util.ReadBenchmarkQueriesFromFile;
 import org.junit.Test;
 
-import uk.ac.standrews.cs.nds.rpc.AbstractConnectionPool;
+import uk.ac.standrews.cs.nds.rpc.stream.StreamProxy;
 
 /**
  * Tests that check for problems that have previous occurred when running the PolePosition and BenchmarkSQL benchmarking tools.
@@ -180,7 +180,6 @@ public class BenchmarkTests extends TestBase {
         createBenchmarkSQLTables();
 
         runBenchmarkCode("testQueries/benchmarkSQL-full.txt");
-
     }
 
     /**
@@ -192,7 +191,7 @@ public class BenchmarkTests extends TestBase {
     @Test
     public void benchmarkSQLQueriesFullTwoReplicas() throws SQLException, FileNotFoundException, IOException {
 
-        AbstractConnectionPool.MAX_FREE_CONNECTIONS_PER_ADDRESS = 10;
+        StreamProxy.CONNECTION_POOL.setMaxFreeConnectionsPerAddress(10);
         createBenchmarkSQLTables();
 
         createReplicaOnB("warehouse");
@@ -205,7 +204,6 @@ public class BenchmarkTests extends TestBase {
         createReplicaOnB("item");
 
         runBenchmarkCode("testQueries/benchmarkSQL-full.txt");
-
     }
 
     /*
@@ -243,5 +241,4 @@ public class BenchmarkTests extends TestBase {
             stt.close();
         }
     }
-
 }

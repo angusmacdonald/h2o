@@ -33,7 +33,7 @@ import org.junit.BeforeClass;
 
 import uk.ac.standrews.cs.nds.registry.IRegistry;
 import uk.ac.standrews.cs.nds.registry.stream.RegistryFactory;
-import uk.ac.standrews.cs.nds.rpc.AbstractConnectionPool;
+import uk.ac.standrews.cs.nds.rpc.stream.StreamProxy;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
@@ -68,7 +68,7 @@ public class TestBase2 {
     @BeforeClass
     public static void initialSetUp() {
 
-        AbstractConnectionPool.MAX_FREE_CONNECTIONS_PER_ADDRESS = 0;
+        StreamProxy.CONNECTION_POOL.setMaxFreeConnectionsPerAddress(0);
         Diagnostic.setLevel(DiagnosticLevel.FULL);
         Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.stachord");
     }

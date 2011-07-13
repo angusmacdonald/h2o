@@ -32,7 +32,7 @@ import org.h2o.H2O;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.DatabaseURL;
 
-import uk.ac.standrews.cs.nds.rpc.AbstractConnectionPool;
+import uk.ac.standrews.cs.nds.rpc.stream.StreamProxy;
 
 /**
  * Test manager that abstracts over the details of instantiating and cleaning up a set of in-memory database instances.
@@ -61,8 +61,7 @@ public class MemoryTestManager extends TestManager {
     public void setUp() throws Exception {
 
         super.setUp();
-
-        AbstractConnectionPool.MAX_FREE_CONNECTIONS_PER_ADDRESS = 0; /* in single process tests connection pooling causes slow tearDown, so it is disabled */
+        StreamProxy.CONNECTION_POOL.setMaxFreeConnectionsPerAddress(0); /* in single process tests connection pooling causes slow tearDown, so it is disabled */
         startupLocator();
         setupDatabaseDescriptorLocation();
         initializeDatabaseProperties();

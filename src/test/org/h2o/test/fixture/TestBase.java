@@ -34,7 +34,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
-import uk.ac.standrews.cs.nds.rpc.AbstractConnectionPool;
+import uk.ac.standrews.cs.nds.rpc.stream.StreamProxy;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
@@ -63,7 +63,7 @@ public class TestBase {
     @BeforeClass
     public static void initialSetUp() throws IOException {
 
-        AbstractConnectionPool.MAX_FREE_CONNECTIONS_PER_ADDRESS = 0;
+        StreamProxy.CONNECTION_POOL.setMaxFreeConnectionsPerAddress(0);
         Constants.IS_TEAR_DOWN = false;
         Constants.IS_NON_SM_TEST = true;
 
