@@ -72,7 +72,7 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 import uk.ac.standrews.cs.stachord.impl.ChordNodeFactory;
-import uk.ac.standrews.cs.stachord.impl.PredecessorKeyUnknownException;
+import uk.ac.standrews.cs.stachord.impl.KeyUnknownException;
 import uk.ac.standrews.cs.stachord.impl.RemoteChordException;
 import uk.ac.standrews.cs.stachord.interfaces.IChordNode;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
@@ -705,7 +705,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                 ErrorHandling.errorNoEvent("RCE: Failed to connect to chord node on + " + localHostname + ":" + localPort + " known host: " + remoteHostname + ":" + remoteChordPort);
                 return false;
             }
-            catch (final PredecessorKeyUnknownException e) {
+            catch (final KeyUnknownException e) {
                 ErrorHandling.errorNoEvent("Couldn't perform Chord lookup because predecessor key was not known.");
                 connected = false;
             }
