@@ -40,6 +40,13 @@ public class SyntaxGenerator {
         return "CREATE TABLE " + tableName + " (id int);\n";
     }
 
+    protected static String sqlComplexCreateTable(final String tableName) {
+
+        //<loop-counter/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-long/>, <generated-long/>
+
+        return "CREATE TABLE " + tableName + " (id int, str_a varchar(40), str_b varchar(40), str_c varchar(40), str_d varchar(40), int_a BIGINT, int_b BIGINT);\n";
+    }
+
     protected static String terminateMachineCommand(final int id) {
 
         return "{terminate_machine id=\"" + id + "\"}\n";

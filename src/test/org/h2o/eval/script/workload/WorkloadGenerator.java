@@ -167,10 +167,10 @@ public class WorkloadGenerator {
              */
 
             if (r.nextDouble() > spec.getReadWriteRatio()) { //this should be a write.
-                script.append("INSERT INTO " + tablesInWorkload.get(i % tablesInWorkload.size()) + " VALUES (<loop-counter/>);\n");
+                script.append("INSERT INTO " + tablesInWorkload.get(i % tablesInWorkload.size()) + " VALUES (<loop-counter/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-long/>, <generated-long/>);\n");
             }
             else { //this should be a read.
-                script.append("SELECT * FROM " + tablesInWorkload.get(i % tablesInWorkload.size()) + ";\n");
+                script.append("SELECT * FROM " + tablesInWorkload.get(i % tablesInWorkload.size()) + " WHERE int_a > " + WorkloadExecutor.generateBigIntegerValue() + ";\n");
             }
 
             if (spec.getSleepTime() > 0) {

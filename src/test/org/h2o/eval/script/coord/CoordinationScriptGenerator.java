@@ -127,7 +127,7 @@ public class CoordinationScriptGenerator {
             final String tableName = TABLE_NAME_PREFIX + nextTableID();
 
             grouping.addTable(tableLocation, tableName);
-            script.append(SyntaxGenerator.createTableCommand(tableLocation, SyntaxGenerator.sqlSimpleCreateTable(tableName)));
+            script.append(SyntaxGenerator.createTableCommand(tableLocation, SyntaxGenerator.sqlComplexCreateTable(tableName)));
         }
 
         return grouping;

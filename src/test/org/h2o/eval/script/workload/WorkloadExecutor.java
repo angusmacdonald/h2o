@@ -1,5 +1,7 @@
 package org.h2o.eval.script.workload;
 
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -20,6 +22,8 @@ import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
  */
 public class WorkloadExecutor {
 
+    private static final String GENERATED_LONG_PLACEHOLDER = "<generated-long/>";
+    private static final String GENERATED_STRING_PLACEHOLDER = "<generated-string/>";
     private static final String COMMENT = "#";
     private static final String SLEEP_OPEN_TAG = "<sleep>";
     private static final String SLEEP_CLOSE_TAG = "</sleep>";
@@ -29,6 +33,8 @@ public class WorkloadExecutor {
     private static final String INCREMENT_COUNTER_TAG = "<increment/>";
     private static final String LOOP_END_TAG = "</loop>";
     private static final long MAX_WORKLOAD_DURATION = 60 * 60;
+
+    private final static SecureRandom random = new SecureRandom();
 
     /**
      * 
@@ -146,6 +152,14 @@ public class WorkloadExecutor {
 
                     query = query.replaceAll(LOOP_COUNTER_PLACEHOLDER, uniqueCounter + "");
 
+                    while (query.contains(GENERATED_STRING_PLACEHOLDER)) {
+                        query.replaceFirst(GENERATED_STRING_PLACEHOLDER, generateRandom40CharString());
+                    }
+
+                    while (query.contains(GENERATED_LONG_PLACEHOLDER)) {
+                        query.replaceFirst(GENERATED_LONG_PLACEHOLDER, generateBigIntegerValue());
+                    }
+
                     Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing query: " + query);
 
                     boolean successfullyExecuted = true;
@@ -200,6 +214,16 @@ public class WorkloadExecutor {
 
         final WorkloadResult result = new WorkloadResult(queryLog, successfullyExecutedTransactions, attemptedTransactions, worker);
         return result;
+    }
+
+    public static String generateBigIntegerValue() {
+
+        return new BigInteger(100, random) + "";
+    }
+
+    public static String generateRandom40CharString() {
+
+        return new BigInteger(200, random).toString(32);
     }
 
 }

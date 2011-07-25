@@ -154,7 +154,7 @@ public class CoordinatorTests {
 
         eval.startLocatorServer(34000);
 
-        eval.executeCoordinatorScript("generatedWorkloads\\2011-06-28-15-27-10\\coordinator.coord");
+        eval.executeCoordinatorScript("src/test/org/h2o/eval/workloads/coordinator.coord");
 
         eval.blockUntilWorkloadsComplete();
     }
@@ -188,7 +188,7 @@ public class CoordinatorTests {
         final TableClustering clusteringSpec = new TableClustering(Clustering.GROUPED, 5);
 
         final Set<WorkloadType> workloadSpecs = new HashSet<WorkloadType>();
-        final WorkloadType spec = new WorkloadType(0.0, false, 0, true, 120, LinkToTableLocation.WORKLOAD_PER_TABLE, false);
+        final WorkloadType spec = new WorkloadType(0.5, false, 0, true, 120, LinkToTableLocation.WORKLOAD_PER_TABLE, false);
         workloadSpecs.add(spec);
 
         return CoordinationScriptGenerator.generateCoordinationScript(runtime, probabilityOfFailure, frequencyOfFailure, numberOfMachines, numberOfTables, clusteringSpec, workloadSpecs);
