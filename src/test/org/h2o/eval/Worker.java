@@ -396,7 +396,7 @@ public class Worker extends Thread implements IWorker {
             if (connection == null) { return false; }
 
             final Statement createStatement = connection.createStatement();
-            createStatement.executeQuery("SET WRITE_DELAY 0");
+            createStatement.executeUpdate("SET WRITE_DELAY 0");
             return true;
         }
         catch (final SQLException e) {
