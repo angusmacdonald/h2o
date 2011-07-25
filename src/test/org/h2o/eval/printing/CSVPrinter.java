@@ -42,7 +42,10 @@ public class CSVPrinter {
 
         for (final WorkloadResult workloadResult : workloadResults) {
 
-            csv.append(printQueryLog(workloadResult.getQueryLog(), workloadResult.getLocationOfExecution(), tableNames, startTime));
+            if (workloadResult.getQueryLog() != null) {
+
+                csv.append(printQueryLog(workloadResult.getQueryLog(), workloadResult.getLocationOfExecution(), tableNames, startTime));
+            }
         }
 
         FileUtil.writeToFile(fileLocation, csv.toString());

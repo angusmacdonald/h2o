@@ -56,7 +56,8 @@ public class Workload extends Thread implements IWorkload {
             return WorkloadExecutor.execute(connection, queries, worker, duration);
         }
         catch (final Exception e) {
-            return new WorkloadResult(e);
+            e.printStackTrace();
+            return new WorkloadResult(e, worker);
         }
 
     }

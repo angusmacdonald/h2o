@@ -180,8 +180,8 @@ public class CoordinatorTests {
 
     public String generateCoordinationScript() throws IOException {
 
-        final long runtime = 60000;
-        final double probabilityOfFailure = 0.5;
+        final long runtime = 120000;
+        final double probabilityOfFailure = 0;
         final long frequencyOfFailure = 30000;
         final int numberOfMachines = 2;
         final int numberOfTables = 1;

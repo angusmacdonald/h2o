@@ -153,11 +153,11 @@ public class WorkloadExecutor {
                     query = query.replaceAll(LOOP_COUNTER_PLACEHOLDER, uniqueCounter + "");
 
                     while (query.contains(GENERATED_STRING_PLACEHOLDER)) {
-                        query.replaceFirst(GENERATED_STRING_PLACEHOLDER, generateRandom40CharString());
+                        query = query.replaceFirst(GENERATED_STRING_PLACEHOLDER, generateRandom40CharString());
                     }
 
                     while (query.contains(GENERATED_LONG_PLACEHOLDER)) {
-                        query.replaceFirst(GENERATED_LONG_PLACEHOLDER, generateBigIntegerValue());
+                        query = query.replaceFirst(GENERATED_LONG_PLACEHOLDER, generateBigIntegerValue());
                     }
 
                     Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing query: " + query);
@@ -179,6 +179,7 @@ public class WorkloadExecutor {
                         }
                     }
                     catch (final SQLException e) {
+                        e.printStackTrace();
                         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to execute '" + query + "'. Error: " + e.getMessage());
                         successfullyExecuted = false;
                     }
@@ -218,12 +219,12 @@ public class WorkloadExecutor {
 
     public static String generateBigIntegerValue() {
 
-        return new BigInteger(100, random) + "";
+        return new BigInteger(40, random) + "";
     }
 
     public static String generateRandom40CharString() {
 
-        return new BigInteger(200, random).toString(32);
+        return "'" + new BigInteger(200, random).toString(32) + "'";
     }
 
 }

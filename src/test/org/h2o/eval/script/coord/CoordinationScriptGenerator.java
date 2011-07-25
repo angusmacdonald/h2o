@@ -58,6 +58,9 @@ public class CoordinationScriptGenerator {
         return scriptLocation;
     }
 
+    /*
+     * Machine 0 never fails.
+     */
     private static void generateFailure(final long runtime, final double probabilityOfFailure, final long frequencyOfFailure, final int numberOfMachines, final StringBuilder script) {
 
         long currentTimeInScript = frequencyOfFailure;
@@ -66,7 +69,7 @@ public class CoordinationScriptGenerator {
 
         while (currentTimeInScript < runtime) {
 
-            for (int id = 0; id < numberOfMachines; id++) {
+            for (int id = 1; id < numberOfMachines; id++) {
                 if (r.nextDouble() < probabilityOfFailure) {
                     script.append(SyntaxGenerator.terminateMachineCommand(id));
                 }

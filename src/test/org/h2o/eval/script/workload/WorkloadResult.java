@@ -30,7 +30,7 @@ public class WorkloadResult implements Serializable {
      */
     private long totalAttemptedTransactions;
 
-    private IWorker worker;
+    private final IWorker worker;
 
     private String locationOfExecution;
     private final List<QueryLogEntry> queryLog;
@@ -40,11 +40,12 @@ public class WorkloadResult implements Serializable {
      * @param e Either an SQLException, thrown because a database connection could not be created, or a WorkloadParseException, because the workload script
      * is not syntactically correct.
      */
-    public WorkloadResult(final Exception e) {
+    public WorkloadResult(final Exception e, final IWorker worker) {
 
         successfullyStarted = false;
         exception = e;
         queryLog = null;
+        this.worker = worker;
     }
 
     public WorkloadResult(final List<QueryLogEntry> queryLog, final long successfullyExecutedTransactions, final long totalAttemptedTransactions, final IWorker worker) {
@@ -103,7 +104,13 @@ public class WorkloadResult implements Serializable {
 
     public long getStartTime() {
 
-        return queryLog.get(0).timeOfLogEntry;
+        final QueryLogEntry queryLogEntry = queryLog.get(0);
+        if (queryLogEntry != null) {
+            return queryLogEntry.timeOfLogEntry;
+        }
+        else {
+            return Long.MAX_VALUE;
+        }
     }
 
 }

@@ -349,7 +349,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     private synchronized void removeFromSetOfActiveWorkloads(final IWorker worker) {
 
         Integer count = workersWithActiveWorkloads.get(worker);
-        if (count == 1) {
+        if (count != null && count == 1) {
             workersWithActiveWorkloads.remove(worker);
         }
         else {
@@ -549,13 +549,15 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
             else if (action.startsWith("{sleep=")) {
                 final int sleepTime = CoordinationScriptExecutor.parseSleepOperation(action);
 
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Sleeping for '" + sleepTime + "'");
+
                 try {
                     Thread.sleep(sleepTime);
                 }
                 catch (final InterruptedException e) {
                 }
 
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Sleeping for '" + sleepTime + "'");
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Finished sleeping.");
 
             }
             else {
@@ -624,10 +626,11 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         final List<InetAddress> workerLocationsInet = convertFromStringToInetAddress(workerLocationsStr);
         workerLocationsInet.add(NetworkUtil.getLocalIPv4Address());
 
-        final int h2oInstancesToStart = processNumberOfInstances(arguments.get("-c"));
+        final int h2oInstancesToStart = processInteger(arguments.get("-c"));
+        final int replicationFactor = processInteger(arguments.get("-r"));
 
         final boolean obliterateExistingInstances = processBoolean(arguments.get("-t"));
-        final boolean startInRemoteDebug = processBoolean(arguments.get("-d"));;
+        final boolean startInRemoteDebug = processBoolean(arguments.get("-d"));
 
         final String connectionPropertiesFile = arguments.get("-p");
 
@@ -641,8 +644,8 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         coord.startLocatorServer(34000);
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Setting system-wide replication factor to " + h2oInstancesToStart);
-        coord.setReplicationFactor(h2oInstancesToStart);
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Setting system-wide replication factor to " + replicationFactor);
+        coord.setReplicationFactor(replicationFactor);
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting primary H2O instance on " + NetworkUtil.getLocalIPv4Address().getHostName());
 
@@ -739,10 +742,10 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         return arg == null ? false : Boolean.valueOf(arg);
     }
 
-    private static int processNumberOfInstances(final String numberOfInstances) throws StartupException {
+    private static int processInteger(final String integer) throws StartupException {
 
-        if (numberOfInstances != null) {
-            return Integer.parseInt(numberOfInstances);
+        if (integer != null) {
+            return Integer.parseInt(integer);
         }
         else {
             throw new StartupException("Number of instances to start was not specified.");

@@ -102,7 +102,7 @@ public class QueryLogEntry implements Serializable {
 
             else if (query.contains("SELECT * FROM ")) {
                 queryType = QueryType.SELECT;
-                tableInvolved = query.substring("SELECT * FROM ".length(), query.indexOf(";"));
+                tableInvolved = query.substring("SELECT * FROM ".length(), query.indexOf(" WHERE"));
             }
 
             if (tableInvolved != null) {
