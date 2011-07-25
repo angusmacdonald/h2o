@@ -201,6 +201,7 @@ public class CommandContainer extends Command {
                 }
                 else {
                     updateCount = prepared.update();
+                    session.getDatabase().sync();
                 }
 
             }
