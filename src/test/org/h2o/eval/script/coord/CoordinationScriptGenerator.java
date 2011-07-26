@@ -122,7 +122,7 @@ public class CoordinationScriptGenerator {
 
         final TableGrouping grouping = new TableGrouping();
 
-        int tableLocation = 0;
+        int tableLocation = 1;
 
         for (int i = 0; i < numberOfTables; i++) { //creates all tables on the first machine.
 
@@ -137,6 +137,8 @@ public class CoordinationScriptGenerator {
     }
 
     /**
+     * The first machine never stores tables. 
+     * 
      * Decide where to locate a new table based on the type of clustering (of tables) that is requested, and where tables have already been created.
      * @param clustering            Type of clustering to be employed.
      * @param numberOfMachines      The number of machines available.
@@ -149,14 +151,14 @@ public class CoordinationScriptGenerator {
         int newTableLocation = -1;
 
         if (clustering.getClustering().equals(TableClustering.Clustering.COLOCATED)) {
-            newTableLocation = 0; //co-locate on the first machine.
+            newTableLocation = 1; //co-locate on the second machine.
         }
         else if (clustering.getClustering().equals(TableClustering.Clustering.GROUPED)) {
             if (tablesCreatedSoFar > 0 && tablesCreatedSoFar % clustering.getGroupSize() == 0) {
                 newTableLocation = lastTableLocation + 1;
 
                 if (newTableLocation > numberOfMachines - 1) {
-                    newTableLocation = 0;
+                    newTableLocation = 1;
                 }
             }
             else {
@@ -167,7 +169,7 @@ public class CoordinationScriptGenerator {
             newTableLocation = tablesCreatedSoFar;
 
             if (newTableLocation > numberOfMachines - 1) {
-                newTableLocation = 0;
+                newTableLocation = 1;
             }
         }
         else {
