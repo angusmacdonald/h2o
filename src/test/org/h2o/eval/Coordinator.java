@@ -90,6 +90,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
     private final Date startDate = new Date();
     private final List<WorkloadResult> workloadResults = new LinkedList<WorkloadResult>();
+    private IWorker reserved_machine = null;
 
     /**
      * 
@@ -272,15 +273,30 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         return worker;
     }
 
+    private IWorker reserveH2OInstance() throws StartupException, RemoteException {
+
+        if (inactiveWorkers.size() == 0) {
+            scanForWorkerNodes(workerLocations);
+
+            if (inactiveWorkers.size() == 0) { throw new StartupException("Could not instantiated another H2O instance."); }
+        }
+
+        final IWorker worker = inactiveWorkers.get(0);
+
+        swapWorkerToActiveSet(worker);
+
+        return worker;
+    }
+
     /**
      * Go through the set of worker hosts and look for active worker instances in the registry on each host. In testing in particular there may
      * be multiple workers on each host.
-     * @param workerLocationsLocal IP addresses or hostnames of machines which are running worker nodes. You can provide the {@link #workerLocations} field
+     * @param workerLocations IP addresses or hostnames of machines which are running worker nodes. You can provide the {@link #workerLocations} field
      * as a parameter, or something else.
      */
-    private void scanForWorkerNodes(final Set<InetAddress> workerLocationsLocal) {
+    private void scanForWorkerNodes(final Set<InetAddress> workerLocations) {
 
-        for (final InetAddress location : workerLocationsLocal) {
+        for (final InetAddress location : workerLocations) {
 
             try {
                 final Registry remoteRegistry = LocateRegistry.getRegistry(location.getHostName());
@@ -413,6 +429,8 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         final IWorker worker = scriptedInstances.get(Integer.valueOf(id));
 
+        if (worker == null) { throw new StartupException("No worker exists for this ID: " + id); }
+
         executeWorkload(worker, workloadFileLocation, duration);
 
     }
@@ -530,6 +548,27 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
                 if (startInstruction.fail_after != null) {
                     killMonitor.addKillOrder(startInstruction.id, System.currentTimeMillis() + startInstruction.fail_after);
                 }
+            }
+            else if (action.startsWith("{reserve_machine")) {
+
+                final MachineInstruction reserveInstruction = CoordinationScriptExecutor.parseReserveMachine(action);
+
+                reserved_machine = reserveH2OInstance();
+
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Reserved machine with ID '" + reserveInstruction.id + "'");
+
+            }
+            else if (action.startsWith("{start_reserved_machine")) {
+
+                final MachineInstruction reserveInstruction = CoordinationScriptExecutor.parseStartReservedMachine(action);
+
+                if (reserved_machine == null) { throw new WorkloadParseException("Tried to start a reserved machine without reserving one first with the 'reserve_machine' command."); }
+
+                reserved_machine.startH2OInstance(descriptorFile, false);
+
+                scriptedInstances.put(reserveInstruction.id, reserved_machine);
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Started Reserved machine with ID '" + reserveInstruction.id + "'");
+
             }
             else if (action.startsWith("{terminate_machine")) {
 

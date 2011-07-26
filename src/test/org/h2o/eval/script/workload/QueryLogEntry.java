@@ -118,7 +118,10 @@ public class QueryLogEntry implements Serializable {
     public String toCSV(final DateFormat dateformatter, final String locationOfExecution, final Collection<String> tableNames, final long startTime) {
 
         final String tablesInvolvedString = PrettyPrinter.toString(tablesInvolved, ";", false);
-        String row = timeOfLogEntry - startTime + "," + timeToExecute + "," + locationOfExecution + "," + tablesInvolvedString + "," + getNumberOf(QueryType.INSERT) + "," + getNumberOf(QueryType.SELECT) + ",";
+        final long timeOfTransactionMS = timeOfLogEntry - startTime;
+        final int timeOfTransactionSec = (int) (timeOfTransactionMS / 1000);
+
+        String row = timeOfTransactionMS + "," + timeOfTransactionSec + ", " + timeToExecute + "," + locationOfExecution + "," + tablesInvolvedString + "," + getNumberOf(QueryType.INSERT) + "," + getNumberOf(QueryType.SELECT) + ",";
 
         for (final String tableName : tableNames) {
             if (tableName.equals(tablesInvolvedString)) {
@@ -150,7 +153,7 @@ public class QueryLogEntry implements Serializable {
 
     public static String toCSVHeader(final Collection<String> tableNames) {
 
-        String header = "Time of Transaction, Time To Execute, Location of Execution, Tables Involved, Insert Queries, Select Queries, ";
+        String header = "Time of Transaction (ms), Time of Transaction (s), Time To Execute, Location of Execution, Tables Involved, Insert Queries, Select Queries, ";
 
         for (final String tableName : tableNames) {
             header += tableName + ",";

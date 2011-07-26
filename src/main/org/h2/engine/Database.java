@@ -1087,32 +1087,32 @@ public class Database implements DataHandler, Observer, ISystemStatus {
 
     public void startDatabaseInstanceServer() {
 
-        int preferredDatabaseInstancePort = Integer.parseInt(databaseSettings.get("DATABASE_INSTANCE_SERVER_PORT"));
-        preferredDatabaseInstancePort = H2ONetUtils.getInactiveTCPPort(preferredDatabaseInstancePort);
+        int databaseServerPort = Integer.parseInt(databaseSettings.get("DATABASE_INSTANCE_SERVER_PORT"));
+        databaseServerPort = H2ONetUtils.getInactiveTCPPort(databaseServerPort);
 
-        database_instance_server = new DatabaseInstanceServer(getLocalDatabaseInstance(), preferredDatabaseInstancePort, getRemoteInterface().getApplicationRegistryIDForLocalDatabase());
+        database_instance_server = new DatabaseInstanceServer(getLocalDatabaseInstance(), databaseServerPort, getRemoteInterface().getApplicationRegistryIDForLocalDatabase());
 
         try {
             database_instance_server.start(true); // true means: allow registry entry for this database ID to be overwritten
-            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Database Instance Server started for database " + getID() + " on port " + preferredDatabaseInstancePort + ".");
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Database Instance Server started for database " + getID() + " on port " + databaseServerPort + ".");
         }
         catch (final Exception e) {
             ErrorHandling.hardExceptionError(e, "Couldn't start database instance server.");
         }
 
-        databaseRemote.setDatabaseInstanceServerPort(preferredDatabaseInstancePort);
+        databaseRemote.setDatabaseInstanceServerPort(databaseServerPort);
     }
 
     public void startTableManagerInstanceServer() {
 
-        int preferredTableManagerPort = Integer.parseInt(databaseSettings.get("TABLE_MANAGER_SERVER_PORT"));
-        preferredTableManagerPort = H2ONetUtils.getInactiveTCPPort(preferredTableManagerPort);
+        int tableManagerServerPort = Integer.parseInt(databaseSettings.get("TABLE_MANAGER_SERVER_PORT"));
+        tableManagerServerPort = H2ONetUtils.getInactiveTCPPort(tableManagerServerPort);
 
-        table_manager_instance_server = new TableManagerInstanceServer(preferredTableManagerPort);
+        table_manager_instance_server = new TableManagerInstanceServer(tableManagerServerPort);
 
         try {
             table_manager_instance_server.start();
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Table Manager Instance Server started for database " + getID() + " on port " + preferredTableManagerPort + ".");
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Table Manager Instance Server started for database " + getID() + " on port " + tableManagerServerPort + ".");
         }
         catch (final Exception e) {
             ErrorHandling.hardExceptionError(e, "Couldn't start table manager instance server.");

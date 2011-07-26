@@ -1,0 +1,6 @@
+{start_machine id="0"}
+{sleep="3000"}
+{start_machine id="1"}
+{0} CREATE TABLE test0 (id int, str_a varchar(40), str_b varchar(40), str_c varchar(40), str_d varchar(40), int_a BIGINT, int_b BIGINT);
+{0} {execute_workload="src/test/org/h2o/eval/workloads/table-test0.workload" duration="60000"}
+{sleep="30000"}

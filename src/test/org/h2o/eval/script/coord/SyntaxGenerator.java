@@ -19,6 +19,24 @@ public class SyntaxGenerator {
         return startMachineCommand;
     }
 
+    public static String createReserveMachineCommand(final int id) {
+
+        return "{reserve_machine id=\"" + id + "\"}\n";
+
+    }
+
+    public static String createStartReservedMachineCommand(final int id, final boolean sleepBeforeStart) {
+
+        String command = "";
+
+        if (sleepBeforeStart) {
+            command += SyntaxGenerator.createSleepCommand(10000);
+        }
+
+        return command + "{start_reserved_machine id=\"" + id + "\"}\n";
+
+    }
+
     protected static String createSleepCommand(final long sleepTime) {
 
         return "{sleep=\"" + sleepTime + "\"}\n";
@@ -51,4 +69,5 @@ public class SyntaxGenerator {
 
         return "{terminate_machine id=\"" + id + "\"}\n";
     }
+
 }

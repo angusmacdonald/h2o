@@ -160,6 +160,23 @@ public class CoordinatorTests {
     }
 
     @Test
+    public void runStaticGeneratedCoordinationScript2() throws Exception {
+
+        workers = new IWorker[3];
+        for (int i = 0; i < workers.length; i++) {
+            workers[i] = new Worker();
+        }
+
+        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
+
+        eval.startLocatorServer(34000);
+
+        eval.executeCoordinatorScript("src/test/org/h2o/eval/workloads/failure/coordinator.coord");
+
+        eval.blockUntilWorkloadsComplete();
+    }
+
+    @Test
     public void generateThenRunCoordinationScript() throws Exception {
 
         final String coordScriptLocation = generateCoordinationScript();
@@ -181,9 +198,9 @@ public class CoordinatorTests {
     public String generateCoordinationScript() throws IOException {
 
         final long runtime = 60000;
-        final double probabilityOfFailure = 0;
+        final double probabilityOfFailure = 0.5;
         final long frequencyOfFailure = 30000;
-        final int numberOfMachines = 2;
+        final int numberOfMachines = 3;
         final int numberOfTables = 1;
         final TableClustering clusteringSpec = new TableClustering(Clustering.GROUPED, 5);
 

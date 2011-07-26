@@ -67,6 +67,8 @@ public class CoordinationScriptGenerator {
 
         final Random r = new Random(System.currentTimeMillis());
 
+        script.append(SyntaxGenerator.createSleepCommand(frequencyOfFailure)); // don't have any machines fail immediately.
+
         while (currentTimeInScript < runtime) {
 
             for (int id = 1; id < numberOfMachines; id++) {
@@ -181,9 +183,15 @@ public class CoordinationScriptGenerator {
 
     public static void startMachines(final int numberOfMachines, final StringBuilder script) {
 
+        //final int reservedMachineID = nextMachineID();
+        //   script.append(SyntaxGenerator.createReserveMachineCommand(reservedMachineID));
+
         for (int i = 0; i < numberOfMachines; i++) {
             script.append(SyntaxGenerator.createStartMachineCommand(nextMachineID(), i == 0));
         }
+
+        //    script.append(SyntaxGenerator.createStartReservedMachineCommand(reservedMachineID, true));
+
     }
 
     private static int nextMachineID() {

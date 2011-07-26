@@ -35,11 +35,27 @@ public class CoordinationScriptExecutor {
         return new MachineInstruction(id, fail_after);
     }
 
-    public static MachineInstruction parseTerminateMachine(final String action) throws WorkloadParseException {
+    public static MachineInstruction parseReserveMachine(final String action) throws WorkloadParseException {
 
-        //example format: {terminate_machine id="0"}
+        //format: {reserve_machine id="<machine-id>" fail-after=<time_to_failure>}
+        //example format: {reserve_machine id="0" fail-after="30000"}
 
-        final Pattern p = Pattern.compile("\\{terminate_machine id=\"(\\d+)\"\\}");
+        final Pattern p = Pattern.compile("\\{reserve_machine id=\"(\\d+)\"\\}");
+
+        return parseReserveOperation(action, p);
+    }
+
+    public static MachineInstruction parseStartReservedMachine(final String action) throws WorkloadParseException {
+
+        //format: {start_reserved_machine id="<machine-id>" fail-after=<time_to_failure>}
+        //example format: {start_reserved_machine id="0" fail-after="30000"}
+
+        final Pattern p = Pattern.compile("\\{start_reserved_machine id=\"(\\d+)\"\\}");
+
+        return parseReserveOperation(action, p);
+    }
+
+    public static MachineInstruction parseReserveOperation(final String action, final Pattern p) throws WorkloadParseException {
 
         final Matcher matcher = p.matcher(action);
 
@@ -54,6 +70,15 @@ public class CoordinationScriptExecutor {
         }
 
         return new MachineInstruction(id, null);
+    }
+
+    public static MachineInstruction parseTerminateMachine(final String action) throws WorkloadParseException {
+
+        //example format: {terminate_machine id="0"}
+
+        final Pattern p = Pattern.compile("\\{terminate_machine id=\"(\\d+)\"\\}");
+
+        return parseReserveOperation(action, p);
     }
 
     public static Instruction parseQuery(final String action) throws WorkloadParseException {
