@@ -121,7 +121,10 @@ public class QueryLogEntry implements Serializable {
         final long timeOfTransactionMS = timeOfLogEntry - startTime;
         final int timeOfTransactionSec = (int) (timeOfTransactionMS / 1000);
 
-        String row = timeOfTransactionMS + "," + timeOfTransactionSec + ", " + timeToExecute + "," + locationOfExecution + "," + tablesInvolvedString + "," + getNumberOf(QueryType.INSERT) + "," + getNumberOf(QueryType.SELECT) + ",";
+        final String successfulExecutionTime = (successfulExecution ? timeToExecute : "=NA()") + "";
+        final String unsuccessfulExecutionTime = (!successfulExecution ? timeToExecute : "=NA()") + "";
+
+        String row = timeOfTransactionMS + "," + timeOfTransactionSec + ", " + successfulExecutionTime + "," + unsuccessfulExecutionTime + ", " + locationOfExecution + "," + tablesInvolvedString + "," + getNumberOf(QueryType.INSERT) + "," + getNumberOf(QueryType.SELECT) + ",";
 
         for (final String tableName : tableNames) {
             if (tableName.equals(tablesInvolvedString)) {
@@ -153,7 +156,7 @@ public class QueryLogEntry implements Serializable {
 
     public static String toCSVHeader(final Collection<String> tableNames) {
 
-        String header = "Time of Transaction (ms), Time of Transaction (s), Time To Execute, Location of Execution, Tables Involved, Insert Queries, Select Queries, ";
+        String header = "Time of Transaction (ms), Time of Transaction (s), Time To Execute if Successful, Time to Execute if Unsuccessful, Location of Execution, Tables Involved, Insert Queries, Select Queries, ";
 
         for (final String tableName : tableNames) {
             header += tableName + ",";

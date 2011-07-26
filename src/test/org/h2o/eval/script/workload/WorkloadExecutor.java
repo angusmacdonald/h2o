@@ -160,6 +160,13 @@ public class WorkloadExecutor {
                          */
                         try {
                             stat.execute("ROLLBACK;");
+
+                            final long timeAfterQueryExecution = System.currentTimeMillis();
+
+                            queryLog.add(QueryLogEntry.createQueryLogEntry(queriesInThisTransaction, false, timeAfterQueryExecution - timeBeforeQueryExecution));
+
+                            timeBeforeQueryExecution = System.currentTimeMillis(); // when auto-commit isn't enabled, the transaction starts after the previous one finishes.
+
                             queriesInThisTransaction.clear();
                         }
                         catch (final Exception e) {
