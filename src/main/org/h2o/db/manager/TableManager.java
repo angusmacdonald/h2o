@@ -465,7 +465,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
             try {
                 // the update could be sent to any or all machines in the system.
 
-                potentialReplicaLocations = getDB().getSystemTableReference().getRankedListOfInstances(createReplicaMetric, Requirements.NO_FILTERING);
+                potentialReplicaLocations = getDB().getSystemTableReference().getRankedListOfInstances(createReplicaMetric, Requirements.FILTER_NO_REPLICA_INSTANCES);
             }
             catch (final RPCException e) {
                 e.printStackTrace();
