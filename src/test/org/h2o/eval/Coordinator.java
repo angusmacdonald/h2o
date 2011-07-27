@@ -650,7 +650,8 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      *            <li><em>-r<name></em>. Optional. The system-wide replication factor for user tables..</li>
      *            <li><em>-d<name></em>. Optional (true/false). Whether to start the remote instance in Java remote debug mode.</li>
      *            </ul>
-     * @throws StartupException Thrown if a required parameter was not specified.
+     * @throws StartupExcepti
+     * on Thrown if a required parameter was not specified.
      * @throws IOException 
      */
     public static void main(final String[] args) throws StartupException, IOException {

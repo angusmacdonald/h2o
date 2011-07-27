@@ -28,7 +28,7 @@ public class ExternalNumonicTest implements Observer {
 
         final Threshold[] thresholds = ThresholdChecker.getThresholds("default_numonic_thresholds.properties");
 
-        final NumonicReporter reporter = new NumonicReporter("default_numonic_settings.properties", "C:\\", null, null, null, thresholds);
+        final NumonicReporter reporter = new NumonicReporter("default_numonic_settings.properties", "C:\\", null, null, null, null, thresholds);
 
         reporter.addObserver(this);
 

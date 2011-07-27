@@ -218,7 +218,7 @@ public class MetaDataReplicaManager {
                     Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "System table was NULL so the meta-data manager is unable to replicate.");
                     return;
                 }
-                databaseInstances = systemTableRef.getRankedListOfInstances(createMetaDataReplicaMetric, Requirements.NO_FILTERING);
+                databaseInstances = systemTableRef.getRankedListOfInstances(createMetaDataReplicaMetric, Requirements.FILTER_NO_REPLICA_INSTANCES);
             }
             catch (final Exception e) {
                 Diagnostic.trace(DiagnosticLevel.FULL, "Error trying to contact system table (for the purposes of discovering new instances on which to replicate data). This is not a fatal error. No recovery is attempted.");

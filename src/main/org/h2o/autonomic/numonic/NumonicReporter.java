@@ -10,6 +10,7 @@ import java.util.Observer;
 import org.h2o.autonomic.numonic.interfaces.ILocalDataCollector;
 import org.h2o.autonomic.numonic.interfaces.INumonic;
 import org.h2o.autonomic.numonic.threshold.Threshold;
+import org.h2o.autonomic.settings.Settings;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 
@@ -57,6 +58,8 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
      */
     private final String fileSystem;
 
+    private final Settings databaseSettings;
+
     /**
      * 
      * @param numonicPropertiesFileName Path to the configuration file needed to start numonic. The default file is called default_numonic_configuration.properties.
@@ -65,9 +68,11 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
      * @param systemTable Reference to the System Table wrapper class. Used to send data to the system table when enough has been collected.
      * @param thresholds    Array of thresholds that the system must check for.
      */
-    public NumonicReporter(final String numonicPropertiesFileName, final String fileSystem, final DatabaseID localDatabaseID, final ISystemTableReference systemTable, final ISystemStatus db, final Threshold... thresholds) {
+    public NumonicReporter(final String numonicPropertiesFileName, final String fileSystem, final DatabaseID localDatabaseID, final ISystemTableReference systemTable, final ISystemStatus db, final Settings databaseSettings, final Threshold... thresholds) {
 
         setName("numonic-reporting-thread");
+
+        this.databaseSettings = databaseSettings;
 
         /*
          * Create Numonic instance and set up reporting class.
@@ -108,9 +113,9 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
         localDataCollector = new LocalDataCollector(localDatabaseID, systemTable, false, db);
     }
 
-    public NumonicReporter(final String numonicPropertiesFile, final String fileSystem, final DatabaseID localDatabaseID, final ISystemTableReference systemTable, final ISystemStatus db, final String thresholdPropertiesFile) throws IOException {
+    public NumonicReporter(final String numonicPropertiesFile, final String fileSystem, final DatabaseID localDatabaseID, final ISystemTableReference systemTable, final ISystemStatus db, final Settings databaseSettings, final String thresholdPropertiesFile) throws IOException {
 
-        this(numonicPropertiesFile, fileSystem, localDatabaseID, systemTable, db, ThresholdChecker.getThresholds(thresholdPropertiesFile));
+        this(numonicPropertiesFile, fileSystem, localDatabaseID, systemTable, db, databaseSettings, ThresholdChecker.getThresholds(thresholdPropertiesFile));
     }
 
     /**
@@ -174,7 +179,16 @@ public class NumonicReporter extends Thread implements IReporting, INumonic {
     @Override
     public boolean reportSystemInfo(final SystemInfoData staticSysInfoData) throws Exception {
 
-        localDataCollector.setStaticSystemInfo(staticSysInfoData);
+        if (databaseSettings != null && Boolean.parseBoolean(databaseSettings.get("NO_REPLICATE"))) {
+            //Provide a fake SYS_INFO for an extremely low powered machine.
+
+            final SystemInfoData lowSysInfo = new SystemInfoData(staticSysInfoData.machine_id, staticSysInfoData.os_name, staticSysInfoData.os_version, staticSysInfoData.hostname, staticSysInfoData.primary_ip, staticSysInfoData.default_gateway_ip, staticSysInfoData.default_gateway_mac,
+                            staticSysInfoData.cpu_vendor, staticSysInfoData.cpu_model, staticSysInfoData.number_of_cores, staticSysInfoData.number_of_cpus, 1, 1, 1, 1, staticSysInfoData.active);
+            localDataCollector.setStaticSystemInfo(lowSysInfo);
+        }
+        else {
+            localDataCollector.setStaticSystemInfo(staticSysInfoData);
+        }
 
         return true;
     }

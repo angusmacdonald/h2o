@@ -373,15 +373,19 @@ public class SystemTable implements ISystemTableMigratable {
 
         final Queue<DatabaseInstanceWrapper> rankedInstances = monitoring.getRankedListOfInstances(metric, requirements);
         final Queue<DatabaseInstanceWrapper> inactiveInstancesRemoved = SystemTable.removeInactiveInstances(rankedInstances, monitoring, getDatabaseInstances());
-        final Queue<DatabaseInstanceWrapper> unMonitoredInstancesAdded = SystemTable.addUnMonitoredMachinesToEndOfQueue(inactiveInstancesRemoved, getDatabaseInstances());
+
+        //Don't add unmonitored instances to the end of the queue, if the corresponding setting doesn't allow it. 
+        final boolean excludeUnmonitoredInstances = Boolean.parseBoolean(database.getDatabaseSettings().get("NUMONIC_MONITORING_ENABLED")) && !Boolean.parseBoolean(database.getDatabaseSettings().get("INCLUDE_UNMONITORED_INSTANCES_IN_RANKING"));
+
+        final Queue<DatabaseInstanceWrapper> unMonitoredInstancesAdded = addUnMonitoredMachinesToEndOfQueue(inactiveInstancesRemoved, getDatabaseInstances(), excludeUnmonitoredInstances);
 
         return unMonitoredInstancesAdded;
 
     }
 
-    public static Queue<DatabaseInstanceWrapper> addUnMonitoredMachinesToEndOfQueue(final Queue<DatabaseInstanceWrapper> rankedActiveInstances, final Set<DatabaseInstanceWrapper> allInstances) {
+    public static Queue<DatabaseInstanceWrapper> addUnMonitoredMachinesToEndOfQueue(final Queue<DatabaseInstanceWrapper> rankedActiveInstances, final Set<DatabaseInstanceWrapper> allInstances, final boolean excludeUnmonitoredInstances) {
 
-        if (rankedActiveInstances.size() == allInstances.size()) { return rankedActiveInstances; }
+        if (rankedActiveInstances.size() == allInstances.size() || excludeUnmonitoredInstances) { return rankedActiveInstances; }
 
         for (final DatabaseInstanceWrapper instance : allInstances) {
             if (!rankedActiveInstances.contains(instance)) {

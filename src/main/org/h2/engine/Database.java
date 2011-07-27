@@ -484,7 +484,7 @@ public class Database implements DataHandler, Observer, ISystemStatus {
                 if (Boolean.parseBoolean(databaseSettings.get("NUMONIC_MONITORING_ENABLED"))) {
 
                     final String fileSystemName = getFileSystemName(databaseName);
-                    numonic = new NumonicReporter(databaseSettings.get("NUMONIC_MONITORING_FILE_LOCATION"), fileSystemName, getID(), systemTableRef, this, databaseSettings.get("NUMONIC_THRESHOLDS_FILE_LOCATION"));
+                    numonic = new NumonicReporter(databaseSettings.get("NUMONIC_MONITORING_FILE_LOCATION"), fileSystemName, getID(), systemTableRef, this, databaseSettings, databaseSettings.get("NUMONIC_THRESHOLDS_FILE_LOCATION"));
 
                     numonic.start();
                 }
