@@ -222,7 +222,7 @@ public class Settings {
         /*
          * Whether numonic should be started with this database instance.
          */
-        defaults.setProperty("NUMONIC_MONITORING_ENABLED", "true");
+        defaults.setProperty("NUMONIC_MONITORING_ENABLED", "false");
 
         /*
          * Whether other instances should be able to replicate data onto this instance.
