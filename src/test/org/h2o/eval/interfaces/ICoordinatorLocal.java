@@ -55,4 +55,9 @@ public interface ICoordinatorLocal {
      * @throws RemoteException Thrown if, while checking whether workloads have finished on remote workers, there was a loss of communication to the remote worker.
      */
     public void blockUntilWorkloadsComplete() throws RemoteException;
+
+    /**
+     * Shutdown this co-ordinator by killing any extant threads.
+     */
+    public void shutdown();
 }

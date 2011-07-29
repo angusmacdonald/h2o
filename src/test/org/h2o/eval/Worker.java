@@ -200,7 +200,7 @@ public class Worker extends Thread implements IWorker {
     }
 
     @Override
-    public String startH2OInstance(final H2OPropertiesWrapper descriptor, final boolean startInRemoteDebug) throws RemoteException, StartupException {
+    public String startH2OInstance(final H2OPropertiesWrapper descriptor, final boolean startInRemoteDebug, final boolean disableReplication) throws RemoteException, StartupException {
 
         if (h2oProcess != null) {
             //Check if its still running.
@@ -219,6 +219,10 @@ public class Worker extends Thread implements IWorker {
         connection = MultiProcessTestBase.createConnectionToDatabase(connectionString);
 
         final boolean isRunning = checkDatabaseIsActive();
+
+        //   if (disableReplication) {
+        //       disableReplicationOnLocalInstance();
+        //   }
 
         if (!isRunning) { throw new StartupException("New H2O process couldn't be contacted once it had been created."); }
 
@@ -401,6 +405,19 @@ public class Worker extends Thread implements IWorker {
         }
         catch (final SQLException e) {
             return false;
+        }
+    }
+
+    public void disableReplicationOnLocalInstance() {
+
+        try {
+
+            final Statement createStatement = connection.createStatement();
+            createStatement.executeUpdate("SET REPLICATE FALSE");
+
+        }
+        catch (final SQLException e) {
+            e.printStackTrace();
         }
     }
 

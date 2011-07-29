@@ -72,7 +72,7 @@ public class WorkerTests {
         final H2OPropertiesWrapper descriptorFile = H2OPropertiesWrapper.getWrapper(databaseDescriptorLocation);
         descriptorFile.loadProperties();
 
-        worker.startH2OInstance(descriptorFile, false);
+        worker.startH2OInstance(descriptorFile, false, false);
 
         worker.terminateH2OInstance();
     }
@@ -97,9 +97,9 @@ public class WorkerTests {
         final H2OPropertiesWrapper descriptorFile = H2OPropertiesWrapper.getWrapper(databaseDescriptorLocation);
         descriptorFile.loadProperties();
 
-        worker.startH2OInstance(descriptorFile, false);
+        worker.startH2OInstance(descriptorFile, false, false);
         Thread.sleep(5000);
-        worker2.startH2OInstance(descriptorFile, false);
+        worker2.startH2OInstance(descriptorFile, false, false);
 
         worker.terminateH2OInstance();
         worker2.terminateH2OInstance();
@@ -124,8 +124,8 @@ public class WorkerTests {
         final H2OPropertiesWrapper descriptorFile = H2OPropertiesWrapper.getWrapper(databaseDescriptorLocation);
         descriptorFile.loadProperties();
 
-        worker.startH2OInstance(descriptorFile, false);
-        worker.startH2OInstance(descriptorFile, false);
+        worker.startH2OInstance(descriptorFile, false, false);
+        worker.startH2OInstance(descriptorFile, false, false);
 
         worker.terminateH2OInstance();
     }
@@ -149,7 +149,7 @@ public class WorkerTests {
         final H2OPropertiesWrapper descriptorFile = H2OPropertiesWrapper.getWrapper(databaseDescriptorLocation);
         descriptorFile.loadProperties();
 
-        worker.startH2OInstance(descriptorFile, false);
+        worker.startH2OInstance(descriptorFile, false, false);
 
         worker.stopH2OInstance();
 
@@ -176,7 +176,7 @@ public class WorkerTests {
         final H2OPropertiesWrapper descriptorFile = H2OPropertiesWrapper.getWrapper(databaseDescriptorLocation);
         descriptorFile.loadProperties();
 
-        worker.startH2OInstance(descriptorFile, false);
+        worker.startH2OInstance(descriptorFile, false, false);
 
         final Workload workload = new Workload("src/test/org/h2o/eval/workloads/test.workload", 0);
 

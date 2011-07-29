@@ -160,7 +160,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
             }
 
             try {
-                worker.startH2OInstance(descriptorFile, false);
+                worker.startH2OInstance(descriptorFile, false, false);
 
                 activeWorkers.add(worker);
 
@@ -189,7 +189,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      * @return the JDBC connections string for the recently started database, or null if it wasn't successfully started.
      * @throws StartupException
      */
-    public String startH2OInstance(final InetAddress hostname, final boolean startInRemoteDebug) throws StartupException {
+    public String startH2OInstance(final InetAddress hostname, final boolean startInRemoteDebug, final boolean disableReplication) throws StartupException {
 
         if (!locatorServerStarted) { throw new StartupException("The locator server has not yet been started."); }
 
@@ -199,7 +199,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
             try {
                 if (worker.getHostname().equals(hostname)) {
 
-                    final String jdbcConnectionString = worker.startH2OInstance(descriptorFile, startInRemoteDebug);
+                    final String jdbcConnectionString = worker.startH2OInstance(descriptorFile, startInRemoteDebug, disableReplication);
 
                     swapWorkerToActiveSet(worker);
 
@@ -256,17 +256,17 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         return allWorkers;
     }
 
-    private IWorker startH2OInstance() throws StartupException, RemoteException {
+    private IWorker startH2OInstance(final boolean disableReplication) throws StartupException, RemoteException {
 
         if (inactiveWorkers.size() == 0) {
             scanForWorkerNodes(workerLocations);
 
-            if (inactiveWorkers.size() == 0) { throw new StartupException("Could not instantiated another H2O instance."); }
+            if (inactiveWorkers.size() == 0) { throw new StartupException("No more workers are available. Could not instantiate another H2O instance."); }
         }
 
         final IWorker worker = inactiveWorkers.get(0);
 
-        worker.startH2OInstance(descriptorFile, false);
+        worker.startH2OInstance(descriptorFile, false, disableReplication);
 
         swapWorkerToActiveSet(worker);
 
@@ -540,7 +540,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
                 final MachineInstruction startInstruction = CoordinationScriptExecutor.parseStartMachine(action);
 
-                final IWorker worker = startH2OInstance();
+                final IWorker worker = startH2OInstance(startInstruction.id == 0); //disable replication on the first instance.
 
                 scriptedInstances.put(startInstruction.id, worker);
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Starting machine with ID '" + startInstruction.id + "'");
@@ -564,7 +564,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
                 if (reserved_machine == null) { throw new WorkloadParseException("Tried to start a reserved machine without reserving one first with the 'reserve_machine' command."); }
 
-                reserved_machine.startH2OInstance(descriptorFile, false);
+                reserved_machine.startH2OInstance(descriptorFile, false, true);
 
                 scriptedInstances.put(reserveInstruction.id, reserved_machine);
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Started Reserved machine with ID '" + reserveInstruction.id + "'");
@@ -698,7 +698,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting secondary H2O instances on " + (h2oInstancesToStart - 1) + " of the following nodes: " + PrettyPrinter.toString(workerLocationsStr));
 
-        final String connectionString = coord.startH2OInstance(host, startInRemoteDebug); //start an instance locally as the system table.
+        final String connectionString = coord.startH2OInstance(host, startInRemoteDebug, true); //start an instance locally as the system table.
 
         if (connectionString == null) { throw new StartupException("Failed to start the local H2O instance that is intended to become the System Table."); }
 
@@ -810,6 +810,14 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     private static String processDatabaseName(final String arg) {
 
         return arg == null ? DEFAULT_DATABASE_NAME : arg;
+    }
+
+    @Override
+    public void shutdown() {
+
+        if (killMonitor != null) {
+            killMonitor.setRunning(false);
+        }
     }
 
 }

@@ -162,7 +162,7 @@ public class CoordinatorTests {
     @Test
     public void runStaticGeneratedCoordinationScript2() throws Exception {
 
-        workers = new IWorker[3];
+        workers = new IWorker[5];
         for (int i = 0; i < workers.length; i++) {
             workers[i] = new Worker();
         }
