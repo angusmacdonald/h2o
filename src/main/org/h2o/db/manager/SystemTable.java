@@ -10,6 +10,7 @@ package org.h2o.db.manager;
 
 import java.net.InetSocketAddress;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
@@ -34,6 +35,9 @@ import org.h2o.util.exceptions.MigrationException;
 import org.h2o.util.exceptions.MovedException;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 /**
@@ -55,6 +59,11 @@ public class SystemTable implements ISystemTableMigratable {
     private final ICentralDataCollector monitoring = new SystemTableDataCollector();
 
     /**
+     * List of machines that will never be added to ranked machines results.
+     */
+    private final Set<DatabaseInstanceWrapper> excludedMachines;
+
+    /**
      * Fields related to the migration functionality of the System Table.
      */
     private final SystemTableMigrationState migrationState;
@@ -73,6 +82,8 @@ public class SystemTable implements ISystemTableMigratable {
         persisted = new PersistentSystemTable(db, createTables);
 
         migrationState = new SystemTableMigrationState(db.getChordInterface().getLocalChordReference());
+
+        excludedMachines = new HashSet<DatabaseInstanceWrapper>();
 
     }
 
@@ -373,18 +384,20 @@ public class SystemTable implements ISystemTableMigratable {
 
         final Queue<DatabaseInstanceWrapper> rankedInstances = monitoring.getRankedListOfInstances(metric, requirements);
         final Queue<DatabaseInstanceWrapper> inactiveInstancesRemoved = SystemTable.removeInactiveInstances(rankedInstances, monitoring, getDatabaseInstances());
-        final Queue<DatabaseInstanceWrapper> unMonitoredInstancesAdded = SystemTable.addUnMonitoredMachinesToEndOfQueue(inactiveInstancesRemoved, getDatabaseInstances());
+        final Queue<DatabaseInstanceWrapper> unMonitoredInstancesAdded = SystemTable.addUnMonitoredMachinesToEndOfQueue(inactiveInstancesRemoved, getDatabaseInstances(), excludedMachines);
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Ranked list of instances (" + unMonitoredInstancesAdded.size() + "): " + PrettyPrinter.toString(unMonitoredInstancesAdded));
 
         return unMonitoredInstancesAdded;
 
     }
 
-    public static Queue<DatabaseInstanceWrapper> addUnMonitoredMachinesToEndOfQueue(final Queue<DatabaseInstanceWrapper> rankedActiveInstances, final Set<DatabaseInstanceWrapper> allInstances) {
+    public static Queue<DatabaseInstanceWrapper> addUnMonitoredMachinesToEndOfQueue(final Queue<DatabaseInstanceWrapper> rankedActiveInstances, final Set<DatabaseInstanceWrapper> allInstances, final Set<DatabaseInstanceWrapper> excludedInstances) {
 
         if (rankedActiveInstances.size() == allInstances.size()) { return rankedActiveInstances; }
 
         for (final DatabaseInstanceWrapper instance : allInstances) {
-            if (!rankedActiveInstances.contains(instance)) {
+            if (!rankedActiveInstances.contains(instance) && (excludedInstances == null || !excludedInstances.contains(instance))) {
                 rankedActiveInstances.add(instance);
             }
         }
@@ -423,6 +436,16 @@ public class SystemTable implements ISystemTableMigratable {
         preMethodTest();
 
         monitoring.removeDataForInactiveInstance(inactiveDatabaseID);
+    }
+
+    @Override
+    public void excludeInstanceFromRankedResults(final DatabaseID id) throws RPCException, MovedException {
+
+        preMethodTest();
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Added machine to set of excluded machines for replication: " + id);
+        excludedMachines.add(new DatabaseInstanceWrapper(id, null, true));
+
     }
 
 }

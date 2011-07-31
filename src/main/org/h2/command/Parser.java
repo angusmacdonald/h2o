@@ -80,6 +80,7 @@ import org.h2.command.h2o.DropReplica;
 import org.h2.command.h2o.MigrateSystemTable;
 import org.h2.command.h2o.MigrateTableManager;
 import org.h2.command.h2o.RecreateTableManager;
+import org.h2.command.h2o.SetReplicate;
 import org.h2.constant.ErrorCode;
 import org.h2.constant.LocationPreference;
 import org.h2.constant.SysProperties;
@@ -4618,6 +4619,11 @@ public class Parser {
             list.toArray(schemaNames);
             command.setStringArray(schemaNames);
             return command;
+        }
+        else if (readIf("REPLICATE")) {
+            final boolean allowReplication = readBooleanSetting();
+
+            return new SetReplicate(session, allowReplication);
         }
         else {
             if (isToken("LOGSIZE")) {

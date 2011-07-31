@@ -359,6 +359,8 @@ public class Database implements DataHandler, Observer, ISystemStatus {
 
     private boolean connected = false;
 
+    private boolean allowReplication;
+
     public Database(final String name, final ConnectionInfo ci, final String cipher) throws SQLException {
 
         localSchema.add(Constants.H2O_SCHEMA);
@@ -3454,6 +3456,20 @@ public class Database implements DataHandler, Observer, ISystemStatus {
     public void setConnected(final boolean connected) {
 
         this.connected = connected;
+
+    }
+
+    public void setReplicate(final boolean allowReplication) {
+
+        this.allowReplication = allowReplication;
+
+        try {
+            systemTableRef.getSystemTable().excludeInstanceFromRankedResults(getID());
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Machine " + getID() + " is set to replicate: " + allowReplication);
+        }
+        catch (final Exception e) {
+            e.printStackTrace();
+        }
 
     }
 

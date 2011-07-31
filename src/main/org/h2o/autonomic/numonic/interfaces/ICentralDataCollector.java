@@ -50,4 +50,12 @@ public interface ICentralDataCollector {
      */
     public void removeDataForInactiveInstance(DatabaseID inactiveDatabaseID) throws RPCException, MovedException;
 
+    /**
+     * Exclude the specified database from the results of calling {@link #getRankedListOfInstances(IMetric, Requirements)}.
+     * @param id A database ID.
+     * @throws MovedException 
+     * @throws RPCException 
+     */
+    public void excludeInstanceFromRankedResults(DatabaseID id) throws RPCException, MovedException;
+
 }

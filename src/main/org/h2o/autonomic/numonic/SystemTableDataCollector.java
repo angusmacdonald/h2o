@@ -190,4 +190,10 @@ public class SystemTableDataCollector implements ICentralDataCollector {
 
     }
 
+    @Override
+    public void excludeInstanceFromRankedResults(final DatabaseID id) throws RPCException, MovedException {
+
+        monitoringData.remove(id);
+    }
+
 }

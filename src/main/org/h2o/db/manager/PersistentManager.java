@@ -164,15 +164,15 @@ public abstract class PersistentManager {
 
         getNewQueryParser();
 
+        DatabaseID dbID = tableDetails.getDatabaseID();
+
+        if (dbID == null) {
+            // find the URL from the Table Manager.
+            dbID = tableManagerURL;
+        }
+
         try {
             assert !tableDetails.getTableName().startsWith("H2O_");
-
-            DatabaseID dbID = tableDetails.getDatabaseID();
-
-            if (dbID == null) {
-                // find the URL from the Table Manager.
-                dbID = tableManagerURL;
-            }
 
             final int connectionID = getConnectionID(dbID);
 
@@ -185,12 +185,7 @@ public abstract class PersistentManager {
 
             if (addReplicaInfo) {
                 final int tableID = metaDataReplicaManager.getTableID(tableDetails, isSystemTable);
-                if (!isReplicaListed(tableDetails, connectionID)) { // the table
-                    // doesn't
-                    // already
-                    // exist in
-                    // the
-                    // manager.
+                if (!isReplicaListed(tableDetails, connectionID)) { // the table  doesn't already exist in the manager.
                     addReplicaInformation(tableDetails, tableID, connectionID);
                 }
             }
@@ -199,7 +194,7 @@ public abstract class PersistentManager {
         }
         catch (final SQLException e) {
 
-            ErrorHandling.exceptionError(e, "Failed to update meta-data tables.");
+            ErrorHandling.exceptionError(e, "Failed to update meta-data tables. Connecting to DB: " + dbID + " for table " + tableDetails + ". Local machine is " + db.getID());
             return false;
         }
     }

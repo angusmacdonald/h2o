@@ -26,41 +26,44 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  */
 public class LinkedIndex extends BaseIndex {
 
-    private TableLink link;
+    private final TableLink link;
 
-    private String targetTableName;
+    private final String targetTableName;
 
     private long rowCount;
 
-    public LinkedIndex(TableLink table, int id, IndexColumn[] columns, IndexType indexType) {
+    public LinkedIndex(final TableLink table, final int id, final IndexColumn[] columns, final IndexType indexType) {
 
         initBaseIndex(table, id, null, columns, indexType);
         link = table;
         targetTableName = link.getQualifiedTable();
     }
 
+    @Override
     public String getCreateSQL() {
 
         return null;
     }
 
-    public void close(Session session) {
+    @Override
+    public void close(final Session session) {
 
         // nothing to do
     }
 
-    private boolean isNull(Value v) {
+    private boolean isNull(final Value v) {
 
         return v == null || v == ValueNull.INSTANCE;
     }
 
-    public void add(Session session, Row row) throws SQLException {
+    @Override
+    public void add(final Session session, final Row row) throws SQLException {
 
-        StringBuilder buff = new StringBuilder("INSERT INTO ");
+        final StringBuilder buff = new StringBuilder("INSERT INTO ");
         buff.append(targetTableName);
         buff.append(" VALUES(");
         for (int i = 0, j = 0; i < row.getColumnCount(); i++) {
-            Value v = row.getValue(i);
+            final Value v = row.getValue(i);
             if (j > 0) {
                 buff.append(',');
             }
@@ -73,12 +76,12 @@ public class LinkedIndex extends BaseIndex {
             }
         }
         buff.append(')');
-        String sql = buff.toString();
+        final String sql = buff.toString();
         synchronized (link.getConnection()) {
             try {
-                PreparedStatement prep = link.getPreparedStatement(sql, false);
+                final PreparedStatement prep = link.getPreparedStatement(sql, false);
                 for (int i = 0, j = 0; i < row.getColumnCount(); i++) {
-                    Value v = row.getValue(i);
+                    final Value v = row.getValue(i);
                     if (v != null && v != ValueNull.INSTANCE) {
                         v.set(prep, j + 1);
                         j++;
@@ -87,34 +90,35 @@ public class LinkedIndex extends BaseIndex {
                 prep.executeUpdate();
                 rowCount++;
             }
-            catch (SQLException e) {
+            catch (final SQLException e) {
                 throw link.wrapException(sql, e);
             }
         }
     }
 
-    public Cursor find(Session session, SearchRow first, SearchRow last) throws SQLException {
+    @Override
+    public Cursor find(final Session session, final SearchRow first, final SearchRow last) throws SQLException {
 
-        StringBuilder buff = new StringBuilder();
+        final StringBuilder buff = new StringBuilder();
         for (int i = 0; first != null && i < first.getColumnCount(); i++) {
-            Value v = first.getValue(i);
+            final Value v = first.getValue(i);
             if (v != null) {
                 if (buff.length() != 0) {
                     buff.append(" AND ");
                 }
-                Column col = table.getColumn(i);
+                final Column col = table.getColumn(i);
                 buff.append(col.getSQL());
                 buff.append(">=");
                 addParameter(buff, col);
             }
         }
         for (int i = 0; last != null && i < last.getColumnCount(); i++) {
-            Value v = last.getValue(i);
+            final Value v = last.getValue(i);
             if (v != null) {
                 if (buff.length() != 0) {
                     buff.append(" AND ");
                 }
-                Column col = table.getColumn(i);
+                final Column col = table.getColumn(i);
                 buff.append(col.getSQL());
                 buff.append("<=");
                 addParameter(buff, col);
@@ -124,36 +128,36 @@ public class LinkedIndex extends BaseIndex {
             buff.insert(0, " WHERE ");
         }
         buff.insert(0, "SELECT * FROM " + targetTableName + " T");
-        String sql = buff.toString();
+        final String sql = buff.toString();
         synchronized (link.getConnection()) {
             try {
-                PreparedStatement prep = link.getPreparedStatement(sql, true);
+                final PreparedStatement prep = link.getPreparedStatement(sql, true);
                 int j = 0;
                 for (int i = 0; first != null && i < first.getColumnCount(); i++) {
-                    Value v = first.getValue(i);
+                    final Value v = first.getValue(i);
                     if (v != null) {
                         v.set(prep, j + 1);
                         j++;
                     }
                 }
                 for (int i = 0; last != null && i < last.getColumnCount(); i++) {
-                    Value v = last.getValue(i);
+                    final Value v = last.getValue(i);
                     if (v != null) {
                         v.set(prep, j + 1);
                         j++;
                     }
                 }
-                ResultSet rs = prep.executeQuery();
+                final ResultSet rs = prep.executeQuery();
                 return new LinkedCursor(link, rs, session, sql, prep);
             }
-            catch (SQLException e) {
-                ErrorHandling.errorNoEvent("Failed to connect via linked table to table on " + link.getUrl());
+            catch (final SQLException e) {
+                ErrorHandling.exceptionError(e, "Failed to connect via linked table to table on " + link.getUrl());
                 throw link.wrapException(sql, e);
             }
         }
     }
 
-    private void addParameter(StringBuilder buff, Column col) {
+    private void addParameter(final StringBuilder buff, final Column col) {
 
         if (col.getType() == Value.STRING_FIXED && link.isOracle()) {
             // workaround for Oracle
@@ -169,55 +173,63 @@ public class LinkedIndex extends BaseIndex {
         }
     }
 
-    public double getCost(Session session, int[] masks) {
+    @Override
+    public double getCost(final Session session, final int[] masks) {
 
         return 100 + getCostRangeIndex(masks, rowCount + Constants.COST_ROW_OFFSET);
     }
 
-    public void remove(Session session) {
+    @Override
+    public void remove(final Session session) {
 
         // nothing to do
     }
 
-    public void truncate(Session session) {
+    @Override
+    public void truncate(final Session session) {
 
         // nothing to do
     }
 
+    @Override
     public void checkRename() throws SQLException {
 
         throw Message.getUnsupportedException();
     }
 
+    @Override
     public boolean needRebuild() {
 
         return false;
     }
 
+    @Override
     public boolean canGetFirstOrLast() {
 
         return false;
     }
 
-    public Cursor findFirstOrLast(Session session, boolean first) throws SQLException {
+    @Override
+    public Cursor findFirstOrLast(final Session session, final boolean first) throws SQLException {
 
         // TODO optimization: could get the first or last value (in any case;
         // maybe not optimized)
         throw Message.getUnsupportedException();
     }
 
-    public void remove(Session session, Row row) throws SQLException {
+    @Override
+    public void remove(final Session session, final Row row) throws SQLException {
 
-        StringBuilder buff = new StringBuilder("DELETE FROM ");
+        final StringBuilder buff = new StringBuilder("DELETE FROM ");
         buff.append(targetTableName);
         buff.append(" WHERE ");
         for (int i = 0; i < row.getColumnCount(); i++) {
             if (i > 0) {
                 buff.append("AND ");
             }
-            Column col = table.getColumn(i);
+            final Column col = table.getColumn(i);
             buff.append(col.getSQL());
-            Value v = row.getValue(i);
+            final Value v = row.getValue(i);
             if (isNull(v)) {
                 buff.append(" IS NULL ");
             }
@@ -227,21 +239,21 @@ public class LinkedIndex extends BaseIndex {
                 buff.append(' ');
             }
         }
-        String sql = buff.toString();
+        final String sql = buff.toString();
         synchronized (link.getConnection()) {
             try {
-                PreparedStatement prep = link.getPreparedStatement(sql, false);
+                final PreparedStatement prep = link.getPreparedStatement(sql, false);
                 for (int i = 0, j = 0; i < row.getColumnCount(); i++) {
-                    Value v = row.getValue(i);
+                    final Value v = row.getValue(i);
                     if (!isNull(v)) {
                         v.set(prep, j + 1);
                         j++;
                     }
                 }
-                int count = prep.executeUpdate();
+                final int count = prep.executeUpdate();
                 rowCount -= count;
             }
-            catch (SQLException e) {
+            catch (final SQLException e) {
                 throw link.wrapException(sql, e);
             }
         }
@@ -255,9 +267,9 @@ public class LinkedIndex extends BaseIndex {
      * @param newRow
      *            the new data
      */
-    public void update(Row oldRow, Row newRow) throws SQLException {
+    public void update(final Row oldRow, final Row newRow) throws SQLException {
 
-        StringBuilder buff = new StringBuilder("UPDATE ");
+        final StringBuilder buff = new StringBuilder("UPDATE ");
         buff.append(targetTableName).append(" SET ");
         for (int i = 0; i < newRow.getColumnCount(); i++) {
             if (i > 0) {
@@ -270,9 +282,9 @@ public class LinkedIndex extends BaseIndex {
             if (i > 0) {
                 buff.append("AND ");
             }
-            Column col = table.getColumn(i);
+            final Column col = table.getColumn(i);
             buff.append(col.getSQL());
-            Value v = oldRow.getValue(i);
+            final Value v = oldRow.getValue(i);
             if (isNull(v)) {
                 buff.append(" IS NULL ");
             }
@@ -282,38 +294,40 @@ public class LinkedIndex extends BaseIndex {
                 buff.append(' ');
             }
         }
-        String sql = buff.toString();
+        final String sql = buff.toString();
         synchronized (link.getConnection()) {
             try {
                 int j = 1;
-                PreparedStatement prep = link.getPreparedStatement(sql, false);
+                final PreparedStatement prep = link.getPreparedStatement(sql, false);
                 for (int i = 0; i < newRow.getColumnCount(); i++) {
                     newRow.getValue(i).set(prep, j);
                     j++;
                 }
                 for (int i = 0; i < oldRow.getColumnCount(); i++) {
-                    Value v = oldRow.getValue(i);
+                    final Value v = oldRow.getValue(i);
                     if (!isNull(v)) {
                         v.set(prep, j);
                         j++;
                     }
                 }
-                int count = prep.executeUpdate();
+                final int count = prep.executeUpdate();
                 // this has no effect but at least it allows to debug the update
                 // count
                 rowCount = rowCount + count - count;
             }
-            catch (SQLException e) {
+            catch (final SQLException e) {
                 throw link.wrapException(sql, e);
             }
         }
     }
 
-    public long getRowCount(Session session) {
+    @Override
+    public long getRowCount(final Session session) {
 
         return rowCount;
     }
 
+    @Override
     public long getRowCountApproximation() {
 
         return rowCount;

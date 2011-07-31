@@ -481,6 +481,18 @@ public class SystemTableServer extends ApplicationServer {
 
             }
         });
+
+        handler_map.put("excludeInstanceFromRankedResults", new IHandler() {
+
+            @Override
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
+
+                final DatabaseID p0 = marshaller.deserializeDatabaseID(args);
+                system_table.removeDataForInactiveInstance(p0);
+                completeVoidResponse(response);
+
+            }
+        });
     }
 
     public void completeVoidResponse(final JSONWriter response) throws JSONException {

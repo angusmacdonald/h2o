@@ -220,9 +220,9 @@ public class Worker extends Thread implements IWorker {
 
         final boolean isRunning = checkDatabaseIsActive();
 
-        //   if (disableReplication) {
-        //       disableReplicationOnLocalInstance();
-        //   }
+        if (disableReplication) {
+            disableReplicationOnLocalInstance();
+        }
 
         if (!isRunning) { throw new StartupException("New H2O process couldn't be contacted once it had been created."); }
 

@@ -206,7 +206,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
     }
 
     /**
-     * The System Table connection has been lost. Try to connect to the System Table lookup location and obtain a reference to the new
+     * The System Table connection has been lost (or a database has just started). Try to connect to the System Table lookup location and obtain a reference to the new
      * System Table.
      * 
      * @throws SQLException         Thrown if an active System Table could not be found.
@@ -214,7 +214,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
      */
     private SystemTableWrapper tryToFindSystemTableViaLocator() throws SQLException, LocatorException {
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, db.getID() + ": Attempting to fix a broken System Table connection.");
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, db.getID() + ": Attempting to find the System Table via locator servers.");
 
         final List<String> databaseIntanceLocationsFromLocator = getActiveSystemTableLocationsFromLocator();
 

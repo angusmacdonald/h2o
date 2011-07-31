@@ -104,12 +104,17 @@ public class WorkloadResult implements Serializable {
 
     public long getStartTime() {
 
-        final QueryLogEntry queryLogEntry = queryLog.get(0);
-        if (queryLogEntry != null) {
-            return queryLogEntry.timeOfLogEntry;
+        if (queryLog.size() > 0) {
+            final QueryLogEntry queryLogEntry = queryLog.get(0);
+            if (queryLogEntry != null) {
+                return queryLogEntry.timeOfLogEntry;
+            }
+            else {
+                return Long.MAX_VALUE;
+            }
         }
         else {
-            return Long.MAX_VALUE;
+            return 0;
         }
     }
 

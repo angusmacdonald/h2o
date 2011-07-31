@@ -186,6 +186,7 @@ public abstract class Command implements CommandInterface {
                 return query(maxrows);
             }
             catch (final Exception e) {
+                e.printStackTrace();
                 final SQLException s = Message.convert(e, sql);
                 database.exceptionThrown(s, sql);
                 throw s;

@@ -237,6 +237,8 @@ public class TcpServerThread implements Runnable {
 
     private void process() throws IOException, SQLException, RPCException {
 
+        if (!session.getDatabase().isRunning() || session.getDatabase().isStarting()) { throw new SQLException("Database has not yet started."); }
+
         final int operation = transfer.readInt();
         switch (operation) {
             case SessionRemote.SESSION_PREPARE_READ_PARAMS:

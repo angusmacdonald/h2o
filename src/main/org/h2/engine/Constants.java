@@ -238,7 +238,7 @@ public class Constants {
     /**
      * For testing, the lock timeout is smaller than for interactive use cases. This value could be increased to about 5 or 10 seconds.
      */
-    public static final int INITIAL_LOCK_TIMEOUT = 2000;
+    public static final int INITIAL_LOCK_TIMEOUT = 5000;
 
     /**
      * The block size for I/O operations.
@@ -495,7 +495,7 @@ public class Constants {
     /**
      * Set this to true to enable logging of lock operations. ONLY USE THIS FOR DEBUGGING - IT WILL CRASH EVENTUALLY CRASH THE PROCESS IF USED ON ANY PROPER WORKLOAD DUE TO MEMORY OVERCONSUMPTION.
      */
-    public final static boolean DO_LOCK_LOGGING = false;
+    public final static boolean DO_LOCK_LOGGING = true;
 
     public static boolean IS_TEAR_DOWN = false;
 

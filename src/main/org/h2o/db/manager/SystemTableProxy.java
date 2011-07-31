@@ -763,4 +763,26 @@ public class SystemTableProxy extends StreamProxy implements ISystemTableMigrata
         }
 
     }
+
+    @Override
+    public void excludeInstanceFromRankedResults(final DatabaseID id) throws RPCException, MovedException {
+
+        try {
+            final Connection connection = (Connection) startCall("excludeInstanceFromRankedResults");
+            final JSONWriter jw = connection.getJSONwriter();
+
+            marshaller.serializeDatabaseID(id, jw);
+
+            handleVoidCall(makeCall(connection));
+
+            finishCall(connection);
+
+        }
+        catch (final MovedException e) {
+            throw e;
+        }
+        catch (final Exception e) {
+            dealWithException(e);
+        }
+    }
 }

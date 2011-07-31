@@ -399,6 +399,7 @@ public class MetaDataReplicaManager {
             }
             else {
                 try {
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing meta-data update on " + replica.getKey().getURL() + "[ query: " + query + "]");
                     result = replica.getKey().getDatabaseInstance().executeUpdate(query, true);
                 }
                 catch (final RPCException e) {

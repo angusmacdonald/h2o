@@ -81,6 +81,8 @@ public class DatabaseInstance implements IDatabaseInstanceRemote {
     @Override
     public int execute(final String query, final String transactionName, final boolean commitOperation) throws SQLException, RPCException {
 
+        if (!database.isRunning() || database.isStarting()) { throw new SQLException("Database has not yet started."); }
+
         if (query == null) {
             ErrorHandling.hardError("Shouldn't happen.");
         }
@@ -139,22 +141,34 @@ public class DatabaseInstance implements IDatabaseInstanceRemote {
     @Override
     public int executeUpdate(final String sql, final boolean systemTableCommand) throws RPCException, SQLException {
 
-        if (!database.isRunning()) { throw new SQLException("Could execute query. The database either hasn't fully started, or is being shut down. Query: " + sql); }
+        try {
 
-        Command command = null;
-        if (systemTableCommand) {
+            if (!database.isRunning()) { throw new SQLException("Could not execute query. The database either hasn't fully started, or is being shut down. Query: " + sql); }
 
-            final Parser schemaParser = new Parser(database.getH2OSession(), true);
-            command = schemaParser.prepareCommand(sql);
+            Command command = null;
+            if (systemTableCommand) {
+
+                final Parser schemaParser = new Parser(database.getH2OSession(), true);
+                command = schemaParser.prepareCommand(sql);
+            }
+            else {
+                command = parser.prepareCommand(sql);
+            }
+
+            final int result = command.executeUpdate(false);
+            command.close();
+
+            return result;
+
         }
-        else {
-            command = parser.prepareCommand(sql);
+        catch (final SQLException e) {
+            ErrorHandling.exceptionError(e, "Exception thrown while executing update on " + database.getID());
+            throw e;
         }
-
-        final int result = command.executeUpdate(false);
-        command.close();
-
-        return result;
+        catch (final Exception e) {
+            ErrorHandling.exceptionError(e, "Exception thrown while executing update on " + database.getID());
+            return -1;
+        }
     }
 
     @Override

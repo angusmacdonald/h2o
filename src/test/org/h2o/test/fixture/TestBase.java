@@ -310,7 +310,7 @@ public class TestBase {
      * Delete all of the database files created in these tests
      * @throws SQLException
      */
-    private static void deleteDatabaseData(final String baseDir, final String db) throws SQLException {
+    protected static void deleteDatabaseData(final String baseDir, final String db) throws SQLException {
 
         DeleteDbFiles.execute(baseDir, db, true);
     }

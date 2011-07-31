@@ -17,6 +17,7 @@ import org.h2o.db.query.locking.LockException;
 import org.h2o.test.fixture.H2OTest;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -161,6 +162,10 @@ public class CommandContainer extends Command {
 
             doLock(); // This throws an SQLException if no lock is found.
 
+            if (prepared.getSQL().contains("TEST0")) {
+                Diagnostic.printStackTrace();
+            }
+
             try {
 
                 updateCount = prepared.update(currentProxyManager.getTransactionName());
@@ -270,7 +275,7 @@ public class CommandContainer extends Command {
              * Check current time.. wait.
              */
             final long now = System.currentTimeMillis();
-            if (now >= max) { throw new LockException("Couldn't obtain locks for all tables involved in query."); }
+            if (now >= max) { throw new LockException("Couldn't obtain locks for all tables involved in query: " + prepared.getSQL()); }
 
             try {
                 // TODO al says: WTF

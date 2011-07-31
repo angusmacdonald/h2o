@@ -346,7 +346,7 @@ public class MachineRankingTests {
         final Set<DatabaseInstanceWrapper> unMonitored = new HashSet<DatabaseInstanceWrapper>();
         unMonitored.add(m4.getDatabaseWrapper());
 
-        final Queue<DatabaseInstanceWrapper> unMonitoringInstancesIncluded = SystemTable.addUnMonitoredMachinesToEndOfQueue(rankedInstances, unMonitored);
+        final Queue<DatabaseInstanceWrapper> unMonitoringInstancesIncluded = SystemTable.addUnMonitoredMachinesToEndOfQueue(rankedInstances, unMonitored, null);
 
         assertEquals(3, unMonitoringInstancesIncluded.size());
 
@@ -354,5 +354,4 @@ public class MachineRankingTests {
         assertEquals(m2.getDatabaseID(), unMonitoringInstancesIncluded.remove().getURL());
         assertEquals(m4.getDatabaseID(), unMonitoringInstancesIncluded.remove().getURL());
     }
-
 }
