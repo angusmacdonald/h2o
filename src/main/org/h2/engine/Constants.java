@@ -495,7 +495,7 @@ public class Constants {
     /**
      * Set this to true to enable logging of lock operations. ONLY USE THIS FOR DEBUGGING - IT WILL CRASH EVENTUALLY CRASH THE PROCESS IF USED ON ANY PROPER WORKLOAD DUE TO MEMORY OVERCONSUMPTION.
      */
-    public final static boolean DO_LOCK_LOGGING = true;
+    public final static boolean DO_LOCK_LOGGING = false;
 
     public static boolean IS_TEAR_DOWN = false;
 

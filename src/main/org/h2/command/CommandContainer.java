@@ -17,7 +17,6 @@ import org.h2o.db.query.locking.LockException;
 import org.h2o.test.fixture.H2OTest;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
-import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
@@ -162,10 +161,6 @@ public class CommandContainer extends Command {
             }
 
             doLock(); // This throws an SQLException if no lock is found.
-
-            if (prepared.getSQL().contains("TEST0")) {
-                Diagnostic.printStackTrace();
-            }
 
             try {
 
