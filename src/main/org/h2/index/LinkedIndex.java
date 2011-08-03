@@ -131,7 +131,7 @@ public class LinkedIndex extends BaseIndex {
         final String sql = buff.toString();
         synchronized (link.getConnection()) {
             try {
-                final PreparedStatement prep = link.getPreparedStatement(sql, true);
+                final PreparedStatement prep = link.getPreparedStatement(sql + "[internal]", true);
                 int j = 0;
                 for (int i = 0; first != null && i < first.getColumnCount(); i++) {
                     final Value v = first.getValue(i);

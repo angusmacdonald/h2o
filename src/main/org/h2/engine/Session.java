@@ -483,10 +483,17 @@ public class Session extends SessionWithState {
      *            the SQL statement
      * @return the prepared statement
      */
-    public Command prepareLocal(final String sql) throws SQLException {
+    public Command prepareLocal(String sql) throws SQLException {
 
         if (closed) { throw Message.getSQLException(ErrorCode.CONNECTION_BROKEN); }
-        final Parser parser = new Parser(this, false);
+
+        boolean internal = false;
+
+        if (sql.endsWith("[internal]")) {
+            sql = sql.substring(0, sql.length() - "[internal]".length());
+            internal = true;
+        }
+        final Parser parser = new Parser(this, internal);
         return parser.prepareCommand(sql);
     }
 

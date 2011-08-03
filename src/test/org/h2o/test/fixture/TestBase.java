@@ -67,7 +67,7 @@ public class TestBase {
         Constants.IS_TEAR_DOWN = false;
         Constants.IS_NON_SM_TEST = true;
 
-        Diagnostic.setLevel(DiagnosticLevel.INIT);
+        Diagnostic.setLevel(DiagnosticLevel.FULL);
         Diagnostic.addIgnoredPackage("uk.ac.standrews.cs.stachord");
 
         createProperties("jdbc:h2:mem:two", true);

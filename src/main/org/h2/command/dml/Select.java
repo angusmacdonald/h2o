@@ -575,7 +575,16 @@ public class Select extends Query {
         }
         topTableFilter.startQuery(session);
         topTableFilter.reset();
-        topTableFilter.lock(session, isForUpdate, isForUpdate);
+        if (!internalQuery) {
+            /**
+             * This if statement fixes a bug where a remote machine makes a linkedtable read query to this machine. In this case the remote machine obtains an H2O-level lock, which means
+             * it is allowed to make the query, but the query is sent to this machine which previously had no idea that it was part of another transaction. In this approach, the local machine
+             * doesn't bother obtaining an H2 level lock, because it knows that an H2O level lock is already taken out by the remote machine.
+             * 
+             * This needs further checks to ensure that it doesn't affect the ability of a transaction to see its own changed state.
+             */
+            topTableFilter.lock(session, isForUpdate, isForUpdate);
+        }
         if (isQuickAggregateQuery) {
             queryQuick(columnCount, result);
         }
@@ -1239,7 +1248,7 @@ public class Select extends Query {
     public void acquireLocks(final TableProxyManager tableProxyManager) throws SQLException {
 
         for (final Table table : getTables()) {
-            if (!session.getDatabase().isTableLocal(table.getSchema())) {
+            if (!session.getDatabase().isTableLocal(table.getSchema()) && !internalQuery) {
 
                 if (Table.TABLE.equals(table.getTableType())) {
                     TableProxy qp = tableProxyManager.getTableProxy(table.getFullName());

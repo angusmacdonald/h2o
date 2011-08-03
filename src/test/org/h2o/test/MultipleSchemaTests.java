@@ -174,7 +174,7 @@ public class MultipleSchemaTests extends TestBase2 {
         sa.execute("INSERT INTO SCHEMA2.TEST VALUES(4, 'Meh');");
         sa.execute("INSERT INTO SCHEMA2.TEST VALUES(5, 'Heh');");
 
-        sb.execute("CREATE REPLICA TEST, SCHEMA2.TEST;");
+        sb.execute("CREATE REPLICA SCHEMA2.TEST;");
 
         assertEquals(0, sb.getUpdateCount());
 

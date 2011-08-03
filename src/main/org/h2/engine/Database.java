@@ -3308,6 +3308,11 @@ public class Database implements DataHandler, Observer, ISystemStatus {
         return localSchema;
     }
 
+    /**
+     * Is the table in a schema that is not replicated -- not a test for whether the table exists locally.
+     * @param schema
+     * @return
+     */
     public boolean isTableLocal(final Schema schema) {
 
         return localSchema.contains(schema.getName());

@@ -126,6 +126,7 @@ public class CommandContainer extends Command {
             return result;
         }
         catch (final SQLException e) {
+            e.printStackTrace();
             currentProxyManager.releaseLocksAndUpdateReplicaState(null, false);
             throw e;
         }

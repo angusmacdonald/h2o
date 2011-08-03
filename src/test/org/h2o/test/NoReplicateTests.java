@@ -150,7 +150,7 @@ public class NoReplicateTests extends TestBase {
      * Tests that the truncate table command works when a table has multiple replicas.
      */
     @Test
-    public void truncateTableTest() {
+    public void noReplicateTest() {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
 
