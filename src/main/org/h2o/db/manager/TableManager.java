@@ -77,6 +77,7 @@ import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 import uk.ac.standrews.cs.numonic.data.ResourceType;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
@@ -441,7 +442,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
      */
     private Map<DatabaseInstanceWrapper, Integer> selectReplicaLocations(final LockType lockType, final LockRequest lockRequest, final boolean isDrop) {
 
-        if (lockType == LockType.READ || lockType == LockType.NONE) { return replicaManager.getActiveReplicas(); }// else, a more informed decision is needed.
+        if (lockType == LockType.READ || lockType == LockType.NONE) { return replicaManager.getAllReplicasOnActiveMachines(); }// else, a more informed decision is needed.
 
         /*
          * The set of machines onto which new replicas will be added.
@@ -621,6 +622,8 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
             if (!asynchronousCommit && changed.size() < replicaManager.getActiveReplicas().size() && changed.size() > 1) {
                 // This is the first part of a query. Some replicas will be made inactive.
+
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Newly inactive replicas: " + PrettyPrinter.toString(changed));
                 persistInactiveInformation(tableInfo, changed);
             }
             else {
@@ -724,6 +727,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
         hasMoved = true;
         inMigration = false;
+
     }
 
     @Override
@@ -817,19 +821,17 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
             final DatabaseInstanceWrapper replicaLocation = getDatabaseInstance(dbID);
 
             boolean alive = true;
-            if (dbID.sanitizedLocation().equals(oldPrimaryDatabaseName)) {
-                try {
-                    alive = replicaLocation.getDatabaseInstance().isAlive();
-                }
-                catch (final Exception e) {
-                    alive = false;
-                }
+            try {
+                alive = replicaLocation.getDatabaseInstance().isAlive();
+                Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Active replica for " + tableName + " found on " + dbID);
+
+            }
+            catch (final Exception e) {
+                alive = false;
             }
 
             replicaLocation.setActive(alive); // even dead replicas must be recorded.
             replicaLocations.add(replicaLocation);
-
-            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Active replica for " + tableName + " found on " + dbID);
 
         }
 
