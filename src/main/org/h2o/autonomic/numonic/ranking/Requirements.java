@@ -18,6 +18,11 @@ public class Requirements {
     public static final Requirements NO_FILTERING = new Requirements(0, 0, 0, 0);
 
     /**
+     * Doesn't include instances that have been set as 'NO_REPLICATE', meaning they shouldn't receive any replicas.
+     */
+    public static final Requirements FILTER_NO_REPLICA_INSTANCES = new Requirements(2, 2, 2, 2);
+
+    /**
      * The amount of CPU capacity required, in MHz.
      */
     private final long cpu_capacity;

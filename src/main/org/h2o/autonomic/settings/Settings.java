@@ -224,6 +224,18 @@ public class Settings {
          */
         defaults.setProperty("NUMONIC_MONITORING_ENABLED", "false");
 
+        /*
+         * Whether other instances should be able to replicate data onto this instance.
+         */
+        defaults.setProperty("NO_REPLICATE", "false");
+
+        /*
+         * Whether the system table should include machines that haven't submitted monitoring data in response to queries
+         * which request machines to be ranked (they will be added to the end of the queue that is returned, if this and 'NUMONIC_MONITORING_ENABLED'
+         * is true.
+         */
+        defaults.setProperty("INCLUDE_UNMONITORED_INSTANCES_IN_RANKING", "false");
+
         return defaults;
     }
 
