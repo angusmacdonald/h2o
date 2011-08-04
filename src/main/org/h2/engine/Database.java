@@ -317,7 +317,7 @@ public class Database implements DataHandler, Observer, ISystemStatus {
 
     private MetaDataReplicationThread metaDataReplicationThread;
 
-    private boolean running = false;
+    private volatile boolean running = false;
 
     public MetaDataReplicaManager getMetaDataReplicaManager() {
 
@@ -486,7 +486,7 @@ public class Database implements DataHandler, Observer, ISystemStatus {
                 if (Boolean.parseBoolean(databaseSettings.get("NUMONIC_MONITORING_ENABLED"))) {
 
                     final String fileSystemName = getFileSystemName(databaseName);
-                    numonic = new NumonicReporter(databaseSettings.get("NUMONIC_MONITORING_FILE_LOCATION"), fileSystemName, getID(), systemTableRef, this, databaseSettings.get("NUMONIC_THRESHOLDS_FILE_LOCATION"));
+                    numonic = new NumonicReporter(databaseSettings.get("NUMONIC_MONITORING_FILE_LOCATION"), fileSystemName, getID(), systemTableRef, this, databaseSettings, databaseSettings.get("NUMONIC_THRESHOLDS_FILE_LOCATION"));
 
                     numonic.start();
                 }
@@ -498,6 +498,7 @@ public class Database implements DataHandler, Observer, ISystemStatus {
 
         running = true;
         connected = true;
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Database " + getID() + " started.");
     }
 
     /**
