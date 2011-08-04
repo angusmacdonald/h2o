@@ -184,6 +184,14 @@ public class NoReplicateTests extends TestBase {
                 fail("There should be some entries in this table.");
             }
 
+            cb.close();
+
+            final ResultSet rs3 = sa.executeQuery("SELECT * FROM TEST;");
+
+            if (!rs3.next()) {
+                fail("There should be some entries in this table.");
+            }
+
         }
         catch (final SQLException e) {
             e.printStackTrace();

@@ -1385,7 +1385,7 @@ public class JdbcConnection extends TraceObject implements Connection {
     boolean checkClosed() throws SQLException {
 
         if (session == null) { throw Message.getSQLException(ErrorCode.OBJECT_CLOSED); }
-        if (session.isClosed()) { throw Message.getSQLException(ErrorCode.DATABASE_CALLED_AT_SHUTDOWN); }
+        if (session.isClosed()) { throw new SQLException("Database is already closed: " + url); }
         if (session.isReconnectNeeded()) {
             trace.debug("reconnect");
             session = session.reconnect();

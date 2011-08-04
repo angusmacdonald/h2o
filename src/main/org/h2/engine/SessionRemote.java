@@ -522,7 +522,7 @@ public class SessionRemote extends SessionWithState implements SessionFactory, D
      */
     public void checkClosed() throws SQLException {
 
-        if (isClosed()) { throw new SQLException("Could not connect to database instance specified: " + getDatabasePath()); }
+        if (isClosed()) { throw new SQLException("Could not connect to database instance specified (remote session or database is closed): " + databaseName); }
     }
 
     @Override

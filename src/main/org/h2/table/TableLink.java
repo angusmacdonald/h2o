@@ -455,7 +455,7 @@ public class TableLink extends Table {
      */
     public SQLException wrapException(final String sql, final SQLException e) {
 
-        return Message.getSQLException(ErrorCode.ERROR_ACCESSING_LINKED_TABLE_2, new String[]{sql, e.toString()}, e);
+        return Message.getSQLException(ErrorCode.ERROR_ACCESSING_LINKED_TABLE_2, new String[]{sql, e.toString() + ":" + driver}, e);
     }
 
     public String getQualifiedTable() {

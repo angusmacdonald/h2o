@@ -359,7 +359,7 @@ public class CreateTable extends SchemaCommand {
                     final int result = instance.execute(sql, transactionName, false);
 
                     if (result == 0) {
-
+                        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Successfully replicated " + tableInfo.getFullTableName() + " onto " + replicaLocation.getURL());
                         successfulUpdates.add(replicaLocation);
                     }
                 }

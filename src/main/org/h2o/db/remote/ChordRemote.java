@@ -1061,14 +1061,8 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                     successorDB.executeUpdate("MIGRATE TABLEMANAGER " + wrapper.getTableInfo().getFullTableName(), false);
                 }
             }
-            catch (final RPCException e) {
-                ErrorHandling.errorNoEvent("(Error during shutdown) " + e.getMessage());
-            }
-            catch (final MovedException e) {
-                ErrorHandling.errorNoEvent("(Error during shutdown) " + e.getMessage());
-            }
-            catch (final SQLException e) {
-                ErrorHandling.errorNoEvent("(Error during shutdown) " + e.getMessage());
+            catch (final Exception e) {
+                ErrorHandling.exceptionError(e, "(Error during shutdown on " + db.getID() + ") " + e.getMessage());
             }
 
             /*
