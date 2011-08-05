@@ -495,7 +495,7 @@ public final class InMemorySystemTable implements ISystemTable {
         if (isAlive(tableManagerWrapper.getTableManager())) { return false; // check that it isn't already active.
         }
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Beginning attempt to recreate Table Manager for " + tableManagerWrapper.getTableInfo());
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Beginning attempt to recreate Table Manager for " + tableManagerWrapper.getTableInfo() + " on " + database.getID());
 
         final Set<DatabaseID> tableManagerReplicaLocations = tmReplicaLocations.get(tableManagerWrapper.getTableInfo());
 
