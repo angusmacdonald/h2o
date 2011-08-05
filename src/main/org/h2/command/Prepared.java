@@ -798,6 +798,11 @@ public abstract class Prepared {
      */
     public String getSQLIncludingParameters() {
 
-        return command.getSQLIncludingParameters();
+        if (command != null) {
+            return command.getSQLIncludingParameters();
+        }
+        else {
+            return sqlStatement;
+        }
     }
 }
