@@ -1043,4 +1043,11 @@ public abstract class Table extends SchemaObjectBase {
 
         ErrorHandling.hardError("Should never be called. Implemented only by TableData, called in CreateReplica.");
     }
+
+    @Override
+    public String toString() {
+
+        return "Table [getTableType()=" + getTableType() + ", getFullName()=" + getFullName() + "]";
+    }
+
 }
