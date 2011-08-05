@@ -7,3 +7,11 @@ syntax: regexp
 ^db_data$
 syntax: regexp
 ^\.classpath$
+syntax: regexp
+^db_data1$
+syntax: regexp
+^db_data2$
+syntax: regexp
+^eval$
+syntax: regexp
+^generatedWorkloads$
