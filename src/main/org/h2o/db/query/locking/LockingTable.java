@@ -142,6 +142,7 @@ public class LockingTable implements ILockingTable, Serializable {
             return LockType.WRITE;
         }
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "attempted to release lock which wasn't held on " + fullName + " requester: " + lockRequest + "; readLockHolders.size=" + readLockHolders.size());
         ErrorHandling.hardError("Unexpected Code Path: attempted to release a lock which wasn't held for table: " + fullName);
         return null; // Unreachable.
     }
