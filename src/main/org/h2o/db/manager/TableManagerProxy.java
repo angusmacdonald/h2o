@@ -591,6 +591,24 @@ public class TableManagerProxy extends StreamProxy implements ITableManagerRemot
     }
 
     @Override
+    public Map<DatabaseInstanceWrapper, Integer> getReplicasOnActiveMachines() throws RPCException, MovedException {
+
+        try {
+            final Connection connection = (Connection) startCall("getReplicasOnActiveMachines");
+            final JSONWriter jw = connection.getJSONwriter();
+            setUpJSONArrayForRMI(jw);
+            final JSONReader reader = makeCall(connection);
+            final Map<DatabaseInstanceWrapper, Integer> result = marshaller.deserializeMapDatabaseInstanceWrapperInteger(reader);
+            finishCall(connection);
+            return result;
+        }
+        catch (final Exception e) {
+            dealWithException(e);
+            return null; // not reached
+        }
+    }
+
+    @Override
     public Map<DatabaseInstanceWrapper, Integer> getAllReplicas() throws RPCException, MovedException {
 
         try {

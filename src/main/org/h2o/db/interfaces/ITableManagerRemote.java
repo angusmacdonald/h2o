@@ -124,6 +124,12 @@ public interface ITableManagerRemote extends IH2ORemote, IMigratable {
     public Map<DatabaseInstanceWrapper, Integer> getActiveReplicas() throws RPCException, MovedException;
 
     /**
+     * Get the set of all replicas that are currently active and on active machines.
+     * @return
+     */
+    public Map<DatabaseInstanceWrapper, Integer> getReplicasOnActiveMachines() throws RPCException, MovedException;
+
+    /**
      * Get the set of all replicas (both active and inactive) along with their corresponding update IDs.
      */
     public Map<DatabaseInstanceWrapper, Integer> getAllReplicas() throws RPCException, MovedException;

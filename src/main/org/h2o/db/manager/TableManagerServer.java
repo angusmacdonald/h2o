@@ -264,6 +264,15 @@ public class TableManagerServer extends ApplicationServer {
             }
         });
 
+        handler_map.put("getReplicasOnActiveMachines", new IHandler() {
+
+            @Override
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
+
+                marshaller.serializeMapDatabaseInstanceWrapperInteger(table_manager.getReplicasOnActiveMachines(), writer);
+            }
+        });
+
         // public Map<DatabaseInstanceWrapper, Integer> getAllReplicas() throws RPCException, MovedException
 
         handler_map.put("getAllReplicas", new IHandler() {

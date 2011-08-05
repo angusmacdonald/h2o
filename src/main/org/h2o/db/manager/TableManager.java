@@ -956,4 +956,10 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
         replicaManager.markMachineAsFailed(failedMachine);
 
     }
+
+    @Override
+    public Map<DatabaseInstanceWrapper, Integer> getReplicasOnActiveMachines() {
+
+        return replicaManager.getAllReplicasOnActiveMachines();
+    }
 }
