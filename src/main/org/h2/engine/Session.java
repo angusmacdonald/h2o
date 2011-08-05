@@ -484,10 +484,13 @@ public class Session extends SessionWithState {
 
         if (closed) { throw Message.getSQLException(ErrorCode.CONNECTION_BROKEN); }
 
+        /*
+         * If this is an internal query no H2O level locks will be acquired - they must have already been acquired somewhere else.
+         */
         boolean internal = false;
 
-        if (sql.endsWith("[internal]")) {
-            sql = sql.substring(0, sql.length() - "[internal]".length());
+        if (sql.endsWith(Constants.INTERNAL_FLAG)) {
+            sql = sql.substring(0, sql.length() - Constants.INTERNAL_FLAG.length());
             internal = true;
         }
         final Parser parser = new Parser(this, internal);
@@ -946,7 +949,7 @@ public class Session extends SessionWithState {
                 }
             }
             if (!found && commit) { // only called on commit because of the way ROLLBACKS could be sent to machines unaware of a problem.
-                throw Message.getSQLException(ErrorCode.TRANSACTION_NOT_FOUND_1, transactionName);
+                throw Message.getSQLException(ErrorCode.TRANSACTION_NOT_FOUND_1, transactionName + ", " + database.getID());
             }
         }
     }

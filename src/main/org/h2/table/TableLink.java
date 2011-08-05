@@ -181,7 +181,7 @@ public class TableLink extends Table {
         Statement stat = null;
         try {
             stat = conn.getConnection().createStatement();
-            rs = stat.executeQuery("SELECT * FROM " + qualifiedTableName + " T WHERE 1=0");
+            rs = stat.executeQuery("SELECT * FROM " + qualifiedTableName + " T WHERE 1=0[internal]");
             if (columnList.size() == 0) {
                 // alternative solution
                 final ResultSetMetaData rsMeta = rs.getMetaData();

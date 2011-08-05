@@ -490,12 +490,12 @@ public class Constants {
     /**
      * Whether updates should be logged in a table proxy manager. THIS USES LARGE AMOUNTS OF MEMORY AND SHOULD ONLY BE USED IN DEBUGGING.
      */
-    public static final boolean LOG_INCOMING_UPDATES = false;
+    public static final boolean LOG_INCOMING_UPDATES = true;
 
     /**
      * Set this to true to enable logging of lock operations. ONLY USE THIS FOR DEBUGGING - IT WILL CRASH EVENTUALLY CRASH THE PROCESS IF USED ON ANY PROPER WORKLOAD DUE TO MEMORY OVERCONSUMPTION.
      */
-    public final static boolean DO_LOCK_LOGGING = false;
+    public final static boolean DO_LOCK_LOGGING = true;
 
     public static boolean IS_TEAR_DOWN = false;
 
@@ -506,6 +506,11 @@ public class Constants {
     public static boolean IS_NON_SM_TEST = false;
 
     public static boolean IS_TEST = false;
+
+    /**
+     * Added to the end of some queries to indicate to H2O that the query is part of an internal operation, so now H2O level locks need to be taken out.
+     */
+    public static final String INTERNAL_FLAG = "[internal]";
 
     private Constants() {
 

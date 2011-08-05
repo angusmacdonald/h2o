@@ -192,11 +192,13 @@ public class NoReplicateTests extends TestBase {
                 fail("There should be some entries in this table.");
             }
 
+            sa.execute("COMMIT;");
         }
         catch (final SQLException e) {
             e.printStackTrace();
             fail("An Unexpected SQLException was thrown.");
         }
-    }
 
+        System.err.println("End of test.");
+    }
 }
