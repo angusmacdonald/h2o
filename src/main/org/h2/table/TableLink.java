@@ -34,6 +34,9 @@ import org.h2.value.ValueDate;
 import org.h2.value.ValueTime;
 import org.h2.value.ValueTimestamp;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+
 /**
  * A linked table contains connection information for a table accessible by JDBC. The table may be stored in a different database.
  */
@@ -86,6 +89,8 @@ public class TableLink extends Table {
             linkedIndex = new LinkedIndex(this, id, IndexColumn.wrap(cols), IndexType.createNonUnique(false));
             indexes.add(linkedIndex);
         }
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Created new TableLink for " + name + " at " + url);
     }
 
     private void connect(final boolean clearLinkConnectionCache) throws SQLException {
@@ -455,7 +460,7 @@ public class TableLink extends Table {
      */
     public SQLException wrapException(final String sql, final SQLException e) {
 
-        return Message.getSQLException(ErrorCode.ERROR_ACCESSING_LINKED_TABLE_2, new String[]{sql, e.toString() + ":" + driver}, e);
+        return Message.getSQLException(ErrorCode.ERROR_ACCESSING_LINKED_TABLE_2, new String[]{sql, e.toString() + ":" + url}, e);
     }
 
     public String getQualifiedTable() {
