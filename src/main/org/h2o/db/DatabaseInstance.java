@@ -143,7 +143,7 @@ public class DatabaseInstance implements IDatabaseInstanceRemote {
 
         try {
 
-            if (!database.isRunning()) { throw new SQLException("Could not execute query. The database either hasn't fully started, or is being shut down. Query: " + sql); }
+            // if (!database.isRunning()) { throw new SQLException("Could not execute query. The database either hasn't fully started, or is being shut down. Query: " + sql); }
 
             Command command = null;
             if (systemTableCommand) {
@@ -162,11 +162,11 @@ public class DatabaseInstance implements IDatabaseInstanceRemote {
 
         }
         catch (final SQLException e) {
-            ErrorHandling.exceptionError(e, "Exception thrown while executing update on " + database.getID());
+            ErrorHandling.exceptionError(e, "Exception thrown while executing update on " + database.getID() + ". Query: " + sql);
             throw e;
         }
         catch (final Exception e) {
-            ErrorHandling.exceptionError(e, "Exception thrown while executing update on " + database.getID());
+            ErrorHandling.exceptionError(e, "Exception thrown while executing update on " + database.getID() + ". Query: " + sql);
             return -1;
         }
     }
