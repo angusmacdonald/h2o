@@ -5,6 +5,8 @@
 package org.h2.command.ddl;
 
 import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.h2.constant.LocationPreference;
 import org.h2.engine.Database;
@@ -94,7 +96,9 @@ public class CreateLinkedTable extends SchemaCommand {
 
             final Table linkedTableToRemove = schema.findLocalTableOrView(session, tableName);
 
-            final boolean alreadyExists = schema.removeLinkedTable(linkedTableToRemove, url);
+            final Set<String> urls = new HashSet<String>();
+            urls.add(url);
+            final boolean alreadyExists = schema.removeLinkedTable(linkedTableToRemove, urls);
 
             if (alreadyExists) {
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Linked Table already exists to correct location.");

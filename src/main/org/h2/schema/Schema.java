@@ -315,17 +315,17 @@ public class Schema extends DbObjectBase {
     }
 
     /**
-     * Remove a LinkedTable if one already exists and it doesn't point to the correct database URL
-     * (the urlRequired parameter). This is called from CreateLinkedTable if a linked table has 
+     * Remove a LinkedTable if one already exists and it doesn't point to a correct database URL
+     * (the urls parameter). This is called from CreateLinkedTable if a linked table has 
      * to be created to another URL.
      * @return Returns true if the link table required (at the correct URL) already exists).
      */
-    public boolean removeLinkedTable(final SchemaObject obj, final String urlRequired) {
+    public boolean removeLinkedTable(final SchemaObject obj, final Set<String> urls) {
 
         final Table table = (Table) obj;
         final ReplicaSet replicaSet = tablesAndViews.get(table.getName());
 
-        final boolean linkedTableAlreadyExists = replicaSet.removeLinkedTable(table, urlRequired);
+        final boolean linkedTableAlreadyExists = replicaSet.removeLinkedTable(table, urls);
 
         return linkedTableAlreadyExists;
 

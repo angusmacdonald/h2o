@@ -4877,6 +4877,7 @@ public class Parser {
             } // XXX this might fail if its not the default schema.
         }
         else { // 1
+            ErrorHandling.errorNoEvent("Search remote: " + searchRemote + "; isConnected = " + database.getSystemTableReference().isConnectedToSM() + "; locale = " + locale);
             throw Message.getSQLException(ErrorCode.TABLE_OR_VIEW_NOT_FOUND_1, tableName);
         }
 
@@ -4906,11 +4907,22 @@ public class Parser {
      */
     private Table removeReferenceToLinkedTableIfInvalid(final Queue<DatabaseInstanceWrapper> replicaLocations, Table table, final boolean removeLinkedTable) throws SQLException {
 
+        final java.util.Set<String> urls = new HashSet<String>();
+
+        for (final DatabaseInstanceWrapper databaseInstanceWrapper : replicaLocations) {
+            urls.add(databaseInstanceWrapper.getURL().getURL());
+        }
+
         if (removeLinkedTable && table != null && table instanceof TableLink) {
-            if (!replicaLocations.contains(((TableLink) table).getUrl())) {
-                database.getSchema(session.getCurrentSchemaName()).removeLinkedTable(table, "");
-                table = null;
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Deleting linked table which points to the wrong location.");
+            final String currentURL = ((TableLink) table).getUrl();
+            if (!replicaLocations.contains(currentURL)) {
+                final boolean removed = database.getSchema(session.getCurrentSchemaName()).removeLinkedTable(table, urls); //XXX change to pass all linked table references.
+
+                if (removed) {
+                    table = null;
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Deleted linked table which pointed to the wrong URL [" + currentURL + "].");
+                }
+
             }
         }
 

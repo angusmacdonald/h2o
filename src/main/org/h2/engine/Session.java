@@ -65,9 +65,6 @@ import org.h2.value.ValueString;
 import org.h2o.db.query.TableProxyManager;
 import org.h2o.db.remote.IDatabaseRemote;
 
-import uk.ac.standrews.cs.nds.util.Diagnostic;
-import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
-
 /**
  * A session represents an embedded database connection. When using the server mode, this object resides on the server side and communicates
  * with a SessionRemote object on the client side.
@@ -1358,7 +1355,7 @@ public class Session extends SessionWithState {
 
         if (proxyManagerForCurrentTransaction == null) {
             proxyManagerForCurrentTransaction = new TableProxyManager(getDatabase(), this);
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "New transaction started: " + proxyManagerForCurrentTransaction.getTransactionName());
+            //Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "New transaction started: " + proxyManagerForCurrentTransaction.getTransactionName());
         }
         return proxyManagerForCurrentTransaction;
     }

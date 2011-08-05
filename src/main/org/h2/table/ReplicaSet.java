@@ -12,6 +12,9 @@ import org.h2.result.Row;
 import org.h2.schema.SchemaObject;
 import org.h2.util.ObjectArray;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+
 /**
  * H2O. Contains a set of replicas for a single table instance.
  * 
@@ -135,6 +138,8 @@ public class ReplicaSet {
      */
     public Table getACopy() {
 
+        //Diagnostic.traceNoEvent(DiagnosticLevel.FULL, tableName + ": Primary copy: " + primaryCopy + ". " + PrettyPrinter.toString(replicas));
+
         return getLocalCopy() == null ? getPrimaryCopy() : getLocalCopy();
     }
 
@@ -164,32 +169,41 @@ public class ReplicaSet {
      * (the urlRequired parameter). This is called from CreateLinkedTable if a linked table has 
      * to be created to another URL.
      * @param table
-     * @param urlRequired
+     * @param urls
      * @return Returns true if the link table required (at the correct URL) already exists).
      */
-    public boolean removeLinkedTable(final Table table, final String urlRequired) {
+    public boolean removeLinkedTable(final Table table, final Set<String> urls) {
 
-        boolean linkedTableAlreadyExists = false;
         Table linkedTableToRemove = null;
 
-        for (final Table iTable : replicas) {
-            if (iTable instanceof TableLink) {
-                final TableLink linkedTable = (TableLink) iTable;
+        for (final Table tableReference : replicas) {
+            if (tableReference instanceof TableLink) {
+                final TableLink linkedTable = (TableLink) tableReference;
 
-                if (!linkedTable.getUrl().equals(urlRequired)) {
-                    linkedTableToRemove = iTable;
-                }
-                else {
-                    linkedTableAlreadyExists = true;
+                if (!urls.contains(linkedTable.getUrl())) {
+                    linkedTableToRemove = tableReference;
                 }
 
-                break; //there can only ever be one linked table.
+                break; //a linked table is like highlander: there can only ever be one.
             }
         }
 
-        final boolean anythingRemoved = replicas.remove(linkedTableToRemove);
+        boolean anythingRemoved = replicas.remove(linkedTableToRemove);
 
-        return linkedTableAlreadyExists;
+        if (primaryCopy != null && primaryCopy instanceof TableLink) {
+            final TableLink linkedTable = (TableLink) primaryCopy;
+
+            if (!urls.contains(linkedTable.getUrl())) {
+                primaryCopy = null;
+
+                anythingRemoved = true;
+
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Removing old linked table to machine at [" + linkedTable.getUrl() + "]");
+
+            }
+        }
+
+        return anythingRemoved;
     }
 
     /**
