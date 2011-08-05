@@ -6,7 +6,7 @@
 {sleep="10000"}
 {1} CREATE TABLE test0 (id int, str_a varchar(40), str_b varchar(40), str_c varchar(40), str_d varchar(40), int_a BIGINT, int_b BIGINT);
 {sleep="20000"}
-{0} {execute_workload="src/test/org/h2o/eval/workloads/failure/table-test0.workload" duration="60000"}
-{sleep="30000"}
+{0} {execute_workload="src/test/org/h2o/eval/workloads/failure/table-test0.workload" duration="40000"}
+{sleep="20000"}
 {terminate_machine id="1"}
-{sleep="30000"}
+{sleep="20000"}
