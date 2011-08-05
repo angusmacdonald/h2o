@@ -133,6 +133,7 @@ import org.h2.table.RangeTable;
 import org.h2.table.Table;
 import org.h2.table.TableData;
 import org.h2.table.TableFilter;
+import org.h2.table.TableLink;
 import org.h2.table.TableView;
 import org.h2.util.ByteUtils;
 import org.h2.util.MathUtils;
@@ -168,6 +169,7 @@ import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 /**
  * The parser is used to convert a SQL statement string to an command object.
@@ -1147,7 +1149,7 @@ public class Parser {
                 table = getDualTable();
             }
             else {
-                table = readTableOrView(tableName, true, currentSelect.getLocationPreference());
+                table = readTableOrView(tableName, true, currentSelect.getLocationPreference(), true);
             }
         }
         alias = readFromAlias(alias);
@@ -4738,7 +4740,7 @@ public class Parser {
 
     private Table readTableOrView() throws SQLException {
 
-        return readTableOrView(readIdentifierWithSchema(null), true, LocationPreference.NO_PREFERENCE);
+        return readTableOrView(readIdentifierWithSchema(null), true, LocationPreference.NO_PREFERENCE, true);
     }
 
     /**
@@ -4747,10 +4749,12 @@ public class Parser {
      * @param tableName
      * @param searchRemote
      *            Indicates whether the method will look for a remote copy of the data (true) or if it should just return null (false).
+     * @param removeLinkedTable Whether this method will remove an existing linked table. This method can be called recursively through {@link #findViaSystemTable(String, String)}
+     * so this prevents a newly created linked table from being continually deleted.
      * @return
      * @throws SQLException
      */
-    private Table readTableOrView(final String tableName, final boolean searchRemote, final LocationPreference locale) throws SQLException {
+    private Table readTableOrView(final String tableName, final boolean searchRemote, final LocationPreference locale, final boolean removeLinkedTable) throws SQLException {
 
         String localSchemaName = null;
 
@@ -4788,19 +4792,22 @@ public class Parser {
             if (tableManager != null) {
 
                 tableFound = true;
+                final TableProxy tableProxy = getProxyFromTableManager(tableInfo, tableManager);
 
                 if (Settings.CHECK_LOCAL_TABLE_VALIDITY_AT_TABLE_MANAGER) {
-                    final TableProxy tableProxy = getProxyFromTableManager(tableInfo, tableManager);
 
                     replicaLocations.addAll(tableProxy.getReplicaLocations().keySet());
 
-                    if (replicaLocations.size() == 0) {
-                        ErrorHandling.errorNoEvent("No active replicas for table: " + tableName);
-                        throw new SQLException("No active replicas for table: " + tableName);
-                    }
                 }
                 else {
-                    replicaLocations.add(database.getLocalDatabaseInstanceInWrapper());
+                    replicaLocations.addAll(tableProxy.getReplicaLocations().keySet());
+
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Replica locations for table " + tableName + ": " + PrettyPrinter.toString(replicaLocations));
+                }
+
+                if (replicaLocations.size() == 0) {
+                    ErrorHandling.errorNoEvent("No active replicas for table: " + tableName);
+                    throw new SQLException("No active replicas for table: " + tableName);
                 }
 
             }
@@ -4825,7 +4832,7 @@ public class Parser {
         }
         Table table = database.getSchema(session.getCurrentSchemaName()).findTableOrView(session, tableName, locale);
 
-        table = removeReferenceToLinkedTableIfInvalid(replicaLocations, table);
+        table = removeReferenceToLinkedTableIfInvalid(replicaLocations, table, removeLinkedTable);
 
         /*
          * Return if: the table was found by the ST and is local; the table was found by the ST, and isn't local but a LinkedTable is; or if
@@ -4897,15 +4904,15 @@ public class Parser {
      * @return
      * @throws SQLException
      */
-    private Table removeReferenceToLinkedTableIfInvalid(final Queue<DatabaseInstanceWrapper> replicaLocations, final Table table) throws SQLException {
+    private Table removeReferenceToLinkedTableIfInvalid(final Queue<DatabaseInstanceWrapper> replicaLocations, Table table, final boolean removeLinkedTable) throws SQLException {
 
-        //
-        //        if (table != null && table instanceof TableLink) {
-        //            if (!replicaLocations.contains(((TableLink) table).getUrl())) {
-        //                database.getSchema(session.getCurrentSchemaName()).removeLinkedTable(table, "");
-        //                table = null;
-        //            }
-        //        }
+        if (removeLinkedTable && table != null && table instanceof TableLink) {
+            if (!replicaLocations.contains(((TableLink) table).getUrl())) {
+                database.getSchema(session.getCurrentSchemaName()).removeLinkedTable(table, "");
+                table = null;
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Deleting linked table which points to the wrong location.");
+            }
+        }
 
         return table;
     }
@@ -5015,7 +5022,7 @@ public class Parser {
 
         Map<DatabaseInstanceWrapper, Integer> replicaLocations = null;
         try {
-            replicaLocations = tableManager.getActiveReplicas();
+            replicaLocations = tableManager.getReplicasOnActiveMachines();
 
         }
         catch (final MovedException e) {
@@ -5024,7 +5031,7 @@ public class Parser {
             tableManager = session.getDatabase().getSystemTableReference().lookup(new TableInfo(tableName, thisSchemaName), false);
 
             try {
-                replicaLocations = tableManager.getActiveReplicas();
+                replicaLocations = tableManager.getReplicasOnActiveMachines();
             }
             catch (final MovedException e1) {
                 throw new SQLException("Unable to contact Table Manager for " + tableName + ":: " + e1.getMessage());
@@ -5042,7 +5049,7 @@ public class Parser {
 
             tableManager = session.getDatabase().getSystemTableReference().lookup(new TableInfo(tableName, thisSchemaName), false);
             try {
-                replicaLocations = tableManager.getActiveReplicas();
+                replicaLocations = tableManager.getReplicasOnActiveMachines();
             }
             catch (final MovedException e1) {
                 throw new SQLException("Unable to contact Table Manager for " + tableName + ":: " + e1.getMessage());
@@ -5061,6 +5068,9 @@ public class Parser {
 
         int result = -1;
 
+        /**
+         * XXX code to decide which read replica to query.
+         */
         for (final DatabaseInstanceWrapper replicaLocation : replicaLocations.keySet()) {
             tableLocation = replicaLocation.getURL().getURL();
 
@@ -5091,7 +5101,7 @@ public class Parser {
         if (result == 0) {
             // Linked table was successfully added.
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Successfully created linked table '" + tableName + "'. Attempting to access it.");
-            return readTableOrView(tableName, false, LocationPreference.PRIMARY);
+            return readTableOrView(tableName, false, LocationPreference.PRIMARY, false);
         }
         else {
             throw new SQLException("Couldn't find active copy of table " + tableName + " to connect to.");
