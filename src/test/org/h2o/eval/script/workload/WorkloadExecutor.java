@@ -160,14 +160,8 @@ public class WorkloadExecutor {
                          */
                         try {
                             stat.execute("ROLLBACK;");
-
-                            final long timeAfterQueryExecution = System.currentTimeMillis();
-
-                            queryLog.add(QueryLogEntry.createQueryLogEntry(queriesInThisTransaction, false, timeAfterQueryExecution - timeBeforeQueryExecution));
-
-                            timeBeforeQueryExecution = System.currentTimeMillis(); // when auto-commit isn't enabled, the transaction starts after the previous one finishes.
-
                             queriesInThisTransaction.clear();
+                            transactionRollback = false;
                         }
                         catch (final Exception e) {
                             //May throw an exception is there is nothing to roll back.
@@ -191,7 +185,7 @@ public class WorkloadExecutor {
                             final boolean resultSet = stat.execute(query);
 
                             if (resultSet) {
-
+                                //Not currently checked.
                             }
                             else {
                                 if (!query.contains("COMMIT") && stat.getUpdateCount() < 1) { throw new SQLException("Update count was lower than expected."); }
