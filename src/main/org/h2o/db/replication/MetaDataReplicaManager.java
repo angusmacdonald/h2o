@@ -309,9 +309,9 @@ public class MetaDataReplicaManager {
                      */
                     final String createQuery = isSystemTable ? addNewSystemTableQuery : addNewReplicaLocationQuery;
 
-                    newReplicaLocation.getDatabaseInstance().executeUpdate(createQuery, true);
+                    final int result = newReplicaLocation.getDatabaseInstance().executeUpdate(createQuery, true);
 
-                    Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "H2O " + (isSystemTable ? "System Table" : "Table Manager") + " tables on " + localDatabase.getURL() + " replicated onto new node: " + newReplicaLocation.getURL().getDbLocation());
+                    Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "H2O " + (isSystemTable ? "System Table" : "Table Manager") + " tables on " + localDatabase.getURL() + " replicated onto new node: " + newReplicaLocation.getURL().getDbLocation() + "[result=" + result + "]");
 
                     publishReplicaCreationToEventBus(newReplicaLocation, isSystemTable);
 

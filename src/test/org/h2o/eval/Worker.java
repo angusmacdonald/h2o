@@ -19,7 +19,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
@@ -109,46 +108,6 @@ public class Worker extends Thread implements IWorker {
 
     private final long randomID;
 
-    @Override
-    public void run() {
-
-        final List<FutureTask<WorkloadResult>> toRemove = new LinkedList<FutureTask<WorkloadResult>>();
-
-        while (isRunning()) {
-
-            for (final FutureTask<WorkloadResult> workloadTask : executingWorkloads) {
-
-                if (workloadTask.isDone()) {
-
-                    try {
-                        remoteCoordinator.collateMonitoringResults(workloadTask.get());
-                        toRemove.add(workloadTask);
-                    }
-                    catch (final InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    catch (final ExecutionException e) {
-                        e.printStackTrace();
-                    }
-                    catch (final RemoteException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                }
-
-            }
-
-            executingWorkloads.removeAll(toRemove);
-            toRemove.clear();
-
-            try {
-                Thread.sleep(CHECKER_SLEEP_TIME);
-            }
-            catch (final InterruptedException e) {
-            }
-        }
-    }
-
     public Worker() throws RemoteException, AlreadyBoundException, UnknownHostException {
 
         final String platform_name = System.getProperty("os.name");
@@ -174,6 +133,8 @@ public class Worker extends Thread implements IWorker {
         }
 
         registry.bind(REGISTRY_PREFIX + h2oInstanceName, UnicastRemoteObject.exportObject(this, 0));
+
+        setName("worker-" + h2oInstanceName);
 
         start();
     }
@@ -543,5 +504,54 @@ public class Worker extends Thread implements IWorker {
 
         Diagnostic.setLevel(DiagnosticLevel.FULL);
         new Worker();
+    }
+
+    /*
+     * Checks whether any workloads have completed. If they have, the results are sent to the co-ordinator. 
+     */
+    @Override
+    public void run() {
+
+        final List<FutureTask<WorkloadResult>> toRemove = new LinkedList<FutureTask<WorkloadResult>>();
+
+        while (isRunning()) {
+
+            for (final FutureTask<WorkloadResult> workloadTask : executingWorkloads) {
+
+                if (workloadTask.isDone()) {
+
+                    try {
+                        remoteCoordinator.collateMonitoringResults(workloadTask.get());
+                        toRemove.add(workloadTask);
+                    }
+                    catch (final Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            }
+
+            executingWorkloads.removeAll(toRemove);
+            toRemove.clear();
+
+            try {
+                Thread.sleep(CHECKER_SLEEP_TIME);
+            }
+            catch (final InterruptedException e) {
+            }
+        }
+    }
+
+    @Override
+    public void shutdownWorker() throws RemoteException {
+
+        setRunning(false);
+
+        try {
+            stopH2OInstance();
+        }
+        catch (final Exception e) {
+            //Doesn't matter. It might not have been running.
+        }
     }
 }

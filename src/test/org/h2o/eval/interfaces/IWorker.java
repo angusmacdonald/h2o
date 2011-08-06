@@ -120,4 +120,9 @@ public interface IWorker extends Remote {
      * @throws RemoteException
      */
     public InetAddress getHostname() throws RemoteException;
+
+    /**
+     * Stop the worker from running by terminating any running threads, and closing any extant database instances or connections.
+     */
+    public void shutdownWorker() throws RemoteException;
 }

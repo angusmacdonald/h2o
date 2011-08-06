@@ -1,7 +1,5 @@
 package org.h2o.eval.tests;
 
-import static org.junit.Assert.assertEquals;
-
 import java.io.IOException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -26,11 +24,11 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 
 /**
- * Tests of the H2O co-ordinator class, {@link Coordinator}.
+ * Tests of the co-ordinator scripts run through the {@link Coordinator} class.
  *
  * @author Angus Macdonald (angus.macdonald@st-andrews.ac.uk)
  */
-public class CoordinatorTests {
+public class ScriptTests {
 
     private IWorker[] workers = null;
 
@@ -51,7 +49,7 @@ public class CoordinatorTests {
 
             if (worker != null) {
                 try {
-                    worker.terminateH2OInstance();
+                    worker.shutdownWorker();
                 }
                 catch (final Exception e) { //Will happen if an H2O instance isn't running.
                 }
@@ -66,37 +64,13 @@ public class CoordinatorTests {
 
     }
 
+    /**
+     * The instance holding the table manager fails, but queries are still answered by a second instance when the TM is recreated.
+     */
     @Test
-    public void startOneWorker() throws Exception {
+    public void singleFailureScript() throws Exception {
 
-        workers = new IWorker[1];
-        workers[0] = new Worker();
-
-        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
-
-        eval.startLocatorServer(34000);
-
-        assertEquals(1, eval.startH2OInstances(1));
-    }
-
-    @Test
-    public void startTwoWorkers() throws Exception {
-
-        workers = new IWorker[2];
-        workers[0] = new Worker();
-        workers[1] = new Worker();
-
-        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
-
-        eval.startLocatorServer(34000);
-
-        assertEquals(2, eval.startH2OInstances(2));
-    }
-
-    @Test
-    public void startThreeWorkers() throws Exception {
-
-        workers = new IWorker[3];
+        workers = new IWorker[5];
         for (int i = 0; i < workers.length; i++) {
             workers[i] = new Worker();
         }
@@ -105,30 +79,21 @@ public class CoordinatorTests {
 
         eval.startLocatorServer(34000);
 
-        assertEquals(3, eval.startH2OInstances(3));
-    }
-
-    @Test
-    public void runWorkloadOnWorker() throws Exception {
-
-        workers = new IWorker[1];
-        workers[0] = new Worker();
-
-        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
-
-        eval.startLocatorServer(34000);
-
-        assertEquals(1, eval.startH2OInstances(1));
-
-        eval.executeWorkload("src/test/org/h2o/eval/workloads/test.workload");
+        eval.executeCoordinatorScript("src/test/org/h2o/eval/workloads/failure/coordinator-singlefailure.coord");
 
         eval.blockUntilWorkloadsComplete();
+
+        eval.shutdown();
     }
 
+    /**
+     * One TM fails, it is recovered, but fails on a second machine... all subsequent queries fail.
+     * @throws Exception
+     */
     @Test
-    public void runCoordinationScript() throws Exception {
+    public void doubleFailureScript() throws Exception {
 
-        workers = new IWorker[3];
+        workers = new IWorker[5];
         for (int i = 0; i < workers.length; i++) {
             workers[i] = new Worker();
         }
@@ -137,15 +102,21 @@ public class CoordinatorTests {
 
         eval.startLocatorServer(34000);
 
-        eval.executeCoordinatorScript("src/test/org/h2o/eval/workloads/test.coord");
+        eval.executeCoordinatorScript("src/test/org/h2o/eval/workloads/failure/coordinator-doublefailure-threemachines.coord");
 
         eval.blockUntilWorkloadsComplete();
+
+        eval.shutdown();
     }
 
+    /**
+     * One TM fails, it is recovered, but fails on a second machine... it is recreated again and runs successfully on a third machine.
+     * @throws Exception
+     */
     @Test
-    public void runStaticGeneratedCoordinationScript() throws Exception {
+    public void doubleFailureFourMachines() throws Exception {
 
-        workers = new IWorker[2];
+        workers = new IWorker[5];
         for (int i = 0; i < workers.length; i++) {
             workers[i] = new Worker();
         }
@@ -154,9 +125,11 @@ public class CoordinatorTests {
 
         eval.startLocatorServer(34000);
 
-        eval.executeCoordinatorScript("src/test/org/h2o/eval/workloads/coordinator.coord");
+        eval.executeCoordinatorScript("src/test/org/h2o/eval/workloads/failure/coordinator-doublefailure-fourmachines.coord");
 
         eval.blockUntilWorkloadsComplete();
+
+        eval.shutdown();
     }
 
     @Test

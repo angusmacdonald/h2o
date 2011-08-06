@@ -536,7 +536,10 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         killMonitor.start();
 
         for (final String action : script) {
-            if (action.startsWith("{start_machine")) {
+            if (action.startsWith("#") || action.trim().equals("")) {
+
+            }
+            else if (action.startsWith("{start_machine")) {
 
                 final MachineInstruction startInstruction = CoordinationScriptExecutor.parseStartMachine(action);
 
@@ -817,6 +820,18 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         if (killMonitor != null) {
             killMonitor.setRunning(false);
+        }
+
+        for (final IWorker worker : scriptedInstances.values()) {
+            
+            if (worker != null){
+            try {
+                worker.shutdownWorker();
+            }
+            catch (final RemoteException e) {
+                ErrorHandling.errorNoEvent("Failed to contact worker to shut it down.");
+            }
+            }
         }
     }
 

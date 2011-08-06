@@ -126,13 +126,13 @@ public class Settings {
         defaults.setProperty("REPLICATOR_SLEEP_TIME", "2000");
 
         // The number of copies required for individual relations in the system.
-        defaults.setProperty("RELATION_REPLICATION_FACTOR", "2");
+        defaults.setProperty("RELATION_REPLICATION_FACTOR", "3");
 
         // Number of copies required of the System Table's state.
-        defaults.setProperty("SYSTEM_TABLE_REPLICATION_FACTOR", "2");
+        defaults.setProperty("SYSTEM_TABLE_REPLICATION_FACTOR", "3");
 
         // Number of copies required of Table Manager state.
-        defaults.setProperty("TABLE_MANAGER_REPLICATION_FACTOR", "2");
+        defaults.setProperty("TABLE_MANAGER_REPLICATION_FACTOR", "3");
 
         /*
          * The number of times a database should attempt to connect to an active instance when previous attempts have failed due to bind
