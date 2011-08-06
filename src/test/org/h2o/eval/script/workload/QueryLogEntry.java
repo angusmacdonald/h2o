@@ -8,6 +8,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 public class QueryLogEntry implements Serializable {
@@ -111,7 +113,10 @@ public class QueryLogEntry implements Serializable {
             queryTypes.add(queryType);
         }
 
-        return new QueryLogEntry(successfullyExecuted, timeToExecute, queryTypes, tablesInvolved);
+        final QueryLogEntry newQueryLog = new QueryLogEntry(successfullyExecuted, timeToExecute, queryTypes, tablesInvolved);
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Created new query log entry: " + newQueryLog);
+        return newQueryLog;
 
     }
 
@@ -124,7 +129,7 @@ public class QueryLogEntry implements Serializable {
         final String successfulExecutionTime = (successfulExecution ? timeToExecute : "=NA()") + "";
         final String unsuccessfulExecutionTime = (!successfulExecution ? timeToExecute : "=NA()") + "";
 
-        String row = timeOfTransactionMS + "," + timeOfTransactionSec + ", " + successfulExecutionTime + "," + unsuccessfulExecutionTime + ", " + locationOfExecution + "," + tablesInvolvedString + "," + getNumberOf(QueryType.INSERT) + "," + getNumberOf(QueryType.SELECT) + ",";
+        String row = timeOfTransactionMS + "," + timeOfTransactionSec + "," + successfulExecutionTime + "," + unsuccessfulExecutionTime + ", " + locationOfExecution + "," + tablesInvolvedString + "," + getNumberOf(QueryType.INSERT) + "," + getNumberOf(QueryType.SELECT) + ",";
 
         for (final String tableName : tableNames) {
             if (tableName.equals(tablesInvolvedString)) {
