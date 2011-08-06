@@ -159,6 +159,7 @@ public class WorkloadExecutor {
                          * Rollback the entire transaction if an operation some way through it failed. 
                          */
                         try {
+                            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing rollback because transaction has failed.");
                             stat.execute("ROLLBACK;");
                             queriesInThisTransaction.clear();
                             transactionRollback = false;
@@ -169,15 +170,7 @@ public class WorkloadExecutor {
                     }
                     else if (!autoCommitEnabled || !transactionRollback) { //Ignore operations if there has been a failure already as part of this transaction.
 
-                        query = query.replaceAll(LOOP_COUNTER_PLACEHOLDER, uniqueCounter + "");
-
-                        while (query.contains(GENERATED_STRING_PLACEHOLDER)) {
-                            query = query.replaceFirst(GENERATED_STRING_PLACEHOLDER, generateRandom40CharString());
-                        }
-
-                        while (query.contains(GENERATED_LONG_PLACEHOLDER)) {
-                            query = query.replaceFirst(GENERATED_LONG_PLACEHOLDER, generateBigIntegerValue());
-                        }
+                        query = replacePlaceholderValues(uniqueCounter, query);
 
                         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing query: " + query);
 
@@ -208,6 +201,7 @@ public class WorkloadExecutor {
                             queryLog.add(QueryLogEntry.createQueryLogEntry(query, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
                         }
                         else if (!autoCommitEnabled && query.contains("COMMIT;")) {
+
                             queryLog.add(QueryLogEntry.createQueryLogEntry(queriesInThisTransaction, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
                             queriesInThisTransaction.clear();
                             timeBeforeQueryExecution = System.currentTimeMillis(); // when auto-commit isn't enabled, the transaction starts after the previous one finishes.
@@ -235,6 +229,20 @@ public class WorkloadExecutor {
 
         final WorkloadResult result = new WorkloadResult(queryLog, successfullyExecutedTransactions, attemptedTransactions, worker);
         return result;
+    }
+
+    public static String replacePlaceholderValues(final long uniqueCounter, String query) {
+
+        query = query.replaceAll(LOOP_COUNTER_PLACEHOLDER, uniqueCounter + "");
+
+        while (query.contains(GENERATED_STRING_PLACEHOLDER)) {
+            query = query.replaceFirst(GENERATED_STRING_PLACEHOLDER, generateRandom40CharString());
+        }
+
+        while (query.contains(GENERATED_LONG_PLACEHOLDER)) {
+            query = query.replaceFirst(GENERATED_LONG_PLACEHOLDER, generateBigIntegerValue());
+        }
+        return query;
     }
 
     public static String generateBigIntegerValue() {
