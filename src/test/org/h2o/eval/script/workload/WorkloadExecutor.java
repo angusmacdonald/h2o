@@ -78,7 +78,7 @@ public class WorkloadExecutor {
 
             boolean autoCommitEnabled = true;
 
-            for (int i = 0; i < queries.size(); i++) {
+            queryLoop: for (int i = 0; i < queries.size(); i++) {
 
                 String query = queries.get(i);
 
@@ -205,7 +205,7 @@ public class WorkloadExecutor {
 
                     if (!successfullyExecuted) {
                         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Re-starting workload after unsuccessful execution.");
-                        break timeLoop; //restart the workload.
+                        break queryLoop; //restart the workload.
                     }
 
                     if (System.currentTimeMillis() > workloadEndTime) {
