@@ -82,7 +82,7 @@ public class WorkloadExecutor {
 
                 String query = queries.get(i);
 
-                if (query.startsWith(COMMENT)) {
+                if (query.startsWith(COMMENT) || query.equals("")) {
                     continue; //it's a comment. Ignore.
                 }
                 else if (query.startsWith(SLEEP_OPEN_TAG)) { //Sleep for a specified number of seconds.
@@ -204,10 +204,12 @@ public class WorkloadExecutor {
                     }
 
                     if (!successfullyExecuted) {
+                        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Re-starting workload after unsuccessful execution.");
                         break timeLoop; //restart the workload.
                     }
 
                     if (System.currentTimeMillis() > workloadEndTime) {
+                        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Workload complete.");
                         try {
                             stat.execute("ROLLBACK;");
                             queriesInThisTransaction.clear();
@@ -215,7 +217,7 @@ public class WorkloadExecutor {
                         catch (final Exception e) {
                             //May throw an exception is there is nothing to roll back.
                         }
-                        break timeLoop; // End the workload here.
+                        break; // End the workload here.
                     }
 
                 }
