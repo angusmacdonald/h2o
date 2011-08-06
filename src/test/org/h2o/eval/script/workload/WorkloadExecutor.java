@@ -69,8 +69,6 @@ public class WorkloadExecutor {
 
             stat.execute("SET AUTOCOMMIT ON;");
 
-            boolean transactionRollback = false; //if auto-commit is off and an update/query fails midway, the entire transaction should be rolled back.
-
             long timeBeforeQueryExecution = 0; //when a particular transaction started.
             final List<String> queriesInThisTransaction = new LinkedList<String>();
 
@@ -148,80 +146,78 @@ public class WorkloadExecutor {
                         timeBeforeQueryExecution = System.currentTimeMillis();
                     }
 
-                    if (autoCommitEnabled || query.startsWith("COMMIT")) {
-                        attemptedTransactions++;
-                    }
-
                     boolean successfullyExecuted = true;
 
-                    if (!autoCommitEnabled && transactionRollback && query.startsWith("COMMIT")) {
-                        /*
-                         * Rollback the entire transaction if an operation some way through it failed. 
-                         */
+                    query = replacePlaceholderValues(uniqueCounter, query);
+
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing query: " + query);
+
+                    try {
+                        final boolean resultSet = stat.execute(query);
+
+                        if (resultSet) {
+                            //Not currently checked.
+                        }
+                        else {
+                            if (!query.contains("COMMIT") && stat.getUpdateCount() < 1) { throw new SQLException("Update count was lower than expected."); }
+                        }
+
+                    }
+                    catch (final SQLException e) {
+                        e.printStackTrace();
+                        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to execute '" + query + "'. Error: " + e.getMessage());
+                        successfullyExecuted = false;
+
+                        if (autoCommitEnabled) {
+                            /*
+                             * Rollback the entire transaction if an operation some way through it failed. 
+                             */
+                            try {
+                                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing rollback because transaction has failed.");
+                                stat.execute("ROLLBACK;");
+                                queriesInThisTransaction.clear();
+                            }
+                            catch (final Exception e1) {
+                                //May throw an exception is there is nothing to roll back.
+                            }
+                        }
+                    }
+
+                    final long timeAfterQueryExecution = System.currentTimeMillis();
+
+                    if (autoCommitEnabled) {
+                        queryLog.add(QueryLogEntry.createQueryLogEntry(query, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
+                    }
+                    else if (!autoCommitEnabled && (query.contains("COMMIT;") || !successfullyExecuted)) {
+
+                        if (successfullyExecuted) {
+                            successfullyExecutedTransactions++;
+                        }
+                        attemptedTransactions++;
+
+                        queryLog.add(QueryLogEntry.createQueryLogEntry(queriesInThisTransaction, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
+                        queriesInThisTransaction.clear();
+                        timeBeforeQueryExecution = System.currentTimeMillis(); // when auto-commit isn't enabled, the transaction starts after the previous one finishes.
+                    }
+                    else {
+                        queriesInThisTransaction.add(query);
+                    }
+
+                    if (!successfullyExecuted) {
+                        break timeLoop; //restart the workload.
+                    }
+
+                    if (System.currentTimeMillis() > workloadEndTime) {
                         try {
-                            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing rollback because transaction has failed.");
                             stat.execute("ROLLBACK;");
                             queriesInThisTransaction.clear();
-                            transactionRollback = false;
                         }
                         catch (final Exception e) {
                             //May throw an exception is there is nothing to roll back.
                         }
+                        break timeLoop; // End the workload here.
                     }
-                    else if (!autoCommitEnabled || !transactionRollback) { //Ignore operations if there has been a failure already as part of this transaction.
 
-                        query = replacePlaceholderValues(uniqueCounter, query);
-
-                        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing query: " + query);
-
-                        try {
-                            final boolean resultSet = stat.execute(query);
-
-                            if (resultSet) {
-                                //Not currently checked.
-                            }
-                            else {
-                                if (!query.contains("COMMIT") && stat.getUpdateCount() < 1) { throw new SQLException("Update count was lower than expected."); }
-                            }
-
-                            if (autoCommitEnabled || query.startsWith("COMMIT")) {
-                                successfullyExecutedTransactions++;
-                            }
-                        }
-                        catch (final SQLException e) {
-                            e.printStackTrace();
-                            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to execute '" + query + "'. Error: " + e.getMessage());
-                            successfullyExecuted = false;
-                            transactionRollback = true;
-                        }
-
-                        final long timeAfterQueryExecution = System.currentTimeMillis();
-
-                        if (autoCommitEnabled) {
-                            queryLog.add(QueryLogEntry.createQueryLogEntry(query, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
-                        }
-                        else if (!autoCommitEnabled && query.contains("COMMIT;")) {
-
-                            queryLog.add(QueryLogEntry.createQueryLogEntry(queriesInThisTransaction, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
-                            queriesInThisTransaction.clear();
-                            timeBeforeQueryExecution = System.currentTimeMillis(); // when auto-commit isn't enabled, the transaction starts after the previous one finishes.
-                        }
-                        else {
-                            queriesInThisTransaction.add(query);
-                        }
-
-                        if (System.currentTimeMillis() > workloadEndTime) {
-                            try {
-                                stat.execute("ROLLBACK;");
-                                queriesInThisTransaction.clear();
-                            }
-                            catch (final Exception e) {
-                                //May throw an exception is there is nothing to roll back.
-                            }
-                            break timeLoop; // End the workload here.
-                        }
-
-                    }
                 }
             }
 
