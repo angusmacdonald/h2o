@@ -238,6 +238,7 @@ public class Worker extends Thread implements IWorker {
         }
         else {
             h2oProcess.destroy();
+            h2oProcess = null;
         }
     }
 

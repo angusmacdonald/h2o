@@ -65,6 +65,9 @@ import org.h2.value.ValueString;
 import org.h2o.db.query.TableProxyManager;
 import org.h2o.db.remote.IDatabaseRemote;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+
 /**
  * A session represents an embedded database connection. When using the server mode, this object resides on the server side and communicates
  * with a SessionRemote object on the client side.
@@ -551,6 +554,7 @@ public class Session extends SessionWithState {
         checkCommitRollback();
         lastUncommittedDelete = 0;
         currentTransactionName = null;
+
         if (containsUncommitted()) {
             // need to commit even if rollback is not possible
             // (create/drop table and so on)
@@ -916,6 +920,14 @@ public class Session extends SessionWithState {
             logSystem.prepareCommit(this, transactionName);
         }
         currentTransactionName = transactionName;
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, getDatabase().getID() + ":: Setting current transaction name: " + transactionName);
+
+        if (transactionName == null) {
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Set transaction name to null.");
+            Diagnostic.printStackTrace();
+        }
+
     }
 
     /**
@@ -928,7 +940,12 @@ public class Session extends SessionWithState {
      */
     public void setPreparedTransaction(final String transactionName, final boolean commit) throws SQLException {
 
+        if (currentTransactionName == null || !currentTransactionName.equals(transactionName)) {
+            prepareCommit(transactionName);
+        }
+
         if (currentTransactionName != null && currentTransactionName.equals(transactionName)) {
+
             if (commit) {
                 commit(false, true);
             }
@@ -937,6 +954,9 @@ public class Session extends SessionWithState {
             }
         }
         else {
+
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, getDatabase().getID() + ":: Current transaction name: " + currentTransactionName + ", committing transaction name: " + transactionName);
+
             final ObjectArray list = logSystem.getInDoubtTransactions();
             final int state = commit ? InDoubtTransaction.COMMIT : InDoubtTransaction.ROLLBACK;
             boolean found = false;
@@ -949,6 +969,8 @@ public class Session extends SessionWithState {
                 }
             }
             if (!found && commit) { // only called on commit because of the way ROLLBACKS could be sent to machines unaware of a problem.
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Transaction not found.");
+                Diagnostic.printStackTrace();
                 throw Message.getSQLException(ErrorCode.TRANSACTION_NOT_FOUND_1, transactionName + ", " + database.getID());
             }
         }

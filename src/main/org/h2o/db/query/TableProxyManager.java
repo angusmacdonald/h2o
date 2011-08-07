@@ -36,6 +36,7 @@ import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 /**
  * Manages table proxies where multiple locks are required in a single transaction.
@@ -378,12 +379,22 @@ public class TableProxyManager {
      */
     private boolean commitLocal(final boolean commit, final boolean h2oCommit) throws SQLException {
 
-        prepare();
+        try {
+            prepare();
 
-        final Command commitCommand = parser.prepareCommand((commit ? "COMMIT" : "ROLLBACK") + (h2oCommit ? " TRANSACTION " + transactionName : ";"));
-        final int result = commitCommand.executeUpdate();
+            final Command commitCommand = parser.prepareCommand((commit ? "COMMIT" : "ROLLBACK") + (h2oCommit ? " TRANSACTION " + transactionName : ";"));
+            final int result = commitCommand.executeUpdate();
 
-        return result == 0;
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, session.getDatabase().getID() + " Queries in successful transaction [" + transactionName + "]: " + PrettyPrinter.toString(queries));
+
+            return result == 0;
+        }
+        catch (final SQLException e) {
+
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, session.getDatabase().getID() + " Queries in failed transaction [" + transactionName + "]: " + PrettyPrinter.toString(queries));
+
+            throw e;
+        }
     }
 
     /**
@@ -476,6 +487,7 @@ public class TableProxyManager {
         }
 
         prepareCommand.executeUpdate();
+
     }
 
     public void begin() throws SQLException {

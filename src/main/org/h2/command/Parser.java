@@ -5022,6 +5022,11 @@ public class Parser {
      */
     public Table findViaSystemTable(final String tableName, final String thisSchemaName) throws SQLException, RPCException {
 
+        if (database.getLocalSchema().contains(thisSchemaName)) {
+            //This should never happen, but it will if H2O expects a meta-data table to be on this machine when it isn't.
+            throw new SQLException("The requested table [" + tableName + "] cannot be found locally, and will not be found in the System Table because it is from a non-replicated schema [" + thisSchemaName + "].");
+        }
+
         /*
          * Attempt to locate the table if it exists remotely.
          */

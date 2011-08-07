@@ -207,6 +207,7 @@ public class CommandContainer extends Command {
 
             }
             catch (final SQLException e) {
+                System.out.println("Failed to execute COMMIT operation: " + prepared.getSQLIncludingParameters() + ", on " + session.getDatabase().getID());
                 ErrorHandling.exceptionError(e, "COMMIT failed to commit to all replicas.");
                 //This could also happen because a transaction isn't found (which would happen if there was a bug in H2O.
                 //But in the regular non-buggy case it can only happen when a transaction couldn't commit to all replicas.

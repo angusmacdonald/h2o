@@ -51,6 +51,7 @@ import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 /**
  * A proxy class used to make sending queries to multiple replicas easier. The query only needs to be sent to the query proxy, which handles
@@ -156,7 +157,7 @@ public class TableProxy implements Serializable {
 
         H2OTest.rmiFailure(); // Test code to simulate the failure of DB instances at this point.
 
-        if (returnValue < 0) { throw new SQLException("Query '" + query + "' failed on one or more replicas. The query will be rolled back."); }
+        if (returnValue < 0) { throw new SQLException("Query '" + query + "' failed on one or more replicas [set of all replicas: " + PrettyPrinter.toString(allReplicas) + ". The query will be rolled back."); }
 
         return returnValue;
     }
