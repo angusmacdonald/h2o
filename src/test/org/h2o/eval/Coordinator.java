@@ -543,9 +543,17 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
                 final MachineInstruction startInstruction = CoordinationScriptExecutor.parseStartMachine(action);
 
-                final IWorker worker = startH2OInstance(startInstruction.id == 0); //disable replication on the first instance.
+                IWorker worker = scriptedInstances.get(startInstruction.id);
 
-                scriptedInstances.put(startInstruction.id, worker);
+                if (worker == null) {
+                    worker = startH2OInstance(startInstruction.id == 0); //disable replication on the first instance.
+                    scriptedInstances.put(startInstruction.id, worker);
+                }
+                else {
+                    worker.startH2OInstance(descriptorFile, false, startInstruction.id == 0);
+                    scriptedInstances.put(startInstruction.id, worker);
+                }
+
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Starting machine with ID '" + startInstruction.id + "'");
 
                 if (startInstruction.fail_after != null) {
@@ -823,14 +831,14 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         }
 
         for (final IWorker worker : scriptedInstances.values()) {
-            
-            if (worker != null){
-            try {
-                worker.shutdownWorker();
-            }
-            catch (final RemoteException e) {
-                ErrorHandling.errorNoEvent("Failed to contact worker to shut it down.");
-            }
+
+            if (worker != null) {
+                try {
+                    worker.shutdownWorker();
+                }
+                catch (final RemoteException e) {
+                    ErrorHandling.errorNoEvent("Failed to contact worker to shut it down.");
+                }
             }
         }
     }
