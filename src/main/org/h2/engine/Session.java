@@ -757,7 +757,12 @@ public class Session extends SessionWithState {
             if (!t.isLockedExclusively()) {
                 synchronized (database) {
                     t.unlock(this);
-                    locks.remove(i);
+                    if (locks.size() > 0) {
+                        /*
+                         * This if-test is a hack to prevent an error occuring on meta-tables. Clearly, if there is an unlock operation, there should always be a lock held.
+                         */
+                        locks.remove(i);
+                    }
                 }
                 i--;
             }
@@ -941,6 +946,7 @@ public class Session extends SessionWithState {
     public void setPreparedTransaction(final String transactionName, final boolean commit) throws SQLException {
 
         if (currentTransactionName == null || !currentTransactionName.equals(transactionName)) {
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Hack to prepare commit for " + transactionName);
             prepareCommit(transactionName);
         }
 
