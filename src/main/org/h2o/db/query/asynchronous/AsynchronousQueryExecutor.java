@@ -255,12 +255,18 @@ public class AsynchronousQueryExecutor {
                 }
             }
             else {
-                final CommitResult commitResult = new CommitResult(true, asyncResult.getWrapper(), asyncResult.getUpdateID(), expectedUpdateID, tableName);
+                /*
+                 * The query execution failed. First log this with CommitResult, then  inform the System Table of the possible failure.
+                 */
+                final CommitResult commitResult = new CommitResult(false, asyncResult.getWrapper(), asyncResult.getUpdateID(), expectedUpdateID, tableName);
                 recentlyCompletedQueries.add(commitResult);
 
                 ErrorHandling.errorNoEvent("Error message: " + tableName + ", " + asyncResult.getException().getMessage());
 
                 returnValues[pos] = -1; //error.
+
+                // informSystemTableOfSuspectedFailure(asyncResult);
+
             }
 
             pos++;
@@ -270,6 +276,39 @@ public class AsynchronousQueryExecutor {
 
         return getSingleReturnValue(returnValues);
 
+    }
+
+    /**
+     * If the query has failed because of a connection problem, inform the System Table that a given machine may have failed.
+     * @param asyncResult
+     * @deprecated Each table manager is made aware of the failure of individual instances using the commit results returned to them when a transaction is executed. The System
+     * Table will eventually be informed using other mechanisms.
+     */
+    @Deprecated
+    public void informSystemTableOfSuspectedFailure(final QueryResult asyncResult) {
+
+        /*
+         * The exception is always wrapped in an SQL exception, so this has to check the contents of the exception message.
+         */
+        if (asyncResult.getException().getMessage().contains("java.net.ConnectException")) {
+
+            try {
+                database.getSystemTableReference().suspectInstanceOfFailure(asyncResult.getWrapper().getURL());
+            }
+            catch (final Exception e) {
+
+                ErrorHandling.exceptionError(e, "Failed to notify system table of suspected failure at " + asyncResult.getWrapper().getURL() + ". Will attempt to recreate it.");
+
+                try {
+                    database.getSystemTableReference().failureRecovery();
+
+                    database.getSystemTableReference().suspectInstanceOfFailure(asyncResult.getWrapper().getURL());
+                }
+                catch (final Exception e1) {
+                    ErrorHandling.exceptionError(e1, "Error trying to recreate system table in an attempt to notify it of a suspected failure.");
+                }
+            }
+        }
     }
 
     /**
