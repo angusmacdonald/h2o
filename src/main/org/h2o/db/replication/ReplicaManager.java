@@ -486,6 +486,7 @@ public class ReplicaManager {
 
         for (final DatabaseInstanceWrapper wrapper : failed) {
             activeReplicas.remove(wrapper);
+            markMachineAsFailed(wrapper.getURL());
         }
     }
 

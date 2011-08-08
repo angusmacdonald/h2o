@@ -59,6 +59,7 @@ import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 /**
  * One instance of this class exists per database instance. This instance is responsible for managing the replication of meta-data for 
@@ -426,7 +427,7 @@ public class MetaDataReplicaManager {
                     }
                 }
             }
-            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Removed one or more replica locations because they couldn't be contacted for the last update.");
+            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Removed one or more replica locations because they couldn't be contacted for the last update: " + PrettyPrinter.toString(failed));
         }
 
         replicaManager.remove(failed.keySet());

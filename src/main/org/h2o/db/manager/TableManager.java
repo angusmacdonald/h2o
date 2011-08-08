@@ -172,7 +172,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
     private final String fullName;
 
-    private final int relationReplicationFactor;
+    private final int desiredRelationReplicationFactor;
 
     private final TableInfo tableInfo;
 
@@ -229,7 +229,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
         location = database.getChordInterface().getLocalChordReference();
 
-        relationReplicationFactor = Integer.parseInt(database.getDatabaseSettings().get("RELATION_REPLICATION_FACTOR"));
+        desiredRelationReplicationFactor = Integer.parseInt(database.getDatabaseSettings().get("RELATION_REPLICATION_FACTOR"));
 
         queryMonitor = new TableManagerMonitor();
 
@@ -460,13 +460,13 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
              * is the create operation that initializes the Table Manager in the first place.
              */
             newReplicaLocations.put(lockRequest.getRequestLocation(), 0);
-            if (relationReplicationFactor == 1) { return newReplicaLocations; // No more replicas are needed currently.
+            if (desiredRelationReplicationFactor == 1) { return newReplicaLocations; // No more replicas are needed currently.
             }
 
             try {
                 // the update could be sent to any or all machines in the system.
 
-                potentialReplicaLocations = getDB().getSystemTableReference().getRankedListOfInstances(createReplicaMetric, Requirements.FILTER_NO_REPLICA_INSTANCES);
+                potentialReplicaLocations = getDB().getSystemTableReference().getRankedListOfInstances(createReplicaMetric, Requirements.NO_FILTERING);
             }
             catch (final RPCException e) {
                 e.printStackTrace();
@@ -478,7 +478,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
             int currentReplicationFactor = 1; // currently one copy of the table.
 
             /*
-             * Loop through all potential replica locations, selecting enough to satisfy the system's replication fact. The location of the
+             * Loop through all potential replica locations, selecting enough to satisfy the system's replication factor. The location of the
              * primary copy cannot be re-used.
              */
             if (potentialReplicaLocations != null && potentialReplicaLocations.size() > 0) {
@@ -493,15 +493,15 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
                     /*
                      * Do we have enough replicas yet?
                      */
-                    if (currentReplicationFactor == relationReplicationFactor) {
+                    if (currentReplicationFactor == desiredRelationReplicationFactor) {
                         break;
                     }
                 }
             }
 
-            if (currentReplicationFactor < relationReplicationFactor) {
+            if (currentReplicationFactor < desiredRelationReplicationFactor) {
                 // Couldn't replicate to enough machines.
-                Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Insufficient number of machines available to reach a replication factor of " + relationReplicationFactor + ". The table will be replicated on " + currentReplicationFactor + " instances.");
+                Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Insufficient number of machines available to reach a replication factor of " + desiredRelationReplicationFactor + ". The table will be replicated on " + currentReplicationFactor + " instances.");
             }
         }
         else if (lockType == LockType.WRITE) {
@@ -867,16 +867,102 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
         try {
             addTableInformation(getDB().getID(), tableInfo);
 
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Temporary initial replicas on Table Manager creation on " + getDB().getID() + ": ");
+            for (final TableInfo ti : temporaryInitialReplicas) {
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\t" + ti.getDatabaseID());
+            }
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "All other replicas on Table Manager creation: " + PrettyPrinter.toString(replicaManager.getAllReplicasOnActiveMachines()));
+
             for (final TableInfo replica : temporaryInitialReplicas) {
                 addReplicaInformation(replica);
             }
             temporaryInitialReplicas.clear();
+
+            //Table replica replication:
+            if (replicaManager.getAllReplicasOnActiveMachines().size() < desiredRelationReplicationFactor) {
+                createNewReplicas();
+            }
+
+            //Meta-data replication:
+            db.getMetaDataReplicaManager().replicateMetaDataIfPossible(db.getSystemTableReference(), false);
         }
         catch (final MovedException e) {
             throw new StartupException("Newly created Table Manager throws a MovedException. This should never happen - serious internal error.");
         }
         catch (final SQLException e) {
             throw new StartupException("Failed to persist table manager meta-data to disk: " + e.getMessage());
+        }
+
+    }
+
+    /**
+     * Create new replicas to reach the required replication factor.
+     * @throws MovedException 
+     * @throws RPCException 
+     */
+    private void createNewReplicas() throws RPCException, MovedException {
+
+        final int currentReplicationFactor = replicaManager.getAllReplicasOnActiveMachines().size();
+        final int newReplicasNeeded = desiredRelationReplicationFactor - currentReplicationFactor;
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Deciding whether to create new replicas. Current replication factor is " + currentReplicationFactor + " and the desired replication factor is " + desiredRelationReplicationFactor + ".");
+
+        if (newReplicasNeeded > 0) {
+            final Queue<DatabaseInstanceWrapper> potentialReplicaLocations = getDB().getSystemTableReference().getRankedListOfInstances(createReplicaMetric, Requirements.NO_FILTERING);
+
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Table Manager for " + fullName + " (on " + db.getID() + ") will attempt to replicate to " + newReplicasNeeded + " of these machines: " + PrettyPrinter.toString(potentialReplicaLocations));
+
+            final String createReplicaSQL = "CREATE  REPLICA " + fullName + " FROM '" + replicaManager.getPrimaryLocation().getURL().getURLwithRMIPort() + "'";
+
+            final Set<DatabaseInstanceWrapper> locationOfNewReplicas = new HashSet<DatabaseInstanceWrapper>();
+
+            DatabaseInstanceWrapper wrapper = null;
+            while ((wrapper = potentialReplicaLocations.poll()) != null) {
+
+                if (!replicaManager.contains(wrapper)) {
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempting to replicate table state of " + fullName + " to " + wrapper.getURL());
+
+                    final IDatabaseInstanceRemote instance = wrapper.getDatabaseInstance();
+
+                    try {
+                        final int result = instance.executeUpdate(createReplicaSQL, true);
+
+                        if (result == 0) {
+                            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Successfully replicated " + tableInfo.getFullTableName() + " onto " + wrapper.getURL());
+                            locationOfNewReplicas.add(wrapper);
+                        }
+                    }
+                    catch (final RPCException e) {
+                        ErrorHandling.errorNoEvent("Tried to create replica of " + tableInfo.getFullTableName() + " onto " + wrapper.getURL() + ", but couldn't connnect: " + e.getMessage());
+
+                        db.getSystemTable().suspectInstanceOfFailure(wrapper.getURL());
+                    }
+                    catch (final SQLException e) {
+                        ErrorHandling.errorNoEvent("Tried to create replica of " + tableInfo.getFullTableName() + " onto " + wrapper.getURL() + ", but couldn't connnect: " + e.getMessage());
+
+                    }
+                }
+                else {
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "There is already a replica on " + wrapper.getURL() + ", so we won't replicate here.");
+                }
+            } //end of while loop attempting replication.
+
+            // Update meta-data to reflect new replica locations.
+
+            for (final DatabaseInstanceWrapper databaseInstanceWrapper : locationOfNewReplicas) {
+                // Update Table Manager meta-data.
+
+                final TableInfo tableDetails = new TableInfo(tableInfo, databaseInstanceWrapper.getURL());
+                try {
+                    addReplicaInformation(tableDetails);
+                }
+                catch (final SQLException e) {
+                    ErrorHandling.errorNoEvent("Failed to add information regarding new replicas for " + tableInfo.getFullTableName() + " on " + db.getID() + ".");
+
+                }
+
+            }
+
         }
 
     }

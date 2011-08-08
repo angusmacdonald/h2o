@@ -14,6 +14,7 @@
 {terminate_machine id="1"}
 {sleep="20000"}
 {terminate_machine id="2"}
+{start_machine id="1"}
 {sleep="20000"}
 {terminate_machine id="3"}
 {sleep="20000"}
