@@ -82,10 +82,13 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
 
         try {
             tm = new TableManager(ti, db, true);
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Re-created table manager for " + ti + " on " + db.getID() + ".");
             tm.recreateReplicaManagerState(oldPrimaryLocation);
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Re-created replica manager for " + ti + " on " + db.getID() + ".");
             tm.persistToCompleteStartup(ti);
             tm.persistReplicaInformation();
             H2OEventBus.publish(new H2OEvent(db.getID().getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Persisted to complete startup, recreation of table mnanager for " + ti + " on " + db.getID() + ".");
 
         }
         catch (final SQLException e) {

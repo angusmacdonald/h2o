@@ -546,10 +546,20 @@ public class Worker extends Thread implements IWorker {
     @Override
     public void shutdownWorker() throws RemoteException {
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Shutting down H2O worker at " + h2oInstanceName);
+
         setRunning(false);
 
         try {
             stopH2OInstance();
+
+        }
+        catch (final Exception e) {
+            //Doesn't matter. It might not have been running.
+        }
+
+        try {
+            terminateH2OInstance();
         }
         catch (final Exception e) {
             //Doesn't matter. It might not have been running.
