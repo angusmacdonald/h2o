@@ -352,8 +352,6 @@ public class ReplicaManager {
 
             for (final CommitResult commitResult : committedQueries) {
 
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CommitResult: " + commitResult);
-
                 if (!commitResult.isCommit()) {
                     //Mark this replica as inactive.
                     final DatabaseID id = commitResult.getDatabaseInstanceWrapper().getURL();

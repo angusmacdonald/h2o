@@ -557,8 +557,6 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
     @Override
     public void releaseLockAndUpdateReplicaState(final boolean commit, final LockRequest lockRequest, final Collection<CommitResult> committedQueries, final boolean asynchronousCommit) throws RPCException, MovedException, SQLException {
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "");
-
         try {
 
             if (tableNewlyCreated(commit)) {
