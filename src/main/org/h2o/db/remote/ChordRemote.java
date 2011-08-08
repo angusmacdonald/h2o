@@ -535,7 +535,7 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                 }
             }
 
-            ErrorHandling.errorNoEvent(localMachineLocation + ": Failed to find an active instance on the machine specified: " + hostname + ". Number of application registry entries: " + serverLocations.size());
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, localMachineLocation + ": Failed to find an active instance on the machine specified: " + hostname + ". Number of application registry entries: " + serverLocations.size());
 
             return null;
         }
