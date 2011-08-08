@@ -1132,7 +1132,7 @@ public class Database implements DataHandler, Observer, ISystemStatus {
 
         metaDataReplicaManager = new MetaDataReplicaManager(metaDataReplicationEnabled, systemTableReplicationFactor, tableManagerReplicationFactor, getLocalDatabaseInstanceInWrapper(), this);
         metaDataReplicationThread = new MetaDataReplicationThread(metaDataReplicaManager, systemTableRef, this, replicationThreadSleepTime);
-        metaDataReplicationThread.setName("MetaDataReplicationThread");
+
     }
 
     private void createSystemTableOrGetReferenceToIt(final boolean databaseExists, final boolean persistedTablesExist, final boolean createTables) throws SQLException {

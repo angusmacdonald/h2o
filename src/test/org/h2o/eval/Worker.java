@@ -551,14 +551,6 @@ public class Worker extends Thread implements IWorker {
         setRunning(false);
 
         try {
-            stopH2OInstance();
-
-        }
-        catch (final Exception e) {
-            //Doesn't matter. It might not have been running.
-        }
-
-        try {
             terminateH2OInstance();
         }
         catch (final Exception e) {

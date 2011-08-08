@@ -1,8 +1,13 @@
 package org.h2o.eval.tests;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.UnknownHostException;
+import java.rmi.AlreadyBoundException;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -16,6 +21,8 @@ import org.h2o.eval.script.coord.specification.TableClustering;
 import org.h2o.eval.script.coord.specification.TableClustering.Clustering;
 import org.h2o.eval.script.coord.specification.WorkloadType;
 import org.h2o.eval.script.coord.specification.WorkloadType.LinkToTableLocation;
+import org.h2o.util.exceptions.StartupException;
+import org.h2o.util.exceptions.WorkloadParseException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -70,20 +77,8 @@ public class ScriptTests {
     @Test
     public void singleFailureScript() throws Exception {
 
-        workers = new IWorker[5];
-        for (int i = 0; i < workers.length; i++) {
-            workers[i] = new Worker();
-        }
+        runScript("src/test/org/h2o/eval/workloads/failure/coordinator-singlefailure.coord");
 
-        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
-
-        eval.startLocatorServer(34000);
-
-        eval.executeCoordinatorScript("src/test/org/h2o/eval/workloads/failure/coordinator-singlefailure.coord");
-
-        eval.blockUntilWorkloadsComplete();
-
-        eval.shutdown();
     }
 
     /**
@@ -93,20 +88,7 @@ public class ScriptTests {
     @Test
     public void doubleFailureScript() throws Exception {
 
-        workers = new IWorker[5];
-        for (int i = 0; i < workers.length; i++) {
-            workers[i] = new Worker();
-        }
-
-        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
-
-        eval.startLocatorServer(34000);
-
-        eval.executeCoordinatorScript("src/test/org/h2o/eval/workloads/failure/coordinator-doublefailure-threemachines.coord");
-
-        eval.blockUntilWorkloadsComplete();
-
-        eval.shutdown();
+        runScript("src/test/org/h2o/eval/workloads/failure/coordinator-doublefailure-threemachines.coord");
     }
 
     /**
@@ -116,6 +98,34 @@ public class ScriptTests {
     @Test
     public void doubleFailureFourMachines() throws Exception {
 
+        runScript("src/test/org/h2o/eval/workloads/failure/coordinator-doublefailure-fourmachines.coord");
+
+    }
+
+    /**
+     * One TM fails, it is recovered, but fails on a second machine... it is recreated again and runs successfully on a third machine.
+     * @throws Exception
+     */
+    @Test
+    public void tripleFailureFourMachines() throws Exception {
+
+        runScript("src/test/org/h2o/eval/workloads/failure/coordinator-triplefailure-fourmachines.coord");
+
+    }
+
+    /**
+     * One TM fails, it is recovered, but fails on a second machine... it is recreated again and runs successfully on a third machine.
+     * @throws Exception
+     */
+    @Test
+    public void tripleFailureFourMachinesSingleRecovery() throws Exception {
+
+        runScript("src/test/org/h2o/eval/workloads/failure/coordinator-triplefailure-fourmachines-singlerecovery.coord");
+
+    }
+
+    public void runScript(final String scriptLocation) throws RemoteException, AlreadyBoundException, UnknownHostException, IOException, StartupException, FileNotFoundException, WorkloadParseException, SQLException {
+
         workers = new IWorker[5];
         for (int i = 0; i < workers.length; i++) {
             workers[i] = new Worker();
@@ -125,7 +135,7 @@ public class ScriptTests {
 
         eval.startLocatorServer(34000);
 
-        eval.executeCoordinatorScript("src/test/org/h2o/eval/workloads/failure/coordinator-doublefailure-fourmachines.coord");
+        eval.executeCoordinatorScript(scriptLocation);
 
         eval.blockUntilWorkloadsComplete();
 

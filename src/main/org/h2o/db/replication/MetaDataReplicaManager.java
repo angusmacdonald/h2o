@@ -40,6 +40,7 @@ import org.h2.result.LocalResult;
 import org.h2o.autonomic.numonic.metric.CreateMetaDataReplicaMetric;
 import org.h2o.autonomic.numonic.metric.IMetric;
 import org.h2o.autonomic.numonic.ranking.Requirements;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.manager.PersistentSystemTable;
@@ -379,7 +380,7 @@ public class MetaDataReplicaManager {
         final ReplicaManager replicaManager = isSystemTable ? systemTableReplicas : tableManagerReplicas;
         final int managerStateReplicationFactor = isSystemTable ? systemTableReplicationFactor : tableManagerReplicationFactor;
 
-        final Map<DatabaseInstanceWrapper, Integer> replicas = replicaManager.getActiveReplicas();
+        final Map<DatabaseInstanceWrapper, Integer> replicas = replicaManager.getAllReplicasOnActiveMachines();
         final Map<DatabaseInstanceWrapper, Integer> failed = new HashMap<DatabaseInstanceWrapper, Integer>();
 
         int result = -1;
@@ -492,7 +493,7 @@ public class MetaDataReplicaManager {
      */
     public Set<DatabaseInstanceWrapper> getTableManagerReplicaLocations() {
 
-        return new HashSet<DatabaseInstanceWrapper>(tableManagerReplicas.getActiveReplicas().keySet());
+        return new HashSet<DatabaseInstanceWrapper>(tableManagerReplicas.getAllReplicasOnActiveMachines().keySet());
     }
 
     private boolean isLocal(final DatabaseInstanceWrapper replica) {
@@ -689,6 +690,19 @@ public class MetaDataReplicaManager {
         }
 
         return ids.toArray(new Integer[0]);
+    }
+
+    /**
+     * The replica manager is notified that a particular machine is now inactive.
+     * @param failedMachine
+     */
+    public void notifyOfFailure(final DatabaseID failedMachine) {
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "The meta-data replication manager on " + db.getID() + " has been notified of the failure of " + failedMachine);
+
+        systemTableReplicas.markMachineAsFailed(failedMachine);
+        tableManagerReplicas.markMachineAsFailed(failedMachine);
+
     }
 
 }

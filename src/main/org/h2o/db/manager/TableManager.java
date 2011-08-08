@@ -968,6 +968,12 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
         replicaManager.markMachineAsFailed(failedMachine);
 
+        /*
+         * Contact the meta-data replica manager for this machine as well.
+         */
+
+        db.getMetaDataReplicaManager().notifyOfFailure(failedMachine);
+
     }
 
     @Override

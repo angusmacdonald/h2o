@@ -155,7 +155,7 @@ public class Settings {
         /*
          * The time between checks to ensure that database meta-data is sufficiently replicated.
          */
-        defaults.setProperty("METADATA_REPLICATION_THREAD_SLEEP_TIME", "5000");
+        defaults.setProperty("METADATA_REPLICATION_THREAD_SLEEP_TIME", "2500");
 
         /*
          * The time between checks to ensure that Table Managers are still running.
