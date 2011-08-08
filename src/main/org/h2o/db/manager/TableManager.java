@@ -521,6 +521,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
             else {
                 replicaLocations = replicaManager.getAllReplicasOnActiveMachines(); // The update could be sent to any or all machines holding the given table.
 
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Replicas on active machines for " + fullName + ": " + PrettyPrinter.toString(replicaLocations));
             }
 
             return replicaLocations;
@@ -556,12 +557,12 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
     @Override
     public void releaseLockAndUpdateReplicaState(final boolean commit, final LockRequest lockRequest, final Collection<CommitResult> committedQueries, final boolean asynchronousCommit) throws RPCException, MovedException, SQLException {
 
-        try {
-            // If it's not a commit on a CREATE TABLE request nothing needs to be persisted.
-            if (!tableAlreadyExists && commit) {
-                // This commit is the first commit of this table, so we must update the System Table.
-                completeCreationByUpdatingSystemTable();
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "");
 
+        try {
+
+            if (tableNewlyCreated(commit)) {
+                completeCreationByUpdatingSystemTable();
                 tableAlreadyExists = true;
             }
 
@@ -570,11 +571,13 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
             // Update the set of 'active replicas' and their update IDs.
             if (commit) {
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Query committed. Replica set will be updated.");
                 //The method call below changes update IDs which is why rollbacks don't call it.
                 updateActiveReplicaSet(commit, committedQueries, asynchronousCommit, lockType);
             }
             else {
-                //TODO Mark replicas as inactive if they are no longer accessible?
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Query was not committed. Some replicas may be on inactive instances.");
+                replicaManager.markNonCommittingReplicasAsInactive(committedQueries, tableInfo);
             }
 
         }
@@ -584,6 +587,18 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
                 lockingTable.releaseLock(lockRequest);
             }
         }
+    }
+
+    /**
+     * Whether this is a create table request.
+     * 
+     * If it's not a commit on a CREATE TABLE request nothing needs to be persisted.
+     * @param commit
+     * @return
+     */
+    public boolean tableNewlyCreated(final boolean commit) {
+
+        return !tableAlreadyExists && commit;
     }
 
     private void completeCreationByUpdatingSystemTable() throws RPCException, MovedException, SQLException {

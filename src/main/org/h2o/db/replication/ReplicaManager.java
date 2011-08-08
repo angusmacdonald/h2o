@@ -209,7 +209,7 @@ public class ReplicaManager {
 
         Diagnostic.trace(DiagnosticLevel.FULL, "commit: " + commit + " table info: " + tableInfo.getFullTableName());
 
-        if (!thisTableWasUpdated(committedQueries, tableInfo)) { return new HashSet<DatabaseInstanceWrapper>(); }
+        if (!ReplicaManager.thisTableWasUpdated(committedQueries, tableInfo)) { return new HashSet<DatabaseInstanceWrapper>(); }
         //Replicas that are currently marked as active (this may be changed during this update).
         final HashMap<DatabaseInstanceWrapper, Integer> oldActiveReplicas = new HashMap<DatabaseInstanceWrapper, Integer>(activeReplicas);
 
@@ -335,18 +335,52 @@ public class ReplicaManager {
     }
 
     /**
+     * If the write operation failed because one or more replicas weren't accessible, mark these replicas as inactive.
+     * @param committedQueries
+     */
+    public void markNonCommittingReplicasAsInactive(final Collection<CommitResult> committedQueries, final TableInfo tableInfo) {
+
+        final boolean someReplicasUpdated = ReplicaManager.thisTableWasUpdated(committedQueries, tableInfo);
+
+        /*
+         * If all replicas failed it could be that the query was not valid. If some replicas were updated, but others failed (resulting in a rollback),
+         * then this method marks the replicas which didn't succeed as inactive.
+         */
+
+        if (someReplicasUpdated) {
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "The query succeeded on some instances, but not all.");
+
+            for (final CommitResult commitResult : committedQueries) {
+
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CommitResult: " + commitResult);
+
+                if (!commitResult.isCommit()) {
+                    //Mark this replica as inactive.
+                    final DatabaseID id = commitResult.getDatabaseInstanceWrapper().getURL();
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Machine at " + id + " marked as inactive on table manager for " + tableInfo + ".");
+                    markMachineAsFailed(id);
+                }
+            }
+        }
+        else {
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "The query which failed, failed on all instances so no replicas are marked as being on inactive instances.");
+        }
+
+    }
+
+    /**
      * Checks whether any of this tables replicas were updated.
      * @param committedQueries information on all the updates which occurred in this transaction.
      * @param tableInfo the name of the table for which this replica manager is responsible.
      * @return true if any of this tables replicas were involved in an update.
      */
-    private boolean thisTableWasUpdated(final Collection<CommitResult> committedQueries, final TableInfo tableInfo) {
+    private static boolean thisTableWasUpdated(final Collection<CommitResult> committedQueries, final TableInfo tableInfo) {
 
         if (committedQueries == null) { return false; }
 
         for (final CommitResult cr : committedQueries) {
             try {
-                if (cr.getTable() != null && tableInfo != null && cr.getTable().equals(tableInfo)) { return true; }
+                if (cr.getTable() != null && tableInfo != null && cr.getTable().equals(tableInfo) && cr.isCommit()) { return true; }
             }
             catch (final Exception e) {
                 e.printStackTrace();
