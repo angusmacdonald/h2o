@@ -411,4 +411,22 @@ public class DatabaseInstanceProxy extends StreamProxy implements IDatabaseInsta
             return -1;
         }
     }
+
+    @Override
+    public boolean isReplicating() throws RPCException {
+
+        try {
+            final Connection connection = (Connection) startCall("isReplicating");
+            final JSONReader reader = makeCall(connection);
+
+            final boolean result = reader.booleanValue();
+
+            finishCall(connection);
+            return result;
+        }
+        catch (final Exception e) {
+            dealWithException(e);
+            return false; // not reached
+        }
+    }
 }

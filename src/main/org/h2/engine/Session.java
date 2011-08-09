@@ -722,11 +722,10 @@ public class Session extends SessionWithState {
         // called _after_ the row was inserted successfully into the table,
         // otherwise rollback will try to rollback a not-inserted row
 
-        // XXX because of exclusive locking at the H2O level, it is assumed that this is not needed.
         if (SysProperties.CHECK) {
             final int lockMode = database.getLockMode();
             if (lockMode != Constants.LOCK_MODE_OFF) {
-                if (locks.indexOf(log.getTable()) < 0 && !Table.TABLE_LINK.equals(log.getTable().getTableType())) {
+                if (locks.indexOf(log.getTable()) < 0 && !getDatabase().getLocalSchema().contains(log.getTable().getSchema().getName()) && !Table.TABLE_LINK.equals(log.getTable().getTableType())) {
 
                     /*
                      * Thrown if we try to log something, but a lock isn't held.
@@ -943,7 +942,7 @@ public class Session extends SessionWithState {
      * @param commit
      *            true for commit, false for rollback
      */
-    public void setPreparedTransaction(final String transactionName, final boolean commit) throws SQLException {
+    public synchronized void setPreparedTransaction(final String transactionName, final boolean commit) throws SQLException {
 
         if (currentTransactionName == null || !currentTransactionName.equals(transactionName)) {
             Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Hack to prepare commit for " + transactionName);

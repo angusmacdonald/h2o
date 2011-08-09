@@ -3479,4 +3479,9 @@ public class Database implements DataHandler, Observer, ISystemStatus {
 
     }
 
+    public boolean isReplicating() {
+
+        return allowReplication;
+    }
+
 }

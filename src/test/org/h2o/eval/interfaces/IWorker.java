@@ -125,4 +125,16 @@ public interface IWorker extends Remote {
      * Stop the worker from running by terminating any running threads, and closing any extant database instances or connections.
      */
     public void shutdownWorker() throws RemoteException;
+
+    /**
+     * Temporarily halt the execution of all workloads running on this machine.
+     * @throws WorkloadException Thrown if no workloads are running.
+     */
+    public void stallWorkloads() throws RemoteException, WorkloadException;
+
+    /**
+     * Resume the execution of all stalled workloads on this machine.
+     * @throws WorkloadException Thrown if no workloads are running.
+     */
+    public void resumeWorkloads() throws RemoteException, WorkloadException;
 }

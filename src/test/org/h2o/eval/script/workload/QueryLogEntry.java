@@ -49,9 +49,9 @@ public class QueryLogEntry implements Serializable {
      * @param tablesInvolved
      * @param timeOfExecution 
      */
-    public QueryLogEntry(final boolean successfulExecution, final long timeToExecute, final List<QueryType> queryTypes, final Set<String> tablesInvolved) {
+    public QueryLogEntry(final long timeOfExecution, final boolean successfulExecution, final long timeToExecute, final List<QueryType> queryTypes, final Set<String> tablesInvolved) {
 
-        timeOfLogEntry = System.currentTimeMillis();
+        timeOfLogEntry = timeOfExecution;
         this.successfulExecution = successfulExecution;
         this.timeToExecute = timeToExecute;
         this.queryTypes = queryTypes;
@@ -67,15 +67,15 @@ public class QueryLogEntry implements Serializable {
         return "QueryLogEntry [queryType=" + PrettyPrinter.toString(queryTypes) + ", tableInvolved=" + PrettyPrinter.toString(tablesInvolved) + ", timeToExecute=" + timeToExecute + ", timeOfLogEntry=" + timeOfLogEntry + ", successfulExecution=" + successfulExecution + "]";
     }
 
-    public static QueryLogEntry createQueryLogEntry(final String query, final boolean successfullyExecuted, final long timeToExecute) {
+    public static QueryLogEntry createQueryLogEntry(final long timeOfExecution, final String query, final boolean successfullyExecuted, final long timeToExecute) {
 
         final List<String> queries = new LinkedList<String>();
         queries.add(query);
 
-        return createQueryLogEntry(queries, successfullyExecuted, timeToExecute);
+        return createQueryLogEntry(timeOfExecution, queries, successfullyExecuted, timeToExecute);
     }
 
-    public static QueryLogEntry createQueryLogEntry(final List<String> queriesInThisTransaction, final boolean successfullyExecuted, final long timeToExecute) {
+    public static QueryLogEntry createQueryLogEntry(final long timeOfExecution, final List<String> queriesInThisTransaction, final boolean successfullyExecuted, final long timeToExecute) {
 
         final Set<String> tablesInvolved = new HashSet<String>();
         final List<QueryType> queryTypes = new LinkedList<QueryLogEntry.QueryType>();
@@ -113,7 +113,7 @@ public class QueryLogEntry implements Serializable {
             queryTypes.add(queryType);
         }
 
-        final QueryLogEntry newQueryLog = new QueryLogEntry(successfullyExecuted, timeToExecute, queryTypes, tablesInvolved);
+        final QueryLogEntry newQueryLog = new QueryLogEntry(timeOfExecution, successfullyExecuted, timeToExecute, queryTypes, tablesInvolved);
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Created new query log entry: " + newQueryLog);
         return newQueryLog;

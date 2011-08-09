@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.h2o.eval.interfaces.IWorker;
+import org.h2o.eval.interfaces.IWorkload;
 import org.h2o.util.exceptions.WorkloadParseException;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
@@ -36,6 +37,11 @@ public class WorkloadExecutor {
 
     private final static SecureRandom random = new SecureRandom();
 
+    private boolean stalled = false;
+
+    long workloadEndTime = 0;
+    long totalTimeOfStall = 0;
+
     /**
      * 
      * @param connection
@@ -46,15 +52,15 @@ public class WorkloadExecutor {
      * @throws SQLException
      * @throws WorkloadParseException
      */
-    public static WorkloadResult execute(final Connection connection, final ArrayList<String> queries, final IWorker worker, long duration) throws SQLException, WorkloadParseException {
+    public WorkloadResult execute(final Connection connection, final ArrayList<String> queries, final IWorker worker, long duration, final IWorkload workload) throws SQLException, WorkloadParseException {
 
-        final long workloadStartTime = System.currentTimeMillis();
+        final long workloadStartTime = currentTime();
 
         if (duration <= 0) { //if no duration is specified, 'timeout' after a specified period.
             duration = MAX_WORKLOAD_DURATION;
         }
 
-        final long workloadEndTime = workloadStartTime + duration;
+        workloadEndTime = workloadStartTime + duration;
 
         final Statement stat = connection.createStatement();
 
@@ -65,7 +71,7 @@ public class WorkloadExecutor {
 
         final List<QueryLogEntry> queryLog = new LinkedList<QueryLogEntry>();
 
-        timeLoop: while (System.currentTimeMillis() < workloadEndTime) {
+        timeLoop: while (currentTime() < currentWorkloadEndTime()) {
 
             stat.execute("SET AUTOCOMMIT ON;");
 
@@ -79,6 +85,22 @@ public class WorkloadExecutor {
             boolean autoCommitEnabled = true;
 
             queryLoop: for (int i = 0; i < queries.size(); i++) {
+
+                if (isStalled()) {
+
+                    final long stallStartTime = currentTime();
+
+                    while (isStalled()) {
+                        try {
+                            Thread.sleep(50);
+                        }
+                        catch (final InterruptedException e) {
+                        }
+                    }
+
+                    totalTimeOfStall += currentTime() - stallStartTime;
+
+                }
 
                 String query = queries.get(i);
 
@@ -139,11 +161,11 @@ public class WorkloadExecutor {
 
                     if (query.startsWith("SET AUTOCOMMIT OFF;")) {
                         autoCommitEnabled = false;
-                        timeBeforeQueryExecution = System.currentTimeMillis();
+                        timeBeforeQueryExecution = currentTime();
                     }
                     else if (query.startsWith("SET AUTCOMMIT ON;")) {
                         autoCommitEnabled = true;
-                        timeBeforeQueryExecution = System.currentTimeMillis();
+                        timeBeforeQueryExecution = currentTime();
                     }
 
                     boolean successfullyExecuted = true;
@@ -183,10 +205,10 @@ public class WorkloadExecutor {
                         }
                     }
 
-                    final long timeAfterQueryExecution = System.currentTimeMillis();
+                    final long timeAfterQueryExecution = currentTime();
 
                     if (autoCommitEnabled) {
-                        queryLog.add(QueryLogEntry.createQueryLogEntry(query, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
+                        queryLog.add(QueryLogEntry.createQueryLogEntry(currentTime(), query, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
                     }
                     else if (!autoCommitEnabled && (query.contains("COMMIT;") || !successfullyExecuted)) {
 
@@ -195,9 +217,9 @@ public class WorkloadExecutor {
                         }
                         attemptedTransactions++;
 
-                        queryLog.add(QueryLogEntry.createQueryLogEntry(queriesInThisTransaction, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
+                        queryLog.add(QueryLogEntry.createQueryLogEntry(currentTime(), queriesInThisTransaction, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
                         queriesInThisTransaction.clear();
-                        timeBeforeQueryExecution = System.currentTimeMillis(); // when auto-commit isn't enabled, the transaction starts after the previous one finishes.
+                        timeBeforeQueryExecution = currentTime(); // when auto-commit isn't enabled, the transaction starts after the previous one finishes.
                     }
                     else {
                         queriesInThisTransaction.add(query);
@@ -208,7 +230,7 @@ public class WorkloadExecutor {
                         break queryLoop; //restart the workload.
                     }
 
-                    if (System.currentTimeMillis() > workloadEndTime) {
+                    if (currentTime() > currentWorkloadEndTime()) {
                         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Workload complete.");
                         try {
                             stat.execute("ROLLBACK;");
@@ -225,8 +247,24 @@ public class WorkloadExecutor {
 
         }
 
-        final WorkloadResult result = new WorkloadResult(queryLog, successfullyExecutedTransactions, attemptedTransactions, worker);
+        final WorkloadResult result = new WorkloadResult(queryLog, successfullyExecutedTransactions, attemptedTransactions, worker, workload);
         return result;
+    }
+
+    /**
+     * The time in this workloads execution. This is the actual time - the time of any stall operations which have taken place.
+     * 
+     * <p>This ensures results show the stall operation as having been over in an instant.
+     * @return
+     */
+    public long currentTime() {
+
+        return System.currentTimeMillis() - totalTimeOfStall;
+    }
+
+    public long currentWorkloadEndTime() {
+
+        return workloadEndTime;
     }
 
     public static String replacePlaceholderValues(final long uniqueCounter, String query) {
@@ -251,6 +289,28 @@ public class WorkloadExecutor {
     public static String generateRandom40CharString() {
 
         return "'" + new BigInteger(200, random).toString(32) + "'";
+    }
+
+    /**
+     * Stall the execution of a workload.
+     */
+    public synchronized void stall() {
+
+        stalled = true;
+    }
+
+    /**
+     * Resume the execution of a stalled workload.
+     */
+    public synchronized void resume() {
+
+        stalled = false;
+
+    }
+
+    public synchronized boolean isStalled() {
+
+        return stalled;
     }
 
 }

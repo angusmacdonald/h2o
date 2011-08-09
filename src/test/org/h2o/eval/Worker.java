@@ -15,9 +15,11 @@ import java.rmi.server.UnicastRemoteObject;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -30,6 +32,7 @@ import org.h2o.db.id.DatabaseURL;
 import org.h2o.eval.interfaces.ICoordinatorRemote;
 import org.h2o.eval.interfaces.IWorker;
 import org.h2o.eval.interfaces.IWorkload;
+import org.h2o.eval.interfaces.WorkloadException;
 import org.h2o.eval.script.workload.WorkloadResult;
 import org.h2o.eval.script.workload.WorkloadThreadFactory;
 import org.h2o.test.fixture.MultiProcessTestBase;
@@ -42,6 +45,7 @@ import uk.ac.standrews.cs.nds.madface.HostDescriptor;
 import uk.ac.standrews.cs.nds.madface.JavaProcessDescriptor;
 import uk.ac.standrews.cs.nds.madface.PlatformDescriptor;
 import uk.ac.standrews.cs.nds.madface.ProcessDescriptor;
+import uk.ac.standrews.cs.nds.madface.ProcessManager;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
@@ -86,18 +90,24 @@ public class Worker extends Thread implements IWorker {
      */
     private static int instanceCount = 0;
 
+    private static int executingWorkloadsCount = 0;
+
     private static ExecutorService workloadExecutor = Executors.newCachedThreadPool(new WorkloadThreadFactory() {
 
         @Override
         public Thread newThread(final Runnable r) {
 
-            return new Thread(r);
+            final Thread t = new Thread(r);
+
+            t.setName("workload-executor-" + executingWorkloadsCount++);
+
+            return t;
         }
     });
 
     private ICoordinatorRemote remoteCoordinator;
 
-    private final List<FutureTask<WorkloadResult>> executingWorkloads = new LinkedList<FutureTask<WorkloadResult>>();
+    private final List<FutureTask<WorkloadResult>> executingFutures = new LinkedList<FutureTask<WorkloadResult>>();
 
     private boolean running = true;
 
@@ -107,6 +117,10 @@ public class Worker extends Thread implements IWorker {
     private final InetAddress hostname;
 
     private final long randomID;
+
+    private final Set<IWorkload> executingWorkloads = new HashSet<IWorkload>();
+
+    private ProcessManager processManager = null;
 
     public Worker() throws RemoteException, AlreadyBoundException, UnknownHostException {
 
@@ -272,9 +286,11 @@ public class Worker extends Thread implements IWorker {
 
                 return workload.executeWorkload();
             }
+
         });
 
-        executingWorkloads.add(future);
+        executingFutures.add(future);
+        executingWorkloads.add(workload);
 
         workloadExecutor.execute(future);
 
@@ -298,7 +314,7 @@ public class Worker extends Thread implements IWorker {
     @Override
     public boolean isWorkloadRunning() throws RemoteException {
 
-        for (final FutureTask<WorkloadResult> workloadTask : executingWorkloads) {
+        for (final FutureTask<WorkloadResult> workloadTask : executingFutures) {
             if (!workloadTask.isDone()) { return true; }
         }
 
@@ -330,7 +346,8 @@ public class Worker extends Thread implements IWorker {
 
         try {
             final ProcessDescriptor pd = new JavaProcessDescriptor().classToBeInvoked(H2O.class).jvmParams(addDebugParams(startInDebug)).args(args);
-            return new HostDescriptor().getProcessManager().runProcess(pd);
+            processManager = new HostDescriptor().getProcessManager();
+            return processManager.runProcess(pd);
         }
         catch (final Exception e) {
             e.printStackTrace();
@@ -514,16 +531,22 @@ public class Worker extends Thread implements IWorker {
     public void run() {
 
         final List<FutureTask<WorkloadResult>> toRemove = new LinkedList<FutureTask<WorkloadResult>>();
+        final List<IWorkload> toRemoveWorkload = new LinkedList<IWorkload>();
 
         while (isRunning()) {
 
-            for (final FutureTask<WorkloadResult> workloadTask : executingWorkloads) {
+            for (final FutureTask<WorkloadResult> workloadTask : executingFutures) {
 
                 if (workloadTask.isDone()) {
 
                     try {
-                        remoteCoordinator.collateMonitoringResults(workloadTask.get());
+                        final WorkloadResult workloadResult = workloadTask.get();
+
                         toRemove.add(workloadTask);
+                        toRemoveWorkload.add(workloadResult.getWorkload());
+
+                        workloadResult.removeWorkloadReference();
+                        remoteCoordinator.collateMonitoringResults(workloadResult);
                     }
                     catch (final Exception e) {
                         e.printStackTrace();
@@ -532,8 +555,10 @@ public class Worker extends Thread implements IWorker {
 
             }
 
-            executingWorkloads.removeAll(toRemove);
+            executingFutures.removeAll(toRemove);
+            executingWorkloads.removeAll(toRemoveWorkload);
             toRemove.clear();
+            toRemoveWorkload.clear();
 
             try {
                 Thread.sleep(CHECKER_SLEEP_TIME);
@@ -555,6 +580,40 @@ public class Worker extends Thread implements IWorker {
         }
         catch (final Exception e) {
             //Doesn't matter. It might not have been running.
+        }
+
+        if (processManager != null) {
+            processManager.stopReaderThreads();
+        }
+    }
+
+    @Override
+    public void stallWorkloads() throws WorkloadException {
+
+        if (executingWorkloads.size() == 0) { throw new WorkloadException("There are no workloads running, so none can be stalled."); }
+
+        for (final IWorkload workload : executingWorkloads) {
+            try {
+                workload.stallWorkload();
+            }
+            catch (final WorkloadException e) {
+                ErrorHandling.errorNoEvent("Exception thrown trying to stall workload.");
+            }
+        }
+    }
+
+    @Override
+    public void resumeWorkloads() throws WorkloadException {
+
+        if (executingWorkloads.size() == 0) { throw new WorkloadException("There are no workloads running, so none can be stalled."); }
+
+        for (final IWorkload workload : executingWorkloads) {
+            try {
+                workload.resumeWorkload();
+            }
+            catch (final WorkloadException e) {
+                ErrorHandling.errorNoEvent("Exception thrown trying to resume workload.");
+            }
         }
     }
 }

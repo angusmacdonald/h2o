@@ -510,7 +510,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
             if (isDrop) {
                 /*
                  * If this is a drop table request we return a hashmap where the update IDs are all zero. This is due to a problem where
-                 * AUTO COMMIT is off, and a new table is created after a table ahs been dropped. This results in the update ID being higher
+                 * AUTO COMMIT is off, and a new table is created after a table has been dropped. This results in the update ID being higher
                  * than expected unless we reset them on DROP.
                  */
                 replicaLocations = new HashMap<DatabaseInstanceWrapper, Integer>();

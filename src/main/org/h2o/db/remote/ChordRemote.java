@@ -970,7 +970,10 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
                     final DatabaseInstanceWrapper successorInstanceWrapper = new DatabaseInstanceWrapper(successorInstance.getURL(), successorInstance, true);
 
-                    metaDataReplicaManager.replicateMetaDataToRemoteInstance(systemTableRef, true, successorInstanceWrapper);
+                    if (successorInstanceWrapper.getDatabaseInstance().isReplicating()) {
+
+                        metaDataReplicaManager.replicateMetaDataToRemoteInstance(systemTableRef, true, successorInstanceWrapper);
+                    }
                 }
 
                 /*
@@ -983,8 +986,10 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                     // replicated on this machine.
 
                     final DatabaseInstanceWrapper successorInstanceWrapper = new DatabaseInstanceWrapper(successorInstance.getURL(), successorInstance, true);
+                    if (successorInstanceWrapper.getDatabaseInstance().isReplicating()) {
 
-                    metaDataReplicaManager.replicateMetaDataToRemoteInstance(systemTableRef, false, successorInstanceWrapper);
+                        metaDataReplicaManager.replicateMetaDataToRemoteInstance(systemTableRef, false, successorInstanceWrapper);
+                    }
                 }
             }
             else {

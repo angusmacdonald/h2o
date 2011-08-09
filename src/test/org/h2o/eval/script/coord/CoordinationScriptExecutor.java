@@ -81,6 +81,45 @@ public class CoordinationScriptExecutor {
         return parseReserveOperation(action, p);
     }
 
+    public static int parseStallCommand(final String action) throws WorkloadParseException {
+
+        //example format: {stall id="0"}, where ID is the location where workloads should be stalled.
+
+        final Pattern p = Pattern.compile("\\{stall id=\"(\\d+)\"\\}");
+
+        return parseIDCommand(action, p);
+    }
+
+    public static int parseResumeCommand(final String action) throws WorkloadParseException {
+
+        //example format: {resume id="0"}, where ID is the location where workloads should be resumed.
+
+        final Pattern p = Pattern.compile("\\{resume id=\"(\\d+)\"\\}");
+
+        return parseIDCommand(action, p);
+    }
+
+    /**
+     * Parse a command which only looks for a single ID in the first capture group.
+     * @throws WorkloadParseException
+     */
+    public static int parseIDCommand(final String action, final Pattern p) throws WorkloadParseException {
+
+        final Matcher matcher = p.matcher(action);
+
+        Integer id = null;
+
+        if (matcher.matches()) {
+            id = Integer.valueOf(matcher.group(1));
+
+        }
+        else {
+            throw new WorkloadParseException("Invalid syntax in : " + action);
+        }
+
+        return id;
+    }
+
     public static Instruction parseQuery(final String action) throws WorkloadParseException {
 
         //format: {<machine-id>} [query | execute workload operation]

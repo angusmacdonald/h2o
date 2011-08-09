@@ -270,4 +270,10 @@ public class DatabaseInstance implements IDatabaseInstanceRemote {
 
         return database.getRemoteInterface().getChordPort();
     }
+
+    @Override
+    public boolean isReplicating() {
+
+        return database.isReplicating();
+    }
 }

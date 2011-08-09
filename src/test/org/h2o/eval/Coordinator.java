@@ -31,6 +31,7 @@ import org.h2o.eval.coordinator.KillMonitorThread;
 import org.h2o.eval.interfaces.ICoordinatorLocal;
 import org.h2o.eval.interfaces.ICoordinatorRemote;
 import org.h2o.eval.interfaces.IWorker;
+import org.h2o.eval.interfaces.WorkloadException;
 import org.h2o.eval.printing.CSVPrinter;
 import org.h2o.eval.script.coord.CoordinationScriptExecutor;
 import org.h2o.eval.script.coord.instructions.Instruction;
@@ -522,7 +523,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     }
 
     @Override
-    public void executeCoordinatorScript(final String configFileLocation) throws RemoteException, FileNotFoundException, WorkloadParseException, StartupException, SQLException, IOException {
+    public void executeCoordinatorScript(final String configFileLocation) throws RemoteException, FileNotFoundException, WorkloadParseException, StartupException, SQLException, IOException, WorkloadException {
 
         final List<String> script = FileUtil.readAllLines(configFileLocation);
 
@@ -568,6 +569,27 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Reserved machine with ID '" + reserveInstruction.id + "'");
 
+            }
+            else if (action.startsWith("{stall")) {
+
+                final int machineID = CoordinationScriptExecutor.parseStallCommand(action);
+
+                final IWorker worker = scriptedInstances.get(machineID);
+
+                worker.stallWorkloads();
+
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Workloads stalled on '" + machineID + "'");
+
+            }
+            else if (action.startsWith("{resume")) {
+
+                final int machineID = CoordinationScriptExecutor.parseResumeCommand(action);
+
+                final IWorker worker = scriptedInstances.get(machineID);
+
+                worker.resumeWorkloads();
+
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Workloads resumed on '" + machineID + "'");
             }
             else if (action.startsWith("{start_reserved_machine")) {
 

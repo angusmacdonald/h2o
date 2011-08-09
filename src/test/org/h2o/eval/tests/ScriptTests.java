@@ -16,6 +16,7 @@ import org.h2o.eval.Coordinator;
 import org.h2o.eval.Worker;
 import org.h2o.eval.interfaces.ICoordinatorLocal;
 import org.h2o.eval.interfaces.IWorker;
+import org.h2o.eval.interfaces.WorkloadException;
 import org.h2o.eval.script.coord.CoordinationScriptGenerator;
 import org.h2o.eval.script.coord.specification.TableClustering;
 import org.h2o.eval.script.coord.specification.TableClustering.Clustering;
@@ -124,7 +125,18 @@ public class ScriptTests {
 
     }
 
-    public void runScript(final String scriptLocation) throws RemoteException, AlreadyBoundException, UnknownHostException, IOException, StartupException, FileNotFoundException, WorkloadParseException, SQLException {
+    /**
+     * Tests that time stands still (in the workloads execution) when the stall command is used.
+     * @throws Exception
+     */
+    @Test
+    public void stallTest() throws Exception {
+
+        runScript("src/test/org/h2o/eval/workloads/failure/stall-test.coord");
+
+    }
+
+    public void runScript(final String scriptLocation) throws RemoteException, AlreadyBoundException, UnknownHostException, IOException, StartupException, FileNotFoundException, WorkloadParseException, SQLException, WorkloadException {
 
         workers = new IWorker[5];
         for (int i = 0; i < workers.length; i++) {

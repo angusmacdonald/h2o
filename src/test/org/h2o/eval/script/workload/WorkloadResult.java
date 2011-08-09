@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.List;
 
 import org.h2o.eval.interfaces.IWorker;
+import org.h2o.eval.interfaces.IWorkload;
 
 public class WorkloadResult implements Serializable {
 
@@ -35,20 +36,23 @@ public class WorkloadResult implements Serializable {
     private String locationOfExecution;
     private final List<QueryLogEntry> queryLog;
 
+    private IWorkload workload;
+
     /**
      * Called when a workload has not successfully initiated.
      * @param e Either an SQLException, thrown because a database connection could not be created, or a WorkloadParseException, because the workload script
      * is not syntactically correct.
      */
-    public WorkloadResult(final Exception e, final IWorker worker) {
+    public WorkloadResult(final Exception e, final IWorker worker, final IWorkload workload) {
 
         successfullyStarted = false;
         exception = e;
         queryLog = null;
         this.worker = worker;
+        this.workload = workload;
     }
 
-    public WorkloadResult(final List<QueryLogEntry> queryLog, final long successfullyExecutedTransactions, final long totalAttemptedTransactions, final IWorker worker) {
+    public WorkloadResult(final List<QueryLogEntry> queryLog, final long successfullyExecutedTransactions, final long totalAttemptedTransactions, final IWorker worker, final IWorkload workload) {
 
         successfullyStarted = true;
         exception = null;
@@ -56,6 +60,7 @@ public class WorkloadResult implements Serializable {
         this.successfullyExecutedTransactions = successfullyExecutedTransactions;
         this.totalAttemptedTransactions = totalAttemptedTransactions;
         this.worker = worker;
+        this.workload = workload;
         this.queryLog = queryLog;
 
         locationOfExecution = worker.toString();
@@ -116,6 +121,19 @@ public class WorkloadResult implements Serializable {
         else {
             return 0;
         }
+    }
+
+    public IWorkload getWorkload() {
+
+        return workload;
+    }
+
+    /**
+     * This isn't serializable so it must be removed before sending the workload result over RMI.
+     */
+    public void removeWorkloadReference() {
+
+        workload = null;
     }
 
 }

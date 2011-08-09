@@ -6,6 +6,7 @@ import java.sql.SQLException;
 
 import org.h2o.eval.Worker;
 import org.h2o.eval.script.workload.WorkloadResult;
+import org.h2o.util.exceptions.WorkloadParseException;
 
 /**
  * Workload to be run on a worker node.
@@ -29,4 +30,15 @@ public interface IWorkload extends Serializable {
      */
     public WorkloadResult executeWorkload();
 
+    /**
+     * Temporarily halt the execution of a workload.
+     * @throws WorkloadException Thrown if a workload isn't running.
+     */
+    public void stallWorkload() throws WorkloadException;
+
+    /**
+     * Resume the execution of a workload.
+     * @throws WorkloadException Thrown if a workload isn't running, or if a running workload isn't stalled.
+     */
+    public void resumeWorkload() throws WorkloadException;
 }

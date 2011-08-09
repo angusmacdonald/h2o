@@ -238,5 +238,14 @@ public class DatabaseInstanceServer extends ApplicationServer {
                 response.value(instance.getChordPort());
             }
         });
+
+        handler_map.put("isReplicating", new IHandler() {
+
+            @Override
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
+
+                response.value(instance.isReplicating());
+            }
+        });
     }
 }

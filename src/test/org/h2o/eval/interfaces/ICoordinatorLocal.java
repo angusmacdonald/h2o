@@ -47,8 +47,9 @@ public interface ICoordinatorLocal {
      * @throws StartupException If an H2O instance could not be started as requested.
      * @throws SQLException If a query could not be executed as requested.
      * @throws IOException If there was a problem accessing the co-ordinator script file.
+     * @throws WorkloadException If a workload operation (stall/resume) fails. See {@link IWorker#resumeWorkloads()} and {@link IWorker#stallWorkloads()}.
      */
-    public void executeCoordinatorScript(String configFileLocation) throws RemoteException, FileNotFoundException, WorkloadParseException, StartupException, SQLException, IOException;
+    public void executeCoordinatorScript(String configFileLocation) throws RemoteException, FileNotFoundException, WorkloadParseException, StartupException, SQLException, IOException, WorkloadException;
 
     /**
      * Method returns when all workloads that have been started by this co-ordinator terminate (doesn't matter whether they terminate successfully or via an exception).

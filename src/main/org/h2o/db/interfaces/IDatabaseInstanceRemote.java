@@ -144,4 +144,11 @@ public interface IDatabaseInstanceRemote extends IH2ORemote, TwoPhaseCommit {
      * @throws RPCException
      */
     public int getChordPort() throws RPCException;
+
+    /**
+     * If false this instance is set to 'NO_REPLICATE' - it is not accepting replicas of anything. True if it is.
+     * @return
+     * @throws RPCException 
+     */
+    boolean isReplicating() throws RPCException;
 }

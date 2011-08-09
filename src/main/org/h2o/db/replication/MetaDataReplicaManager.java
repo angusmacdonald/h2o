@@ -208,6 +208,10 @@ public class MetaDataReplicaManager {
         final ReplicaManager replicaManager = isSystemTable ? systemTableReplicas : tableManagerReplicas;
         final int managerStateReplicationFactor = isSystemTable ? systemTableReplicationFactor : tableManagerReplicationFactor;
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Does " + (isSystemTable ? "system table" : "table manager") + " meta-data need to be replicated? Currently " + replicaManager.allReplicasSize() + ", and there needs to be " + managerStateReplicationFactor);
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Meta-data on " + db.getID() + " currently replicated to : " + PrettyPrinter.toString(replicaManager.getAllReplicas()));
+
         // Check that replication is enabled and replication factor has not already been reached.
         if (metaDataReplicationEnabled && replicaManager.allReplicasSize() < managerStateReplicationFactor) {
 
@@ -701,9 +705,11 @@ public class MetaDataReplicaManager {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "The meta-data replication manager on " + db.getID() + " has been notified of the failure of " + failedMachine);
 
-        systemTableReplicas.markMachineAsFailed(failedMachine);
-        tableManagerReplicas.markMachineAsFailed(failedMachine);
+        //        systemTableReplicas.markMachineAsFailed(failedMachine);
+        //        tableManagerReplicas.markMachineAsFailed(failedMachine);
 
+        systemTableReplicas.remove(new DatabaseInstanceWrapper(failedMachine, null, false));
+        tableManagerReplicas.remove(new DatabaseInstanceWrapper(failedMachine, null, false));
     }
 
 }
