@@ -132,7 +132,18 @@ public class ScriptTests {
     @Test
     public void tripleFailureSevenMachinesSingleRecovery() throws Exception {
 
-        runScript("src/test/org/h2o/eval/workloads/failure/coordinator-triplefailure-fourmachines-singlerecovery.coord");
+        runScript("src/test/org/h2o/eval/workloads/failure/triplefailure-sevenmachines-doublerecovery.coord");
+
+    }
+
+    /**
+     * Start a single machine, kill it off after a while, then restart it. Check that queries are able to execute when it is restarted.
+     * @throws Exception
+     */
+    @Test
+    public void failureThenRestart() throws Exception {
+
+        runScript("src/test/org/h2o/eval/workloads/failure/failure-then-restart.coord");
 
     }
 
