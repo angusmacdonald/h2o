@@ -126,6 +126,17 @@ public class ScriptTests {
     }
 
     /**
+     * A number of machines are killed at once, and one recovers.
+     * @throws Exception
+     */
+    @Test
+    public void tripleFailureSevenMachinesSingleRecovery() throws Exception {
+
+        runScript("src/test/org/h2o/eval/workloads/failure/coordinator-triplefailure-fourmachines-singlerecovery.coord");
+
+    }
+
+    /**
      * Tests that time stands still (in the workloads execution) when the stall command is used.
      * @throws Exception
      */
@@ -138,7 +149,7 @@ public class ScriptTests {
 
     public void runScript(final String scriptLocation) throws RemoteException, AlreadyBoundException, UnknownHostException, IOException, StartupException, FileNotFoundException, WorkloadParseException, SQLException, WorkloadException {
 
-        workers = new IWorker[5];
+        workers = new IWorker[7];
         for (int i = 0; i < workers.length; i++) {
             workers[i] = new Worker();
         }

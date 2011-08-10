@@ -208,12 +208,11 @@ public class MetaDataReplicaManager {
         final ReplicaManager replicaManager = isSystemTable ? systemTableReplicas : tableManagerReplicas;
         final int managerStateReplicationFactor = isSystemTable ? systemTableReplicationFactor : tableManagerReplicationFactor;
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Does " + (isSystemTable ? "system table" : "table manager") + " meta-data need to be replicated? Currently " + replicaManager.allReplicasSize() + ", and there needs to be " + managerStateReplicationFactor);
-
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Meta-data on " + db.getID() + " currently replicated to : " + PrettyPrinter.toString(replicaManager.getAllReplicas()));
-
         // Check that replication is enabled and replication factor has not already been reached.
         if (metaDataReplicationEnabled && replicaManager.allReplicasSize() < managerStateReplicationFactor) {
+
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Does " + (isSystemTable ? "system table" : "table manager") + " meta-data need to be replicated? Currently " + replicaManager.allReplicasSize() + ", and there needs to be " + managerStateReplicationFactor);
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Meta-data on " + db.getID() + " currently replicated to : " + PrettyPrinter.toString(replicaManager.getAllReplicas()));
 
             Queue<DatabaseInstanceWrapper> databaseInstances = null;
 
@@ -405,7 +404,7 @@ public class MetaDataReplicaManager {
             }
             else {
                 try {
-                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing meta-data update on " + replica.getKey().getURL() + "[ query: " + query + "]");
+                    //Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing meta-data update on " + replica.getKey().getURL() + "[ query: " + query + "]");
                     result = replica.getKey().getDatabaseInstance().executeUpdate(query, true);
                 }
                 catch (final RPCException e) {
@@ -431,7 +430,7 @@ public class MetaDataReplicaManager {
                     }
                 }
             }
-            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Removed one or more replica locations because they couldn't be contacted for the last update: " + PrettyPrinter.toString(failed));
+            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, db.getID() + ": Removed one or more replica locations because they couldn't be contacted for the last update: " + PrettyPrinter.toString(failed));
         }
 
         replicaManager.remove(failed.keySet());

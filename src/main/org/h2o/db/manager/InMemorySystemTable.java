@@ -72,12 +72,22 @@ public final class InMemorySystemTable implements ISystemTable {
      */
     private int tableSetNumber = 1;
 
+    /**
+     * Where table managers are located.
+     * XXX this duplicates the {@link #tableManagers} field, so it should probably be removed to prevent inconsistencies.
+     */
     private Map<TableInfo, DatabaseID> primaryLocations;
 
     /**
      * A thread which periodically checks that Table Managers are still alive.
      */
     private final TableManagerLivenessCheckerThread tableManagerPingerThread;
+
+    /**
+     * The set of table managers that are currently being recreated via the {@link #recreateTableManagerIfNotAlive(TableManagerWrapper)} method. This prevents
+     * concurrent calls to this method attempting to recreate the same table manager multiple times.
+     */
+    private final Set<TableManagerWrapper> managersBeingRecreated = Collections.synchronizedSet(new HashSet<TableManagerWrapper>());
 
     private boolean started = false;
 
@@ -218,6 +228,7 @@ public final class InMemorySystemTable implements ISystemTable {
         if (tableManagerWrapper != null) {
             tm = tableManagerWrapper.getTableManager();
         }
+
         /*
          * If there is a null reference to a Table Manager we can try to reinstantiate it, but if there is no reference at all just return
          * null for the lookup.
@@ -495,42 +506,55 @@ public final class InMemorySystemTable implements ISystemTable {
         if (isAlive(tableManagerWrapper.getTableManager())) { return false; // check that it isn't already active.
         }
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Beginning attempt to recreate Table Manager for " + tableManagerWrapper.getTableInfo() + " on " + database.getID());
+        //Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Beginning attempt to recreate Table Manager for " + tableManagerWrapper.getTableInfo() + " on " + database.getID());
 
-        final Set<DatabaseID> tableManagerReplicaLocations = tmReplicaLocations.get(tableManagerWrapper.getTableInfo());
+        if (!managersBeingRecreated.contains(tableManagerWrapper)) { //Prevent this being called in quick succession on a single table manager.
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Table Manager replicas exist at " + tableManagerReplicaLocations);
-
-        for (final DatabaseID replicaLocation : tableManagerReplicaLocations) {
             try {
-                final DatabaseInstanceWrapper instance = databasesInSystem.get(replicaLocation);
+                managersBeingRecreated.add(tableManagerWrapper);
 
-                if (instance != null && instance.getDatabaseInstance() != null) {
-                    final boolean success = instance.getDatabaseInstance().recreateTableManager(tableManagerWrapper.getTableInfo(), tableManagerWrapper.getURL());
+                final Set<DatabaseID> tableManagerReplicaLocations = tmReplicaLocations.get(tableManagerWrapper.getTableInfo());
 
-                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, success + ": attempt to recreate Table Manager for " + tableManagerWrapper.getTableInfo() + " on machine " + instance.getURL() + ".");
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, database.getID() + ": To recreate " + tableManagerWrapper.getTableInfo() + ", replicas exist at " + tableManagerReplicaLocations);
 
-                    if (success) {
-                        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Table Manager for " + tableManagerWrapper.getTableInfo() + " recreated on " + instance.getURL());
+                for (final DatabaseID replicaLocation : tableManagerReplicaLocations) {
 
-                        return true;
+                    final DatabaseInstanceWrapper instance = databasesInSystem.get(replicaLocation);
+
+                    try {
+
+                        if (instance != null && instance.getDatabaseInstance() != null) {
+                            final boolean success = instance.getDatabaseInstance().recreateTableManager(tableManagerWrapper.getTableInfo(), tableManagerWrapper.getURL());
+
+                            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, (success ? "Successfully " : "Unsuccessfully ") + "recreated " + tableManagerWrapper.getTableInfo() + " Table Manager on " + instance.getURL() + ".");
+
+                            return success;
+                        }
+                        else {
+                            if (instance != null) {
+                                instance.setActive(false);
+                            }
+                        }
                     }
-                }
-                else {
-                    if (instance != null) {
+                    catch (final RPCException e) {
+                        // May fail on some nodes.
                         instance.setActive(false);
                     }
                 }
-            }
-            catch (final RPCException e) {
-                // May fail on some nodes.
 
-                // TODO mark these instances as inactive.
+                ErrorHandling.errorNoEvent(DiagnosticLevel.INIT,
+                                "Failed to recreate Table Manager for " + tableManagerWrapper.getTableInfo() + ". There were " + tableManagerReplicaLocations.size() + " replicas available (including the failed machine) at " + PrettyPrinter.toString(tableManagerReplicaLocations) + ".");
+
             }
+            finally {
+                managersBeingRecreated.remove(tableManagerWrapper);
+            }
+
+        }
+        else {
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Will not attempt to recreate the table manager for " + tableManagerWrapper.getTableInfo() + ", because it is being recreated elsewhere.");
         }
 
-        ErrorHandling.errorNoEvent(DiagnosticLevel.INIT,
-                        "Failed to recreate Table Manager for " + tableManagerWrapper.getTableInfo() + ". There were " + tableManagerReplicaLocations.size() + " replicas available (including the failed machine) at " + PrettyPrinter.toString(tableManagerReplicaLocations) + ".");
         return false;
     }
 

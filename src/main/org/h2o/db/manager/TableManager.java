@@ -521,7 +521,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
             else {
                 replicaLocations = replicaManager.getAllReplicasOnActiveMachines(); // The update could be sent to any or all machines holding the given table.
 
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Replicas on active machines for " + fullName + ": " + PrettyPrinter.toString(replicaLocations));
+                //Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Replicas on active machines for " + fullName + ": " + PrettyPrinter.toString(replicaLocations));
             }
 
             return replicaLocations;
@@ -569,7 +569,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
             // Update the set of 'active replicas' and their update IDs.
             if (commit) {
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Query committed. Replica set will be updated.");
+                //Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Query committed. Replica set will be updated.");
                 //The method call below changes update IDs which is why rollbacks don't call it.
                 updateActiveReplicaSet(commit, committedQueries, asynchronousCommit, lockType);
             }
@@ -1059,6 +1059,17 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
          */
 
         db.getMetaDataReplicaManager().notifyOfFailure(failedMachine);
+
+        /*
+         * Check whether any new replicas are needed.
+         */
+
+        try {
+            createNewReplicas();
+        }
+        catch (final MovedException e) {
+            ErrorHandling.exceptionError(e, "Error checking whether new replicas need to be created on the Table Manager for " + db.getID());
+        }
 
     }
 

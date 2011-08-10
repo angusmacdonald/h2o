@@ -925,7 +925,7 @@ public class Session extends SessionWithState {
         }
         currentTransactionName = transactionName;
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, getDatabase().getID() + ":: Setting current transaction name: " + transactionName);
+        //Diagnostic.traceNoEvent(DiagnosticLevel.FULL, getDatabase().getID() + ":: Setting current transaction name: " + transactionName);
 
         if (transactionName == null) {
             Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Set transaction name to null.");

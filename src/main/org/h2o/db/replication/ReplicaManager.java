@@ -207,7 +207,7 @@ public class ReplicaManager {
      */
     public Set<DatabaseInstanceWrapper> completeUpdate(final boolean commit, final Collection<CommitResult> committedQueries, final TableInfo tableInfo, final boolean firstPartOfUpdate) throws SQLException {
 
-        Diagnostic.trace(DiagnosticLevel.FULL, "commit: " + commit + " table info: " + tableInfo.getFullTableName());
+        //Diagnostic.trace(DiagnosticLevel.FULL, "commit: " + commit + " table info: " + tableInfo.getFullTableName());
 
         if (!ReplicaManager.thisTableWasUpdated(committedQueries, tableInfo)) { return new HashSet<DatabaseInstanceWrapper>(); }
         //Replicas that are currently marked as active (this may be changed during this update).
@@ -284,7 +284,7 @@ public class ReplicaManager {
                             addToAllReplicas(wrapper, newUpdateID);
 
                             successfullyCommittedQueries.add(commitResult); // this query has been successfully updated.
-                            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Replica successfully updated: " + commitResult);
+                            //Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Replica successfully updated: " + commitResult);
                         }
                         else {
                             if (!allRollback) {

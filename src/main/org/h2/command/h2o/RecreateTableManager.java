@@ -6,6 +6,7 @@ import org.h2.engine.Database;
 import org.h2.engine.Session;
 import org.h2.schema.Schema;
 import org.h2o.db.id.TableInfo;
+import org.h2o.db.interfaces.ITableManagerRemote;
 import org.h2o.db.manager.TableManager;
 import org.h2o.db.manager.interfaces.ISystemTableReference;
 import org.h2o.viewer.H2OEventBus;
@@ -65,10 +66,6 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
         final Database db = session.getDatabase();
         final ISystemTableReference systemTableReference = db.getSystemTableReference();
 
-        /*
-         * TODO perform a check to see that it isn't already active.
-         */
-
         String schemaName = "";
         if (getSchema() != null) {
             schemaName = getSchema().getName();
@@ -78,31 +75,53 @@ public class RecreateTableManager extends org.h2.command.ddl.SchemaCommand {
         }
 
         final TableInfo ti = new TableInfo(tableName, schemaName, db.getID());
-        TableManager tm = null;
+
+        /*
+         * Perform a check to see that it isn't already active.
+         */
+        final ITableManagerRemote extantTableManager = systemTableReference.lookup(ti, false);
+
+        boolean tableManagerExists = false;
 
         try {
-            tm = new TableManager(ti, db, true);
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Re-created table manager for " + ti + " on " + db.getID() + ".");
-            tm.recreateReplicaManagerState(oldPrimaryLocation);
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Re-created replica manager for " + ti + " on " + db.getID() + ".");
-            tm.persistToCompleteStartup(ti);
-            tm.persistReplicaInformation();
-            H2OEventBus.publish(new H2OEvent(db.getID().getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Persisted to complete startup, recreation of table mnanager for " + ti + " on " + db.getID() + ".");
-
+            tableManagerExists = extantTableManager.isAlive();
         }
-        catch (final SQLException e) {
-            //Update Failed.
-            return -1;
-        }
-        catch (final Exception e) {
-            //Update Failed.
-            return -1;
+        catch (final Exception e1) {
+            //Expected.
         }
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, ti + " recreated on " + db.getID() + ".");
+        if (!tableManagerExists) {
+            //Create the new table manager on this instance.
+            TableManager tm = null;
 
-        systemTableReference.addNewTableManagerReference(ti, tm);
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, db.getID() + ": Recreating table manager for " + ti + ", with state from " + oldPrimaryLocation + "'s replicated meta-tables.");
+
+            try {
+                tm = new TableManager(ti, db, true);
+                tm.recreateReplicaManagerState(oldPrimaryLocation);
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Re-created replica manager for " + ti + " on " + db.getID() + ".");
+                tm.persistToCompleteStartup(ti);
+                tm.persistReplicaInformation();
+                H2OEventBus.publish(new H2OEvent(db.getID().getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Persisted to complete startup, recreation of table mnanager for " + ti + " on " + db.getID() + ".");
+
+            }
+            catch (final SQLException e) {
+                //Update Failed.
+                return -1;
+            }
+            catch (final Exception e) {
+                //Update Failed.
+                return -1;
+            }
+
+            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, ti + " recreated on " + db.getID() + ".");
+
+            systemTableReference.addNewTableManagerReference(ti, tm);
+        }
+        else {
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Table Manager for " + ti + " will not be recreated on " + db.getID() + " because it already active elsewhere.");
+        }
 
         return 1;
     }

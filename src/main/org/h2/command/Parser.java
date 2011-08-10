@@ -169,7 +169,6 @@ import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
-import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 /**
  * The parser is used to convert a SQL statement string to an command object.
@@ -4802,7 +4801,7 @@ public class Parser {
                 else {
                     replicaLocations.addAll(tableProxy.getReplicaLocations().keySet());
 
-                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Replica locations for table " + tableName + ": " + PrettyPrinter.toString(replicaLocations));
+                    //Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Replica locations for table " + tableName + ": " + PrettyPrinter.toString(replicaLocations));
                 }
 
                 if (replicaLocations.size() == 0) {

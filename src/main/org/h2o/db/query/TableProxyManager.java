@@ -385,7 +385,7 @@ public class TableProxyManager {
             final Command commitCommand = parser.prepareCommand((commit ? "COMMIT" : "ROLLBACK") + (h2oCommit ? " TRANSACTION " + transactionName : ";"));
             final int result = commitCommand.executeUpdate();
 
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, session.getDatabase().getID() + " Queries in successful transaction [" + transactionName + "]: " + PrettyPrinter.toString(queries));
+            //Diagnostic.traceNoEvent(DiagnosticLevel.FULL, session.getDatabase().getID() + " Queries in successful transaction [" + transactionName + "]: " + PrettyPrinter.toString(queries));
 
             return result == 0;
         }

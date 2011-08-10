@@ -141,8 +141,6 @@ public class H2O {
 
         final H2O db = new H2O(args);
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting H2O Server Instance.");
-
         db.startDatabase();
     }
 
