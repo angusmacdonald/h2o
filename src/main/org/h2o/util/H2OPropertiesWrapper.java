@@ -153,13 +153,13 @@ public class H2OPropertiesWrapper implements IPropertiesWrapper, Serializable {
         if (f.getParentFile() != null) {
             final boolean successful = f.getParentFile().mkdirs(); // create any directories specified in the path, if necessary.
             if (!successful) {
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to create folder. It may already exist.");
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to create folder. It may already exist: " + propertiesFileLocation);
             }
         }
 
         final boolean successful = f.createNewFile(); // create the properties file.
         if (!successful) {
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to create file. It may already exist.");
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Failed to create file. It may already exist: " + propertiesFileLocation);
         }
     }
 
