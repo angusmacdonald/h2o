@@ -318,6 +318,7 @@ public class Schema extends DbObjectBase {
      * Remove a LinkedTable if one already exists and it doesn't point to a correct database URL
      * (the urls parameter). This is called from CreateLinkedTable if a linked table has 
      * to be created to another URL.
+     * @param urls  If this is null it will remove the linked table regardless its location.
      * @return Returns true if the link table required (at the correct URL) already exists).
      */
     public boolean removeLinkedTable(final SchemaObject obj, final Set<String> urls) {

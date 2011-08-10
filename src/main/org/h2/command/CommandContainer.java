@@ -125,6 +125,7 @@ public class CommandContainer extends Command {
             return result;
         }
         catch (final SQLException e) {
+            // session.getDatabase().getSchema(session.getCurrentSchemaName()).removeLinkedTable(prepared.table, null);
             e.printStackTrace();
             currentProxyManager.releaseLocksAndUpdateReplicaState(null, false);
             throw e;

@@ -282,124 +282,131 @@ public class TableFilter implements ColumnResolver {
      */
     public boolean next() throws SQLException {
 
-        boolean alwaysFalse = false;
-        if (state == AFTER_LAST) {
-            return false;
-        }
-        else if (state == BEFORE_FIRST) {
-            SearchRow start = null, end = null;
-            for (int i = 0; i < indexConditions.size(); i++) {
-                final IndexCondition condition = (IndexCondition) indexConditions.get(i);
-                if (condition.isAlwaysFalse()) {
-                    alwaysFalse = true;
-                    break;
-                }
-                final Column column = condition.getColumn();
-                final int type = column.getType();
-                final int id = column.getColumnId();
-                final Value v = condition.getCurrentValue(session).convertTo(type);
-                boolean isStart = condition.isStart(), isEnd = condition.isEnd();
-                final IndexColumn idxCol = indexColumns[id];
-                if (idxCol != null && (idxCol.sortType & SortOrder.DESCENDING) != 0) {
-                    // if the index column is sorted the other way, we swap end
-                    // and start
-                    // NULLS_FIRST / NULLS_LAST is not a problem, as nulls never
-                    // match anyway
-                    final boolean temp = isStart;
-                    isStart = isEnd;
-                    isEnd = temp;
-                }
-                if (isStart) {
-                    Value newStart;
-                    if (start == null) {
-                        start = table.getTemplateRow();
-                        newStart = v;
-                    }
-                    else {
-                        newStart = getMax(start.getValue(id), v, true);
-                    }
-                    start.setValue(id, newStart);
-                }
-                if (isEnd) {
-                    Value newEnd;
-                    if (end == null) {
-                        end = table.getTemplateRow();
-                        newEnd = v;
-                    }
-                    else {
-                        newEnd = getMax(end.getValue(id), v, false);
-                    }
-                    end.setValue(id, newEnd);
-                }
+        try {
+            boolean alwaysFalse = false;
+            if (state == AFTER_LAST) {
+                return false;
             }
-            if (!alwaysFalse) {
-                cursor = index.find(session, start, end);
-                if (join != null) {
-                    join.reset();
+            else if (state == BEFORE_FIRST) {
+                SearchRow start = null, end = null;
+                for (int i = 0; i < indexConditions.size(); i++) {
+                    final IndexCondition condition = (IndexCondition) indexConditions.get(i);
+                    if (condition.isAlwaysFalse()) {
+                        alwaysFalse = true;
+                        break;
+                    }
+                    final Column column = condition.getColumn();
+                    final int type = column.getType();
+                    final int id = column.getColumnId();
+                    final Value v = condition.getCurrentValue(session).convertTo(type);
+                    boolean isStart = condition.isStart(), isEnd = condition.isEnd();
+                    final IndexColumn idxCol = indexColumns[id];
+                    if (idxCol != null && (idxCol.sortType & SortOrder.DESCENDING) != 0) {
+                        // if the index column is sorted the other way, we swap end
+                        // and start
+                        // NULLS_FIRST / NULLS_LAST is not a problem, as nulls never
+                        // match anyway
+                        final boolean temp = isStart;
+                        isStart = isEnd;
+                        isEnd = temp;
+                    }
+                    if (isStart) {
+                        Value newStart;
+                        if (start == null) {
+                            start = table.getTemplateRow();
+                            newStart = v;
+                        }
+                        else {
+                            newStart = getMax(start.getValue(id), v, true);
+                        }
+                        start.setValue(id, newStart);
+                    }
+                    if (isEnd) {
+                        Value newEnd;
+                        if (end == null) {
+                            end = table.getTemplateRow();
+                            newEnd = v;
+                        }
+                        else {
+                            newEnd = getMax(end.getValue(id), v, false);
+                        }
+                        end.setValue(id, newEnd);
+                    }
                 }
-            }
-        }
-        else {
-            // state == FOUND || LAST_ROW
-            // the last row was ok - try next row of the join
-            if (join != null && join.next()) { return true; }
-        }
-        while (true) {
-            // go to the next row
-            if (state == NULL_ROW) {
-                break;
-            }
-            if (alwaysFalse) {
-                state = AFTER_LAST;
+                if (!alwaysFalse) {
+                    cursor = index.find(session, start, end);
+                    if (join != null) {
+                        join.reset();
+                    }
+                }
             }
             else {
-                if ((++scanCount & 4095) == 0) {
-                    checkTimeout();
-                }
-                if (cursor.next()) {
-                    currentSearchRow = cursor.getSearchRow();
-                    current = null;
-                    // cursor.get();
-                    state = FOUND;
-                }
-                else {
-                    state = AFTER_LAST;
-                }
+                // state == FOUND || LAST_ROW
+                // the last row was ok - try next row of the join
+                if (join != null && join.next()) { return true; }
             }
-            // if no more rows found, try the null row (for outer joins only)
-            if (state == AFTER_LAST) {
-                if (outerJoin && !foundOne) {
-                    state = NULL_ROW;
-                    current = table.getNullRow();
-                    currentSearchRow = current;
-                }
-                else {
+            while (true) {
+                // go to the next row
+                if (state == NULL_ROW) {
                     break;
                 }
-            }
-            if (!isOk(filterCondition)) {
-                continue;
-            }
-            final boolean joinConditionOk = isOk(joinCondition);
-            if (state == FOUND) {
-                if (joinConditionOk) {
-                    foundOne = true;
+                if (alwaysFalse) {
+                    state = AFTER_LAST;
                 }
                 else {
+                    if ((++scanCount & 4095) == 0) {
+                        checkTimeout();
+                    }
+                    if (cursor.next()) {
+                        currentSearchRow = cursor.getSearchRow();
+                        current = null;
+                        // cursor.get();
+                        state = FOUND;
+                    }
+                    else {
+                        state = AFTER_LAST;
+                    }
+                }
+                // if no more rows found, try the null row (for outer joins only)
+                if (state == AFTER_LAST) {
+                    if (outerJoin && !foundOne) {
+                        state = NULL_ROW;
+                        current = table.getNullRow();
+                        currentSearchRow = current;
+                    }
+                    else {
+                        break;
+                    }
+                }
+                if (!isOk(filterCondition)) {
                     continue;
                 }
-            }
-            if (join != null) {
-                join.reset();
-                if (!join.next()) {
-                    continue;
+                final boolean joinConditionOk = isOk(joinCondition);
+                if (state == FOUND) {
+                    if (joinConditionOk) {
+                        foundOne = true;
+                    }
+                    else {
+                        continue;
+                    }
                 }
+                if (join != null) {
+                    join.reset();
+                    if (!join.next()) {
+                        continue;
+                    }
+                }
+                // check if it's ok
+                if (state == NULL_ROW || joinConditionOk) { return true; }
             }
-            // check if it's ok
-            if (state == NULL_ROW || joinConditionOk) { return true; }
+            state = AFTER_LAST;
+            return false;
         }
-        state = AFTER_LAST;
-        return false;
+        catch (final SQLException e) {
+
+            session.getDatabase().getSchema(session.getCurrentSchemaName()).removeLinkedTable(table, null);
+            throw e;
+        }
     }
 
     private void checkTimeout() throws SQLException {

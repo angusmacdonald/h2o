@@ -152,6 +152,7 @@ public class LinkedIndex extends BaseIndex {
             }
             catch (final SQLException e) {
                 ErrorHandling.exceptionError(e, "Failed to connect via linked table to table on " + link.getUrl());
+                database.clearTableLinkCache();
                 throw link.wrapException(sql, e);
             }
         }

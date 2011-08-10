@@ -56,7 +56,7 @@ public abstract class Query extends Prepared {
 
     private Value[] lastParameters;
 
-    public Query(Session session, boolean internalQuery) {
+    public Query(final Session session, final boolean internalQuery) {
 
         super(session, internalQuery);
     }
@@ -185,19 +185,21 @@ public abstract class Query extends Prepared {
      */
     public abstract void updateAggregate(Session session) throws SQLException;
 
+    @Override
     public boolean isQuery() {
 
         return true;
     }
 
+    @Override
     public boolean isTransactional() {
 
         return true;
     }
 
-    private boolean sameResultAsLast(Session session, Value[] params, Value[] lastParams, long lastEvaluated) throws SQLException {
+    private boolean sameResultAsLast(final Session session, final Value[] params, final Value[] lastParams, final long lastEvaluated) throws SQLException {
 
-        Database db = session.getDatabase();
+        final Database db = session.getDatabase();
         for (int i = 0; i < params.length; i++) {
             if (!db.areEqual(lastParams[i], params[i])) { return false; }
         }
@@ -212,19 +214,20 @@ public abstract class Query extends Prepared {
         if (list == null) {
             list = new ObjectArray();
         }
-        Value[] params = new Value[list.size()];
+        final Value[] params = new Value[list.size()];
         for (int i = 0; i < list.size(); i++) {
-            Value v = ((Parameter) list.get(i)).getParamValue();
+            final Value v = ((Parameter) list.get(i)).getParamValue();
             params[i] = v;
         }
         return params;
     }
 
-    public LocalResult query(int limit) throws SQLException {
+    @Override
+    public LocalResult query(final int limit) throws SQLException {
 
         if (!session.getDatabase().getOptimizeReuseResults()) { return queryWithoutCache(limit); }
-        Value[] params = getParameterValues();
-        long now = session.getDatabase().getModificationDataId();
+        final Value[] params = getParameterValues();
+        final long now = session.getDatabase().getModificationDataId();
         if (lastResult != null && !lastResult.isClosed() && limit == lastLimit) {
             if (sameResultAsLast(session, params, lastParameters, lastEvaluated)) {
                 lastResult = lastResult.createShallowCopy(session);
@@ -237,7 +240,8 @@ public abstract class Query extends Prepared {
         lastParameters = params;
         closeLastResult();
         lastResult = queryWithoutCache(limit);
-        this.lastEvaluated = now;
+
+        lastEvaluated = now;
         lastLimit = limit;
         return lastResult;
     }
@@ -263,11 +267,11 @@ public abstract class Query extends Prepared {
      * @param mustBeInResult
      *            all order by expressions must be in the select list
      */
-    void initOrder(ObjectArray expressions, ObjectArray expressionSQL, ObjectArray orderList, int visible, boolean mustBeInResult) throws SQLException {
+    void initOrder(final ObjectArray expressions, final ObjectArray expressionSQL, final ObjectArray orderList, final int visible, final boolean mustBeInResult) throws SQLException {
 
         for (int i = 0; i < orderList.size(); i++) {
-            SelectOrderBy o = (SelectOrderBy) orderList.get(i);
-            Expression e = o.expression;
+            final SelectOrderBy o = (SelectOrderBy) orderList.get(i);
+            final Expression e = o.expression;
             if (e == null) {
                 continue;
             }
@@ -278,17 +282,17 @@ public abstract class Query extends Prepared {
             boolean isAlias = false;
             int idx = expressions.size();
             if (e instanceof ExpressionColumn) {
-                ExpressionColumn exprCol = (ExpressionColumn) e;
-                String tableAlias = exprCol.getOriginalTableAliasName();
-                String col = exprCol.getOriginalColumnName();
+                final ExpressionColumn exprCol = (ExpressionColumn) e;
+                final String tableAlias = exprCol.getOriginalTableAliasName();
+                final String col = exprCol.getOriginalColumnName();
                 for (int j = 0; j < visible; j++) {
                     boolean found = false;
-                    Expression ec = (Expression) expressions.get(j);
+                    final Expression ec = (Expression) expressions.get(j);
                     if (ec instanceof ExpressionColumn) {
-                        ExpressionColumn c = (ExpressionColumn) ec;
+                        final ExpressionColumn c = (ExpressionColumn) ec;
                         found = col.equals(c.getColumnName());
                         if (tableAlias != null && found) {
-                            String ca = c.getOriginalTableAliasName();
+                            final String ca = c.getOriginalTableAliasName();
                             if (ca != null) {
                                 found = tableAlias.equals(ca);
                             }
@@ -301,12 +305,12 @@ public abstract class Query extends Prepared {
                         found = true;
                     }
                     else {
-                        Expression ec2 = ec.getNonAliasExpression();
+                        final Expression ec2 = ec.getNonAliasExpression();
                         if (ec2 instanceof ExpressionColumn) {
-                            ExpressionColumn c2 = (ExpressionColumn) ec2;
-                            String ta = exprCol.getSQL();
+                            final ExpressionColumn c2 = (ExpressionColumn) ec2;
+                            final String ta = exprCol.getSQL();
                             // exprCol.getTableAlias();
-                            String tb = c2.getSQL();
+                            final String tb = c2.getSQL();
                             // getTableAlias();
                             found = col.equals(c2.getColumnName());
                             if (!StringUtils.equals(ta, tb)) {
@@ -322,9 +326,9 @@ public abstract class Query extends Prepared {
                 }
             }
             else {
-                String s = e.getSQL();
+                final String s = e.getSQL();
                 for (int j = 0; expressionSQL != null && j < expressionSQL.size(); j++) {
-                    String s2 = (String) expressionSQL.get(j);
+                    final String s2 = (String) expressionSQL.get(j);
                     if (s2.equals(s)) {
                         idx = j;
                         isAlias = true;
@@ -335,7 +339,7 @@ public abstract class Query extends Prepared {
             if (!isAlias) {
                 if (mustBeInResult) { throw Message.getSQLException(ErrorCode.ORDER_BY_NOT_IN_RESULT, e.getSQL()); }
                 expressions.add(e);
-                String sql = e.getSQL();
+                final String sql = e.getSQL();
                 expressionSQL.add(sql);
             }
             o.columnIndexExpr = ValueExpression.get(ValueInt.get(idx + 1));
@@ -351,16 +355,16 @@ public abstract class Query extends Prepared {
      *            the number of columns in the query
      * @return the {@link SortOrder} object
      */
-    public SortOrder prepareOrder(ObjectArray orderList, int expressionCount) throws SQLException {
+    public SortOrder prepareOrder(final ObjectArray orderList, final int expressionCount) throws SQLException {
 
-        int[] index = new int[orderList.size()];
-        int[] sortType = new int[orderList.size()];
+        final int[] index = new int[orderList.size()];
+        final int[] sortType = new int[orderList.size()];
         for (int i = 0; i < orderList.size(); i++) {
-            SelectOrderBy o = (SelectOrderBy) orderList.get(i);
+            final SelectOrderBy o = (SelectOrderBy) orderList.get(i);
             int idx;
             boolean reverse = false;
-            Expression expr = o.columnIndexExpr;
-            Value v = expr.getValue(null);
+            final Expression expr = o.columnIndexExpr;
+            final Value v = expr.getValue(null);
             if (v == ValueNull.INSTANCE) {
                 // parameter not yet set - order by first column
                 idx = 0;
@@ -391,12 +395,12 @@ public abstract class Query extends Prepared {
         return new SortOrder(session.getDatabase(), index, sortType);
     }
 
-    public void setOffset(Expression offset) {
+    public void setOffset(final Expression offset) {
 
         this.offset = offset;
     }
 
-    public void setLimit(Expression limit) {
+    public void setLimit(final Expression limit) {
 
         this.limit = limit;
     }
@@ -407,7 +411,7 @@ public abstract class Query extends Prepared {
      * @param param
      *            the parameter to add
      */
-    void addParameter(Parameter param) {
+    void addParameter(final Parameter param) {
 
         if (parameters == null) {
             parameters = new ObjectArray();
@@ -415,14 +419,14 @@ public abstract class Query extends Prepared {
         parameters.add(param);
     }
 
-    public void setSampleSize(int sampleSize) {
+    public void setSampleSize(final int sampleSize) {
 
         this.sampleSize = sampleSize;
     }
 
     public final long getMaxDataModificationId() {
 
-        ExpressionVisitor visitor = ExpressionVisitor.get(ExpressionVisitor.SET_MAX_DATA_MODIFICATION_ID);
+        final ExpressionVisitor visitor = ExpressionVisitor.get(ExpressionVisitor.SET_MAX_DATA_MODIFICATION_ID);
         isEverything(visitor);
         return visitor.getMaxDataModificationId();
     }
@@ -434,9 +438,9 @@ public abstract class Query extends Prepared {
      *            the visitor type
      * @return true if no component returned false
      */
-    public final boolean isEverything(int expressionVisitorType) {
+    public final boolean isEverything(final int expressionVisitorType) {
 
-        ExpressionVisitor visitor = ExpressionVisitor.get(expressionVisitorType);
+        final ExpressionVisitor visitor = ExpressionVisitor.get(expressionVisitorType);
         return isEverything(visitor);
     }
 

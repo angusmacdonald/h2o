@@ -195,6 +195,10 @@ public class Worker extends Thread implements IWorker {
 
         final boolean isRunning = checkDatabaseIsActive();
 
+        if (isRunning) {
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "H2O instance started at " + connectionString);
+        }
+
         if (disableReplication) {
             disableReplicationOnLocalInstance();
         }

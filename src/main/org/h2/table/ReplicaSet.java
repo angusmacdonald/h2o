@@ -166,10 +166,10 @@ public class ReplicaSet {
 
     /**
      * Remove a LinkedTable if one already exists and it doesn't point to the correct database URL
-     * (the urlRequired parameter). This is called from CreateLinkedTable if a linked table has 
+     * (the urls parameter). This is called from CreateLinkedTable if a linked table has 
      * to be created to another URL.
      * @param table
-     * @param urls
+     * @param urls  If this is null it will remove the linked table regardless its location.
      * @return Returns true if the link table required (at the correct URL) already exists).
      */
     public boolean removeLinkedTable(final Table table, final Set<String> urls) {
@@ -180,7 +180,7 @@ public class ReplicaSet {
             if (tableReference instanceof TableLink) {
                 final TableLink linkedTable = (TableLink) tableReference;
 
-                if (!urls.contains(linkedTable.getUrl())) {
+                if (urls == null || !urls.contains(linkedTable.getUrl())) {
                     linkedTableToRemove = tableReference;
                 }
 
@@ -193,7 +193,7 @@ public class ReplicaSet {
         if (primaryCopy != null && primaryCopy instanceof TableLink) {
             final TableLink linkedTable = (TableLink) primaryCopy;
 
-            if (!urls.contains(linkedTable.getUrl())) {
+            if (urls == null || !urls.contains(linkedTable.getUrl())) {
                 primaryCopy = null;
 
                 anythingRemoved = true;

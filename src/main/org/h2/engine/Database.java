@@ -2904,10 +2904,15 @@ public class Database implements DataHandler, Observer, ISystemStatus {
     public TableLinkConnection getLinkConnection(final String driver, final String url, final String user, final String password, final boolean clearLinkConnectionCache) throws SQLException {
 
         if (linkConnections == null || clearLinkConnectionCache) {
-            linkConnections = new HashMap<TableLinkConnection, TableLinkConnection>();
+            clearTableLinkCache();
         }
 
         return TableLinkConnection.open(linkConnections, driver, url, user, password);
+    }
+
+    public void clearTableLinkCache() {
+
+        linkConnections = new HashMap<TableLinkConnection, TableLinkConnection>();
     }
 
     @Override
