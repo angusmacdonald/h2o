@@ -4,6 +4,8 @@ import java.text.DateFormat;
 
 public class FailureLogEntry extends LogEntry {
 
+    private static final long serialVersionUID = -8423500139953668030L;
+
     private final String failedMachineID;
     private final boolean startEvent;
 
