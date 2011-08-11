@@ -620,4 +620,10 @@ public class Worker extends Thread implements IWorker {
             }
         }
     }
+
+    @Override
+    public String getLocalDatabaseName() throws RemoteException {
+
+        return h2oInstanceName;
+    }
 }

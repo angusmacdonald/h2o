@@ -1,0 +1,19 @@
+#Terminate the TM machine after 20 seconds, wait another 20 seconds and terminate the second TM machine (no more replicas exist at this point).
+{start_machine id="0"}
+{sleep="5000"}
+{start_machine id="1"}
+{sleep="5000"}
+{start_machine id="2"}
+{sleep="5000"}
+{1} CREATE TABLE test0 (id int, str_a varchar(40), str_b varchar(40), str_c varchar(40), str_d varchar(40), int_a BIGINT, int_b BIGINT);
+{sleep="20000"}
+{0} {execute_workload="src/test/org/h2o/eval/workloads/failure/table-test0.workload" duration="60000"}
+{sleep="20000"}
+{stall id="0"}
+{terminate_machine id="1"}
+{sleep="20000"}
+{terminate_machine id="2"}
+{sleep="20000"}
+{start_machine id="1"}
+{resume id="0"}
+#Restart workload execution here.

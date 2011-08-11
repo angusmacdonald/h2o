@@ -159,6 +159,18 @@ public class ScriptTests {
     }
 
     /**
+     * Two machines (both with replicas) fail, the first one long before the second. No queries come in during this downtime, the second fails, and the first one restarts. The first one should still be thought to have
+     * valid meta-data.
+     * @throws Exception
+     */
+    @Test
+    public void failureThenRestart3() throws Exception {
+
+        runScript("src/test/org/h2o/eval/workloads/failure/failure-then-restart3.coord");
+
+    }
+
+    /**
      * Tests that time stands still (in the workloads execution) when the stall command is used.
      * @throws Exception
      */
@@ -192,7 +204,7 @@ public class ScriptTests {
 
         final String coordScriptLocation = generateCoordinationScript();
 
-        workers = new IWorker[3];
+        workers = new IWorker[5];
         for (int i = 0; i < workers.length; i++) {
             workers[i] = new Worker();
         }
@@ -208,11 +220,11 @@ public class ScriptTests {
 
     public String generateCoordinationScript() throws IOException {
 
-        final long runtime = 60000;
-        final double probabilityOfFailure = 0.5;
-        final long frequencyOfFailure = 30000;
-        final int numberOfMachines = 3;
-        final int numberOfTables = 1;
+        final long runtime = 80000;
+        final double probabilityOfFailure = 0.2;
+        final long frequencyOfFailure = 20000;
+        final int numberOfMachines = 5;
+        final int numberOfTables = 3;
         final TableClustering clusteringSpec = new TableClustering(Clustering.GROUPED, 5);
 
         final Set<WorkloadType> workloadSpecs = new HashSet<WorkloadType>();

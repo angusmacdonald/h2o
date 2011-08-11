@@ -137,4 +137,10 @@ public interface IWorker extends Remote {
      * @throws WorkloadException Thrown if no workloads are running.
      */
     public void resumeWorkloads() throws RemoteException, WorkloadException;
+
+    /**
+     * Get the name of the database created by this worker.
+     * @return Short database name (e.g. 'eigg1').
+     */
+    public String getLocalDatabaseName() throws RemoteException;
 }

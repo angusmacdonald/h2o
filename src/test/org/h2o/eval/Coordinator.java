@@ -37,6 +37,7 @@ import org.h2o.eval.script.coord.CoordinationScriptExecutor;
 import org.h2o.eval.script.coord.instructions.Instruction;
 import org.h2o.eval.script.coord.instructions.MachineInstruction;
 import org.h2o.eval.script.coord.instructions.WorkloadInstruction;
+import org.h2o.eval.script.workload.FailureLogEntry;
 import org.h2o.eval.script.workload.Workload;
 import org.h2o.eval.script.workload.WorkloadResult;
 import org.h2o.util.H2OPropertiesWrapper;
@@ -91,6 +92,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
     private final Date startDate = new Date();
     private final List<WorkloadResult> workloadResults = new LinkedList<WorkloadResult>();
+    private final List<FailureLogEntry> failureLog = new LinkedList<FailureLogEntry>();
     private IWorker reserved_machine = null;
 
     /**
@@ -510,7 +512,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         }
 
         try {
-            CSVPrinter.printResults("generatedWorkloads" + File.separator + dateFormatter.format(startDate) + "-results.csv", workloadResults);
+            CSVPrinter.printResults("generatedWorkloads" + File.separator + dateFormatter.format(startDate) + "-results.csv", workloadResults, failureLog);
         }
         catch (final FileNotFoundException e) {
             ErrorHandling.exceptionError(e, "Failed to create file to save results to.");
@@ -535,6 +537,14 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         }
 
         killMonitor.start();
+
+        executeCoordinationScript(script);
+    }
+
+    public void executeCoordinationScript(final List<String> script) throws WorkloadParseException, RemoteException, StartupException, SQLException, WorkloadException {
+
+        long currentExecutionTime = 0;
+        boolean startedExecution = false; //execution only starts with the first of the first workload.
 
         for (final String action : script) {
             if (action.startsWith("#") || action.trim().equals("")) {
@@ -617,11 +627,17 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
                 }
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Terminated machine with ID '" + terminateInstruction.id + "'");
 
+                failureLog.add(new FailureLogEntry(currentExecutionTime, scriptedInstances.get(Integer.valueOf(terminateInstruction.id)).getLocalDatabaseName()));
+
             }
             else if (action.startsWith("{sleep=")) {
                 final int sleepTime = CoordinationScriptExecutor.parseSleepOperation(action);
 
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Sleeping for '" + sleepTime + "'");
+
+                if (startedExecution) {
+                    currentExecutionTime += sleepTime;
+                }
 
                 try {
                     Thread.sleep(sleepTime);
@@ -641,6 +657,11 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
                     Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Executing workload '" + wi.workloadFile + "' for '" + wi.duration + "', on '" + wi.id + "'.");
 
+                    if (!startedExecution) {
+                        currentExecutionTime = System.currentTimeMillis();
+                        startedExecution = true;
+                    }
+
                 }
                 else {
                     executeQuery(instruction.id, instruction.getData());
@@ -650,10 +671,6 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
                 }
             }
         }
-    }
-
-    public void executeCoordinationScript(final List<String> script) throws WorkloadParseException, RemoteException, StartupException, SQLException {
-
     }
 
     private void executeQuery(final String workerID, final String query) throws RemoteException, SQLException {

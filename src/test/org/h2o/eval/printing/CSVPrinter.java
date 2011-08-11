@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.h2o.eval.script.workload.FailureLogEntry;
 import org.h2o.eval.script.workload.QueryLogEntry;
 import org.h2o.eval.script.workload.WorkloadResult;
 
@@ -28,7 +29,7 @@ public class CSVPrinter {
      * @param workloadResults The results to be written.
      * @throws FileNotFoundException If the file could not be created or written to.
      */
-    public static void printResults(final String fileLocation, final List<WorkloadResult> workloadResults) throws FileNotFoundException {
+    public static void printResults(final String fileLocation, final List<WorkloadResult> workloadResults, final List<FailureLogEntry> failureLog) throws FileNotFoundException {
 
         final Set<String> tableNames = getAllTableNames(workloadResults);
 
@@ -47,6 +48,8 @@ public class CSVPrinter {
                 csv.append(printQueryLog(workloadResult.getQueryLog(), workloadResult.getLocationOfExecution(), tableNames, startTime));
             }
         }
+
+        csv.append(printFailureLog(failureLog, startTime));
 
         FileUtil.writeToFile(fileLocation, csv.toString());
     }
@@ -103,4 +106,16 @@ public class CSVPrinter {
 
         return csv;
     }
+
+    private static StringBuilder printFailureLog(final List<FailureLogEntry> failureLog, final long startTime) {
+
+        final StringBuilder csv = new StringBuilder();
+
+        for (final FailureLogEntry queryLog : failureLog) {
+            csv.append(queryLog.toCSV(dateFormatter, startTime));
+        }
+
+        return csv;
+    }
+
 }

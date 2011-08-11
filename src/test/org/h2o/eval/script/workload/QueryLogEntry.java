@@ -12,13 +12,9 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
-public class QueryLogEntry implements Serializable {
+public class QueryLogEntry extends LogEntry implements Serializable {
 
     private static final long serialVersionUID = 6421309505616188993L;
-
-    public enum QueryType {
-        CREATE, DROP, INSERT, DELETE, UNKNOWN, SELECT
-    };
 
     /**
      * Type of query being performed.
@@ -28,14 +24,12 @@ public class QueryLogEntry implements Serializable {
     /**
      * Name of the table on which this operation was performed.
      */
-    public final Set<String> tablesInvolved;
+    public final Collection<String> tablesInvolved;
 
     /**
      * Time taken to execute the query (either successfully, or for it to fail).
      */
     public long timeToExecute;
-
-    public long timeOfLogEntry;
 
     /**
      * Whether the query executed successfully.
@@ -51,11 +45,17 @@ public class QueryLogEntry implements Serializable {
      */
     public QueryLogEntry(final long timeOfExecution, final boolean successfulExecution, final long timeToExecute, final List<QueryType> queryTypes, final Set<String> tablesInvolved) {
 
-        timeOfLogEntry = timeOfExecution;
+        super(timeOfExecution);
+
         this.successfulExecution = successfulExecution;
         this.timeToExecute = timeToExecute;
         this.queryTypes = queryTypes;
         this.tablesInvolved = tablesInvolved;
+    }
+
+    public String toCSV(final DateFormat dateformatter, final String locationOfExecution, final Collection<String> tableNames, final long startTime) {
+
+        return super.toCSV(dateformatter, locationOfExecution, tableNames, startTime, tablesInvolved, successfulExecution, timeToExecute, queryTypes);
     }
 
     /* (non-Javadoc)
@@ -64,7 +64,7 @@ public class QueryLogEntry implements Serializable {
     @Override
     public String toString() {
 
-        return "QueryLogEntry [queryType=" + PrettyPrinter.toString(queryTypes) + ", tableInvolved=" + PrettyPrinter.toString(tablesInvolved) + ", timeToExecute=" + timeToExecute + ", timeOfLogEntry=" + timeOfLogEntry + ", successfulExecution=" + successfulExecution + "]";
+        return "QueryLogEntry [queryType=" + PrettyPrinter.toString(queryTypes) + ", tableInvolved=" + PrettyPrinter.toString(tablesInvolved) + ", timeToExecute=" + timeToExecute + ", timeOfLogEntry=" + timeOfExecution + ", successfulExecution=" + successfulExecution + "]";
     }
 
     public static QueryLogEntry createQueryLogEntry(final long timeOfExecution, final String query, final boolean successfullyExecuted, final long timeToExecute) {
@@ -120,55 +120,4 @@ public class QueryLogEntry implements Serializable {
 
     }
 
-    public String toCSV(final DateFormat dateformatter, final String locationOfExecution, final Collection<String> tableNames, final long startTime) {
-
-        final String tablesInvolvedString = PrettyPrinter.toString(tablesInvolved, ";", false);
-        final long timeOfTransactionMS = timeOfLogEntry - startTime;
-        final int timeOfTransactionSec = (int) (timeOfTransactionMS / 1000);
-
-        final String successfulExecutionTime = (successfulExecution ? timeToExecute : "=NA()") + "";
-        final String unsuccessfulExecutionTime = (!successfulExecution ? timeToExecute : "=NA()") + "";
-
-        String row = timeOfTransactionMS + "," + timeOfTransactionSec + "," + successfulExecutionTime + "," + unsuccessfulExecutionTime + ", " + locationOfExecution + "," + tablesInvolvedString + "," + getNumberOf(QueryType.INSERT) + "," + getNumberOf(QueryType.SELECT) + ",";
-
-        for (final String tableName : tableNames) {
-            if (tableName.equals(tablesInvolvedString)) {
-                row += timeToExecute;
-            }
-            else {
-                row += "=NA()";
-            }
-
-            row += ",";
-        }
-
-        row += "\n";
-
-        return row;
-
-    }
-
-    private int getNumberOf(final QueryType type) {
-
-        int count = 0;
-        for (final QueryType singleQueryType : queryTypes) {
-            if (singleQueryType.equals(type)) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    public static String toCSVHeader(final Collection<String> tableNames) {
-
-        String header = "Time of Transaction (ms), Time of Transaction (s), Time To Execute if Successful, Time to Execute if Unsuccessful, Location of Execution, Tables Involved, Insert Queries, Select Queries, ";
-
-        for (final String tableName : tableNames) {
-            header += tableName + ",";
-        }
-
-        header += "\n";
-
-        return header;
-    }
 }
