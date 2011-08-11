@@ -24,7 +24,7 @@ public class LogEntry implements Serializable {
 
     public static String toCSVHeader(final Collection<String> tableNames) {
 
-        String header = "Time of Transaction (ms), Time of Transaction (s), Time To Execute if Successful, Time to Execute if Unsuccessful, Machine Failure Event, Location of Event, Tables Involved, Insert Queries, Select Queries, ";
+        String header = "Time of Transaction (ms), Time of Transaction (s), Time To Execute if Successful, Time to Execute if Unsuccessful, Machine Start Event, Machine Failure Event, Location of Event, Tables Involved, Insert Queries, Select Queries, ";
 
         for (final String tableName : tableNames) {
             header += tableName + ",";
@@ -36,7 +36,7 @@ public class LogEntry implements Serializable {
     }
 
     public String toCSV(final DateFormat dateformatter, final String locationOfExecution, final Collection<String> tableNames, final long startTime, final Collection<String> tablesInvolved, final boolean successfulExecution, final long timeToExecute, final List<QueryType> queryTypes,
-                    final boolean machineFailureEvent) {
+                    final boolean machineFailureEvent, final boolean machineFailure) {
 
         final String tablesInvolvedString = PrettyPrinter.toString(tablesInvolved, ";", false);
         final long timeOfTransactionMS = timeOfExecution - startTime;
@@ -44,10 +44,11 @@ public class LogEntry implements Serializable {
 
         final String successfulExecutionTime = machineFailureEvent ? "=NA()" : (successfulExecution ? timeToExecute : "=NA()") + "";
         final String unsuccessfulExecutionTime = machineFailureEvent ? "=NA()" : (!successfulExecution ? timeToExecute : "=NA()") + "";
-        final String machineFailureEventText = machineFailureEvent ? "0" : "=NA()";
+        final String machineFailureEventText = !machineFailureEvent ? "=NA()" : machineFailure ? "0" : "=NA()";
+        final String machineStartEventText = !machineFailureEvent ? "=NA()" : !machineFailure ? "0" : "=NA()";
 
-        String row = timeOfTransactionMS + "," + timeOfTransactionSec + "," + successfulExecutionTime + "," + unsuccessfulExecutionTime + "," + machineFailureEventText + "," + locationOfExecution + "," + tablesInvolvedString + "," + getNumberOf(QueryType.INSERT, queryTypes) + ","
-                        + getNumberOf(QueryType.SELECT, queryTypes) + ",";
+        String row = timeOfTransactionMS + "," + timeOfTransactionSec + "," + successfulExecutionTime + "," + unsuccessfulExecutionTime + "," + machineStartEventText + "," + machineFailureEventText + "," + locationOfExecution + "," + tablesInvolvedString + ","
+                        + getNumberOf(QueryType.INSERT, queryTypes) + "," + getNumberOf(QueryType.SELECT, queryTypes) + ",";
 
         if (tableNames != null) {
             for (final String tableName : tableNames) {

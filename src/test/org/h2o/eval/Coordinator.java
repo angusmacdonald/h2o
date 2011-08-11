@@ -563,6 +563,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
                 else {
                     worker.startH2OInstance(descriptorFile, false, startInstruction.id == 0);
                     scriptedInstances.put(startInstruction.id, worker);
+                    failureLog.add(new FailureLogEntry(currentExecutionTime, scriptedInstances.get(Integer.valueOf(startInstruction.id)).getLocalDatabaseName(), true));
                 }
 
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Starting machine with ID '" + startInstruction.id + "'");
@@ -627,7 +628,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
                 }
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Terminated machine with ID '" + terminateInstruction.id + "'");
 
-                failureLog.add(new FailureLogEntry(currentExecutionTime, scriptedInstances.get(Integer.valueOf(terminateInstruction.id)).getLocalDatabaseName()));
+                failureLog.add(new FailureLogEntry(currentExecutionTime, scriptedInstances.get(Integer.valueOf(terminateInstruction.id)).getLocalDatabaseName(), false));
 
             }
             else if (action.startsWith("{sleep=")) {

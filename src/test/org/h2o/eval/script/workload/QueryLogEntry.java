@@ -55,7 +55,7 @@ public class QueryLogEntry extends LogEntry implements Serializable {
 
     public String toCSV(final DateFormat dateformatter, final String locationOfExecution, final Collection<String> tableNames, final long startTime) {
 
-        return super.toCSV(dateformatter, locationOfExecution, tableNames, startTime, tablesInvolved, successfulExecution, timeToExecute, queryTypes, false);
+        return super.toCSV(dateformatter, locationOfExecution, tableNames, startTime, tablesInvolved, successfulExecution, timeToExecute, queryTypes, false, false);
     }
 
     /* (non-Javadoc)
