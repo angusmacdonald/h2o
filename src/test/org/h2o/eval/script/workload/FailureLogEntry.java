@@ -19,7 +19,7 @@ public class FailureLogEntry extends LogEntry {
 
     public String toCSV(final DateFormat dateformatter, final long startTime) {
 
-        return super.toCSV(dateformatter, failedMachineID, null, startTime, null, true, 0, null);
+        return super.toCSV(dateformatter, failedMachineID, null, startTime, null, true, 0, null, true);
     }
 
 }
