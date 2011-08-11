@@ -148,6 +148,17 @@ public class ScriptTests {
     }
 
     /**
+     * Two machines (both with replicas) fail, the second one is restarted later.
+     * @throws Exception
+     */
+    @Test
+    public void failureThenRestart2() throws Exception {
+
+        runScript("src/test/org/h2o/eval/workloads/failure/failure-then-restart2.coord");
+
+    }
+
+    /**
      * Tests that time stands still (in the workloads execution) when the stall command is used.
      * @throws Exception
      */
