@@ -234,7 +234,7 @@ public class MetaDataReplicaManager {
 
                 for (final DatabaseInstanceWrapper databaseInstance : databaseInstances) {
 
-                    if (!isLocal(databaseInstance) && databaseInstance.isActive()) {
+                    if (!isLocal(databaseInstance) && databaseInstance.isActive() && !replicaManager.getAllReplicas().keySet().contains(databaseInstance)) {
                         try {
 
                             addReplicaLocation(databaseInstance, isSystemTable);
