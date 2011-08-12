@@ -867,11 +867,12 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
         try {
             addTableInformation(getDB().getID(), tableInfo);
 
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Temporary initial replicas on Table Manager creation on " + getDB().getID() + ": ");
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Replicas of " + fullName + "[started on " + getDB().getID() + "] have been created on: ");
             for (final TableInfo ti : temporaryInitialReplicas) {
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "\t" + ti.getDatabaseID());
             }
             Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "All other replicas on Table Manager creation: " + PrettyPrinter.toString(replicaManager.getAllReplicasOnActiveMachines()));
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Set of all replicas known to the table manager: " + PrettyPrinter.toString(replicaManager.getAllReplicas()));
 
             for (final TableInfo replica : temporaryInitialReplicas) {
                 addReplicaInformation(replica);
@@ -976,17 +977,8 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
                 super.addConnectionInformation(ti.getDatabaseID(), true);
                 super.addReplicaInformation(ti);
             }
-            catch (final RPCException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-            catch (final MovedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-            catch (final SQLException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+            catch (final Exception e) {
+                ErrorHandling.exceptionError(e, "Trying to persist replica information.");
             }
         }
     }
