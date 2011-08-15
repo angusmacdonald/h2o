@@ -80,6 +80,8 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
     private final Map<IWorker, Integer> workersWithActiveWorkloads = Collections.synchronizedMap(new HashMap<IWorker, Integer>());
 
+    private IWorker reserved_machine = null;
+
     /*
      * Locator server fields.
      */
@@ -87,13 +89,20 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     private H2OPropertiesWrapper descriptorFile;
     private KillMonitorThread killMonitor;
 
+    /*
+     * Results file location:
+     */
     private static final DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
-    private static final String DEFAULT_DATABASE_NAME = "MY_EVALUATION_DATABASE";
+    public final static String DEFAULT_DATABASE_NAME = "MY_EVALUATION_DATABASE";
+    public static final String DEFAULT_RESULTS_FOLDER_LOCATION = "generatedWorkloads";
+    private String resultsFolderLocation;
 
+    /*
+     * Results log:
+     */
     private final Date startDate = new Date();
     private final List<WorkloadResult> workloadResults = new LinkedList<WorkloadResult>();
     private final List<FailureLogEntry> failureLog = new LinkedList<FailureLogEntry>();
-    private IWorker reserved_machine = null;
 
     /**
      * 
@@ -115,6 +124,8 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         this.databaseName = databaseName;
         this.workerLocations = new HashSet<InetAddress>();
         this.workerLocations.addAll(workerLocations);
+        resultsFolderLocation = DEFAULT_DATABASE_NAME;
+
         bindToRegistry();
     }
 
@@ -235,7 +246,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     /**
      * Connect to all known workers and terminate any active H2O instances. Also remove the state of those instances.
      */
-    private void obliterateExtantInstances() {
+    public void obliterateExtantInstances() {
 
         scanForWorkerNodes(workerLocations);
 
@@ -512,7 +523,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         }
 
         try {
-            CSVPrinter.printResults("generatedWorkloads" + File.separator + dateFormatter.format(startDate) + "-results.csv", workloadResults, failureLog);
+            CSVPrinter.printResults(resultsFolderLocation + File.separator + dateFormatter.format(startDate) + "-results.csv", workloadResults, failureLog);
         }
         catch (final FileNotFoundException e) {
             ErrorHandling.exceptionError(e, "Failed to create file to save results to.");
@@ -525,9 +536,16 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     }
 
     @Override
-    public void executeCoordinatorScript(final String configFileLocation) throws RemoteException, FileNotFoundException, WorkloadParseException, StartupException, SQLException, IOException, WorkloadException {
+    public void executeCoordinatorScript(final String coordinatorScriptLocation) throws RemoteException, FileNotFoundException, WorkloadParseException, StartupException, SQLException, IOException, WorkloadException {
 
-        final List<String> script = FileUtil.readAllLines(configFileLocation);
+        executeCoordinatorScript(coordinatorScriptLocation, DEFAULT_RESULTS_FOLDER_LOCATION);
+    }
+
+    public void executeCoordinatorScript(final String coordinatorScriptLocation, final String resultsFolderLocation) throws FileNotFoundException, IOException, WorkloadParseException, StartupException, SQLException, WorkloadException {
+
+        this.resultsFolderLocation = resultsFolderLocation;
+
+        final List<String> script = FileUtil.readAllLines(coordinatorScriptLocation);
 
         killMonitor = new KillMonitorThread(this);
 
@@ -689,7 +707,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     }
 
     /**
-     * 
+     * Start up a new set of H2O instances based on the provided parameters.
      * @param args
      *            <ul>
      *            <li><em>-n<name></em>. The name of the database system (i.e. the name of the database in the descriptor file, the global system).</li>
@@ -697,8 +715,8 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      *            an instance will be started on the local instance, so this hostname does not need to be included.</li>
      *            <li><em>-c<name></em>. The number of H2O instances that are to be started. This number must be less than or equal to the number of active worker instances.</li>
      *            <li><em>-t<name></em>. Optional. Whether to terminate any existing instances running at all workers (including stored state), before doing anything else.</li>
-     *            <li><em>-p<name></em>. Optional. The path/name of the properties file to create stating how to connect to the system table.</li>
-     *            <li><em>-r<name></em>. Optional. The system-wide replication factor for user tables..</li>
+     *            <li><em>-p<name></em>. Optional. The path/name of the properties file to create stating how to connect to the system table (used by BenchmarkSQL)</li>
+     *            <li><em>-r<name></em>. Optional. The system-wide replication factor for user tables.</li>
      *            <li><em>-d<name></em>. Optional (true/false). Whether to start the remote instance in Java remote debug mode.</li>
      *            </ul>
      * @throws StartupException Thrown if a required parameter was not specified.
@@ -708,6 +726,9 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         Diagnostic.setLevel(DiagnosticLevel.FINAL);
 
+        /*
+         * Parse parameters.
+         */
         final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
 
         final String databaseName = processDatabaseName(arguments.get("-n"));
@@ -724,6 +745,9 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         final String connectionPropertiesFile = arguments.get("-p");
 
+        /*
+         * Create new Coordinator and start the specified number of database instances.
+         */
         final Coordinator coord = new Coordinator(databaseName, workerLocationsInet);
 
         if (obliterateExistingInstances) {
@@ -737,27 +761,25 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Setting system-wide replication factor to " + replicationFactor);
         coord.setReplicationFactor(replicationFactor);
 
+        /* 
+         * Start first H2O instance.
+         */
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting primary H2O instance on " + NetworkUtil.getLocalIPv4Address().getHostName());
+        final InetAddress localhost = getLocalHostname();
 
-        InetAddress host = null;
-        try {
-            host = NetworkUtil.getLocalIPv4Address();
-        }
-        catch (final UnknownHostException e1) {
-            throw new StartupException("Couldn't create local InetAddress.");
-        }
-
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting secondary H2O instances on " + (h2oInstancesToStart - 1) + " of the following nodes: " + PrettyPrinter.toString(workerLocationsStr));
-
-        final String connectionString = coord.startH2OInstance(host, startInRemoteDebug, true); //start an instance locally as the system table.
+        final String connectionString = coord.startH2OInstance(localhost, startInRemoteDebug, true); //start an instance locally as the system table.
 
         if (connectionString == null) { throw new StartupException("Failed to start the local H2O instance that is intended to become the System Table."); }
 
+        /*
+         * Start remaining H2O instances.
+         */
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting secondary H2O instances on " + (h2oInstancesToStart - 1) + " of the following nodes: " + PrettyPrinter.toString(workerLocationsStr));
         final int started = coord.startH2OInstances(h2oInstancesToStart - 1);
 
         if (started != h2oInstancesToStart - 1) {
             System.err.println("Failed to start the correct number of instances. Started " + started + 1 + ", but needed to start " + h2oInstancesToStart + ".");
-            System.exit(1);
+            System.exit(1); //do this rather than returning because extant processes spawned by this process will stop the JVM from terminating.
         }
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Started " + h2oInstancesToStart + " H2O instances.");
@@ -772,12 +794,24 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         System.exit(0);
     }
 
+    public static InetAddress getLocalHostname() throws StartupException {
+
+        InetAddress host = null;
+        try {
+            host = NetworkUtil.getLocalIPv4Address();
+        }
+        catch (final UnknownHostException e1) {
+            throw new StartupException("Couldn't create local InetAddress.");
+        }
+        return host;
+    }
+
     /**
      * Sets the desired replication factor in the database descriptor file. This will only be used if it is set before a database is started up.
      * @param replicationFactor How many copies of each table the system should aim to create.
      * @throws StartupException 
      */
-    private void setReplicationFactor(final int replicationFactor) throws StartupException {
+    void setReplicationFactor(final int replicationFactor) throws StartupException {
 
         if (descriptorFile == null) { throw new StartupException("Descriptor file has not been create yet. Call startLocatorServer() first."); }
 

@@ -211,9 +211,6 @@ public class MetaDataReplicaManager {
         // Check that replication is enabled and replication factor has not already been reached.
         if (metaDataReplicationEnabled && replicaManager.allReplicasSize() < managerStateReplicationFactor) {
 
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Does " + (isSystemTable ? "system table" : "table manager") + " meta-data need to be replicated? Currently " + replicaManager.allReplicasSize() + ", and there needs to be " + managerStateReplicationFactor);
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Meta-data on " + db.getID() + " currently replicated to : " + PrettyPrinter.toString(replicaManager.getAllReplicas()));
-
             Queue<DatabaseInstanceWrapper> databaseInstances = null;
 
             try {
@@ -228,6 +225,13 @@ public class MetaDataReplicaManager {
             catch (final Exception e) {
                 Diagnostic.trace(DiagnosticLevel.FULL, "Error trying to contact system table (for the purposes of discovering new instances on which to replicate data). This is not a fatal error. No recovery is attempted.");
                 return; // just return, the system will attempt to replicate later on.
+            }
+
+            if (databaseInstances.size() > replicaManager.allReplicasSize()) {
+                //Don't display diagnostic message when it isn't possible to replicate further anyway.
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
+                                "Does " + (isSystemTable ? "system table" : "table manager") + " meta-data need to be replicated? Currently " + replicaManager.allReplicasSize() + ", and there needs to be " + managerStateReplicationFactor + "(" + databaseInstances.size() + " machines available).");
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Meta-data on " + db.getID() + " currently replicated to : " + PrettyPrinter.toString(replicaManager.getAllReplicas()));
             }
 
             if (databaseInstances.size() != 1) {

@@ -61,7 +61,7 @@ public class Worker extends Thread implements IWorker {
 
     private static final boolean LOGGING_TO_FILE_ENABLED = true;
 
-    private static final int DATABASE_DIAGNOSTIC_LEVEL = 6; // 0 - full, 6 - none.
+    private static final int DATABASE_DIAGNOSTIC_LEVEL = 0; // 0 - full, 6 - none.
 
     private static String LOG_FILE_LOCATION;
 

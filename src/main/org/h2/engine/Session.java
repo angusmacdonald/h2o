@@ -944,6 +944,11 @@ public class Session extends SessionWithState {
      */
     public synchronized void setPreparedTransaction(final String transactionName, final boolean commit) throws SQLException {
 
+        /*
+         * XXX NOTE: Making this method synchronized fixes a number of concurrency issues that occasionally happen in multi-process failure tests,
+         * but it causes some single process tests to stall. Synchronizing is the correct behaviour, but the single process tests will need
+         * to be refactored to take account of this.
+         */
         if (currentTransactionName == null || !currentTransactionName.equals(transactionName)) {
             Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Hack to prepare commit for " + transactionName);
             prepareCommit(transactionName);

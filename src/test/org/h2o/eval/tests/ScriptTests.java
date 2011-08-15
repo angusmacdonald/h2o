@@ -104,7 +104,7 @@ public class ScriptTests {
     }
 
     /**
-     * One TM fails, it is recovered, but fails on a second machine... it is recreated again and runs successfully on a third machine.
+     * One TM fails, it is recovered, but fails on a second machine... it is recreated again and runs successfully on a third machine before that is killed and no transactions can execute successfully.
      * @throws Exception
      */
     @Test
@@ -130,7 +130,7 @@ public class ScriptTests {
      * @throws Exception
      */
     @Test
-    public void tripleFailureSevenMachinesSingleRecovery() throws Exception {
+    public void tripleFailureSevenMachinesDoubleRecovery() throws Exception {
 
         runScript("src/test/org/h2o/eval/workloads/failure/triplefailure-sevenmachines-doublerecovery.coord");
 

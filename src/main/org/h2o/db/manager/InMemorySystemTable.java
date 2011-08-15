@@ -706,14 +706,14 @@ public final class InMemorySystemTable implements ISystemTable {
     @Override
     public void suspectInstanceOfFailure(final DatabaseID suspectedDbURL) throws RPCException, MovedException {
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Instance at " + suspectedDbURL + " is suspected of failure. Checking whether this is the case.");
+        //Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Instance at " + suspectedDbURL + " is suspected of failure. Checking whether this is the case.");
 
         final DatabaseInstanceWrapper suspectedDb = databasesInSystem.get(suspectedDbURL);
 
         if (suspectedDb != null) {
             try {
                 suspectedDb.getDatabaseInstance().isAlive();
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Instance at " + suspectedDbURL + " is still alive.");
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Instance at " + suspectedDbURL + " was suspected of failure, but is still alive.");
 
             }
             catch (final RPCException e) {
