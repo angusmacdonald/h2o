@@ -1,6 +1,5 @@
 package org.h2o.eval.script.workload;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.Connection;
@@ -36,11 +35,8 @@ public class Workload extends Thread implements IWorkload {
     public Workload(final String workloadFileLocation, final long duration) throws FileNotFoundException, IOException {
 
         this.duration = duration;
-        final File workloadFile = new File(workloadFileLocation);
 
-        if (!workloadFile.exists()) { throw new FileNotFoundException("Workload file doesn't exist."); }
-
-        queries = FileUtil.readAllLines(workloadFile);
+        queries = FileUtil.readAllLines(workloadFileLocation);
 
     }
 
