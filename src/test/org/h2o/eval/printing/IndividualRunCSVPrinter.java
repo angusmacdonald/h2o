@@ -19,7 +19,7 @@ import uk.ac.standrews.cs.nds.util.FileUtil;
  *
  * @author Angus Macdonald (angus.macdonald@st-andrews.ac.uk)
  */
-public class CSVPrinter {
+public class IndividualRunCSVPrinter {
 
     private static final DateFormat dateFormatter = new SimpleDateFormat("dd MMM yyyy hh:mm:ss");
 
