@@ -51,7 +51,7 @@ public class CSVPrinter {
 
         csv.append(printFailureLog(failureLog, startTime));
 
-        FileUtil.writeToFile(fileLocation, csv.toString());
+        FileUtil.writeToFile(fileLocation, csv.toString(), true);
     }
 
     /**
