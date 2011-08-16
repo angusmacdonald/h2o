@@ -29,8 +29,8 @@ public class AveragedResultsCSVPrinter extends Printer {
         final long numOfTransactionsExecuted = getNumberOfAttemptedTransactions(workloadResults);
         final long numOfTransactionsSuccessful = getNumberOfSuccessfulTransactions(workloadResults);
 
-        final long totalTimeOfSuccessfulTranscations = getTotalTimeOfTransactions(workloadResults, true);
-        final long totalTimeOfUnSuccessfulTransactions = getTotalTimeOfTransactions(workloadResults, false);
+        final long totalTimeOfSuccessfulTranscations = getTotalTimeOfTransactions(workloadResults, true, startTime);
+        final long totalTimeOfUnSuccessfulTransactions = getTotalTimeOfTransactions(workloadResults, false, startTime);
 
         if (!new File(fileLocation).exists()) {
             FileUtil.writeToFile(fileLocation, printHeader(), true);

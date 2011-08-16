@@ -73,9 +73,10 @@ public class Printer {
      * 
      * @param workloadResults
      * @param successful if true this counts the time to taken to successfully execute transactions; otherwise it counts unsuccessfully executed transaction time.
+     * @param startTime 
      * @return
      */
-    protected static long getTotalTimeOfTransactions(final List<WorkloadResult> workloadResults, final boolean successful) {
+    protected static long getTotalTimeOfTransactions(final List<WorkloadResult> workloadResults, final boolean successful, final long startTime) {
 
         long count = 0;
 
@@ -84,7 +85,7 @@ public class Printer {
 
             for (final QueryLogEntry queryLogEntry : queryLog) {
                 if (successful == queryLogEntry.successfulExecution) {
-                    count += queryLogEntry.timeOfExecution;
+                    count += queryLogEntry.timeOfExecution - startTime;
                 }
             }
         }
