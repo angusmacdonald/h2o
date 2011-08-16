@@ -32,7 +32,8 @@ import org.h2o.eval.interfaces.ICoordinatorLocal;
 import org.h2o.eval.interfaces.ICoordinatorRemote;
 import org.h2o.eval.interfaces.IWorker;
 import org.h2o.eval.interfaces.WorkloadException;
-import org.h2o.eval.printing.CSVPrinter;
+import org.h2o.eval.printing.AveragedResultsCSVPrinter;
+import org.h2o.eval.printing.IndividualRunCSVPrinter;
 import org.h2o.eval.script.coord.CoordinationScriptExecutor;
 import org.h2o.eval.script.coord.instructions.Instruction;
 import org.h2o.eval.script.coord.instructions.MachineInstruction;
@@ -103,6 +104,16 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     private final Date startDate = new Date();
     private final List<WorkloadResult> workloadResults = new LinkedList<WorkloadResult>();
     private final List<FailureLogEntry> failureLog = new LinkedList<FailureLogEntry>();
+
+    /**
+     * The replication factor being used by the database (if set via the {@link #setReplicationFactor(int)} method - otherwise this will be 0).
+     */
+    private int replicationFactor;
+
+    /**
+     * Name of the configuration script being run by co-ordinator. This will be null if no co-ordinator scripts are being run.
+     */
+    private String scriptName;
 
     /**
      * 
@@ -523,11 +534,14 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         }
 
         try {
-            CSVPrinter.printResults(resultsFolderLocation + File.separator + dateFormatter.format(startDate) + "-results.csv", workloadResults, failureLog);
+            IndividualRunCSVPrinter.printResults(resultsFolderLocation + File.separator + dateFormatter.format(startDate) + "-results.csv", workloadResults, failureLog);
+            AveragedResultsCSVPrinter.printResults(resultsFolderLocation + File.separator + "all.csv", workloadResults, scriptName, activeWorkers.size(), replicationFactor);
         }
-        catch (final FileNotFoundException e) {
-            ErrorHandling.exceptionError(e, "Failed to create file to save results to.");
+        catch (final IOException e) {
+
+            ErrorHandling.exceptionError(e, "Failed printing results file.");
         }
+
     }
 
     private synchronized boolean areThereActiveWorkloads() {
@@ -542,6 +556,8 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     }
 
     public void executeCoordinatorScript(final String coordinatorScriptLocation, final String resultsFolderLocation) throws FileNotFoundException, IOException, WorkloadParseException, StartupException, SQLException, WorkloadException {
+
+        scriptName = coordinatorScriptLocation;
 
         this.resultsFolderLocation = resultsFolderLocation;
 
@@ -813,6 +829,8 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      */
     void setReplicationFactor(final int replicationFactor) throws StartupException {
 
+        this.replicationFactor = replicationFactor;
+
         if (descriptorFile == null) { throw new StartupException("Descriptor file has not been create yet. Call startLocatorServer() first."); }
 
         descriptorFile.setProperty("RELATION_REPLICATION_FACTOR", replicationFactor + "");
@@ -840,9 +858,9 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      * Writes the connection string to a properties file formatted for benchmarkSQL.
      * @param connectionString
      * @param propertiesFileLocation 
-     * @throws FileNotFoundException 
+     * @throws IOException 
      */
-    private static void writeConnectionStringToPropertiesFile(final String connectionString, final String propertiesFileLocation) throws FileNotFoundException {
+    private static void writeConnectionStringToPropertiesFile(final String connectionString, final String propertiesFileLocation) throws IOException {
 
         final File f = new File(propertiesFileLocation);
 

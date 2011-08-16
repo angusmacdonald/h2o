@@ -1,10 +1,7 @@
 package org.h2o.eval.printing;
 
-import java.io.FileNotFoundException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.io.IOException;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -15,21 +12,19 @@ import org.h2o.eval.script.workload.WorkloadResult;
 import uk.ac.standrews.cs.nds.util.FileUtil;
 
 /**
- * Utility class to print results to a CSV file.
+ * Utility class to print results of each co-ordinator script execution to a new CSV file.
  *
  * @author Angus Macdonald (angus.macdonald@st-andrews.ac.uk)
  */
-public class IndividualRunCSVPrinter {
-
-    private static final DateFormat dateFormatter = new SimpleDateFormat("dd MMM yyyy hh:mm:ss");
+public class IndividualRunCSVPrinter extends Printer {
 
     /**
      * 
      * @param fileLocation The file results are to be written to.
      * @param workloadResults The results to be written.
-     * @throws FileNotFoundException If the file could not be created or written to.
+     * @throws IOException 
      */
-    public static void printResults(final String fileLocation, final List<WorkloadResult> workloadResults, final List<FailureLogEntry> failureLog) throws FileNotFoundException {
+    public static void printResults(final String fileLocation, final List<WorkloadResult> workloadResults, final List<FailureLogEntry> failureLog) throws IOException {
 
         final Set<String> tableNames = getAllTableNames(workloadResults);
 
@@ -52,48 +47,6 @@ public class IndividualRunCSVPrinter {
         csv.append(printFailureLog(failureLog, startTime));
 
         FileUtil.writeToFile(fileLocation, csv.toString(), true);
-    }
-
-    /**
-     * Get the time when the first benchmark started.
-     * @param workloadResults
-     * @return unix time.
-     */
-    private static long getStartTime(final List<WorkloadResult> workloadResults) {
-
-        long min = Long.MAX_VALUE;
-
-        for (final WorkloadResult workloadResult : workloadResults) {
-
-            min = Math.min(min, workloadResult.getStartTime());
-
-        }
-        return min;
-    }
-
-    private static Set<String> getAllTableNames(final List<WorkloadResult> workloadResults) {
-
-        final Set<String> allNames = new HashSet<String>();
-
-        for (final WorkloadResult workloadResult : workloadResults) {
-            for (final QueryLogEntry entry : workloadResult.getQueryLog()) {
-                allNames.addAll(entry.tablesInvolved);
-            }
-        }
-
-        return allNames;
-    }
-
-    @SuppressWarnings("unused")
-    private static StringBuilder printBasicWorkloadDetails(final WorkloadResult workloadResult) {
-
-        final StringBuilder csv = new StringBuilder();
-
-        csv.append("Evaluation results:\n");
-        csv.append("Total attempted transactions:, " + workloadResult.getTotalAttemptedTransactions() + "\n");
-        csv.append("Total successful transactions:, " + workloadResult.getTotalSuccessfulTransactions() + "\n\n");
-
-        return csv;
     }
 
     public static StringBuilder printQueryLog(final List<QueryLogEntry> queryLogList, final String location, final Collection<String> tableNames, final long startTime) {

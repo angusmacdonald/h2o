@@ -1,7 +1,6 @@
 package org.h2o.eval.script.workload;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -127,9 +126,9 @@ public class WorkloadGenerator {
      * @param spec 
      * @param tablesInWorkload
      * @return location of newly created workload file.
-     * @throws FileNotFoundException Thrown if it wasn't possible to create the workload file.
+     * @throws IOException 
      */
-    private String createWorkload(final WorkloadType spec, final ArrayList<String> tablesInWorkload, final String fileName) throws FileNotFoundException {
+    private String createWorkload(final WorkloadType spec, final ArrayList<String> tablesInWorkload, final String fileName) throws IOException {
 
         final String workloadFileLocation = workloadFolder.getAbsolutePath() + File.separator + fileName;
 
