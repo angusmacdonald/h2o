@@ -822,18 +822,29 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         return host;
     }
 
-    /**
-     * Sets the desired replication factor in the database descriptor file. This will only be used if it is set before a database is started up.
-     * @param replicationFactor How many copies of each table the system should aim to create.
-     * @throws StartupException 
+    /* (non-Javadoc)
+     * @see org.h2o.eval.interfaces.ICoordinatorLocal#setReplicationFactor(int)
      */
-    void setReplicationFactor(final int replicationFactor) throws StartupException {
+    @Override
+    public void setReplicationFactor(final int replicationFactor) throws StartupException {
 
         this.replicationFactor = replicationFactor;
 
-        if (descriptorFile == null) { throw new StartupException("Descriptor file has not been create yet. Call startLocatorServer() first."); }
+        if (descriptorFile == null) { throw new StartupException("Descriptor file has not been created yet. Call startLocatorServer() first."); }
 
         descriptorFile.setProperty("RELATION_REPLICATION_FACTOR", replicationFactor + "");
+    }
+
+    /* (non-Javadoc)
+     * @see org.h2o.eval.interfaces.ICoordinatorLocal#setMetaDataReplicationFactor(int)
+     */
+    @Override
+    public void setMetaDataReplicationFactor(final int replicationFactor) throws StartupException {
+
+        if (descriptorFile == null) { throw new StartupException("Descriptor file has not been created yet. Call startLocatorServer() first."); }
+
+        descriptorFile.setProperty("TABLE_MANAGER_REPLICATION_FACTOR", replicationFactor + "");
+        descriptorFile.setProperty("SYSTEM_TABLE_REPLICATION_FACTOR", replicationFactor + "");
     }
 
     private static List<InetAddress> convertFromStringToInetAddress(final String[] hostnames) {

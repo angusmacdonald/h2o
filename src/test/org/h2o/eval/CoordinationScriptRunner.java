@@ -101,7 +101,7 @@ public class CoordinationScriptRunner {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Setting system-wide replication factor to " + replicationFactor);
         coord.setReplicationFactor(replicationFactor);
-
+        coord.setMetaDataReplicationFactor(replicationFactor);
         /*
          * Execute co-ordinator script.
          */

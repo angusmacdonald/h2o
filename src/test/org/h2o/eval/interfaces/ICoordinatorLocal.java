@@ -58,6 +58,20 @@ public interface ICoordinatorLocal {
     public void blockUntilWorkloadsComplete() throws RemoteException;
 
     /**
+     * Sets the desired replication factor in the database descriptor file. This will only be used if it is set before a database is started up.
+     * @param replicationFactor How many copies of each table the system should aim to create.
+     * @throws StartupException If the descriptor file hasn't been created yet.
+     */
+    public abstract void setReplicationFactor(final int replicationFactor) throws StartupException;
+
+    /**
+     * Set the replication factor for meta-data replication (of both the System Table and Table Manager).
+     * @param replicationFactor How many copies of each meta-data table the system should aim to create.
+     * @throws StartupException If the descriptor file hasn't been created yet.
+     */
+    public abstract void setMetaDataReplicationFactor(final int replicationFactor) throws StartupException;
+
+    /**
      * Shutdown this co-ordinator by killing any extant threads.
      */
     public void shutdown();
