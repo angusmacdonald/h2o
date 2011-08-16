@@ -41,11 +41,11 @@ public class QueryLogEntry extends LogEntry implements Serializable {
      * @param timeToExecute
      * @param queryTypes
      * @param tablesInvolved
-     * @param timeOfExecution 
+     * @param timeOfCommit 
      */
-    public QueryLogEntry(final long timeOfExecution, final boolean successfulExecution, final long timeToExecute, final List<QueryType> queryTypes, final Set<String> tablesInvolved) {
+    public QueryLogEntry(final long timeOfCommit, final boolean successfulExecution, final long timeToExecute, final List<QueryType> queryTypes, final Set<String> tablesInvolved) {
 
-        super(timeOfExecution);
+        super(timeOfCommit);
 
         this.successfulExecution = successfulExecution;
         this.timeToExecute = timeToExecute;
@@ -64,7 +64,7 @@ public class QueryLogEntry extends LogEntry implements Serializable {
     @Override
     public String toString() {
 
-        return "QueryLogEntry [queryType=" + PrettyPrinter.toString(queryTypes) + ", tableInvolved=" + PrettyPrinter.toString(tablesInvolved) + ", timeToExecute=" + timeToExecute + ", timeOfLogEntry=" + timeOfExecution + ", successfulExecution=" + successfulExecution + "]";
+        return "QueryLogEntry [queryType=" + PrettyPrinter.toString(queryTypes) + ", tableInvolved=" + PrettyPrinter.toString(tablesInvolved) + ", timeToExecute=" + timeToExecute + ", timeOfLogEntry=" + timeOfCommit + ", successfulExecution=" + successfulExecution + "]";
     }
 
     public static QueryLogEntry createQueryLogEntry(final long timeOfExecution, final String query, final boolean successfullyExecuted, final long timeToExecute) {
@@ -75,7 +75,7 @@ public class QueryLogEntry extends LogEntry implements Serializable {
         return createQueryLogEntry(timeOfExecution, queries, successfullyExecuted, timeToExecute);
     }
 
-    public static QueryLogEntry createQueryLogEntry(final long timeOfExecution, final List<String> queriesInThisTransaction, final boolean successfullyExecuted, final long timeToExecute) {
+    public static QueryLogEntry createQueryLogEntry(final long timeOfCommit, final List<String> queriesInThisTransaction, final boolean successfullyExecuted, final long timeToExecute) {
 
         final Set<String> tablesInvolved = new HashSet<String>();
         final List<QueryType> queryTypes = new LinkedList<QueryLogEntry.QueryType>();
@@ -113,7 +113,7 @@ public class QueryLogEntry extends LogEntry implements Serializable {
             queryTypes.add(queryType);
         }
 
-        final QueryLogEntry newQueryLog = new QueryLogEntry(timeOfExecution, successfullyExecuted, timeToExecute, queryTypes, tablesInvolved);
+        final QueryLogEntry newQueryLog = new QueryLogEntry(timeOfCommit, successfullyExecuted, timeToExecute, queryTypes, tablesInvolved);
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Created new query log entry: " + newQueryLog);
         return newQueryLog;

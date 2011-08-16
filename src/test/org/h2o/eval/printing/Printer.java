@@ -85,7 +85,7 @@ public class Printer {
 
             for (final QueryLogEntry queryLogEntry : queryLog) {
                 if (successful == queryLogEntry.successfulExecution) {
-                    count += queryLogEntry.timeOfExecution - startTime;
+                    count += queryLogEntry.timeToExecute;
                 }
             }
         }

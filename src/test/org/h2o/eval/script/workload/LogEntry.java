@@ -11,15 +11,15 @@ public class LogEntry implements Serializable {
 
     private static final long serialVersionUID = 8404704261377608930L;
 
-    public long timeOfExecution;
+    public long timeOfCommit;
 
     public LogEntry() {
 
     }
 
-    public LogEntry(final long timeOfExecution) {
+    public LogEntry(final long timeOfCommit) {
 
-        this.timeOfExecution = timeOfExecution;
+        this.timeOfCommit = timeOfCommit;
     }
 
     public static String toCSVHeader(final Collection<String> tableNames) {
@@ -39,7 +39,7 @@ public class LogEntry implements Serializable {
                     final boolean machineFailureEvent, final boolean machineFailure) {
 
         final String tablesInvolvedString = PrettyPrinter.toString(tablesInvolved, ";", false);
-        final long timeOfTransactionMS = timeOfExecution - startTime;
+        final long timeOfTransactionMS = timeOfCommit - startTime;
         final int timeOfTransactionSec = (int) (timeOfTransactionMS / 1000);
 
         final String successfulExecutionTime = machineFailureEvent ? "=NA()" : (successfulExecution ? timeToExecute : "=NA()") + "";

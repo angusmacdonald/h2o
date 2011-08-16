@@ -112,7 +112,7 @@ public class WorkloadResult implements Serializable {
         if (queryLog.size() > 0) {
             final LogEntry queryLogEntry = queryLog.get(0);
             if (queryLogEntry != null) {
-                return queryLogEntry.timeOfExecution;
+                return queryLogEntry.timeOfCommit;
             }
             else {
                 return Long.MAX_VALUE;
