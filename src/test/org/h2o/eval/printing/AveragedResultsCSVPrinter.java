@@ -57,8 +57,8 @@ public class AveragedResultsCSVPrinter extends Printer {
 
         StringBuilder row = new StringBuilder(startTime + "");
 
-        row = appendToRow(row, workloadLength);
         row = appendToRow(row, scriptName);
+        row = appendToRow(row, workloadLength);
         row = appendToRow(row, numOfTransactionsExecuted);
         row = appendToRow(row, numOfTransactionsSuccessful);
         row = appendToRow(row, totalTimeOfSuccessfulTranscations);
