@@ -663,7 +663,7 @@ public class MultiProcessTestBase extends TestBase {
         }
         catch (final SQLException e) {
             ErrorHandling.exceptionError(e, "Failed to connect to " + connectionString);
-            throw new StartupException("Couldn't connect to " + connectionString);
+            throw new StartupException("Couldn't connect to " + connectionString + ": " + e.getMessage());
         }
     }
 
