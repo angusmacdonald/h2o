@@ -512,6 +512,9 @@ public class Constants {
      */
     public static final String INTERNAL_FLAG = "[internal]";
 
+    /**
+     * Whether the database has a write delay before committing to disk (false), or if it immediately fsync's when a transaction is committed (true).
+     */
     public static final boolean DURABLE = false;
 
     private Constants() {
