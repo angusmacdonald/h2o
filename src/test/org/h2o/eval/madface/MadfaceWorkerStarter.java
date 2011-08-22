@@ -112,6 +112,8 @@ public class MadfaceWorkerStarter {
 
         Diagnostic.setLevel(DiagnosticLevel.FINAL);
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Args Length: " + args.length);
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "List of args passed in: " + PrettyPrinter.toString(args));
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "List of machines passed in: " + PrettyPrinter.toString(args[0]));
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "H2O JAR: " + args[1]);
 
