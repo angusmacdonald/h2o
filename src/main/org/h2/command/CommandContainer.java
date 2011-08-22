@@ -203,7 +203,10 @@ public class CommandContainer extends Command {
                 }
                 else {
                     updateCount = prepared.update();
-                    session.getDatabase().sync();
+
+                    if (Constants.DURABLE) {
+                        session.getDatabase().sync();
+                    }
                 }
 
             }

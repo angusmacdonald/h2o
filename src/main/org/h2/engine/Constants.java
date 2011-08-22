@@ -512,6 +512,8 @@ public class Constants {
      */
     public static final String INTERNAL_FLAG = "[internal]";
 
+    public static final boolean DURABLE = false;
+
     private Constants() {
 
         // utility class

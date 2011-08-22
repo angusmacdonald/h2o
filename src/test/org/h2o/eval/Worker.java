@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 
+import org.h2.engine.Constants;
 import org.h2.tools.DeleteDbFiles;
 import org.h2.util.NetUtils;
 import org.h2o.H2O;
@@ -382,8 +383,14 @@ public class Worker extends Thread implements IWorker {
 
             if (connection == null) { return false; }
 
-            final Statement createStatement = connection.createStatement();
-            createStatement.executeUpdate("SET WRITE_DELAY 0");
+            final Statement stat = connection.createStatement();
+
+            stat.execute("SELECT * FROM INFORMATION_SCHEMA.USERS");
+
+            if (Constants.DURABLE) {
+                stat.executeUpdate("SET WRITE_DELAY 0");
+            }
+
             return true;
         }
         catch (final SQLException e) {
