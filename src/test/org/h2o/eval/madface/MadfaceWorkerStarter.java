@@ -31,17 +31,17 @@ public class MadfaceWorkerStarter {
     private static final String SSH_PUBLIC_KEY_PATH = "/root/.ssh/id_dsa";
     private static final String SSH_PUBLIC_KEY_PASSWORD = "";
 
-    public MadfaceWorkerStarter(final SortedSet<HostDescriptor> host_descriptors, final IApplicationManager workerManager) throws Exception {
+    public MadfaceWorkerStarter(final SortedSet<HostDescriptor> host_descriptors, final IApplicationManager workerManager, final String h2oJarName) throws Exception {
 
         madface_manager = MadfaceManagerFactory.makeMadfaceManager();
 
-        madface_manager.setHostScanning(true); //XXX does this need to be enabled?
+        madface_manager.setHostScanning(true);
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Set host scanning to true.");
 
         madface_manager.configureApplication(workerManager);
 
-        final Set<URL> application_urls = getH2OApplicationURLs();
+        final Set<URL> application_urls = getH2OApplicationURLs(h2oJarName);
 
         madface_manager.configureApplication(application_urls);
 
@@ -78,11 +78,11 @@ public class MadfaceWorkerStarter {
 
     }
 
-    public Set<URL> getH2OApplicationURLs() throws IOException {
+    public Set<URL> getH2OApplicationURLs(final String h2oJarName) throws IOException {
 
         final Set<URL> application_urls = new HashSet<URL>();
 
-        application_urls.add(new URL("http://www.cs.st-andrews.ac.uk/~angus/eval/h2o.jar"));
+        application_urls.add(new URL("http://www.cs.st-andrews.ac.uk/~angus/eval/" + h2oJarName));
 
         application_urls.add(new URL("http://www.cs.st-andrews.ac.uk/~angus/eval/json.jar"));
         application_urls.add(new URL("http://www.cs.st-andrews.ac.uk/~angus/eval/sigar.jar"));
@@ -104,7 +104,8 @@ public class MadfaceWorkerStarter {
 
     /**
      * 
-     * @param args Hostnames to start the network on.
+     * @param args[0] Hostnames to start the network on.
+     * @param args[1] Name of the h2o jar file to use. Several are available. Typically: h2o.jar or h2o-writedelay.jar.
      * @throws Exception
      */
     public static void main(final String[] args) throws Exception {
@@ -117,6 +118,8 @@ public class MadfaceWorkerStarter {
 
         final String[] hostnames = parseHostnamesArray(args[0]);
 
+        final String h2oJarName = args[1];
+
         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Creating workers on hosts: " + PrettyPrinter.toString(hostnames));
 
         final Credentials cred = new Credentials(Credentials.constructJSONString(SSH_USER, SSH_PUBLIC_KEY_PATH, SSH_PUBLIC_KEY_PASSWORD));
@@ -125,7 +128,7 @@ public class MadfaceWorkerStarter {
 
         final IApplicationManager workerManager = new WorkerManager();
 
-        new MadfaceWorkerStarter(node_descriptors, workerManager); //returns when remote hosts have started.
+        new MadfaceWorkerStarter(node_descriptors, workerManager, h2oJarName); //returns when remote hosts have started.
     }
 
     private static String[] parseHostnamesArray(String hostnames) throws StartupException {
