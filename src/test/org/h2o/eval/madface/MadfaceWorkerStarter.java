@@ -3,7 +3,6 @@ package org.h2o.eval.madface;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 
@@ -16,7 +15,6 @@ import uk.ac.standrews.cs.nds.madface.MadfaceManagerFactory;
 import uk.ac.standrews.cs.nds.madface.URL;
 import uk.ac.standrews.cs.nds.madface.interfaces.IApplicationManager;
 import uk.ac.standrews.cs.nds.madface.interfaces.IMadfaceManager;
-import uk.ac.standrews.cs.nds.util.CommandLineArgs;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.PrettyPrinter;
@@ -114,19 +112,16 @@ public class MadfaceWorkerStarter {
 
         Diagnostic.setLevel(DiagnosticLevel.FINAL);
 
-        final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
-
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Args Length: " + args.length);
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "List of args passed in: " + PrettyPrinter.toString(args));
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "List of machines passed in: " + PrettyPrinter.toString(arguments.get("-m")));
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "H2O JAR: " + arguments.get("-j"));
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "List of machines passed in: " + PrettyPrinter.toString(args[0]));
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "H2O JAR: " + args[1]);
 
-        if (arguments.get("-m") == null) { throw new StartupException("You must provide a colon separated list of machines."); }
+        if (args.length != 2) { throw new StartupException("To start an evaluation network you need to specify a list of colon separated hostnames (in quotes) and the name of the H2O jar file to use. Only " + args.length + " arguments were given."); }
 
-        final String[] hostnames = parseHostnamesArray(arguments.get("-m"));
+        final String[] hostnames = parseHostnamesArray(args[0]);
 
-        if (arguments.get("-j") == null) { throw new StartupException("You must provide an H2O jar name."); }
-
-        final String h2oJarName = arguments.get("-j");
+        final String h2oJarName = args[1];
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Creating workers on hosts: " + PrettyPrinter.toString(hostnames));
 
