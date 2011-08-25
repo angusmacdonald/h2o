@@ -264,10 +264,18 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         for (final IWorker worker : getAllWorkers()) {
             try {
                 worker.terminateH2OInstance();
+            }
+            catch (final Exception e) {
+
+            }
+        }
+
+        for (final IWorker worker : getAllWorkers()) {
+            try {
                 worker.deleteH2OInstanceState();
             }
             catch (final Exception e) {
-                ErrorHandling.exceptionError(e, "Failed to terminate instance " + worker);
+
             }
         }
 
@@ -600,7 +608,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
                     failureLog.add(new FailureLogEntry(currentExecutionTime, scriptedInstances.get(Integer.valueOf(startInstruction.id)).getLocalDatabaseName(), true));
                 }
 
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Starting machine with ID '" + startInstruction.id + "'");
+                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "CSCRIPT: Starting machine with ID '" + startInstruction.id + "'");
 
                 if (startInstruction.fail_after != null) {
                     killMonitor.addKillOrder(startInstruction.id, System.currentTimeMillis() + startInstruction.fail_after);
@@ -612,7 +620,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
                 reserved_machine = reserveH2OInstance();
 
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Reserved machine with ID '" + reserveInstruction.id + "'");
+                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "CSCRIPT: Reserved machine with ID '" + reserveInstruction.id + "'");
 
             }
             else if (action.startsWith("{stall")) {
@@ -623,7 +631,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
                 worker.stallWorkloads();
 
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Workloads stalled on '" + machineID + "'");
+                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "CSCRIPT: Workloads stalled on '" + machineID + "'");
 
             }
             else if (action.startsWith("{resume")) {
@@ -634,7 +642,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
                 worker.resumeWorkloads();
 
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Workloads resumed on '" + machineID + "'");
+                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "CSCRIPT: Workloads resumed on '" + machineID + "'");
             }
             else if (action.startsWith("{start_reserved_machine")) {
 
@@ -650,8 +658,6 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
             }
             else if (action.startsWith("{terminate_machine")) {
 
-                System.err.println("TERMINATING MACHINE.");
-
                 final MachineInstruction terminateInstruction = CoordinationScriptExecutor.parseTerminateMachine(action);
 
                 try {
@@ -660,7 +666,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
                 catch (final ShutdownException e) {
                     ErrorHandling.exceptionError(e, "Failed to shutdown instance with ID " + terminateInstruction.id + ".");
                 }
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Terminated machine with ID '" + terminateInstruction.id + "'");
+                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "CSCRIPT: Terminated machine with ID '" + terminateInstruction.id + "'");
 
                 failureLog.add(new FailureLogEntry(currentExecutionTime, scriptedInstances.get(Integer.valueOf(terminateInstruction.id)).getLocalDatabaseName(), false));
 
@@ -668,7 +674,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
             else if (action.startsWith("{sleep=")) {
                 final int sleepTime = CoordinationScriptExecutor.parseSleepOperation(action);
 
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Sleeping for '" + sleepTime + "'");
+                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "CSCRIPT: Sleeping for '" + sleepTime + "'");
 
                 if (startedExecution) {
                     currentExecutionTime += sleepTime;
@@ -680,7 +686,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
                 catch (final InterruptedException e) {
                 }
 
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Finished sleeping.");
+                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "CSCRIPT: Finished sleeping.");
 
             }
             else {
