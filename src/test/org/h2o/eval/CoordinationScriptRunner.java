@@ -79,7 +79,7 @@ public class CoordinationScriptRunner {
 
             Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting a number of worker instances locally for testing purposes.");
 
-            final IWorker[] workers = new IWorker[5];
+            final IWorker[] workers = new IWorker[8];
             for (int i = 0; i < workers.length; i++) {
                 workers[i] = new Worker();
             }
@@ -90,10 +90,11 @@ public class CoordinationScriptRunner {
          */
         final Coordinator coord = new Coordinator(databaseName, workerLocationsInet);
 
-        if (obliterateExistingInstances) {
-            coord.obliterateExtantInstances();
-            DeleteDbFiles.execute(Worker.PATH_TO_H2O_DATABASE, null, true);
-        }
+        // if (obliterateExistingInstances) {
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Deleting existing instances.");
+        coord.obliterateExtantInstances();
+        DeleteDbFiles.execute(Worker.PATH_TO_H2O_DATABASE, null, true);
+        //}
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting locator server.");
 
