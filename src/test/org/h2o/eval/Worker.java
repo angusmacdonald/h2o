@@ -183,6 +183,13 @@ public class Worker extends Thread implements IWorker {
             throw new StartupException("Couldn't start H2O instance. Another instance is already running at " + getHostname().getHostName());
         }
 
+        try {
+            deleteLockFile(); // if the database is being restarted, delete any existing lock files.
+        }
+        catch (final SQLException e) {
+            ErrorHandling.exceptionError(e, "Failed to delete lock file.");
+        }
+
         final String descriptorFileLocation = PATH_TO_H2O_DATABASE + File.separator + "descriptor.h2od";
         saveDescriptorToDisk(descriptor, descriptorFileLocation);
 
@@ -270,6 +277,19 @@ public class Worker extends Thread implements IWorker {
         catch (final SQLException e) {
             throw new ShutdownException("Failed to delete database files: " + e.getMessage());
         }
+
+    }
+
+    /**
+     * Delete the lock file for the H2O instance this worker is running. This
+     * should be run when the database is not running.
+     * @throws SQLException If the lock file couldn't be deleted. 
+     */
+    private void deleteLockFile() throws SQLException {
+
+        final HashSet<String> exts = new HashSet<String>();
+        exts.add(Constants.SUFFIX_LOCK_FILE);
+        DeleteDbFiles.execute(Worker.PATH_TO_H2O_DATABASE, null, true, exts);
 
     }
 
