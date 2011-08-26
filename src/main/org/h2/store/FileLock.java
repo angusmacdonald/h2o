@@ -112,9 +112,9 @@ public class FileLock {
      * @param sleep
      *            the number of milliseconds to sleep
      */
-    public FileLock(TraceSystem traceSystem, String fileName, int sleep) {
+    public FileLock(final TraceSystem traceSystem, final String fileName, final int sleep) {
 
-        this.trace = traceSystem.getTrace(Trace.FILE_LOCK);
+        trace = traceSystem.getTrace(Trace.FILE_LOCK);
         this.fileName = fileName;
         this.sleep = sleep;
     }
@@ -127,9 +127,9 @@ public class FileLock {
      * @throws SQLException
      *             if locking was not successful
      */
-    public synchronized void lock(int fileLockMethod) throws SQLException {
+    public synchronized void lock(final int fileLockMethod) throws SQLException {
 
-        this.fs = FileSystem.getInstance(fileName);
+        fs = FileSystem.getInstance(fileName);
         checkServer();
         if (locked) {
             Message.throwInternalError("already locked");
@@ -164,7 +164,7 @@ public class FileLock {
                 socket.close();
             }
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             trace.debug("unlock", e);
         }
         fileName = null;
@@ -180,7 +180,7 @@ public class FileLock {
      * @param value
      *            the value
      */
-    public void setProperty(String key, String value) throws SQLException {
+    public void setProperty(final String key, final String value) throws SQLException {
 
         if (value == null) {
             properties.remove(key);
@@ -193,6 +193,7 @@ public class FileLock {
     /**
      * This finalizer unlocks the file if necessary.
      */
+    @Override
     protected void finalize() {
 
         if (!SysProperties.runFinalize) { return; }
@@ -214,7 +215,7 @@ public class FileLock {
     public void save() throws SQLException {
 
         try {
-            OutputStream out = fs.openFileOutputStream(fileName, false);
+            final OutputStream out = fs.openFileOutputStream(fileName, false);
             try {
                 properties.store(out, MAGIC);
             }
@@ -226,21 +227,21 @@ public class FileLock {
                 trace.debug("save " + properties);
             }
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             throw getExceptionFatal("Could not save properties " + fileName, e);
         }
     }
 
     private void checkServer() throws SQLException {
 
-        Properties prop = load();
-        String server = prop.getProperty("server");
+        final Properties prop = load();
+        final String server = prop.getProperty("server");
         if (server == null) { return; }
         boolean running = false;
-        String id = prop.getProperty("id");
+        final String id = prop.getProperty("id");
         try {
-            Socket socket = NetUtils.createSocket(server, Constants.DEFAULT_SERVER_PORT, false);
-            Transfer transfer = new Transfer(null);
+            final Socket socket = NetUtils.createSocket(server, Constants.DEFAULT_SERVER_PORT, false);
+            final Transfer transfer = new Transfer(null);
             transfer.setSocket(socket);
             transfer.init();
             transfer.writeInt(Constants.TCP_PROTOCOL_VERSION_6);
@@ -250,19 +251,19 @@ public class FileLock {
             transfer.writeString(id);
             transfer.writeInt(SessionRemote.SESSION_CHECK_KEY);
             transfer.flush();
-            int state = transfer.readInt();
+            final int state = transfer.readInt();
             if (state == SessionRemote.STATUS_OK) {
                 running = true;
             }
             transfer.close();
             socket.close();
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             return;
         }
         if (running) {
-            String payload = server + "/" + id;
-            JdbcSQLException ex = Message.getSQLException(ErrorCode.DATABASE_ALREADY_OPEN_1, "Server is running");
+            final String payload = server + "/" + id;
+            final JdbcSQLException ex = Message.getSQLException(ErrorCode.DATABASE_ALREADY_OPEN_1, "Server is running");
             ex.setPayload(payload);
             throw ex;
         }
@@ -276,13 +277,13 @@ public class FileLock {
     public Properties load() throws SQLException {
 
         try {
-            Properties p2 = SortedProperties.loadProperties(fileName);
+            final Properties p2 = SortedProperties.loadProperties(fileName);
             if (trace.isDebugEnabled()) {
                 trace.debug("load " + p2);
             }
             return p2;
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             throw getExceptionFatal("Could not load properties " + fileName, e);
         }
     }
@@ -290,8 +291,8 @@ public class FileLock {
     private void waitUntilOld() throws SQLException {
 
         for (int i = 0; i < TIME_GRANULARITY / SLEEP_GAP; i++) {
-            long last = fs.getLastModified(fileName);
-            long dist = System.currentTimeMillis() - last;
+            final long last = fs.getLastModified(fileName);
+            final long dist = System.currentTimeMillis() - last;
             if (dist < -TIME_GRANULARITY) {
                 throw getExceptionFatal("Lock file modified in the future: dist=" + dist, null);
             }
@@ -299,7 +300,7 @@ public class FileLock {
             try {
                 Thread.sleep(SLEEP_GAP);
             }
-            catch (Exception e) {
+            catch (final Exception e) {
                 trace.debug("sleep", e);
             }
         }
@@ -308,8 +309,8 @@ public class FileLock {
 
     private void setUniqueId() {
 
-        byte[] bytes = RandomUtils.getSecureBytes(RANDOM_BYTES);
-        String random = ByteUtils.convertBytesToString(bytes);
+        final byte[] bytes = RandomUtils.getSecureBytes(RANDOM_BYTES);
+        final String random = ByteUtils.convertBytesToString(bytes);
         uniqueId = Long.toHexString(System.currentTimeMillis()) + random;
         properties.setProperty("id", uniqueId);
     }
@@ -330,11 +331,11 @@ public class FileLock {
         setUniqueId();
         if (!fs.createNewFile(fileName)) {
             waitUntilOld();
-            String m2 = load().getProperty("method", FILE);
+            final String m2 = load().getProperty("method", FILE);
             if (!m2.equals(FILE)) { throw getExceptionFatal("Unsupported lock method " + m2, null); }
             save();
             sleep(2 * sleep);
-            if (!load().equals(properties)) { throw getExceptionAlreadyInUse("Locked by another process"); }
+            if (!load().equals(properties)) { throw getExceptionAlreadyInUse("Locked by another process: " + fileName); }
             fs.delete(fileName);
             if (!fs.createNewFile(fileName)) { throw getExceptionFatal("Another process was faster", null); }
         }
@@ -344,8 +345,9 @@ public class FileLock {
             fileName = null;
             throw getExceptionFatal("Concurrent update", null);
         }
-        Thread watchdog = new Thread(new Runnable() {
+        final Thread watchdog = new Thread(new Runnable() {
 
+            @Override
             public void run() {
 
                 try {
@@ -357,15 +359,15 @@ public class FileLock {
                             }
                             Thread.sleep(sleep);
                         }
-                        catch (OutOfMemoryError e) {
+                        catch (final OutOfMemoryError e) {
                             // ignore
                         }
-                        catch (Exception e) {
+                        catch (final Exception e) {
                             trace.debug("watchdog", e);
                         }
                     }
                 }
-                catch (Exception e) {
+                catch (final Exception e) {
                     trace.debug("watchdog", e);
                 }
             }
@@ -387,38 +389,38 @@ public class FileLock {
         ipAddress = NetUtils.getLocalAddress();
         if (!fs.createNewFile(fileName)) {
             waitUntilOld();
-            long read = fs.getLastModified(fileName);
-            Properties p2 = load();
-            String m2 = p2.getProperty("method", SOCKET);
+            final long read = fs.getLastModified(fileName);
+            final Properties p2 = load();
+            final String m2 = p2.getProperty("method", SOCKET);
             if (m2.equals(FILE)) {
                 lockFile();
                 return;
             }
             else if (!m2.equals(SOCKET)) { throw getExceptionFatal("Unsupported lock method " + m2, null); }
-            String ip = p2.getProperty("ipAddress", ipAddress);
+            final String ip = p2.getProperty("ipAddress", ipAddress);
             if (!ipAddress.equals(ip)) { throw getExceptionAlreadyInUse("Locked by another computer: " + ip); }
-            String port = p2.getProperty("port", "0");
-            int portId = Integer.parseInt(port);
+            final String port = p2.getProperty("port", "0");
+            final int portId = Integer.parseInt(port);
             InetAddress address;
             try {
                 address = InetAddress.getByName(ip);
             }
-            catch (UnknownHostException e) {
+            catch (final UnknownHostException e) {
                 throw getExceptionFatal("Unknown host " + ip, e);
             }
             for (int i = 0; i < 3; i++) {
                 try {
-                    Socket s = new Socket(address, portId);
+                    final Socket s = new Socket(address, portId);
                     s.close();
-                    throw getExceptionAlreadyInUse("Locked by another process");
+                    throw getExceptionAlreadyInUse("Locked by another process: " + fileName);
                 }
-                catch (BindException e) {
+                catch (final BindException e) {
                     throw getExceptionFatal("Bind Exception", null);
                 }
-                catch (ConnectException e) {
+                catch (final ConnectException e) {
                     trace.debug("lockSocket not connected " + port, e);
                 }
-                catch (IOException e) {
+                catch (final IOException e) {
                     throw getExceptionFatal("IOException", null);
                 }
             }
@@ -429,28 +431,29 @@ public class FileLock {
         try {
             // 0 to use any free port
             socket = NetUtils.createServerSocketWithRetry(0, false);
-            int port = socket.getLocalPort();
+            final int port = socket.getLocalPort();
             properties.setProperty("ipAddress", ipAddress);
             properties.setProperty("port", String.valueOf(port));
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             trace.debug("lock", e);
             socket = null;
             lockFile();
             return;
         }
         save();
-        Thread watchdog = new Thread(new Runnable() {
+        final Thread watchdog = new Thread(new Runnable() {
 
+            @Override
             public void run() {
 
                 while (socket != null) {
                     try {
                         trace.debug("watchdog accept");
-                        Socket s = socket.accept();
+                        final Socket s = socket.accept();
                         s.close();
                     }
-                    catch (Exception e) {
+                    catch (final Exception e) {
                         trace.debug("watchdog", e);
                     }
                 }
@@ -462,31 +465,31 @@ public class FileLock {
         watchdog.start();
     }
 
-    private void sleep(int time) throws SQLException {
+    private void sleep(final int time) throws SQLException {
 
         try {
             Thread.sleep(time);
         }
-        catch (InterruptedException e) {
+        catch (final InterruptedException e) {
             throw getExceptionFatal("Sleep interrupted", e);
         }
     }
 
-    private SQLException getExceptionFatal(String reason, Throwable t) {
+    private SQLException getExceptionFatal(final String reason, final Throwable t) {
 
         return Message.getSQLException(ErrorCode.ERROR_OPENING_DATABASE_1, new String[]{reason}, t);
     }
 
-    private SQLException getExceptionAlreadyInUse(String reason) {
+    private SQLException getExceptionAlreadyInUse(final String reason) {
 
-        JdbcSQLException ex = Message.getSQLException(ErrorCode.DATABASE_ALREADY_OPEN_1, reason);
+        final JdbcSQLException ex = Message.getSQLException(ErrorCode.DATABASE_ALREADY_OPEN_1, reason);
         String payload = null;
         if (fileName != null) {
             try {
-                Properties prop = load();
+                final Properties prop = load();
                 payload = prop.getProperty("server") + "/" + prop.getProperty("id");
             }
-            catch (SQLException e) {
+            catch (final SQLException e) {
                 // ignore
             }
         }
@@ -503,7 +506,7 @@ public class FileLock {
      * @throws SQLException
      *             if the method name is unknown
      */
-    public static int getFileLockMethod(String method) throws SQLException {
+    public static int getFileLockMethod(final String method) throws SQLException {
 
         if (method == null || method.equalsIgnoreCase("FILE")) {
             return FileLock.LOCK_FILE;
