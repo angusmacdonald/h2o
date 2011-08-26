@@ -43,6 +43,8 @@ public class CoordinationScriptRunner {
 
         Diagnostic.setLevel(DiagnosticLevel.FINAL);
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Co-ordinator Script Runner version 0.4");
+
         /*
          * Parse parameters.
          */
