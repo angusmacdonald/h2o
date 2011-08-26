@@ -117,7 +117,7 @@ public class MadfaceWorkerStarter {
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "List of machines passed in: " + PrettyPrinter.toString(args[0]));
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "H2O JAR: " + args[1]);
 
-        if (args.length != 2) { throw new StartupException("To start an evaluation network you need to specify a list of colon separated hostnames (in quotes) and the name of the H2O jar file to use. Only " + args.length + " arguments were given."); }
+        if (args.length != 2) { throw new StartupException("To start an evaluation network you need to specify a list of space separated hostnames (in quotes) and the name of the H2O jar file to use. Only " + args.length + " arguments were given."); }
 
         final String[] hostnames = parseHostnamesArray(args[0]);
 
