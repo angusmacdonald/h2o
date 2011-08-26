@@ -243,30 +243,12 @@ public class Worker extends Thread implements IWorker {
     @Override
     public void terminateH2OInstance() throws RemoteException, ShutdownException {
 
-        if (h2oProcess == null) {
-
-            final String platform_name = System.getProperty("os.name");
-
-            if (platform_name.startsWith(PlatformDescriptor.NAME_LINUX)) {
-                try {
-
-                    final String killH2OInstance = "/usr/bin/pkill -9 -f '.*" + H2O.class.getCanonicalName() + ".*'";
-                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Killing H2O instance: " + killH2OInstance);
-                    Runtime.getRuntime().exec(killH2OInstance);
-                }
-                catch (final IOException e) {
-                    throw new ShutdownException(e.getMessage());
-                }
-            }
-            else {
-                //There is nothing else we can do.
-                throw new ShutdownException("Couldn't terminate H2O process because the reference to it was null.");
-            }
-        }
-        else {
+        if (h2oProcess != null) {
             h2oProcess.destroy();
             h2oProcess = null;
         }
+
+        hardKillOnLinux();
 
         try {
             Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Deleting lock files for DB.");
@@ -276,6 +258,31 @@ public class Worker extends Thread implements IWorker {
             ErrorHandling.exceptionError(e, "Failed to delete lock file.");
         }
 
+    }
+
+    /**
+     * Execute the pkill command if running on linux.
+     * @throws ShutdownException
+     */
+    public void hardKillOnLinux() throws ShutdownException {
+
+        final String platform_name = System.getProperty("os.name");
+
+        if (platform_name.startsWith(PlatformDescriptor.NAME_LINUX)) {
+            try {
+
+                final String killH2OInstance = "/usr/bin/pkill -9 -f '.*" + H2O.class.getCanonicalName() + ".*'";
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Killing H2O instance: " + killH2OInstance);
+                Runtime.getRuntime().exec(killH2OInstance);
+            }
+            catch (final IOException e) {
+                throw new ShutdownException(e.getMessage());
+            }
+        }
+        else {
+            //There is nothing else we can do.
+            throw new ShutdownException("Couldn't terminate H2O process because the reference to it was null.");
+        }
     }
 
     @Override
