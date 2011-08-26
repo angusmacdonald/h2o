@@ -6,6 +6,7 @@ package org.h2.tools;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Set;
 
 import org.h2.engine.Constants;
 import org.h2.store.FileLister;
@@ -39,18 +40,19 @@ public class DeleteDbFiles extends Tool {
      *            the command line arguments
      * @throws SQLException
      */
-    public static void main(String[] args) throws SQLException {
+    public static void main(final String[] args) throws SQLException {
 
         new DeleteDbFiles().run(args);
     }
 
-    public void run(String[] args) throws SQLException {
+    @Override
+    public void run(final String[] args) throws SQLException {
 
         String dir = ".";
         String db = null;
         boolean quiet = false;
         for (int i = 0; args != null && i < args.length; i++) {
-            String arg = args[i];
+            final String arg = args[i];
             if (arg.equals("-dir")) {
                 dir = args[++i];
             }
@@ -70,7 +72,7 @@ public class DeleteDbFiles extends Tool {
                 return;
             }
         }
-        process(dir, db, quiet);
+        process(dir, db, quiet, null);
     }
 
     /**
@@ -84,9 +86,14 @@ public class DeleteDbFiles extends Tool {
      *            don't print progress information
      * @throws SQLException
      */
-    public static void execute(String dir, String db, boolean quiet) throws SQLException {
+    public static void execute(final String dir, final String db, final boolean quiet) throws SQLException {
 
-        new DeleteDbFiles().process(dir, db, quiet);
+        new DeleteDbFiles().process(dir, db, quiet, null);
+    }
+
+    public static void execute(final String dir, final String db, final boolean quiet, final Set<String> fileExtensions) throws SQLException {
+
+        new DeleteDbFiles().process(dir, db, quiet, fileExtensions);
     }
 
     /**
@@ -98,31 +105,47 @@ public class DeleteDbFiles extends Tool {
      *            the database name (null for all databases)
      * @param quiet
      *            don't print progress information
+     * @param fileExtensions The file extensions that should be deleted. Null if all relevant database extensions should be deleted.
      * @throws SQLException
      */
-    private void process(String dir, String db, boolean quiet) throws SQLException {
+    private void process(final String dir, final String db, final boolean quiet, final Set<String> fileExtensions) throws SQLException {
 
-        DeleteDbFiles delete = new DeleteDbFiles();
-        ArrayList files = FileLister.getDatabaseFiles(dir, db, true);
+        final DeleteDbFiles delete = new DeleteDbFiles();
+        final ArrayList files = FileLister.getDatabaseFiles(dir, db, true);
         if (files.size() == 0 && !quiet) {
             printNoDatabaseFilesFound(dir, db);
         }
         for (int i = 0; i < files.size(); i++) {
-            String fileName = (String) files.get(i);
-            delete.process(fileName, quiet);
-            if (!quiet) {
-                out.println("Processed: " + fileName);
+            final String fileName = (String) files.get(i);
+
+            boolean deleteFile = true;
+
+            if (fileExtensions != null && fileExtensions.size() > 0) {
+                deleteFile = false;
+
+                for (final String ext : fileExtensions) {
+                    if (fileName.endsWith(ext)) {
+                        deleteFile = true;
+                    }
+                }
+            }
+
+            if (deleteFile) {
+                delete.process(fileName, quiet);
+                if (!quiet) {
+                    out.println("Processed: " + fileName);
+                }
             }
         }
     }
 
-    private void process(String fileName, boolean quiet) throws SQLException {
+    private void process(final String fileName, final boolean quiet) throws SQLException {
 
         if (FileUtils.isDirectory(fileName)) {
             try {
                 FileSystem.getInstance(fileName).deleteRecursive(fileName);
             }
-            catch (SQLException e) {
+            catch (final SQLException e) {
                 if (!quiet) { throw e; }
             }
         }
