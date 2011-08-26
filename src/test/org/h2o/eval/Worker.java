@@ -51,6 +51,7 @@ import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.NetworkUtil;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 public class Worker extends Thread implements IWorker {
 
@@ -266,6 +267,15 @@ public class Worker extends Thread implements IWorker {
             h2oProcess.destroy();
             h2oProcess = null;
         }
+
+        try {
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Deleting lock files for DB.");
+            deleteLockFile(); // delete any existing lock files to allow the db to be later restarted.
+        }
+        catch (final SQLException e) {
+            ErrorHandling.exceptionError(e, "Failed to delete lock file.");
+        }
+
     }
 
     @Override
@@ -289,6 +299,9 @@ public class Worker extends Thread implements IWorker {
 
         final HashSet<String> exts = new HashSet<String>();
         exts.add(Constants.SUFFIX_LOCK_FILE);
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Deleting files with extensions: " + PrettyPrinter.toString(exts));
+
         DeleteDbFiles.execute(Worker.PATH_TO_H2O_DATABASE, null, true, exts);
 
     }

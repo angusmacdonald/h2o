@@ -42,6 +42,7 @@ public class FileSystemDisk extends FileSystem {
         return INSTANCE;
     }
 
+    @Override
     public long length(String fileName) {
 
         fileName = translateFileName(fileName);
@@ -58,18 +59,19 @@ public class FileSystemDisk extends FileSystem {
     protected String translateFileName(String fileName) {
 
         if (fileName != null && fileName.startsWith("~")) {
-            String userDir = SysProperties.USER_HOME;
+            final String userDir = SysProperties.USER_HOME;
             fileName = userDir + fileName.substring(1);
         }
         return fileName;
     }
 
+    @Override
     public void rename(String oldName, String newName) throws SQLException {
 
         oldName = translateFileName(oldName);
         newName = translateFileName(newName);
-        File oldFile = new File(oldName);
-        File newFile = new File(newName);
+        final File oldFile = new File(oldName);
+        final File newFile = new File(newName);
         if (oldFile.getAbsolutePath().equals(newFile.getAbsolutePath())) {
             Message.throwInternalError("rename file old=new");
         }
@@ -77,7 +79,7 @@ public class FileSystemDisk extends FileSystem {
         if (newFile.exists()) { throw Message.getSQLException(ErrorCode.FILE_RENAME_FAILED_2, new String[]{oldName, newName + " (exists)"}); }
         for (int i = 0; i < SysProperties.MAX_FILE_RETRY; i++) {
             trace("rename", oldName + " >" + newName, null);
-            boolean ok = oldFile.renameTo(newFile);
+            final boolean ok = oldFile.renameTo(newFile);
             if (ok) { return; }
             wait(i);
         }
@@ -94,37 +96,38 @@ public class FileSystemDisk extends FileSystem {
      * @param o
      *            the object
      */
-    protected void trace(String method, String fileName, Object o) {
+    protected void trace(final String method, final String fileName, final Object o) {
 
         if (SysProperties.TRACE_IO) {
             System.out.println("FileSystem." + method + " " + fileName + " " + o);
         }
     }
 
-    private static void wait(int i) {
+    private static void wait(final int i) {
 
         if (i > 8) {
             System.gc();
         }
         try {
             // sleep at most 256 ms
-            long sleep = Math.min(256, i * i);
+            final long sleep = Math.min(256, i * i);
             Thread.sleep(sleep);
         }
-        catch (InterruptedException e) {
+        catch (final InterruptedException e) {
             // ignore
         }
     }
 
+    @Override
     public boolean createNewFile(String fileName) {
 
         fileName = translateFileName(fileName);
-        File file = new File(fileName);
+        final File file = new File(fileName);
         for (int i = 0; i < SysProperties.MAX_FILE_RETRY; i++) {
             try {
                 return file.createNewFile();
             }
-            catch (IOException e) {
+            catch (final IOException e) {
                 // 'access denied' is really a concurrent access problem
                 wait(i);
             }
@@ -132,20 +135,22 @@ public class FileSystemDisk extends FileSystem {
         return false;
     }
 
+    @Override
     public boolean exists(String fileName) {
 
         fileName = translateFileName(fileName);
         return new File(fileName).exists();
     }
 
+    @Override
     public void delete(String fileName) throws SQLException {
 
         fileName = translateFileName(fileName);
-        File file = new File(fileName);
+        final File file = new File(fileName);
         if (file.exists()) {
             for (int i = 0; i < SysProperties.MAX_FILE_RETRY; i++) {
                 trace("delete", fileName, null);
-                boolean ok = file.delete();
+                final boolean ok = file.delete();
                 if (ok) { return; }
                 wait(i);
             }
@@ -153,14 +158,20 @@ public class FileSystemDisk extends FileSystem {
         }
     }
 
+    @Override
     public boolean tryDelete(String fileName) {
 
         fileName = translateFileName(fileName);
         trace("tryDelete", fileName, null);
-        return new File(fileName).delete();
+        final File file = new File(fileName);
+        if (!file.exists()) {
+            System.err.println("File doesn't exist.");
+        }
+        return file.delete();
     }
 
-    public String createTempFile(String name, String suffix, boolean deleteOnExit, boolean inTempDir) throws IOException {
+    @Override
+    public String createTempFile(String name, final String suffix, final boolean deleteOnExit, final boolean inTempDir) throws IOException {
 
         name = translateFileName(name);
         name += ".";
@@ -176,12 +187,12 @@ public class FileSystemDisk extends FileSystem {
         if (prefix.length() < 3) {
             prefix += "0";
         }
-        File f = File.createTempFile(prefix, suffix, dir);
+        final File f = File.createTempFile(prefix, suffix, dir);
         if (deleteOnExit) {
             try {
                 f.deleteOnExit();
             }
-            catch (Throwable e) {
+            catch (final Throwable e) {
                 // sometimes this throws a NullPointerException
                 // at java.io.DeleteOnExitHook.add(DeleteOnExitHook.java:33)
                 // we can ignore it
@@ -190,12 +201,13 @@ public class FileSystemDisk extends FileSystem {
         return f.getCanonicalPath();
     }
 
+    @Override
     public String[] listFiles(String path) throws SQLException {
 
         path = translateFileName(path);
-        File f = new File(path);
+        final File f = new File(path);
         try {
-            String[] list = f.list();
+            final String[] list = f.list();
             if (list == null) { return new String[0]; }
             String base = f.getCanonicalPath();
             if (!base.endsWith(File.separator)) {
@@ -206,16 +218,17 @@ public class FileSystemDisk extends FileSystem {
             }
             return list;
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             throw Message.convertIOException(e, path);
         }
     }
 
+    @Override
     public void deleteRecursive(String fileName) throws SQLException {
 
         fileName = translateFileName(fileName);
         if (FileUtils.isDirectory(fileName)) {
-            String[] list = listFiles(fileName);
+            final String[] list = listFiles(fileName);
             for (int i = 0; list != null && i < list.length; i++) {
                 deleteRecursive(list[i]);
             }
@@ -223,63 +236,72 @@ public class FileSystemDisk extends FileSystem {
         delete(fileName);
     }
 
+    @Override
     public boolean isReadOnly(String fileName) {
 
         fileName = translateFileName(fileName);
-        File f = new File(fileName);
+        final File f = new File(fileName);
         return f.exists() && !f.canWrite();
     }
 
+    @Override
     public String normalize(String fileName) throws SQLException {
 
         fileName = translateFileName(fileName);
-        File f = new File(fileName);
+        final File f = new File(fileName);
         try {
             return f.getCanonicalPath();
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             throw Message.convertIOException(e, fileName);
         }
     }
 
+    @Override
     public String getParent(String fileName) {
 
         fileName = translateFileName(fileName);
         return new File(fileName).getParent();
     }
 
+    @Override
     public boolean isDirectory(String fileName) {
 
         fileName = translateFileName(fileName);
         return new File(fileName).isDirectory();
     }
 
+    @Override
     public boolean isAbsolute(String fileName) {
 
         fileName = translateFileName(fileName);
-        File file = new File(fileName);
+        final File file = new File(fileName);
         return file.isAbsolute();
     }
 
+    @Override
     public String getAbsolutePath(String fileName) {
 
         fileName = translateFileName(fileName);
-        File parent = new File(fileName).getAbsoluteFile();
+        final File parent = new File(fileName).getAbsoluteFile();
         return parent.getAbsolutePath();
     }
 
+    @Override
     public long getLastModified(String fileName) {
 
         fileName = translateFileName(fileName);
         return new File(fileName).lastModified();
     }
 
+    @Override
     public boolean canWrite(String fileName) {
 
         fileName = translateFileName(fileName);
         return new File(fileName).canWrite();
     }
 
+    @Override
     public void copy(String original, String copy) throws SQLException {
 
         original = translateFileName(original);
@@ -289,9 +311,9 @@ public class FileSystemDisk extends FileSystem {
         try {
             out = FileUtils.openFileOutputStream(copy, false);
             in = FileUtils.openFileInputStream(original);
-            byte[] buffer = new byte[Constants.IO_BUFFER_SIZE];
+            final byte[] buffer = new byte[Constants.IO_BUFFER_SIZE];
             while (true) {
-                int len = in.read(buffer);
+                final int len = in.read(buffer);
                 if (len < 0) {
                     break;
                 }
@@ -299,7 +321,7 @@ public class FileSystemDisk extends FileSystem {
             }
             out.close();
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             throw Message.convertIOException(e, "original: " + original + " copy: " + copy);
         }
         finally {
@@ -308,14 +330,15 @@ public class FileSystemDisk extends FileSystem {
         }
     }
 
+    @Override
     public void createDirs(String fileName) throws SQLException {
 
         fileName = translateFileName(fileName);
-        File f = new File(fileName);
+        final File f = new File(fileName);
         if (!f.exists()) {
-            String parent = f.getParent();
+            final String parent = f.getParent();
             if (parent == null) { return; }
-            File dir = new File(parent);
+            final File dir = new File(parent);
             for (int i = 0; i < SysProperties.MAX_FILE_RETRY; i++) {
                 if (dir.exists() || dir.mkdirs()) { return; }
                 wait(i);
@@ -324,22 +347,24 @@ public class FileSystemDisk extends FileSystem {
         }
     }
 
+    @Override
     public String getFileName(String name) throws SQLException {
 
         name = translateFileName(name);
-        String separator = SysProperties.FILE_SEPARATOR;
+        final String separator = SysProperties.FILE_SEPARATOR;
         String path = getParent(name);
         if (!path.endsWith(separator)) {
             path += separator;
         }
-        String fullFileName = normalize(name);
+        final String fullFileName = normalize(name);
         if (!fullFileName.startsWith(path)) {
             Message.throwInternalError("file utils error: " + fullFileName + " does not start with " + path);
         }
-        String fileName = fullFileName.substring(path.length());
+        final String fileName = fullFileName.substring(path.length());
         return fileName;
     }
 
+    @Override
     public boolean fileStartsWith(String fileName, String prefix) {
 
         fileName = translateFileName(fileName);
@@ -350,39 +375,41 @@ public class FileSystemDisk extends FileSystem {
         return fileName.startsWith(prefix);
     }
 
-    public OutputStream openFileOutputStream(String fileName, boolean append) throws SQLException {
+    @Override
+    public OutputStream openFileOutputStream(String fileName, final boolean append) throws SQLException {
 
         fileName = translateFileName(fileName);
         try {
-            File file = new File(fileName);
+            final File file = new File(fileName);
             createDirs(file.getAbsolutePath());
-            FileOutputStream out = new FileOutputStream(fileName, append);
+            final FileOutputStream out = new FileOutputStream(fileName, append);
             trace("openFileOutputStream", fileName, out);
             return out;
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             freeMemoryAndFinalize();
             try {
                 return new FileOutputStream(fileName);
             }
-            catch (IOException e2) {
+            catch (final IOException e2) {
                 throw Message.convertIOException(e, fileName);
             }
         }
     }
 
+    @Override
     public InputStream openFileInputStream(String fileName) throws IOException {
 
         if (fileName.indexOf(':') > 1) {
             // if the : is in position 1, a windows file access is assumed: C:..
             // or D:
             // otherwise a URL is assumed
-            URL url = new URL(fileName);
-            InputStream in = url.openStream();
+            final URL url = new URL(fileName);
+            final InputStream in = url.openStream();
             return in;
         }
         fileName = translateFileName(fileName);
-        FileInputStream in = new FileInputStream(fileName);
+        final FileInputStream in = new FileInputStream(fileName);
         trace("openFileInputStream", fileName, in);
         return in;
     }
@@ -393,11 +420,11 @@ public class FileSystemDisk extends FileSystem {
     protected void freeMemoryAndFinalize() {
 
         trace("freeMemoryAndFinalize", null, null);
-        Runtime rt = Runtime.getRuntime();
+        final Runtime rt = Runtime.getRuntime();
         long mem = rt.freeMemory();
         for (int i = 0; i < 16; i++) {
             rt.gc();
-            long now = rt.freeMemory();
+            final long now = rt.freeMemory();
             rt.runFinalization();
             if (now == mem) {
                 break;
@@ -406,7 +433,8 @@ public class FileSystemDisk extends FileSystem {
         }
     }
 
-    public FileObject openFileObject(String fileName, String mode) throws IOException {
+    @Override
+    public FileObject openFileObject(String fileName, final String mode) throws IOException {
 
         fileName = translateFileName(fileName);
         FileObjectDisk f;
@@ -414,12 +442,12 @@ public class FileSystemDisk extends FileSystem {
             f = new FileObjectDisk(fileName, mode);
             trace("openRandomAccessFile", fileName, f);
         }
-        catch (IOException e) {
+        catch (final IOException e) {
             freeMemoryAndFinalize();
             try {
                 f = new FileObjectDisk(fileName, mode);
             }
-            catch (IOException e2) {
+            catch (final IOException e2) {
                 e2.initCause(e);
                 throw e2;
             }
