@@ -32,23 +32,23 @@ public class FileUtils {
      * @param newLength
      *            the new length
      */
-    public static void setLength(RandomAccessFile file, long newLength) throws IOException {
+    public static void setLength(final RandomAccessFile file, final long newLength) throws IOException {
 
         try {
             trace("setLength", null, file);
             file.setLength(newLength);
         }
-        catch (IOException e) {
-            long length = file.length();
+        catch (final IOException e) {
+            final long length = file.length();
             if (newLength < length) { throw e; }
-            long pos = file.getFilePointer();
+            final long pos = file.getFilePointer();
             file.seek(length);
             long remaining = newLength - length;
-            int maxSize = 1024 * 1024;
-            int block = (int) Math.min(remaining, maxSize);
-            byte[] buffer = new byte[block];
+            final int maxSize = 1024 * 1024;
+            final int block = (int) Math.min(remaining, maxSize);
+            final byte[] buffer = new byte[block];
             while (remaining > 0) {
-                int write = (int) Math.min(remaining, maxSize);
+                final int write = (int) Math.min(remaining, maxSize);
                 file.write(buffer, 0, write);
                 remaining -= write;
             }
@@ -63,11 +63,11 @@ public class FileUtils {
      *            the file name
      * @return the absolute path
      */
-    public static String getFileInUserHome(String fileName) {
+    public static String getFileInUserHome(final String fileName) {
 
-        String userDir = SysProperties.USER_HOME;
+        final String userDir = SysProperties.USER_HOME;
         if (userDir == null) { return fileName; }
-        File file = new File(userDir, fileName);
+        final File file = new File(userDir, fileName);
         return file.getAbsolutePath();
     }
 
@@ -81,7 +81,7 @@ public class FileUtils {
      * @param o
      *            the object to append to the message
      */
-    static void trace(String method, String fileName, Object o) {
+    static void trace(final String method, final String fileName, final Object o) {
 
         if (SysProperties.TRACE_IO) {
             System.out.println("FileUtils." + method + " " + fileName + " " + o);
@@ -95,7 +95,7 @@ public class FileUtils {
      *            the directory and file name
      * @return just the file name
      */
-    public static String getFileName(String name) throws SQLException {
+    public static String getFileName(final String name) throws SQLException {
 
         return FileSystem.getInstance(name).getFileName(name);
     }
@@ -107,7 +107,7 @@ public class FileUtils {
      *            the file name
      * @return the normalized file name
      */
-    public static String normalize(String fileName) throws SQLException {
+    public static String normalize(final String fileName) throws SQLException {
 
         return FileSystem.getInstance(fileName).normalize(fileName);
     }
@@ -118,9 +118,13 @@ public class FileUtils {
      * @param fileName
      *            the file name
      */
-    public static void tryDelete(String fileName) {
+    public static void tryDelete(final String fileName) {
 
-        FileSystem.getInstance(fileName).tryDelete(fileName);
+        final boolean deleted = FileSystem.getInstance(fileName).tryDelete(fileName);
+
+        if (!deleted) {
+            System.err.println("File not deleted: " + fileName);
+        }
     }
 
     /**
@@ -130,7 +134,7 @@ public class FileUtils {
      *            the file name
      * @return if it is read only
      */
-    public static boolean isReadOnly(String fileName) {
+    public static boolean isReadOnly(final String fileName) {
 
         return FileSystem.getInstance(fileName).isReadOnly(fileName);
     }
@@ -142,7 +146,7 @@ public class FileUtils {
      *            the file name
      * @return true if it exists
      */
-    public static boolean exists(String fileName) {
+    public static boolean exists(final String fileName) {
 
         return FileSystem.getInstance(fileName).exists(fileName);
     }
@@ -154,7 +158,7 @@ public class FileUtils {
      *            the file name
      * @return the length in bytes
      */
-    public static long length(String fileName) {
+    public static long length(final String fileName) {
 
         return FileSystem.getInstance(fileName).length(fileName);
     }
@@ -172,7 +176,7 @@ public class FileUtils {
      *            if the file should be stored in the temporary directory
      * @return the name of the created file
      */
-    public static String createTempFile(String prefix, String suffix, boolean deleteOnExit, boolean inTempDir) throws IOException {
+    public static String createTempFile(final String prefix, final String suffix, final boolean deleteOnExit, final boolean inTempDir) throws IOException {
 
         return FileSystem.getInstance(prefix).createTempFile(prefix, suffix, deleteOnExit, inTempDir);
     }
@@ -184,7 +188,7 @@ public class FileUtils {
      *            the file or directory name
      * @return the parent directory name
      */
-    public static String getParent(String fileName) {
+    public static String getParent(final String fileName) {
 
         return FileSystem.getInstance(fileName).getParent(fileName);
     }
@@ -196,7 +200,7 @@ public class FileUtils {
      *            the directory
      * @return the list of fully qualified file names
      */
-    public static String[] listFiles(String path) throws SQLException {
+    public static String[] listFiles(final String path) throws SQLException {
 
         return FileSystem.getInstance(path).listFiles(path);
     }
@@ -208,7 +212,7 @@ public class FileUtils {
      *            the file or directory name
      * @return true if it is a directory
      */
-    public static boolean isDirectory(String fileName) {
+    public static boolean isDirectory(final String fileName) {
 
         return FileSystem.getInstance(fileName).isDirectory(fileName);
     }
@@ -220,7 +224,7 @@ public class FileUtils {
      *            the file name
      * @return if the file name is absolute
      */
-    public static boolean isAbsolute(String fileName) {
+    public static boolean isAbsolute(final String fileName) {
 
         return FileSystem.getInstance(fileName).isAbsolute(fileName);
     }
@@ -232,7 +236,7 @@ public class FileUtils {
      *            the file name
      * @return the absolute file name
      */
-    public static String getAbsolutePath(String fileName) {
+    public static String getAbsolutePath(final String fileName) {
 
         return FileSystem.getInstance(fileName).getAbsolutePath(fileName);
     }
@@ -246,7 +250,7 @@ public class FileUtils {
      *            the prefix
      * @return true if it starts with the prefix
      */
-    public static boolean fileStartsWith(String fileName, String prefix) {
+    public static boolean fileStartsWith(final String fileName, final String prefix) {
 
         return FileSystem.getInstance(fileName).fileStartsWith(fileName, prefix);
     }
@@ -258,7 +262,7 @@ public class FileUtils {
      *            the file name
      * @return the input stream
      */
-    public static InputStream openFileInputStream(String fileName) throws IOException {
+    public static InputStream openFileInputStream(final String fileName) throws IOException {
 
         return FileSystem.getInstance(fileName).openFileInputStream(fileName);
     }
@@ -272,7 +276,7 @@ public class FileUtils {
      *            if true, the file will grow, if false, the file will be truncated first
      * @return the output stream
      */
-    public static OutputStream openFileOutputStream(String fileName, boolean append) throws SQLException {
+    public static OutputStream openFileOutputStream(final String fileName, final boolean append) throws SQLException {
 
         return FileSystem.getInstance(fileName).openFileOutputStream(fileName, append);
     }
@@ -286,7 +290,7 @@ public class FileUtils {
      *            the new fully qualified file name
      * @throws SQLException
      */
-    public static void rename(String oldName, String newName) throws SQLException {
+    public static void rename(final String oldName, final String newName) throws SQLException {
 
         FileSystem.getInstance(oldName).rename(oldName, newName);
     }
@@ -297,7 +301,7 @@ public class FileUtils {
      * @param fileName
      *            the file name (not directory name)
      */
-    public static void createDirs(String fileName) throws SQLException {
+    public static void createDirs(final String fileName) throws SQLException {
 
         FileSystem.getInstance(fileName).createDirs(fileName);
     }
@@ -308,7 +312,7 @@ public class FileUtils {
      * @param fileName
      *            the file name
      */
-    public static void delete(String fileName) throws SQLException {
+    public static void delete(final String fileName) throws SQLException {
 
         FileSystem.getInstance(fileName).delete(fileName);
     }
@@ -320,7 +324,7 @@ public class FileUtils {
      *            the file name
      * @return the last modified date
      */
-    public static long getLastModified(String fileName) {
+    public static long getLastModified(final String fileName) {
 
         return FileSystem.getInstance(fileName).getLastModified(fileName);
     }
