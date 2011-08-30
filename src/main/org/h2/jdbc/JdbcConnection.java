@@ -45,7 +45,6 @@ import java.sql.Statement;
 import java.sql.Struct;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.Executor;
 
 import org.h2.command.CommandInterface;
 import org.h2.constant.ErrorCode;
@@ -1739,36 +1738,6 @@ public class JdbcConnection extends TraceObject implements Connection {
                 o = v.getObject();
         }
         return o;
-    }
-
-    @Override
-    public void abort(final Executor arg0) throws SQLException {
-
-        throw Message.getUnsupportedException();
-    }
-
-    @Override
-    public int getNetworkTimeout() throws SQLException {
-
-        throw Message.getUnsupportedException();
-    }
-
-    @Override
-    public String getSchema() throws SQLException {
-
-        throw Message.getUnsupportedException();
-    }
-
-    @Override
-    public void setNetworkTimeout(final Executor arg0, final int arg1) throws SQLException {
-
-        throw Message.getUnsupportedException();
-    }
-
-    @Override
-    public void setSchema(final String arg0) throws SQLException {
-
-        throw Message.getUnsupportedException();
     }
 
 }

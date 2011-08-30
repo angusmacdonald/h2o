@@ -9,9 +9,7 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
-import java.util.logging.Logger;
 
 import javax.naming.Reference;
 import javax.naming.Referenceable;
@@ -87,11 +85,11 @@ public class JdbcDataSource extends TraceObject
     public JdbcDataSource() {
 
         initFactory();
-        final int id = getNextId(TraceObject.DATA_SOURCE);
+        int id = getNextId(TraceObject.DATA_SOURCE);
         setTrace(factory.getTrace(), TraceObject.DATA_SOURCE, id);
     }
 
-    private void readObject(final java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
 
         initFactory();
         in.defaultReadObject();
@@ -107,7 +105,6 @@ public class JdbcDataSource extends TraceObject
      * 
      * @return the timeout in seconds
      */
-    @Override
     public int getLoginTimeout() {
 
         debugCodeCall("getLoginTimeout");
@@ -120,11 +117,10 @@ public class JdbcDataSource extends TraceObject
      * @param timeout
      *            the timeout in seconds
      */
-    @Override
-    public void setLoginTimeout(final int timeout) {
+    public void setLoginTimeout(int timeout) {
 
         debugCodeCall("setLoginTimeout", timeout);
-        loginTimeout = timeout;
+        this.loginTimeout = timeout;
     }
 
     /**
@@ -132,7 +128,6 @@ public class JdbcDataSource extends TraceObject
      * 
      * @return the log writer
      */
-    @Override
     public PrintWriter getLogWriter() {
 
         debugCodeCall("getLogWriter");
@@ -145,8 +140,7 @@ public class JdbcDataSource extends TraceObject
      * @param out
      *            the log writer
      */
-    @Override
-    public void setLogWriter(final PrintWriter out) {
+    public void setLogWriter(PrintWriter out) {
 
         debugCodeCall("setLogWriter(out)");
         logWriter = out;
@@ -157,7 +151,6 @@ public class JdbcDataSource extends TraceObject
      * 
      * @return the connection
      */
-    @Override
     public Connection getConnection() throws SQLException {
 
         debugCodeCall("getConnection");
@@ -173,8 +166,7 @@ public class JdbcDataSource extends TraceObject
      *            the password
      * @return the connection
      */
-    @Override
-    public Connection getConnection(final String user, final String password) throws SQLException {
+    public Connection getConnection(String user, String password) throws SQLException {
 
         if (isDebugEnabled()) {
             debugCode("getConnection(" + quote(user) + ", \"\");");
@@ -182,12 +174,12 @@ public class JdbcDataSource extends TraceObject
         return getJdbcConnection(user, convertToCharArray(password));
     }
 
-    private JdbcConnection getJdbcConnection(final String user, final char[] password) throws SQLException {
+    private JdbcConnection getJdbcConnection(String user, char[] password) throws SQLException {
 
         if (isDebugEnabled()) {
             debugCode("getJdbcConnection(" + quote(user) + ", new char[0]);");
         }
-        final Properties info = new Properties();
+        Properties info = new Properties();
         info.setProperty("user", user);
         info.put("password", password);
         return new JdbcConnection(url, info);
@@ -210,7 +202,7 @@ public class JdbcDataSource extends TraceObject
      * @param url
      *            the new URL
      */
-    public void setURL(final String url) {
+    public void setURL(String url) {
 
         debugCodeCall("setURL", url);
         this.url = url;
@@ -222,7 +214,7 @@ public class JdbcDataSource extends TraceObject
      * @param password
      *            the new password.
      */
-    public void setPassword(final String password) {
+    public void setPassword(String password) {
 
         debugCodeCall("setPassword", "");
         this.password = convertToCharArray(password);
@@ -234,7 +226,7 @@ public class JdbcDataSource extends TraceObject
      * @param password
      *            the new password in the form of a char array.
      */
-    public void setPasswordChars(final char[] password) {
+    public void setPasswordChars(char[] password) {
 
         if (isDebugEnabled()) {
             debugCode("setPasswordChars(new char[0]);");
@@ -242,12 +234,12 @@ public class JdbcDataSource extends TraceObject
         this.password = password;
     }
 
-    private char[] convertToCharArray(final String s) {
+    private char[] convertToCharArray(String s) {
 
         return s == null ? null : s.toCharArray();
     }
 
-    private String convertToString(final char[] a) {
+    private String convertToString(char[] a) {
 
         return a == null ? null : new String(a);
     }
@@ -280,7 +272,7 @@ public class JdbcDataSource extends TraceObject
      * @param user
      *            the new user name
      */
-    public void setUser(final String user) {
+    public void setUser(String user) {
 
         debugCodeCall("setUser", user);
         this.user = user;
@@ -292,12 +284,11 @@ public class JdbcDataSource extends TraceObject
      * @return the new reference
      */
     // ## Java 1.4 begin ##
-    @Override
     public Reference getReference() {
 
         debugCodeCall("getReference");
-        final String factoryClassName = JdbcDataSourceFactory.class.getName();
-        final Reference ref = new Reference(getClass().getName(), factoryClassName, null);
+        String factoryClassName = JdbcDataSourceFactory.class.getName();
+        Reference ref = new Reference(getClass().getName(), factoryClassName, null);
         ref.add(new StringRefAddr("url", url));
         ref.add(new StringRefAddr("user", user));
         ref.add(new StringRefAddr("password", convertToString(password)));
@@ -313,11 +304,10 @@ public class JdbcDataSource extends TraceObject
      * @return the connection
      */
     // ## Java 1.4 begin ##
-    @Override
     public XAConnection getXAConnection() throws SQLException {
 
         debugCodeCall("getXAConnection");
-        final int id = getNextId(XA_DATA_SOURCE);
+        int id = getNextId(XA_DATA_SOURCE);
         return new JdbcXAConnection(factory, id, url, user, password);
     }
 
@@ -333,13 +323,12 @@ public class JdbcDataSource extends TraceObject
      * @return the connection
      */
     // ## Java 1.4 begin ##
-    @Override
-    public XAConnection getXAConnection(final String user, final String password) throws SQLException {
+    public XAConnection getXAConnection(String user, String password) throws SQLException {
 
         if (isDebugEnabled()) {
             debugCode("getXAConnection(" + quote(user) + ", \"\");");
         }
-        final int id = getNextId(XA_DATA_SOURCE);
+        int id = getNextId(XA_DATA_SOURCE);
         return new JdbcXAConnection(factory, id, url, user, convertToCharArray(password));
     }
 
@@ -351,7 +340,6 @@ public class JdbcDataSource extends TraceObject
      * @return the connection
      */
     // ## Java 1.4 begin ##
-    @Override
     public PooledConnection getPooledConnection() throws SQLException {
 
         debugCodeCall("getPooledConnection");
@@ -370,8 +358,7 @@ public class JdbcDataSource extends TraceObject
      * @return the connection
      */
     // ## Java 1.4 begin ##
-    @Override
-    public PooledConnection getPooledConnection(final String user, final String password) throws SQLException {
+    public PooledConnection getPooledConnection(String user, String password) throws SQLException {
 
         if (isDebugEnabled()) {
             debugCode("getPooledConnection(" + quote(user) + ", \"\");");
@@ -388,8 +375,7 @@ public class JdbcDataSource extends TraceObject
      *            the class
      */
 
-    @Override
-    public <T> T unwrap(final Class<T> iface) throws SQLException {
+    public <T> T unwrap(Class<T> iface) throws SQLException {
 
         throw Message.getUnsupportedException();
     }
@@ -401,8 +387,7 @@ public class JdbcDataSource extends TraceObject
      *            the class
      */
 
-    @Override
-    public boolean isWrapperFor(final Class<?> iface) throws SQLException {
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
 
         throw Message.getUnsupportedException();
     }
@@ -410,17 +395,9 @@ public class JdbcDataSource extends TraceObject
     /**
      * INTERNAL
      */
-    @Override
     public String toString() {
 
         return getTraceObjectName() + ": url=" + url + " user=" + user;
-    }
-
-    @Override
-    public Logger getParentLogger() throws SQLFeatureNotSupportedException {
-
-        // TODO Auto-generated method stub
-        return null;
     }
 
 }

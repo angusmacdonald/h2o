@@ -29,9 +29,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
-import java.util.logging.Logger;
 
 import org.h2.engine.Constants;
 import org.h2.jdbc.JdbcConnection;
@@ -174,13 +172,6 @@ public class Driver implements java.sql.Driver {
         catch (final SQLException e) {
             TraceSystem.traceThrowable(e);
         }
-    }
-
-    @Override
-    public Logger getParentLogger() throws SQLFeatureNotSupportedException {
-
-        // TODO Auto-generated method stub
-        return null;
     }
 
 }
