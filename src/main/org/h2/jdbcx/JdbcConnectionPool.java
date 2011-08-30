@@ -12,7 +12,9 @@ package org.h2.jdbcx;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.Stack;
+import java.util.logging.Logger;
 
 import javax.sql.ConnectionEvent;
 import javax.sql.ConnectionEventListener;
@@ -64,13 +66,13 @@ public class JdbcConnectionPool implements DataSource {
 
     private boolean isDisposed;
 
-    private JdbcConnectionPool(ConnectionPoolDataSource dataSource) {
+    private JdbcConnectionPool(final ConnectionPoolDataSource dataSource) {
 
         this.dataSource = dataSource;
         try {
             logWriter = dataSource.getLogWriter();
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             // ignore
         }
     }
@@ -82,7 +84,7 @@ public class JdbcConnectionPool implements DataSource {
      *            the data source to create connections
      * @return the connection pool
      */
-    public static JdbcConnectionPool create(ConnectionPoolDataSource dataSource) {
+    public static JdbcConnectionPool create(final ConnectionPoolDataSource dataSource) {
 
         return new JdbcConnectionPool(dataSource);
     }
@@ -93,10 +95,10 @@ public class JdbcConnectionPool implements DataSource {
      * @param max
      *            the maximum number of connections
      */
-    public synchronized void setMaxConnections(int max) {
+    public synchronized void setMaxConnections(final int max) {
 
         if (max < 1) { throw new IllegalArgumentException("Invalid maxConnections value: " + max); }
-        this.maxConnections = max;
+        maxConnections = max;
         // notify waiting threads if the value was increased
         notifyAll();
     }
@@ -116,6 +118,7 @@ public class JdbcConnectionPool implements DataSource {
      * 
      * @return the timeout in seconds
      */
+    @Override
     public synchronized int getLoginTimeout() {
 
         return timeout;
@@ -127,9 +130,10 @@ public class JdbcConnectionPool implements DataSource {
      * @param seconds
      *            the maximum timeout
      */
-    public synchronized void setLoginTimeout(int seconds) {
+    @Override
+    public synchronized void setLoginTimeout(final int seconds) {
 
-        this.timeout = seconds;
+        timeout = seconds;
     }
 
     /**
@@ -141,11 +145,11 @@ public class JdbcConnectionPool implements DataSource {
         isDisposed = true;
         SQLException e = null;
         while (!recycledConnections.isEmpty()) {
-            PooledConnection pc = (PooledConnection) recycledConnections.pop();
+            final PooledConnection pc = (PooledConnection) recycledConnections.pop();
             try {
                 pc.close();
             }
-            catch (SQLException e2) {
+            catch (final SQLException e2) {
                 if (e == null) {
                     e = e2;
                 }
@@ -164,6 +168,7 @@ public class JdbcConnectionPool implements DataSource {
      * @throws SQLException
      *             when a new connection could not be established, or a timeout occurred
      */
+    @Override
     public Connection getConnection() throws SQLException {
 
         for (int i = 0;; i++) {
@@ -173,7 +178,7 @@ public class JdbcConnectionPool implements DataSource {
                 try {
                     wait(1000);
                 }
-                catch (InterruptedException e) {
+                catch (final InterruptedException e) {
                     // ignore
                 }
             }
@@ -190,7 +195,7 @@ public class JdbcConnectionPool implements DataSource {
         else {
             pc = dataSource.getPooledConnection();
         }
-        Connection conn = pc.getConnection();
+        final Connection conn = pc.getConnection();
         activeConnections++;
         pc.addConnectionEventListener(poolConnectionEventListener);
         return conn;
@@ -203,7 +208,7 @@ public class JdbcConnectionPool implements DataSource {
      * @param pc
      *            the pooled connection
      */
-    synchronized void recycleConnection(PooledConnection pc) {
+    synchronized void recycleConnection(final PooledConnection pc) {
 
         if (isDisposed) {
             disposeConnection(pc);
@@ -220,12 +225,12 @@ public class JdbcConnectionPool implements DataSource {
         notifyAll();
     }
 
-    private void closeConnection(PooledConnection pc) {
+    private void closeConnection(final PooledConnection pc) {
 
         try {
             pc.close();
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             log("Error while closing database connection: " + e.toString());
         }
     }
@@ -236,7 +241,7 @@ public class JdbcConnectionPool implements DataSource {
      * @param pc
      *            the pooled connection
      */
-    synchronized void disposeConnection(PooledConnection pc) {
+    synchronized void disposeConnection(final PooledConnection pc) {
 
         if (activeConnections <= 0) { throw new AssertionError(); }
         activeConnections--;
@@ -244,9 +249,9 @@ public class JdbcConnectionPool implements DataSource {
         closeConnection(pc);
     }
 
-    private void log(String msg) {
+    private void log(final String msg) {
 
-        String s = getClass().getName() + ": " + msg;
+        final String s = getClass().getName() + ": " + msg;
         try {
             if (logWriter == null) {
                 System.err.println(s);
@@ -255,7 +260,7 @@ public class JdbcConnectionPool implements DataSource {
                 logWriter.println(s);
             }
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             // ignore
         }
     }
@@ -265,16 +270,18 @@ public class JdbcConnectionPool implements DataSource {
      */
     class PoolConnectionEventListener implements ConnectionEventListener {
 
-        public void connectionClosed(ConnectionEvent event) {
+        @Override
+        public void connectionClosed(final ConnectionEvent event) {
 
-            PooledConnection pc = (PooledConnection) event.getSource();
+            final PooledConnection pc = (PooledConnection) event.getSource();
             pc.removeConnectionEventListener(this);
             recycleConnection(pc);
         }
 
-        public void connectionErrorOccurred(ConnectionEvent event) {
+        @Override
+        public void connectionErrorOccurred(final ConnectionEvent event) {
 
-            PooledConnection pc = (PooledConnection) event.getSource();
+            final PooledConnection pc = (PooledConnection) event.getSource();
             pc.removeConnectionEventListener(this);
             disposeConnection(pc);
         }
@@ -294,7 +301,8 @@ public class JdbcConnectionPool implements DataSource {
     /**
      * INTERNAL
      */
-    public Connection getConnection(String username, String password) {
+    @Override
+    public Connection getConnection(final String username, final String password) {
 
         throw new UnsupportedOperationException();
     }
@@ -302,6 +310,7 @@ public class JdbcConnectionPool implements DataSource {
     /**
      * INTERNAL
      */
+    @Override
     public PrintWriter getLogWriter() {
 
         return logWriter;
@@ -310,7 +319,8 @@ public class JdbcConnectionPool implements DataSource {
     /**
      * INTERNAL
      */
-    public void setLogWriter(PrintWriter logWriter) {
+    @Override
+    public void setLogWriter(final PrintWriter logWriter) {
 
         this.logWriter = logWriter;
     }
@@ -322,7 +332,8 @@ public class JdbcConnectionPool implements DataSource {
      *            the class
      */
 
-    public <T> T unwrap(Class<T> iface) throws SQLException {
+    @Override
+    public <T> T unwrap(final Class<T> iface) throws SQLException {
 
         throw Message.getUnsupportedException();
     }
@@ -334,9 +345,16 @@ public class JdbcConnectionPool implements DataSource {
      *            the class
      */
 
-    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+    @Override
+    public boolean isWrapperFor(final Class<?> iface) throws SQLException {
 
         throw Message.getUnsupportedException();
+    }
+
+    @Override
+    public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+
+        throw new SQLFeatureNotSupportedException();
     }
 
 }

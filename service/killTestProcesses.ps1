@@ -1,1 +1,2 @@
 kill -Name java
+quit
