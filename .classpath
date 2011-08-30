@@ -14,11 +14,11 @@
 			<attribute name="javadoc_location" value="http://www.appgate.com/products/80_MindTerm/80_API_Documentation/"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.6.0_27"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/stachord"/>
 	<classpathentry kind="lib" path="/nds/lib/json.jar"/>
-	<classpathentry kind="lib" path="C:/Program Files/Java/jdk1.6.0_21/lib/tools.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/numonic"/>
+	<classpathentry kind="lib" path="C:/Program Files/Java/jdk1.7.0/lib/tools.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
