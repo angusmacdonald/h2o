@@ -18,6 +18,7 @@ import java.sql.Statement;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -47,11 +48,13 @@ import uk.ac.standrews.cs.nds.madface.JavaProcessDescriptor;
 import uk.ac.standrews.cs.nds.madface.PlatformDescriptor;
 import uk.ac.standrews.cs.nds.madface.ProcessDescriptor;
 import uk.ac.standrews.cs.nds.madface.ProcessManager;
+import uk.ac.standrews.cs.nds.util.CommandLineArgs;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.nds.util.NetworkUtil;
 import uk.ac.standrews.cs.nds.util.PrettyPrinter;
+import uk.ac.standrews.cs.nds.util.SystemUtil;
 
 public class Worker extends Thread implements IWorker {
 
@@ -570,6 +573,23 @@ public class Worker extends Thread implements IWorker {
      * @throws UnknownHostException 
      */
     public static void main(final String[] args) throws RemoteException, AlreadyBoundException, UnknownHostException {
+
+        //Added command line arg -d in call to Worker.
+
+        Diagnostic.setLevel(DiagnosticLevel.FINAL);
+
+        final Map<String, String> arguments = CommandLineArgs.parseCommandLineArgs(args);
+
+        if (arguments.containsKey("-d")) {
+            try {
+                //TODO make multi-OS compatible.
+                SystemUtil.redirectSysErr("/tmp/worker.log");
+                SystemUtil.redirectSysOut("/tmp/worker.log");
+            }
+            catch (final IOException e) {
+                ErrorHandling.exceptionError(e, "Failed to redirect System.err or System.out.");
+            }
+        }
 
         Diagnostic.setLevel(DiagnosticLevel.FULL);
         new Worker();

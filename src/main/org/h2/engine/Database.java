@@ -26,9 +26,7 @@
 package org.h2.engine;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -140,6 +138,7 @@ import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.SystemUtil;
 import uk.ac.standrews.cs.numonic.data.ResourceType;
 
 /**
@@ -3374,19 +3373,7 @@ public class Database implements DataHandler, Observer, ISystemStatus {
 
         if (sysOutFileLocation != null) {
             try {
-                final File sysOutFile = new File(sysOutFileLocation);
-
-                if (!sysOutFile.exists()) {
-                    final File parentFolder = sysOutFile.getParentFile();
-                    if (!parentFolder.exists()) {
-                        parentFolder.mkdirs();
-                    }
-                    sysOutFile.createNewFile();
-                }
-
-                final PrintStream printStream = new PrintStream(new FileOutputStream(sysOutFile, true));
-
-                System.setOut(printStream);
+                SystemUtil.redirectSysOut(sysOutFileLocation);
             }
             catch (final IOException e) {
                 ErrorHandling.exceptionErrorNoEvent(e, "Failed to redirect System.out messages to file located at: " + sysOutFileLocation);
@@ -3400,22 +3387,10 @@ public class Database implements DataHandler, Observer, ISystemStatus {
 
         if (sysErrFileLocation != null) {
             try {
-                final File sysErrFile = new File(sysErrFileLocation);
-
-                if (!sysErrFile.exists()) {
-                    final File parentFolder = sysErrFile.getParentFile();
-                    if (!parentFolder.exists()) {
-                        parentFolder.mkdirs();
-                    }
-                    sysErrFile.createNewFile();
-                }
-
-                final PrintStream printStream = new PrintStream(new FileOutputStream(sysErrFile, true));
-
-                System.setErr(printStream);
+                SystemUtil.redirectSysErr(sysErrFileLocation);
             }
             catch (final IOException e) {
-                ErrorHandling.exceptionErrorNoEvent(e, "Failed to redirect System.out messages to file located at: " + databaseProperties.getProperty("systemOutLocation"));
+                ErrorHandling.exceptionError(e, "Failed to redirect System.err to file located at: " + sysErrFileLocation);
             }
         }
     }

@@ -42,7 +42,11 @@ public class WorkerManager implements IApplicationManager {
     public void deployApplication(final HostDescriptor host_descriptor) throws Exception {
 
         host_descriptor.javaBinPath(JAVA_BIN_PATH);
-        final ProcessDescriptor java_process_descriptor = new JavaProcessDescriptor().classToBeInvoked(Worker.class).args(new ArrayList<String>());
+        final ArrayList<String> args = new ArrayList<String>();
+
+        args.add("-d");
+
+        final ProcessDescriptor java_process_descriptor = new JavaProcessDescriptor().classToBeInvoked(Worker.class).args(args);
         host_descriptor.getProcessManager().runProcess(java_process_descriptor);
 
     }
