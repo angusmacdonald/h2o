@@ -188,7 +188,7 @@ public class ScriptTests {
             workers[i] = new Worker();
         }
 
-        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
+        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "uist");
 
         eval.startLocatorServer(34000);
 
@@ -209,7 +209,7 @@ public class ScriptTests {
             workers[i] = new Worker();
         }
 
-        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
+        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "uist");
 
         eval.startLocatorServer(34000);
 
