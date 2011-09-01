@@ -20,14 +20,14 @@ public class ScriptGenerator {
     public static void main(final String[] args) throws IOException {
 
         final long runtime = 480000; //eight minutes.
-        final double probabilityOfFailure = 0.2;
+        final double probabilityOfFailure = 0.05;
         final long frequencyOfFailure = 60000;
-        final int numberOfMachines = 8;
+        final int numberOfMachines = 6;
         final int numberOfTables = 1;
         final TableClustering clusteringSpec = new TableClustering(Clustering.GROUPED, 5);
 
         final Set<WorkloadType> workloadSpecs = new HashSet<WorkloadType>();
-        final WorkloadType spec = new WorkloadType(0.5, false, 0, true, 1200, LinkToTableLocation.WORKLOAD_PER_TABLE, false);
+        final WorkloadType spec = new WorkloadType(0.5, false, 0, true, 20, LinkToTableLocation.WORKLOAD_PER_TABLE, false);
         workloadSpecs.add(spec);
 
         final String scriptLocation = CoordinationScriptGenerator.generateCoordinationScript(runtime, probabilityOfFailure, frequencyOfFailure, numberOfMachines, numberOfTables, clusteringSpec, workloadSpecs);
