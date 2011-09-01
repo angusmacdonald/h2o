@@ -98,8 +98,10 @@ public class Printer {
         final Set<String> allNames = new HashSet<String>();
 
         for (final WorkloadResult workloadResult : workloadResults) {
-            for (final QueryLogEntry entry : workloadResult.getQueryLog()) {
-                allNames.addAll(entry.tablesInvolved);
+            if (workloadResult.getQueryLog() != null) {
+                for (final QueryLogEntry entry : workloadResult.getQueryLog()) {
+                    allNames.addAll(entry.tablesInvolved);
+                }
             }
         }
 
