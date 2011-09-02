@@ -589,7 +589,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         boolean startedExecution = false; //execution only starts with the first of the first workload.
 
         for (final String action : script) {
-            if (action.startsWith("#") || action.trim().equals("")) {
+            if (action.startsWith("#") || action.trim().equals("")) { // {machines-to-start="2"}
                 //Comment... ignore.
             }
             else if (action.startsWith("{start_machine")) {
