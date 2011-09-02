@@ -590,7 +590,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         for (final String action : script) {
             if (action.startsWith("#") || action.trim().equals("")) {
-
+                //Comment... ignore.
             }
             else if (action.startsWith("{start_machine")) {
 
@@ -598,15 +598,23 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
                 IWorker worker = scriptedInstances.get(startInstruction.id);
 
-                if (worker == null) {
+                blockWorkloads(startInstruction);
+
+                /*
+                 * Start machine. This blocks the co-ordinator script until the machine is restarted.
+                 */
+                if (worker == null) { //Machine is being started for the first time.
                     worker = startH2OInstance(startInstruction.id == 0); //disable replication on the first instance.
                     scriptedInstances.put(startInstruction.id, worker);
                 }
                 else {
+                    //Machine is being restarted
                     worker.startH2OInstance(descriptorFile, false, startInstruction.id == 0);
                     scriptedInstances.put(startInstruction.id, worker);
                     failureLog.add(new FailureLogEntry(currentExecutionTime, scriptedInstances.get(Integer.valueOf(startInstruction.id)).getLocalDatabaseName(), true));
                 }
+
+                resumeWorkloads(startInstruction);
 
                 Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "CSCRIPT: Starting machine with ID '" + startInstruction.id + "'");
 
@@ -710,6 +718,24 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
                     Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Executing query '" + instruction.getData() + "' on '" + instruction.id + "'.");
 
                 }
+            }
+        }
+    }
+
+    private void blockWorkloads(final MachineInstruction startInstruction) throws RemoteException, WorkloadException {
+
+        if (startInstruction.blockWorkloads) {
+            for (final IWorker runningWorker : scriptedInstances.values()) {
+                runningWorker.stallWorkloads();
+            }
+        }
+    }
+
+    private void resumeWorkloads(final MachineInstruction startInstruction) throws RemoteException, WorkloadException {
+
+        if (startInstruction.blockWorkloads) {
+            for (final IWorker runningWorker : scriptedInstances.values()) {
+                runningWorker.resumeWorkloads();
             }
         }
     }

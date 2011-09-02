@@ -13,26 +13,32 @@ public class CoordinationScriptExecutor {
 
     public static MachineInstruction parseStartMachine(final String action) throws WorkloadParseException {
 
-        //format: {start_machine id="<machine-id>" fail-after=<time_to_failure>}
-        //example format: {start_machine id="0" fail-after="30000"}
+        //format: {start_machine id="<machine-id>" fail-after=<time_to_failure> [block-workloads="<boolean>"]}
+        //n.b. blocking is optional, and false by default.
+        //example format: {start_machine id="0" fail-after="30000" block-workloads="true"}
 
-        final Pattern p = Pattern.compile("\\{start_machine id=\"(\\d+)\"(?:\\s+fail-after=\"(\\d+)\")?\\}");
+        final Pattern p = Pattern.compile("\\{start_machine id=\"(\\d+)\"(?:\\s+fail-after=\"(\\d+)\")?(?:\\s+block-workloads=\"(true|false)\")?\\}");
 
         final Matcher matcher = p.matcher(action);
 
-        Long fail_after = null;
-        Integer id = null;
+        Long fail_after;
+        Integer id;
+
+        boolean blockWorkloads;
 
         if (matcher.matches()) {
             id = Integer.valueOf(matcher.group(1));
             final String failAfterString = matcher.group(2);
             fail_after = failAfterString != null ? Long.valueOf(failAfterString) : null;
+
+            final String blockWorkloadsString = matcher.group(3);
+            blockWorkloads = blockWorkloadsString != null ? Boolean.valueOf(blockWorkloadsString) : false;
         }
         else {
             throw new WorkloadParseException("Invalid syntax in : " + action);
         }
 
-        return new MachineInstruction(id, fail_after);
+        return new MachineInstruction(id, fail_after, blockWorkloads);
     }
 
     public static MachineInstruction parseReserveMachine(final String action) throws WorkloadParseException {
@@ -69,7 +75,7 @@ public class CoordinationScriptExecutor {
             throw new WorkloadParseException("Invalid syntax in : " + action);
         }
 
-        return new MachineInstruction(id, null);
+        return new MachineInstruction(id, null, false);
     }
 
     public static MachineInstruction parseTerminateMachine(final String action) throws WorkloadParseException {

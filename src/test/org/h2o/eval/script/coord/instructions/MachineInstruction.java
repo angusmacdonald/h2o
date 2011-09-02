@@ -12,10 +12,13 @@ public class MachineInstruction {
      */
     public final Long fail_after;
 
-    public MachineInstruction(final Integer id, final Long fail_after) {
+    public final boolean blockWorkloads;
+
+    public MachineInstruction(final Integer id, final Long fail_after, final boolean blockWorkloads) {
 
         this.id = id;
         this.fail_after = fail_after;
+        this.blockWorkloads = blockWorkloads;
     }
 
 }

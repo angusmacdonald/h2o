@@ -658,8 +658,6 @@ public class Worker extends Thread implements IWorker {
     @Override
     public void stallWorkloads() throws WorkloadException {
 
-        if (executingWorkloads.size() == 0) { throw new WorkloadException("There are no workloads running, so none can be stalled."); }
-
         for (final IWorkload workload : executingWorkloads) {
             try {
                 workload.stallWorkload();
@@ -672,8 +670,6 @@ public class Worker extends Thread implements IWorker {
 
     @Override
     public void resumeWorkloads() throws WorkloadException {
-
-        if (executingWorkloads.size() == 0) { throw new WorkloadException("There are no workloads running, so none can be stalled."); }
 
         for (final IWorkload workload : executingWorkloads) {
             try {
