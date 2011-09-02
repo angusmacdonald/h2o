@@ -259,7 +259,7 @@ public class WorkloadExecutor {
      */
     public long currentTime() {
 
-        return System.currentTimeMillis() - totalTimeOfStall;
+        return System.currentTimeMillis();
     }
 
     public long currentWorkloadEndTime() {
