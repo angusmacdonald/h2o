@@ -320,7 +320,7 @@ public class TableProxyManager {
                 ErrorHandling.errorNoEvent("Commit message to some replicas was unsuccessful for transaction '" + transactionName + "'. Some have committed.");
 
                 /*
-                 * Is it possible that throwing an exception here causes inconsistent state?
+                 * XXX Is it possible that throwing an exception here causes inconsistent state?
                  * i.e. it may be correct behaviour to throw an error message but allow the commit on other replicas, as per 2PC.
                  */
                 //throw new SQLException("Failed to commit transaction to all replicas. Rolling back.");

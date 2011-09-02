@@ -39,7 +39,7 @@ public class LogEntry implements Serializable {
                     final boolean machineFailureEvent, final boolean machineFailure) {
 
         final String tablesInvolvedString = PrettyPrinter.toString(tablesInvolved, ";", false);
-        final long timeOfTransactionMS = timeOfCommit - startTime;
+        final long timeOfTransactionMS = timeOfCommit - timeToExecute - startTime;
         final int timeOfTransactionSec = (int) (timeOfTransactionMS / 1000);
 
         final String successfulExecutionTime = machineFailureEvent ? "=NA()" : (successfulExecution ? timeToExecute : "=NA()") + "";
