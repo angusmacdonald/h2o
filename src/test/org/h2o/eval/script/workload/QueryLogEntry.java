@@ -8,6 +8,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 public class QueryLogEntry extends LogEntry implements Serializable {
@@ -113,7 +115,7 @@ public class QueryLogEntry extends LogEntry implements Serializable {
 
         final QueryLogEntry newQueryLog = new QueryLogEntry(timeOfCommit, successfullyExecuted, timeToExecute, queryTypes, tablesInvolved);
 
-        //Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Created new query log entry: " + newQueryLog);
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Created new query log entry: " + newQueryLog);
         return newQueryLog;
 
     }
