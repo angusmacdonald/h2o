@@ -13,10 +13,6 @@ public class LogEntry implements Serializable {
 
     public long timeOfCommit;
 
-    public LogEntry() {
-
-    }
-
     public LogEntry(final long timeOfCommit) {
 
         this.timeOfCommit = timeOfCommit;
