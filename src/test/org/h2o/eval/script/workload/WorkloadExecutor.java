@@ -172,7 +172,7 @@ public class WorkloadExecutor {
 
                     query = replacePlaceholderValues(uniqueCounter, query);
 
-                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing query: " + query);
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Executing query: " + query);
 
                     try {
                         final boolean resultSet = stat.execute(query);
