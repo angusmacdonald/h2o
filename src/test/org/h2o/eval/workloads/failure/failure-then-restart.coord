@@ -10,7 +10,5 @@
 {terminate_machine id="1"}
 {sleep="20000"}
 #Stall while a machine is restarted.
-{stall id="0"}
-{start_machine id="1"}
-{resume id="0"}
+{start_machine id="1" block-workloads="true"}
 #Restart workload execution here.
