@@ -115,7 +115,7 @@ public class QueryLogEntry extends LogEntry implements Serializable {
 
         final QueryLogEntry newQueryLog = new QueryLogEntry(timeOfCommit, successfullyExecuted, timeToExecute, queryTypes, tablesInvolved);
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Created new query log entry: " + newQueryLog);
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Created new query log entry: " + newQueryLog);
         return newQueryLog;
 
     }
