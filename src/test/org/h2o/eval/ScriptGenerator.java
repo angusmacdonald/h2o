@@ -30,7 +30,7 @@ public class ScriptGenerator {
         final WorkloadType spec = new WorkloadType(0.5, false, 0, true, 50, LinkToTableLocation.WORKLOAD_PER_TABLE, false);
         workloadSpecs.add(spec);
 
-        final String scriptLocation = CoordinationScriptGenerator.generateCoordinationScript(runtime, probabilityOfFailure, frequencyOfFailure, numberOfMachines, numberOfTables, clusteringSpec, workloadSpecs);
+        final String scriptLocation = CoordinationScriptGenerator.generateCoordinationScriptAndWriteToFile(runtime, probabilityOfFailure, frequencyOfFailure, numberOfMachines, numberOfTables, clusteringSpec, workloadSpecs);
 
         System.out.println("Co-ordination script saved to: " + scriptLocation);
     }

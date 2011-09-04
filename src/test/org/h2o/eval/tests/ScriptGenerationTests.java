@@ -135,7 +135,7 @@ public class ScriptGenerationTests {
         final WorkloadType spec = new WorkloadType(0.5, false, 50, true, 5, LinkToTableLocation.GROUPED_WORKLOAD, true);
         workloadSpecs.add(spec);
 
-        final String coordinationScriptLocation = CoordinationScriptGenerator.generateCoordinationScript(runtime, probabilityOfFailure, frequencyOfFailure, numberOfMachines, numberOfTables, clusteringSpec, workloadSpecs);
+        final String coordinationScriptLocation = CoordinationScriptGenerator.generateCoordinationScriptAndWriteToFile(runtime, probabilityOfFailure, frequencyOfFailure, numberOfMachines, numberOfTables, clusteringSpec, workloadSpecs);
 
         System.out.println(coordinationScriptLocation);
 
@@ -160,7 +160,7 @@ public class ScriptGenerationTests {
         final WorkloadType spec = new WorkloadType(0.5, false, 50, true, 10, LinkToTableLocation.GROUPED_WORKLOAD, true);
         workloadSpecs.add(spec);
 
-        final String coordinationScriptLocation = CoordinationScriptGenerator.generateCoordinationScript(runtime, probabilityOfFailure, frequencyOfFailure, numberOfMachines, numberOfTables, clusteringSpec, workloadSpecs);
+        final String coordinationScriptLocation = CoordinationScriptGenerator.generateCoordinationScriptAndWriteToFile(runtime, probabilityOfFailure, frequencyOfFailure, numberOfMachines, numberOfTables, clusteringSpec, workloadSpecs);
 
         System.out.println(coordinationScriptLocation);
 

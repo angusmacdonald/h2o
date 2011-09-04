@@ -10,7 +10,7 @@ public class SyntaxGenerator {
      */
     protected static String createStartMachineCommand(final int id, final boolean sleepAfterStart) {
 
-        String startMachineCommand = "{start_machine id=\"" + id + "\"}\n";
+        String startMachineCommand = "{start_machine id=\"" + id + "\"}";
 
         if (sleepAfterStart) {
             startMachineCommand += SyntaxGenerator.createSleepCommand(3000);
@@ -21,7 +21,7 @@ public class SyntaxGenerator {
 
     public static String createReserveMachineCommand(final int id) {
 
-        return "{reserve_machine id=\"" + id + "\"}\n";
+        return "{reserve_machine id=\"" + id + "\"}";
 
     }
 
@@ -33,13 +33,13 @@ public class SyntaxGenerator {
             command += SyntaxGenerator.createSleepCommand(10000);
         }
 
-        return command + "{start_reserved_machine id=\"" + id + "\"}\n";
+        return command + "{start_reserved_machine id=\"" + id + "\"}";
 
     }
 
     protected static String createSleepCommand(final long sleepTime) {
 
-        return "{sleep=\"" + sleepTime + "\"}\n";
+        return "{sleep=\"" + sleepTime + "\"}";
     }
 
     protected static String createTableCommand(final int id, final String sql) {
@@ -49,25 +49,25 @@ public class SyntaxGenerator {
 
     protected static String executeWorkloadCommand(final int id, final String workloadLocation, final long duration) {
 
-        return "{" + id + "} {execute_workload=\"" + workloadLocation + "\" duration=\"" + duration + "\"}\n";
+        return "{" + id + "} {execute_workload=\"" + workloadLocation + "\" duration=\"" + duration + "\"}";
 
     }
 
     protected static String sqlSimpleCreateTable(final String tableName) {
 
-        return "CREATE TABLE " + tableName + " (id int);\n";
+        return "CREATE TABLE " + tableName + " (id int);";
     }
 
     protected static String sqlComplexCreateTable(final String tableName) {
 
         //<loop-counter/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-long/>, <generated-long/>
 
-        return "CREATE TABLE " + tableName + " (id int, str_a varchar(40), str_b varchar(40), str_c varchar(40), str_d varchar(40), int_a BIGINT, int_b BIGINT);\n";
+        return "CREATE TABLE " + tableName + " (id int, str_a varchar(40), str_b varchar(40), str_c varchar(40), str_d varchar(40), int_a BIGINT, int_b BIGINT);";
     }
 
     protected static String terminateMachineCommand(final int id) {
 
-        return "{terminate_machine id=\"" + id + "\"}\n";
+        return "{terminate_machine id=\"" + id + "\"}";
     }
 
 }
