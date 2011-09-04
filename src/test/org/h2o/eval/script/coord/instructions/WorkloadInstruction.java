@@ -1,6 +1,14 @@
 package org.h2o.eval.script.coord.instructions;
 
-public class WorkloadInstruction extends Instruction {
+import java.rmi.RemoteException;
+
+import org.h2o.eval.interfaces.WorkloadException;
+import org.h2o.util.exceptions.StartupException;
+
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+
+public class WorkloadInstruction implements Instruction {
 
     private static final long serialVersionUID = -5175906689517121113L;
 
@@ -14,19 +22,27 @@ public class WorkloadInstruction extends Instruction {
      */
     public final Long duration;
 
+    private final String id;
+
     public WorkloadInstruction(final String id, final String workloadFile, final Long duration) {
 
-        super(id, true);
-
+        this.id = id;
         this.workloadFile = workloadFile;
         this.duration = duration == null ? 0 : duration;
 
     }
 
     @Override
-    public String getData() {
+    public void execute(final CoordinatorScriptState coordState) throws RemoteException, StartupException, WorkloadException {
 
-        return workloadFile;
+        coordState.getCoordintor().executeWorkload(id, workloadFile, duration);
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Executing workload '" + workloadFile + "' for '" + duration + "', on '" + id + "'.");
+
+        if (!coordState.hasStartedExecution()) {
+            coordState.startExecution();
+
+        }
     }
 
 }

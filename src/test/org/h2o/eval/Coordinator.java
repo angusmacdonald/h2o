@@ -27,7 +27,6 @@ import java.util.Set;
 
 import org.h2.util.NetUtils;
 import org.h2o.H2OLocator;
-import org.h2o.eval.coordinator.KillMonitorThread;
 import org.h2o.eval.interfaces.ICoordinatorLocal;
 import org.h2o.eval.interfaces.ICoordinatorRemote;
 import org.h2o.eval.interfaces.IWorker;
@@ -35,10 +34,8 @@ import org.h2o.eval.interfaces.WorkloadException;
 import org.h2o.eval.printing.AveragedResultsCSVPrinter;
 import org.h2o.eval.printing.IndividualRunCSVPrinter;
 import org.h2o.eval.script.coord.CoordinationScriptExecutor;
+import org.h2o.eval.script.coord.instructions.CoordinatorScriptState;
 import org.h2o.eval.script.coord.instructions.Instruction;
-import org.h2o.eval.script.coord.instructions.MachineInstruction;
-import org.h2o.eval.script.coord.instructions.WorkloadInstruction;
-import org.h2o.eval.script.workload.FailureLogEntry;
 import org.h2o.eval.script.workload.Workload;
 import org.h2o.eval.script.workload.WorkloadResult;
 import org.h2o.util.H2OPropertiesWrapper;
@@ -77,18 +74,16 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      * Mapping from an integer ID to worker node for H2O instances that have been started through
      * a co-ordination script.
      */
-    private final Map<Integer, IWorker> scriptedInstances = new HashMap<Integer, IWorker>();
 
     private final Map<IWorker, Integer> workersWithActiveWorkloads = Collections.synchronizedMap(new HashMap<IWorker, Integer>());
 
-    private IWorker reserved_machine = null;
+    private final CoordinatorScriptState coordScriptState = new CoordinatorScriptState(this);
 
     /*
      * Locator server fields.
      */
     private boolean locatorServerStarted = false;
     private H2OPropertiesWrapper descriptorFile;
-    private KillMonitorThread killMonitor;
 
     /*
      * Results file location:
@@ -103,7 +98,6 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
      */
     private final Date startDate = new Date();
     private final List<WorkloadResult> workloadResults = new LinkedList<WorkloadResult>();
-    private final List<FailureLogEntry> failureLog = new LinkedList<FailureLogEntry>();
 
     /**
      * The replication factor being used by the database (if set via the {@link #setReplicationFactor(int)} method - otherwise this will be 0).
@@ -113,7 +107,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     /**
      * Name of the configuration script being run by co-ordinator. This will be null if no co-ordinator scripts are being run.
      */
-    private String scriptName;
+    private String coordinationScriptLocation;
 
     /**
      * 
@@ -289,7 +283,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         return allWorkers;
     }
 
-    private IWorker startH2OInstance(final boolean disableReplication) throws StartupException, RemoteException {
+    public IWorker startH2OInstance(final boolean disableReplication) throws StartupException, RemoteException {
 
         if (inactiveWorkers.size() == 0) {
             scanForWorkerNodes(workerLocations);
@@ -300,21 +294,6 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         final IWorker worker = inactiveWorkers.get(0);
 
         worker.startH2OInstance(descriptorFile, false, disableReplication);
-
-        swapWorkerToActiveSet(worker);
-
-        return worker;
-    }
-
-    private IWorker reserveH2OInstance() throws StartupException, RemoteException {
-
-        if (inactiveWorkers.size() == 0) {
-            scanForWorkerNodes(workerLocations);
-
-            if (inactiveWorkers.size() == 0) { throw new StartupException("Could not instantiated another H2O instance."); }
-        }
-
-        final IWorker worker = inactiveWorkers.get(0);
 
         swapWorkerToActiveSet(worker);
 
@@ -458,9 +437,9 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
     }
 
-    private void executeWorkload(final String id, final String workloadFileLocation, final long duration) throws StartupException {
+    public void executeWorkload(final String id, final String workloadFileLocation, final long duration) throws StartupException {
 
-        final IWorker worker = scriptedInstances.get(Integer.valueOf(id));
+        final IWorker worker = coordScriptState.getScriptedInstance(Integer.valueOf(id));
 
         if (worker == null) { throw new StartupException("No worker exists for this ID: " + id); }
 
@@ -537,13 +516,11 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
         };
 
-        if (killMonitor != null) {
-            killMonitor.setRunning(false);
-        }
+        coordScriptState.disableKillMonitor();
 
         try {
-            IndividualRunCSVPrinter.printResults(resultsFolderLocation + File.separator + dateFormatter.format(startDate) + "-results.csv", workloadResults, failureLog);
-            AveragedResultsCSVPrinter.printResults(resultsFolderLocation + File.separator + "all.csv", workloadResults, scriptName, activeWorkers.size(), replicationFactor);
+            IndividualRunCSVPrinter.printResults(resultsFolderLocation + File.separator + dateFormatter.format(startDate) + "-results.csv", workloadResults, coordScriptState.getFailureLog());
+            AveragedResultsCSVPrinter.printResults(resultsFolderLocation + File.separator + "all.csv", workloadResults, coordinationScriptLocation, activeWorkers.size(), replicationFactor);
         }
         catch (final IOException e) {
 
@@ -563,193 +540,50 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         executeCoordinatorScript(coordinatorScriptLocation, DEFAULT_RESULTS_FOLDER_LOCATION);
     }
 
-    public void executeCoordinatorScript(final String coordinatorScriptLocation, final String resultsFolderLocation) throws FileNotFoundException, IOException, WorkloadParseException, StartupException, SQLException, WorkloadException {
+    public void executeCoordinatorScript(final String coordinationScriptLocation, final String resultsFolderLocation) throws FileNotFoundException, IOException, WorkloadParseException, StartupException, SQLException, WorkloadException {
 
-        scriptName = coordinatorScriptLocation;
-
+        this.coordinationScriptLocation = coordinationScriptLocation;
         this.resultsFolderLocation = resultsFolderLocation;
 
-        final List<String> script = FileUtil.readAllLines(coordinatorScriptLocation);
+        final List<String> script = FileUtil.readAllLines(coordinationScriptLocation);
+        final List<Instruction> parsedInstructions = parseCoordinationScript(script);
 
-        killMonitor = new KillMonitorThread(this);
-
-        if (killMonitor.isRunning()) {
-            killMonitor.setRunning(false);
-            killMonitor = new KillMonitorThread(this);
-        }
-
-        killMonitor.start();
-
-        executeCoordinationScript(script);
+        executeCoordinationScript(parsedInstructions);
     }
 
-    public void executeCoordinationScript(final List<String> script) throws WorkloadParseException, RemoteException, StartupException, SQLException, WorkloadException {
+    private List<Instruction> parseCoordinationScript(final List<String> script) throws WorkloadParseException {
 
-        long currentExecutionTime = 0;
-        boolean startedExecution = false; //execution only starts with the first of the first workload.
+        final List<Instruction> instructions = new LinkedList<Instruction>();
 
         for (final String action : script) {
-            if (action.startsWith("#") || action.trim().equals("")) { // {machines-to-start="2"}
-                //Comment... ignore.
-            }
-            else if (action.startsWith("{start_machine")) {
+            final Instruction instruction = CoordinationScriptExecutor.parse(action);
 
-                final MachineInstruction startInstruction = CoordinationScriptExecutor.parseStartMachine(action);
-
-                IWorker worker = scriptedInstances.get(startInstruction.id);
-
-                blockWorkloads(startInstruction);
-
-                /*
-                 * Start machine. This blocks the co-ordinator script until the machine is restarted.
-                 */
-                if (worker == null) { //Machine is being started for the first time.
-                    worker = startH2OInstance(startInstruction.id == 0); //disable replication on the first instance.
-                    scriptedInstances.put(startInstruction.id, worker);
-                }
-                else {
-                    //Machine is being restarted
-                    worker.startH2OInstance(descriptorFile, false, startInstruction.id == 0);
-                    scriptedInstances.put(startInstruction.id, worker);
-                    failureLog.add(new FailureLogEntry(currentExecutionTime, scriptedInstances.get(Integer.valueOf(startInstruction.id)).getLocalDatabaseName(), true));
-                }
-
-                resumeWorkloads(startInstruction);
-
-                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "CSCRIPT: Starting machine with ID '" + startInstruction.id + "'");
-
-                if (startInstruction.fail_after != null) {
-                    killMonitor.addKillOrder(startInstruction.id, System.currentTimeMillis() + startInstruction.fail_after);
-                }
-            }
-            else if (action.startsWith("{reserve_machine")) {
-
-                final MachineInstruction reserveInstruction = CoordinationScriptExecutor.parseReserveMachine(action);
-
-                reserved_machine = reserveH2OInstance();
-
-                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "CSCRIPT: Reserved machine with ID '" + reserveInstruction.id + "'");
-
-            }
-            else if (action.startsWith("{stall")) {
-
-                final int machineID = CoordinationScriptExecutor.parseStallCommand(action);
-
-                final IWorker worker = scriptedInstances.get(machineID);
-
-                worker.stallWorkloads();
-
-                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "CSCRIPT: Workloads stalled on '" + machineID + "'");
-
-            }
-            else if (action.startsWith("{resume")) {
-
-                final int machineID = CoordinationScriptExecutor.parseResumeCommand(action);
-
-                final IWorker worker = scriptedInstances.get(machineID);
-
-                worker.resumeWorkloads();
-
-                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "CSCRIPT: Workloads resumed on '" + machineID + "'");
-            }
-            else if (action.startsWith("{start_reserved_machine")) {
-
-                final MachineInstruction reserveInstruction = CoordinationScriptExecutor.parseStartReservedMachine(action);
-
-                if (reserved_machine == null) { throw new WorkloadParseException("Tried to start a reserved machine without reserving one first with the 'reserve_machine' command."); }
-
-                reserved_machine.startH2OInstance(descriptorFile, false, true);
-
-                scriptedInstances.put(reserveInstruction.id, reserved_machine);
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Started Reserved machine with ID '" + reserveInstruction.id + "'");
-
-            }
-            else if (action.startsWith("{terminate_machine")) {
-
-                final MachineInstruction terminateInstruction = CoordinationScriptExecutor.parseTerminateMachine(action);
-
-                try {
-                    killInstance(terminateInstruction.id);
-                }
-                catch (final ShutdownException e) {
-                    ErrorHandling.exceptionError(e, "Failed to shutdown instance with ID " + terminateInstruction.id + ".");
-                }
-                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "CSCRIPT: Terminated machine with ID '" + terminateInstruction.id + "'");
-
-                failureLog.add(new FailureLogEntry(currentExecutionTime, scriptedInstances.get(Integer.valueOf(terminateInstruction.id)).getLocalDatabaseName(), false));
-
-            }
-            else if (action.startsWith("{sleep=")) {
-                final int sleepTime = CoordinationScriptExecutor.parseSleepOperation(action);
-
-                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "CSCRIPT: Sleeping for '" + sleepTime + "'");
-
-                if (startedExecution) {
-                    currentExecutionTime += sleepTime;
-                }
-
-                try {
-                    Thread.sleep(sleepTime);
-                }
-                catch (final InterruptedException e) {
-                }
-
-                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "CSCRIPT: Finished sleeping.");
-
-            }
-            else {
-                final Instruction instruction = CoordinationScriptExecutor.parseQuery(action);
-
-                if (instruction.isWorkload()) {
-                    final WorkloadInstruction wi = (WorkloadInstruction) instruction;
-                    executeWorkload(wi.id, wi.workloadFile, wi.duration);
-
-                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Executing workload '" + wi.workloadFile + "' for '" + wi.duration + "', on '" + wi.id + "'.");
-
-                    if (!startedExecution) {
-                        currentExecutionTime = System.currentTimeMillis();
-                        startedExecution = true;
-                    }
-
-                }
-                else {
-                    executeQuery(instruction.id, instruction.getData());
-
-                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Executing query '" + instruction.getData() + "' on '" + instruction.id + "'.");
-
-                }
+            if (instruction != null) {
+                instructions.add(instruction);
             }
         }
+
+        return instructions;
     }
 
-    private void blockWorkloads(final MachineInstruction startInstruction) throws RemoteException, WorkloadException {
+    private void executeCoordinationScript(final List<Instruction> script) throws WorkloadParseException, RemoteException, StartupException, SQLException, WorkloadException {
 
-        if (startInstruction.blockWorkloads) {
-            for (final IWorker runningWorker : scriptedInstances.values()) {
-                runningWorker.stallWorkloads();
-            }
+        coordScriptState.startKillMonitor();
+
+        for (final Instruction instruction : script) {
+            instruction.execute(coordScriptState);
         }
+
     }
 
-    private void resumeWorkloads(final MachineInstruction startInstruction) throws RemoteException, WorkloadException {
-
-        if (startInstruction.blockWorkloads) {
-            for (final IWorker runningWorker : scriptedInstances.values()) {
-                runningWorker.resumeWorkloads();
-            }
-        }
-    }
-
-    private void executeQuery(final String workerID, final String query) throws RemoteException, SQLException {
-
-        final IWorker worker = scriptedInstances.get(Integer.valueOf(workerID));
+    public void executeQuery(final IWorker worker, final String query) throws RemoteException, SQLException {
 
         worker.executeQuery(query);
     }
 
     public void killInstance(final Integer workerID) throws RemoteException, ShutdownException {
 
-        final IWorker worker = scriptedInstances.get(Integer.valueOf(workerID));
+        final IWorker worker = coordScriptState.getScriptedInstance(Integer.valueOf(workerID));
 
         worker.terminateH2OInstance();
     }
@@ -961,11 +795,9 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     @Override
     public void shutdown() {
 
-        if (killMonitor != null) {
-            killMonitor.setRunning(false);
-        }
+        coordScriptState.disableKillMonitor();
 
-        for (final IWorker worker : scriptedInstances.values()) {
+        for (final IWorker worker : coordScriptState.getScriptedInstanceValues()) {
 
             if (worker != null) {
                 try {
@@ -976,6 +808,11 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
                 }
             }
         }
+    }
+
+    public H2OPropertiesWrapper getDescriptorFile() {
+
+        return descriptorFile;
     }
 
 }

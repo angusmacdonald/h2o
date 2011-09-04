@@ -6,10 +6,47 @@ import java.util.regex.Pattern;
 import org.h2o.eval.script.coord.instructions.Instruction;
 import org.h2o.eval.script.coord.instructions.MachineInstruction;
 import org.h2o.eval.script.coord.instructions.QueryInstruction;
+import org.h2o.eval.script.coord.instructions.SleepInstruction;
 import org.h2o.eval.script.coord.instructions.WorkloadInstruction;
 import org.h2o.util.exceptions.WorkloadParseException;
 
 public class CoordinationScriptExecutor {
+
+    /**
+     * Example format: {sleep=5000}
+     */
+    private static final String SLEEP_REGEX = "\\{sleep=\"(\\d+)\"\\}";
+
+    /**
+     * Example format: {0} {execute_workload="src/test/org/h2o/eval/workloads/test.workload"}
+     */
+    private static final String EXECUTE_WORKLOAD_REGEX = "\\{execute_workload=\"([^\"]*)\"(?:\\s+duration=\"(\\d+)\")?\\}";
+
+    /**
+     * Format: {<machine-id>} [query | execute workload operation]
+     * Example format: {0} CREATE TABLE test (id int);
+     * Example format: {0} {execute_workload="src/test/org/h2o/eval/workloads/test.workload"}
+     */
+    private static final String QUERY_REGEX = "\\{(\\d+)\\} ((.)*)";
+
+    /**
+     * Example format: {terminate_machine id="0"}
+
+     */
+    private static final String TERMINATE_MACHINE_REGEX = "\\{terminate_machine id=\"(\\d+)\"\\}";
+
+    /**
+     * Format: {start_machine id="<machine-id>" fail-after=<time_to_failure> [block-workloads="<boolean>"]}
+     * n.b. blocking is optional, and false by default.
+     * Example format: {start_machine id="0" fail-after="30000" block-workloads="true"}
+     */
+    private static final String START_MACHINE_REGEX = "\\{start_machine id=\"(\\d+)\"(?:\\s+fail-after=\"(\\d+)\")?(?:\\s+block-workloads=\"(true|false)\")?\\}";
+
+    private static final Pattern start_machine_pattern = Pattern.compile(START_MACHINE_REGEX);
+    private static final Pattern terminate_machine_pattern = Pattern.compile(TERMINATE_MACHINE_REGEX);
+    private static final Pattern query_pattern = Pattern.compile(QUERY_REGEX);
+    private static final Pattern workload_pattern = Pattern.compile(EXECUTE_WORKLOAD_REGEX);
+    private static final Pattern sleep_pattern = Pattern.compile(SLEEP_REGEX);
 
     public static MachineInstruction parseStartMachine(final String action) throws WorkloadParseException {
 
@@ -17,13 +54,10 @@ public class CoordinationScriptExecutor {
         //n.b. blocking is optional, and false by default.
         //example format: {start_machine id="0" fail-after="30000" block-workloads="true"}
 
-        final Pattern p = Pattern.compile("\\{start_machine id=\"(\\d+)\"(?:\\s+fail-after=\"(\\d+)\")?(?:\\s+block-workloads=\"(true|false)\")?\\}");
-
-        final Matcher matcher = p.matcher(action);
+        final Matcher matcher = start_machine_pattern.matcher(action);
 
         Long fail_after;
         Integer id;
-
         boolean blockWorkloads;
 
         if (matcher.matches()) {
@@ -38,103 +72,17 @@ public class CoordinationScriptExecutor {
             throw new WorkloadParseException("Invalid syntax in : " + action);
         }
 
-        return new MachineInstruction(id, fail_after, blockWorkloads);
-    }
-
-    public static MachineInstruction parseReserveMachine(final String action) throws WorkloadParseException {
-
-        //format: {reserve_machine id="<machine-id>" fail-after=<time_to_failure>}
-        //example format: {reserve_machine id="0" fail-after="30000"}
-
-        final Pattern p = Pattern.compile("\\{reserve_machine id=\"(\\d+)\"\\}");
-
-        return parseReserveOperation(action, p);
-    }
-
-    public static MachineInstruction parseStartReservedMachine(final String action) throws WorkloadParseException {
-
-        //format: {start_reserved_machine id="<machine-id>" fail-after=<time_to_failure>}
-        //example format: {start_reserved_machine id="0" fail-after="30000"}
-
-        final Pattern p = Pattern.compile("\\{start_reserved_machine id=\"(\\d+)\"\\}");
-
-        return parseReserveOperation(action, p);
-    }
-
-    public static MachineInstruction parseReserveOperation(final String action, final Pattern p) throws WorkloadParseException {
-
-        final Matcher matcher = p.matcher(action);
-
-        Integer id = null;
-
-        if (matcher.matches()) {
-            id = Integer.valueOf(matcher.group(1));
-
-        }
-        else {
-            throw new WorkloadParseException("Invalid syntax in : " + action);
-        }
-
-        return new MachineInstruction(id, null, false);
+        return new MachineInstruction(id, fail_after, blockWorkloads, true);
     }
 
     public static MachineInstruction parseTerminateMachine(final String action) throws WorkloadParseException {
 
-        //example format: {terminate_machine id="0"}
-
-        final Pattern p = Pattern.compile("\\{terminate_machine id=\"(\\d+)\"\\}");
-
-        return parseReserveOperation(action, p);
-    }
-
-    public static int parseStallCommand(final String action) throws WorkloadParseException {
-
-        //example format: {stall id="0"}, where ID is the location where workloads should be stalled.
-
-        final Pattern p = Pattern.compile("\\{stall id=\"(\\d+)\"\\}");
-
-        return parseIDCommand(action, p);
-    }
-
-    public static int parseResumeCommand(final String action) throws WorkloadParseException {
-
-        //example format: {resume id="0"}, where ID is the location where workloads should be resumed.
-
-        final Pattern p = Pattern.compile("\\{resume id=\"(\\d+)\"\\}");
-
-        return parseIDCommand(action, p);
-    }
-
-    /**
-     * Parse a command which only looks for a single ID in the first capture group.
-     * @throws WorkloadParseException
-     */
-    public static int parseIDCommand(final String action, final Pattern p) throws WorkloadParseException {
-
-        final Matcher matcher = p.matcher(action);
-
-        Integer id = null;
-
-        if (matcher.matches()) {
-            id = Integer.valueOf(matcher.group(1));
-
-        }
-        else {
-            throw new WorkloadParseException("Invalid syntax in : " + action);
-        }
-
-        return id;
+        return new MachineInstruction(parseSingleIDPattern(action, terminate_machine_pattern), null, false, false);
     }
 
     public static Instruction parseQuery(final String action) throws WorkloadParseException {
 
-        //format: {<machine-id>} [query | execute workload operation]
-        //example format: {0} CREATE TABLE test (id int);
-        //example format: {0} {execute_workload="src/test/org/h2o/eval/workloads/test.workload"}
-
-        final Pattern p = Pattern.compile("\\{(\\d+)\\} ((.)*)");
-
-        final Matcher matcher = p.matcher(action);
+        final Matcher matcher = query_pattern.matcher(action);
 
         String query = null;
         String id = null;
@@ -158,11 +106,7 @@ public class CoordinationScriptExecutor {
 
     protected static WorkloadInstruction parseWorkloadRequest(final String query, final String id) throws WorkloadParseException {
 
-        //example format: {0} {execute_workload="src/test/org/h2o/eval/workloads/test.workload"}
-
-        final Pattern p = Pattern.compile("\\{execute_workload=\"([^\"]*)\"(?:\\s+duration=\"(\\d+)\")?\\}");
-
-        final Matcher matcher = p.matcher(query);
+        final Matcher matcher = workload_pattern.matcher(query);
         String workloadFile = null;
         Long duration = null;
 
@@ -178,13 +122,9 @@ public class CoordinationScriptExecutor {
 
     }
 
-    public static int parseSleepOperation(final String action) throws WorkloadParseException {
+    public static SleepInstruction parseSleepOperation(final String action) throws WorkloadParseException {
 
-        //example format: {sleep=5000}
-
-        final Pattern p = Pattern.compile("\\{sleep=\"(\\d+)\"\\}");
-
-        final Matcher matcher = p.matcher(action);
+        final Matcher matcher = sleep_pattern.matcher(action);
         String sleepTime = null;
 
         if (matcher.matches()) {
@@ -194,7 +134,58 @@ public class CoordinationScriptExecutor {
             throw new WorkloadParseException("Invalid syntax in : " + action);
         }
 
-        return Integer.valueOf(sleepTime);
+        return new SleepInstruction(Integer.valueOf(sleepTime));
+    }
+
+    private static Integer parseSingleIDPattern(final String action, final Pattern pattern) throws WorkloadParseException {
+
+        final Matcher matcher = pattern.matcher(action);
+
+        Integer id = null;
+
+        if (matcher.matches()) {
+            id = Integer.valueOf(matcher.group(1));
+
+        }
+        else {
+            throw new WorkloadParseException("Invalid syntax in : " + action);
+        }
+
+        return id;
+    }
+
+    /**
+     * Create an instruction object by parsing the given line of a coordination script.
+     * @param action
+     * @return Returns null for comments and blank lines.
+     * @throws WorkloadParseException
+     */
+    public static Instruction parse(final String action) throws WorkloadParseException {
+
+        if (action.startsWith("#") || action.trim().equals("")) { // {machines-to-start="2"}
+            //Comment... ignore.
+            return null;
+        }
+        else if (start_machine_pattern.matcher(action).matches()) {
+
+            return CoordinationScriptExecutor.parseStartMachine(action);
+
+        }
+        else if (terminate_machine_pattern.matcher(action).matches()) {
+
+            return CoordinationScriptExecutor.parseTerminateMachine(action);
+
+        }
+        else if (sleep_pattern.matcher(action).matches()) {
+            return CoordinationScriptExecutor.parseSleepOperation(action);
+
+        }
+        else {
+            //Execute a query
+            return CoordinationScriptExecutor.parseQuery(action);
+
+        }
+
     }
 
 }
