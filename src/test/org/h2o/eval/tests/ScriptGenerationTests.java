@@ -125,7 +125,7 @@ public class ScriptGenerationTests {
     public void testCoordinationScriptGeneration() throws IOException {
 
         final long runtime = 60000;
-        final double probabilityOfFailure = 0.1;
+        final double probabilityOfFailure = 0.5;
         final long frequencyOfFailure = 10000;
         final int numberOfMachines = 5;
         final int numberOfTables = 3;

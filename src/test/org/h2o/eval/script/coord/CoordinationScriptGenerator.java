@@ -63,24 +63,62 @@ public class CoordinationScriptGenerator {
      */
     private static void generateFailure(final long runtime, final double probabilityOfFailure, final long frequencyOfFailure, final int numberOfMachines, final StringBuilder script) {
 
-        long currentTimeInScript = frequencyOfFailure;
+        /*
+         * This code refers to 'checkpoints'. These are the points during the scripts execution that it is possible that a machine may fail. They are evenly spaced out,
+         * by the margin specified by the frequencyOfFailure parameter. The following variable calculates how many of these checkpoints exist given the runtime of the script.
+         * It takes away one from this, because the last checkpoint is typically at the very end of the script, and it is pointless to terminate a machine at this point. 
+         */
+        final long numberOfFailureCheckpoints = runtime / frequencyOfFailure - 1;
 
-        final Random r = new Random(System.currentTimeMillis());
+        final int[] whenMachinesFail = decideWhichMachinesFail(numberOfMachines, probabilityOfFailure, numberOfFailureCheckpoints);
+
+        long currentTimeInScript = frequencyOfFailure; //jump past '0' as the start time, because it doesn't make sense to fail machines before anything has happened.
 
         script.append(SyntaxGenerator.createSleepCommand(frequencyOfFailure)); // don't have any machines fail immediately.
+
+        int checkpointNumber = 0;
 
         while (currentTimeInScript < runtime) {
 
             for (int id = 1; id < numberOfMachines; id++) {
-                if (r.nextDouble() < probabilityOfFailure) {
+                if (whenMachinesFail[id] == checkpointNumber) {
                     script.append(SyntaxGenerator.terminateMachineCommand(id));
                 }
             }
+            checkpointNumber++;
 
             script.append(SyntaxGenerator.createSleepCommand(frequencyOfFailure));
+
             currentTimeInScript += frequencyOfFailure;
         }
 
+    }
+
+    /**
+     * Decide whether a machine should fail at some point during the co-ordination scripts execution.
+     * @param numberOfMachines
+     * @param probabilityOfFailure
+     * @param numberOfFailureCheckpoints The number of places in the script where a machine can fail.
+     * @return When the machine should fail. '-1' if it doesn't fail.
+     */
+    private static int[] decideWhichMachinesFail(final int numberOfMachines, final double probabilityOfFailure, final long numberOfFailureCheckpoints) {
+
+        final Random r = new Random(System.currentTimeMillis());
+
+        final int[] whenMachinesFail = new int[numberOfMachines];
+
+        whenMachinesFail[0] = -1; //the first machine never fails.
+
+        for (int id = 1; id < numberOfMachines; id++) {
+            if (r.nextDouble() < probabilityOfFailure) {
+                whenMachinesFail[id] = r.nextInt(numberOfMachines);
+            }
+            else {
+                whenMachinesFail[id] = -1;
+            }
+        }
+
+        return whenMachinesFail;
     }
 
     /**
