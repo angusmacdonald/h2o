@@ -53,7 +53,7 @@ import uk.ac.standrews.cs.nds.util.FileUtil;
 import uk.ac.standrews.cs.nds.util.NetworkUtil;
 import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
-public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
+public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoordinatorScript {
 
     /*
      * Registry fields.
@@ -77,7 +77,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
 
     private final Map<IWorker, Integer> workersWithActiveWorkloads = Collections.synchronizedMap(new HashMap<IWorker, Integer>());
 
-    private final CoordinatorScriptState coordScriptState = new CoordinatorScriptState(this);
+    private CoordinatorScriptState coordScriptState = new CoordinatorScriptState(this);
 
     /*
      * Locator server fields.
@@ -540,15 +540,13 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         executeCoordinatorScript(coordinatorScriptLocation, DEFAULT_RESULTS_FOLDER_LOCATION);
     }
 
+    @Override
     public void executeCoordinatorScript(final String coordinationScriptLocation, final String resultsFolderLocation) throws FileNotFoundException, IOException, WorkloadParseException, StartupException, SQLException, WorkloadException {
-
-        this.coordinationScriptLocation = coordinationScriptLocation;
-        this.resultsFolderLocation = resultsFolderLocation;
 
         final List<String> script = FileUtil.readAllLines(coordinationScriptLocation);
         final List<Instruction> parsedInstructions = parseCoordinationScript(script);
 
-        executeCoordinationScript(parsedInstructions);
+        executeParsedCoordinationScript(parsedInstructions, resultsFolderLocation, coordinationScriptLocation);
     }
 
     private List<Instruction> parseCoordinationScript(final List<String> script) throws WorkloadParseException {
@@ -566,8 +564,21 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
         return instructions;
     }
 
-    private void executeCoordinationScript(final List<Instruction> script) throws WorkloadParseException, RemoteException, StartupException, SQLException, WorkloadException {
+    @Override
+    public void executeCoordinationScript(final List<String> script, final String resultsFolderLocation, final String coordinationScriptName) throws WorkloadParseException, RemoteException, StartupException, SQLException, WorkloadException {
 
+        final List<Instruction> parsedInstructions = parseCoordinationScript(script);
+
+        executeParsedCoordinationScript(parsedInstructions, resultsFolderLocation, coordinationScriptName);
+
+    }
+
+    private void executeParsedCoordinationScript(final List<Instruction> script, final String resultsFolderLocation, final String coordinationScriptLocation) throws WorkloadParseException, RemoteException, StartupException, SQLException, WorkloadException {
+
+        this.resultsFolderLocation = resultsFolderLocation;
+        this.coordinationScriptLocation = coordinationScriptLocation;
+
+        coordScriptState = new CoordinatorScriptState(this);
         coordScriptState.startKillMonitor();
 
         for (final Instruction instruction : script) {
@@ -813,6 +824,23 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal {
     public H2OPropertiesWrapper getDescriptorFile() {
 
         return descriptorFile;
+    }
+
+    @Override
+    public void setupSystem(final int locatorServerPort, final int tableReplicationFactor, final int metadataReplicationFactor) throws IOException, StartupException {
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Deleting existing instances.");
+
+        obliterateExtantInstances();
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Starting locator server on port " + locatorServerPort + ".");
+
+        startLocatorServer(locatorServerPort);
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Setting system-wide replication factor to " + replicationFactor);
+
+        setReplicationFactor(tableReplicationFactor);
+        setMetaDataReplicationFactor(metadataReplicationFactor);
     }
 
 }
