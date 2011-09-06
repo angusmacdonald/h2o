@@ -191,7 +191,7 @@ public final class InMemorySystemTable implements ISystemTable {
      */
     private void setTableManagerAsShutdown(final TableManagerWrapper tmw) throws RPCException {
 
-        if (tmw.getTableManager() != null) {
+        if (tmw != null && tmw.getTableManager() != null) {
             try {
                 tmw.getTableManager().shutdown(true);
             }

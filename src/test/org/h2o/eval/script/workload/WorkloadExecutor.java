@@ -71,11 +71,19 @@ public class WorkloadExecutor {
 
         final List<QueryLogEntry> queryLog = new LinkedList<QueryLogEntry>();
 
-        timeLoop: while (currentTime() < currentWorkloadEndTime()) {
+        boolean startOfExecution = true;
+
+        while (currentTime() < currentWorkloadEndTime()) { // Will repeat the same workload multiple times if its end is reached before the scheduled time.
 
             stat.execute("SET AUTOCOMMIT ON;");
 
             long timeBeforeQueryExecution = 0; //when a particular transaction started.
+
+            if (startOfExecution) {
+                timeBeforeQueryExecution = currentTime();
+                // startOfExecution = false;
+            }
+
             final List<String> queriesInThisTransaction = new LinkedList<String>();
 
             int loopCounter = -1; //the current iteration of the loop in this workload [nested loops are not supported].
@@ -181,7 +189,7 @@ public class WorkloadExecutor {
                             //Not currently checked.
                         }
                         else {
-                            if (!query.contains("COMMIT") && stat.getUpdateCount() < 1) { throw new SQLException("Update count was lower than expected."); }
+                            if (!query.contains("COMMIT") && stat.getUpdateCount() < 0) { throw new SQLException("Update count was lower than expected."); }
                         }
 
                     }
@@ -208,7 +216,19 @@ public class WorkloadExecutor {
                     final long timeAfterQueryExecution = currentTime();
 
                     if (autoCommitEnabled) {
+                        if (timeAfterQueryExecution - timeBeforeQueryExecution < 0 || timeAfterQueryExecution - timeBeforeQueryExecution > 20000) {
+                            System.out.println("HAMMER TIME.");
+                        }
+
                         queryLog.add(QueryLogEntry.createQueryLogEntry(currentTime(), query, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
+
+                        attemptedTransactions++;
+
+                        if (successfullyExecuted) {
+                            successfullyExecutedTransactions++;
+                        }
+
+                        timeBeforeQueryExecution = currentTime();
                     }
                     else if (!autoCommitEnabled && (query.contains("COMMIT;") || !successfullyExecuted)) {
 
@@ -227,6 +247,7 @@ public class WorkloadExecutor {
 
                     if (!successfullyExecuted) {
                         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Re-starting workload after unsuccessful execution.");
+                        startOfExecution = true;
                         break queryLoop; //restart the workload.
                     }
 

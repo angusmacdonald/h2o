@@ -93,11 +93,11 @@ public class QueryLogEntry extends LogEntry implements Serializable {
             }
             else if (query.contains("CREATE TABLE")) {
                 queryType = QueryType.CREATE;
-                tableInvolved = query.substring("CREATE TABLE ".length(), query.indexOf(" ("));
+                tableInvolved = query.substring("CREATE TABLE IF NOT EXISTS".length(), query.indexOf(" ("));
             }
             else if (query.contains("DROP TABLE")) {
                 queryType = QueryType.DROP;
-                tableInvolved = query.substring("DROP TABLE ".length(), query.indexOf(";"));
+                tableInvolved = query.substring("DROP TABLE IF EXISTS".length(), query.indexOf(";"));
             }
 
             else if (query.contains("SELECT * FROM ")) {

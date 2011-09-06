@@ -159,6 +159,17 @@ public class TableManagerServer extends ApplicationServer {
             }
         });
 
+        handler_map.put("shutdown", new IHandler() {
+
+            @Override
+            public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
+
+                final boolean p0 = args.booleanValue();
+                table_manager.shutdown(p0);
+                writer.value("");
+            }
+        });
+
         // public String getSchemaName() throws RPCException;
 
         handler_map.put("getSchemaName", new IHandler() {

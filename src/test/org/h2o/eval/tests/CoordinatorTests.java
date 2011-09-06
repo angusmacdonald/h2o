@@ -162,26 +162,7 @@ public class CoordinatorTests {
     @Test
     public void generateThenRunCoordinationScript() throws Exception {
 
-        final String coordScriptLocation = generateCoordinationScript(false);
-
-        workers = new IWorker[3];
-        for (int i = 0; i < workers.length; i++) {
-            workers[i] = new Worker();
-        }
-
-        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
-
-        eval.startLocatorServer(34000);
-
-        eval.executeCoordinatorScript(coordScriptLocation);
-
-        eval.blockUntilWorkloadsComplete();
-    }
-
-    @Test
-    public void generateThenRunSystemTableCoordinationScript() throws Exception {
-
-        final String coordScriptLocation = generateCoordinationScript(true);
+        final String coordScriptLocation = generateCoordinationScript(false, 0);
 
         workers = new IWorker[3];
         for (int i = 0; i < workers.length; i++) {
@@ -197,7 +178,26 @@ public class CoordinatorTests {
         eval.blockUntilWorkloadsComplete();
     }
 
-    public String generateCoordinationScript(final boolean againstSystemTable) throws IOException {
+    @Test
+    public void generateThenRunSystemTableCoordinationScript() throws Exception {
+
+        final String coordScriptLocation = generateCoordinationScript(true, 200);
+
+        workers = new IWorker[3];
+        for (int i = 0; i < workers.length; i++) {
+            workers[i] = new Worker();
+        }
+
+        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "127.0.0.1");
+
+        eval.startLocatorServer(34000);
+
+        eval.executeCoordinatorScript(coordScriptLocation);
+
+        eval.blockUntilWorkloadsComplete();
+    }
+
+    public String generateCoordinationScript(final boolean againstSystemTable, final int sleepTime) throws IOException {
 
         final long runtime = 60000;
         final double probabilityOfFailure = 0.5;
@@ -207,7 +207,7 @@ public class CoordinatorTests {
         final TableClustering clusteringSpec = new TableClustering(Clustering.GROUPED, 5);
 
         final Set<WorkloadType> workloadSpecs = new HashSet<WorkloadType>();
-        final WorkloadType spec = new WorkloadType(0.5, againstSystemTable, 0, true, 120, LinkToTableLocation.WORKLOAD_PER_TABLE, false);
+        final WorkloadType spec = new WorkloadType(0.5, againstSystemTable, sleepTime, true, 120, LinkToTableLocation.WORKLOAD_PER_TABLE, false);
         workloadSpecs.add(spec);
 
         return CoordinationScriptGenerator.generateCoordinationScriptAndWriteToFile(runtime, probabilityOfFailure, frequencyOfFailure, numberOfMachines, numberOfTables, clusteringSpec, workloadSpecs);
