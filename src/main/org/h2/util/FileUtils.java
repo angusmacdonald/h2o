@@ -122,9 +122,9 @@ public class FileUtils {
 
         final boolean deleted = FileSystem.getInstance(fileName).tryDelete(fileName);
 
-        if (!deleted) {
-            System.err.println("File not deleted: " + fileName);
-        }
+        //        if (!deleted) {
+        //            System.err.println("File not deleted: " + fileName);
+        //        }
     }
 
     /**

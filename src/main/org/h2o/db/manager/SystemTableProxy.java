@@ -285,16 +285,20 @@ public class SystemTableProxy extends StreamProxy implements ISystemTableMigrata
             final JSONReader reader = makeCall(connection);
 
             final Map<DatabaseID, DatabaseInstanceWrapper> result = marshaller.deserializeMapDatabaseIDDatabaseInstanceWrapper(reader);
+
             finishCall(connection);
             return result;
         }
         catch (final MovedException e) {
+            e.printStackTrace();
             throw e;
         }
         catch (final SQLException e) {
+            e.printStackTrace();
             throw e;
         }
         catch (final Exception e) {
+            e.printStackTrace();
             dealWithException(e);
             return null; //not reached
         }

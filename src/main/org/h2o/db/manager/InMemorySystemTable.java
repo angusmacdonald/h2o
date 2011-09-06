@@ -351,6 +351,8 @@ public final class InMemorySystemTable implements ISystemTable {
          */
         final Map<DatabaseID, DatabaseInstanceWrapper> connectedMachines = otherSystemTable.getConnectionInformation();
 
+        if (connectedMachines == null || connectedMachines.size() == 0) { throw new RPCException("No connected machines were found in the remote (old) System Table. There should be at least two."); }
+
         databasesInSystem = new HashMap<DatabaseID, DatabaseInstanceWrapper>();
 
         // Make sure this contains remote references for each URL

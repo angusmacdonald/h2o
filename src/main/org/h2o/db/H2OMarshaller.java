@@ -677,6 +677,8 @@ public class H2OMarshaller extends Marshaller {
                 result.add(deserializeDatabaseInstanceWrapper(reader));
             }
 
+            reader.endArray();
+
             return result;
         }
         catch (final Exception e) {
@@ -695,6 +697,7 @@ public class H2OMarshaller extends Marshaller {
             while (!reader.have(JSONReader.ENDARRAY)) {
                 result.add(deserializeDatabaseInstanceWrapper(reader));
             }
+            reader.endArray();
 
             return result;
         }
@@ -747,6 +750,7 @@ public class H2OMarshaller extends Marshaller {
             return result;
         }
         catch (final Exception e) {
+            e.printStackTrace();
             throw new DeserializationException(e);
         }
     }
@@ -923,7 +927,7 @@ public class H2OMarshaller extends Marshaller {
             while (!reader.have(JSONReader.ENDARRAY)) {
                 result.add(deserializeTableManagerWrapper(reader));
             }
-
+            reader.endArray();
             return result;
         }
         catch (final Exception e) {

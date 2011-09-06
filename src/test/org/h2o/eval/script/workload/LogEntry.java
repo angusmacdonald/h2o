@@ -37,7 +37,8 @@ public class LogEntry implements Serializable {
         final String tablesInvolvedString = PrettyPrinter.toString(tablesInvolved, ";", false);
         final long timeOfTransactionMS = timeOfCommit - timeToExecute - startTime;
 
-        System.out.println(System.currentTimeMillis() + ":: timeOfTransactionMS: " + timeOfTransactionMS + " = " + timeOfCommit + " - " + timeToExecute + " - " + startTime);
+        // Diagnostic used when some bugs have appeared in the time of transaction value.
+        // System.out.println(System.currentTimeMillis() + ":: timeOfTransactionMS: " + timeOfTransactionMS + " = " + timeOfCommit + " - " + timeToExecute + " - " + startTime);
 
         final int timeOfTransactionSec = (int) (timeOfTransactionMS / 1000);
 

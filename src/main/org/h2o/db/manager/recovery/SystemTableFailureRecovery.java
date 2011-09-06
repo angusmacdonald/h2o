@@ -393,11 +393,15 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
                 throw new SystemTableAccessException("This System Table is already being migrated to another instance.");
             }
         }
+        System.out.println("XXX about to recreateSystemTable");
 
         /*
          * Build the System Table's state from that of the existing table.
          */
         try {
+
+            System.out.println("XXX about to recreateSystemTable");
+
             newSystemTable.recreateSystemTable(oldSystemTable);
         }
         catch (final RPCException e) {
@@ -413,8 +417,8 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
             throw new SystemTableAccessException("Couldn't create persisted tables as expected.");
         }
         catch (final NullPointerException e) {
-            // ErrorHandling.exceptionError(e,
-            // "Failed to migrate System Table to new machine. Machine has already been shut down.");
+            ErrorHandling.exceptionError(e, "Failed to migrate System Table to new machine."); //possibly because machine has already been shut down.
+            throw new SystemTableAccessException("Failed to migrate System Table to new machine.");
         }
 
         /*

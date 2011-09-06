@@ -72,7 +72,7 @@ public class CoordinatorTests {
         workers = new IWorker[1];
         workers[0] = new Worker();
 
-        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
+        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "127.0.0.1");
 
         eval.startLocatorServer(34000);
 
@@ -86,7 +86,7 @@ public class CoordinatorTests {
         workers[0] = new Worker();
         workers[1] = new Worker();
 
-        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
+        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "127.0.0.1");
 
         eval.startLocatorServer(34000);
 
@@ -101,7 +101,7 @@ public class CoordinatorTests {
             workers[i] = new Worker();
         }
 
-        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
+        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "127.0.0.1");
 
         eval.startLocatorServer(34000);
 
@@ -114,7 +114,7 @@ public class CoordinatorTests {
         workers = new IWorker[1];
         workers[0] = new Worker();
 
-        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
+        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "127.0.0.1");
 
         eval.startLocatorServer(34000);
 
@@ -133,7 +133,7 @@ public class CoordinatorTests {
             workers[i] = new Worker();
         }
 
-        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
+        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "127.0.0.1");
 
         eval.startLocatorServer(34000);
 
@@ -150,11 +150,28 @@ public class CoordinatorTests {
             workers[i] = new Worker();
         }
 
-        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "eigg");
+        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "127.0.0.1");
 
         eval.startLocatorServer(34000);
 
         eval.executeCoordinatorScript("src/test/org/h2o/eval/workloads/coordinator.coord");
+
+        eval.blockUntilWorkloadsComplete();
+    }
+
+    @Test
+    public void runMigrateCoordinationScript() throws Exception {
+
+        workers = new IWorker[2];
+        for (int i = 0; i < workers.length; i++) {
+            workers[i] = new Worker();
+        }
+
+        final ICoordinatorLocal eval = new Coordinator("evalDatabase", "127.0.0.1");
+
+        eval.startLocatorServer(34000);
+
+        eval.executeCoordinatorScript("src/test/org/h2o/eval/workloads/st_failure/single-failure.coord");
 
         eval.blockUntilWorkloadsComplete();
     }

@@ -35,6 +35,7 @@ import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 /**
  * @author Angus Macdonald (angus@cs.st-andrews.ac.uk)
@@ -163,6 +164,8 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     @Override
     public void recreateSystemTable(final ISystemTable otherSystemTable) throws RPCException {
 
+        System.out.println(">>>recreateSystemTable");
+
         /*
          * Persist the state of the given System Table reference to disk.
          */
@@ -178,6 +181,8 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
             catch (final SQLException e) {
                 e.printStackTrace();
             }
+
+            System.out.println(">>>DatabasesInSystem: " + PrettyPrinter.toString(databasesInSystem));
 
             if (databasesInSystem != null) {
                 for (final Entry<DatabaseID, DatabaseInstanceWrapper> databaseEntry : databasesInSystem.entrySet()) {
@@ -219,7 +224,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
             }
         }
         catch (final MovedException e) {
-            e.printStackTrace();
+            e.printStackTrace(); //Moved exception shouldn't happen TODO even so, this handling is lazy.
         }
     }
 

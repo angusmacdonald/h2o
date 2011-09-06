@@ -166,8 +166,8 @@ public class SystemTable implements ISystemTableMigratable {
     public void recreateSystemTable(final ISystemTable otherSystemTable) throws RPCException, MovedException, SQLException {
 
         preMethodTest();
-        inMemory.recreateSystemTable(otherSystemTable);
 
+        inMemory.recreateSystemTable(otherSystemTable);
         persisted.recreateSystemTable(otherSystemTable);
     }
 
@@ -183,6 +183,7 @@ public class SystemTable implements ISystemTableMigratable {
     public Map<DatabaseID, DatabaseInstanceWrapper> getConnectionInformation() throws RPCException, MovedException, SQLException {
 
         return inMemory.getConnectionInformation();
+
     }
 
     @Override
