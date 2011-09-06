@@ -1070,4 +1070,10 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
         return replicaManager.getAllReplicasOnActiveMachines();
     }
+
+    @Override
+    public DatabaseID getLocalDatabaseID() throws RPCException {
+
+        return db.getID();
+    }
 }

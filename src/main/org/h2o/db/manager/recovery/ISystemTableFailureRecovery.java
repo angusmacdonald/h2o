@@ -51,11 +51,12 @@ public interface ISystemTableFailureRecovery {
      *            Table.
      * @param oldSystemTable
      *            The reference that this database has for the old System Table. This will be used if creating from an active copy.
+    @param noReplicateToPreviousInstance If true, then the new system table will start and be told not to replicate data to the previous system table's location. Only applies to migrations on active System Tables (those not using persisted state).
      * @return Reference to the new System Table.
      * @throws SystemTableAccessException
      *             Thrown when the restart of the System Table failed.
      */
-    public SystemTableWrapper restart(boolean persistedSchemaTablesExist, boolean recreateFromPersistedState, ISystemTableMigratable oldSystemTable) throws SystemTableAccessException;
+    public SystemTableWrapper restart(boolean persistedSchemaTablesExist, boolean recreateFromPersistedState, ISystemTableMigratable oldSystemTable, boolean noReplicateToPreviousInstance) throws SystemTableAccessException;
 
     /**
      * Find the System Table after a MovedException is thrown on SystemTable lookup.

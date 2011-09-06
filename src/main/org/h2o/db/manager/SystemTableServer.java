@@ -493,6 +493,15 @@ public class SystemTableServer extends ApplicationServer {
 
             }
         });
+
+        handler_map.put("getLocalDatabaseID", new IHandler() {
+
+            @Override
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
+
+                marshaller.serializeDatabaseID(system_table.getLocalDatabaseID(), response);
+            }
+        });
     }
 
     public void completeVoidResponse(final JSONWriter response) throws JSONException {

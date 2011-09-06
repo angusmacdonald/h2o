@@ -448,4 +448,9 @@ public class SystemTable implements ISystemTableMigratable {
 
     }
 
+    @Override
+    public DatabaseID getLocalDatabaseID() throws RPCException {
+
+        return database.getID();
+    }
 }

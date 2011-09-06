@@ -8,6 +8,7 @@
  */
 package org.h2o.db.manager.util;
 
+import org.h2o.db.id.DatabaseID;
 import org.h2o.util.exceptions.MigrationException;
 import org.h2o.util.exceptions.MovedException;
 
@@ -47,4 +48,10 @@ public interface IMigratable {
      */
     public IChordRemoteReference getChordReference() throws RPCException;
 
+    /**
+     * Get the ID of the database instance that is running this System table using the {@link DatabaseID#getID()} call.
+     * @return
+     * @throws RPCException
+     */
+    public DatabaseID getLocalDatabaseID() throws RPCException;
 }

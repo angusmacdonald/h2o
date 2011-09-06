@@ -5506,7 +5506,14 @@ public class Parser {
     private Prepared parseMigrate() throws SQLException {
 
         if (readIf("SYSTEMTABLE")) {
-            return new MigrateSystemTable(session, null);
+
+            boolean noReplicateToPreviousInstance = false;
+
+            if (readIf("NO_REPLICATE")) {
+                noReplicateToPreviousInstance = true;
+            }
+
+            return new MigrateSystemTable(session, null, noReplicateToPreviousInstance);
         }
         else if (readIf("TABLEMANAGER")) {
             final String tableName = readIdentifierWithSchema();

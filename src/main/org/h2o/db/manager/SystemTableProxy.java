@@ -785,4 +785,23 @@ public class SystemTableProxy extends StreamProxy implements ISystemTableMigrata
             dealWithException(e);
         }
     }
+
+    @Override
+    public DatabaseID getLocalDatabaseID() throws RPCException {
+
+        try {
+
+            final Connection connection = (Connection) startCall("getLocalDatabaseID");
+
+            final JSONReader reader = makeCall(connection);
+            final DatabaseID result = marshaller.deserializeDatabaseID(reader);
+            finishCall(connection);
+            return result;
+        }
+        catch (final Exception e) {
+            ErrorHandling.exceptionError(e, "Error looking up a table manager location.");
+            dealWithException(e);
+            return null; // not reached
+        }
+    }
 }

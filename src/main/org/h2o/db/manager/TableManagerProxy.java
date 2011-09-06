@@ -50,6 +50,7 @@ import uk.ac.standrews.cs.nds.rpc.stream.Connection;
 import uk.ac.standrews.cs.nds.rpc.stream.JSONReader;
 import uk.ac.standrews.cs.nds.rpc.stream.Marshaller;
 import uk.ac.standrews.cs.nds.rpc.stream.StreamProxy;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 import uk.ac.standrews.cs.stachord.interfaces.IChordRemoteReference;
 
 public class TableManagerProxy extends StreamProxy implements ITableManagerRemote {
@@ -684,6 +685,25 @@ public class TableManagerProxy extends StreamProxy implements ITableManagerRemot
         }
         catch (final Exception e) {
             dealWithException(e);
+        }
+    }
+
+    @Override
+    public DatabaseID getLocalDatabaseID() throws RPCException {
+
+        try {
+
+            final Connection connection = (Connection) startCall("getLocalDatabaseID");
+
+            final JSONReader reader = makeCall(connection);
+            final DatabaseID result = marshaller.deserializeDatabaseID(reader);
+            finishCall(connection);
+            return result;
+        }
+        catch (final Exception e) {
+            ErrorHandling.exceptionError(e, "Error looking up a table manager location.");
+            dealWithException(e);
+            return null; // not reached
         }
     }
 

@@ -297,9 +297,9 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public ISystemTableMigratable migrateSystemTableToLocalInstance(final boolean persistedSchemaTablesExist, final boolean recreateFromPersistedState) throws SystemTableAccessException {
+    public ISystemTableMigratable migrateSystemTableToLocalInstance(final boolean persistedSchemaTablesExist, final boolean recreateFromPersistedState, final boolean noReplicateToPreviousInstance) throws SystemTableAccessException {
 
-        systemTableWrapper = systemTableRecovery.restart(persistedSchemaTablesExist, recreateFromPersistedState, systemTableWrapper.getSystemTable());
+        systemTableWrapper = systemTableRecovery.restart(persistedSchemaTablesExist, recreateFromPersistedState, systemTableWrapper.getSystemTable(), noReplicateToPreviousInstance);
 
         db.getMetaDataReplicaManager().replicateMetaDataIfPossible(this, true); // replicate system table state.
 
@@ -314,7 +314,7 @@ public class SystemTableReference implements ISystemTableReference {
     }
 
     @Override
-    public void migrateSystemTableToLocalInstance() throws SystemTableAccessException {
+    public void migrateSystemTableToLocalInstance(final boolean noReplicateToPreviousInstance) throws SystemTableAccessException {
 
         boolean persistedSchemaTablesExist = false;
 
@@ -325,7 +325,7 @@ public class SystemTableReference implements ISystemTableReference {
             }
         }
 
-        migrateSystemTableToLocalInstance(persistedSchemaTablesExist, false);
+        migrateSystemTableToLocalInstance(persistedSchemaTablesExist, false, noReplicateToPreviousInstance);
     }
 
     @Override

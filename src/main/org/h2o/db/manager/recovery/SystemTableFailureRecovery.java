@@ -105,10 +105,10 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
     }
 
     @Override
-    public synchronized SystemTableWrapper restart(final boolean persistedSchemaTablesExist, final boolean recreateFromPersistedState, final ISystemTableMigratable oldSystemTable) throws SystemTableAccessException {
+    public synchronized SystemTableWrapper restart(final boolean persistedSchemaTablesExist, final boolean recreateFromPersistedState, final ISystemTableMigratable oldSystemTable, final boolean noReplicateToPreviousInstance) throws SystemTableAccessException {
 
         if (recreateFromPersistedState) { return restartSystemTableFromPersistedState(persistedSchemaTablesExist); }
-        return moveSystemTableToLocalMachine(oldSystemTable);
+        return moveSystemTableToLocalMachine(oldSystemTable, noReplicateToPreviousInstance);
     }
 
     /*
@@ -154,7 +154,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         if (localMachineHoldsSystemTableState) {
             // Re-instantiate the System Table on this node
             Diagnostic.traceNoEvent(DiagnosticLevel.INIT, db.getID() + ": A copy of the System Table state exists locally (on " + db.getID() + "). It will be re-instantiated here.");
-            final ISystemTableMigratable newSystemTable = stReference.migrateSystemTableToLocalInstance(true, true); // throws
+            final ISystemTableMigratable newSystemTable = stReference.migrateSystemTableToLocalInstance(true, true, false); // throws
             // SystemTableCreationException
             // if it fails.
             newSystemTableWrapper = new SystemTableWrapper(newSystemTable, db.getID());
@@ -316,17 +316,13 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
     }
 
     /**
-     * Migrates an active System Table to the local machine.
+     * CREATE A NEW System Table BY COPYING THE STATE OF THE CURRENT ACTIVE IN-MEMORY System Table.
      * 
-     * @param database
-     * @param oldSystemTable
+     * @param oldSystemTable    Reference to the old, active System Table.
+     * @param noReplicateToPreviousInstance Whether data can be replicated onto the instance which currently runs the old System Table.
      * @return
      */
-    private SystemTableWrapper moveSystemTableToLocalMachine(ISystemTableMigratable oldSystemTable) throws SystemTableAccessException {
-
-        /*
-         * CREATE A NEW System Table BY COPYING THE STATE OF THE CURRENT ACTIVE IN-MEMORY System Table.
-         */
+    private SystemTableWrapper moveSystemTableToLocalMachine(ISystemTableMigratable oldSystemTable, final boolean noReplicateToPreviousInstance) throws SystemTableAccessException {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Preparing to migrate System Table.");
 
@@ -344,6 +340,17 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         }
 
         db.startSystemTableServer(newSystemTable);
+
+        if (noReplicateToPreviousInstance) {
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Setting previous System Table location as a NO_REPLICATE site.");
+
+            try {
+                newSystemTable.excludeInstanceFromRankedResults(oldSystemTable.getLocalDatabaseID());
+            }
+            catch (final Exception e2) {
+                ErrorHandling.exceptionError(e2, "Failed to set NoReplicate command for old database.");
+            }
+        }
 
         /*
          * Stop the old, remote, manager from accepting any more requests.

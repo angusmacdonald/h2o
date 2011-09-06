@@ -125,17 +125,19 @@ public interface ISystemTableReference {
      * @param recreateFromPersistedState
      *            If true the new System Table will be re-instantiated from persisted state on disk. Otherwise it will be migrated from an
      *            active in-memory copy. If the old System Table has failed the new manager must be recreated from persisted state.
+    @param noReplicateToPreviousInstance If true, then the new system table will start and be told not to replicate data to the previous system table's location. Only applies to migrations on active System Tables (those not using persisted state).
      * @return
      * @throws SystemTableAccessException
      */
-    public ISystemTableMigratable migrateSystemTableToLocalInstance(boolean persistedSchemaTablesExist, boolean recreateFromPersistedState) throws SystemTableAccessException;
+    public ISystemTableMigratable migrateSystemTableToLocalInstance(boolean persistedSchemaTablesExist, boolean recreateFromPersistedState, boolean noReplicateToPreviousInstance) throws SystemTableAccessException;
 
     /**
      * If called the System Table will be moved to the local database instance.
+     * @param noReplicateToPreviousInstance 
      * 
      * @throws SystemTableAccessException
      */
-    public void migrateSystemTableToLocalInstance() throws SystemTableAccessException;
+    public void migrateSystemTableToLocalInstance(boolean noReplicateToPreviousInstance) throws SystemTableAccessException;
 
     /**
      * An exception has been thrown trying to access the System Table because it has been moved to a new location. This method handles this

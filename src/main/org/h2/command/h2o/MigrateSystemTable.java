@@ -13,13 +13,17 @@ import uk.ac.standrews.cs.nds.rpc.RPCException;
  */
 public class MigrateSystemTable extends org.h2.command.ddl.SchemaCommand {
 
+    private final boolean noReplicateToPreviousInstance;
+
     /**
      * @param session
      * @param schema
+     * @param noReplicateToPreviousInstance If true, then the new system table will start and be told not to replicate data to the previous system table's location. Only applies to migrations on active System Tables (those not using persisted state).
      */
-    public MigrateSystemTable(final Session session, final Schema schema) {
+    public MigrateSystemTable(final Session session, final Schema schema, final boolean noReplicateToPreviousInstance) {
 
         super(session, schema);
+        this.noReplicateToPreviousInstance = noReplicateToPreviousInstance;
     }
 
     /*
@@ -40,7 +44,7 @@ public class MigrateSystemTable extends org.h2.command.ddl.SchemaCommand {
     public int update() throws SQLException, RPCException {
 
         try {
-            session.getDatabase().getSystemTableReference().migrateSystemTableToLocalInstance();
+            session.getDatabase().getSystemTableReference().migrateSystemTableToLocalInstance(noReplicateToPreviousInstance);
         }
         catch (final SystemTableAccessException e) {
             throw new SQLException("Failed to recreate System Table on this machine.");

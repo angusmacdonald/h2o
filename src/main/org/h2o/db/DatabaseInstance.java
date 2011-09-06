@@ -177,7 +177,7 @@ public class DatabaseInstance implements IDatabaseInstanceRemote {
         Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Responding to request to recreate System Table on '" + database.getDatabaseLocation() + "'.");
 
         final ISystemTableReference systemTableReference = database.getSystemTableReference();
-        return systemTableReference.migrateSystemTableToLocalInstance(true, true);
+        return systemTableReference.migrateSystemTableToLocalInstance(true, true, false);
     }
 
     @Override

@@ -371,5 +371,14 @@ public class TableManagerServer extends ApplicationServer {
             }
         });
 
+        handler_map.put("getLocalDatabaseID", new IHandler() {
+
+            @Override
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
+
+                marshaller.serializeDatabaseID(table_manager.getLocalDatabaseID(), response);
+            }
+        });
+
     }
 }
