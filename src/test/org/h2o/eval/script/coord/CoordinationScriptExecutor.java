@@ -168,21 +168,21 @@ public class CoordinationScriptExecutor {
         }
         else if (start_machine_pattern.matcher(action).matches()) {
 
-            return CoordinationScriptExecutor.parseStartMachine(action);
+            return parseStartMachine(action);
 
         }
         else if (terminate_machine_pattern.matcher(action).matches()) {
 
-            return CoordinationScriptExecutor.parseTerminateMachine(action);
+            return parseTerminateMachine(action);
 
         }
         else if (sleep_pattern.matcher(action).matches()) {
-            return CoordinationScriptExecutor.parseSleepOperation(action);
+            return parseSleepOperation(action);
 
         }
         else {
             //Execute a query
-            return CoordinationScriptExecutor.parseQuery(action);
+            return parseQuery(action);
 
         }
 

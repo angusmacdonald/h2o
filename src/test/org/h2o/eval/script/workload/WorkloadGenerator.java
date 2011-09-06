@@ -37,6 +37,27 @@ public class WorkloadGenerator {
 
         createWorkloadsFolder(folderPath);
 
+        if (spec.isQueryAgainstSystemTable()) {
+            return generateQueriesAgainstSystemTable(spec);
+        }
+        else {
+            return generateQueriesAgainstTableManagers(spec, tableGrouping);
+        }
+
+    }
+
+    private Map<String, Integer> generateQueriesAgainstSystemTable(final WorkloadType spec) throws IOException {
+
+        final Map<String, Integer> newWorkloads = new HashMap<String, Integer>();
+
+        final String workloadLocation = createWorkload(spec, null, "systemTable.workload");
+
+        newWorkloads.put(workloadLocation, 0);
+        return newWorkloads;
+    }
+
+    private Map<String, Integer> generateQueriesAgainstTableManagers(final WorkloadType spec, final TableGrouping tableGrouping) throws IOException {
+
         final Map<String, Integer> newWorkloads = new HashMap<String, Integer>();
 
         final Map<Integer, ArrayList<String>> groupings = tableGrouping.getGroupings();
@@ -45,11 +66,7 @@ public class WorkloadGenerator {
             //A single workload is created which queries every table.
             final int locationToRunWorkload = 0;
 
-            final ArrayList<String> tablesInWorkload = new ArrayList<String>();
-
-            for (final List<String> tablesInGroup : groupings.values()) {
-                tablesInWorkload.addAll(tablesInGroup);
-            }
+            final ArrayList<String> tablesInWorkload = getAllTablesInWorkload(groupings);
 
             final String workloadLocation = createWorkload(spec, tablesInWorkload, "allTables.workload");
 
@@ -87,6 +104,17 @@ public class WorkloadGenerator {
         }
 
         return newWorkloads;
+    }
+
+    private ArrayList<String> getAllTablesInWorkload(final Map<Integer, ArrayList<String>> groupings) {
+
+        final ArrayList<String> tablesInWorkload = new ArrayList<String>();
+
+        for (final List<String> tablesInGroup : groupings.values()) {
+            tablesInWorkload.addAll(tablesInGroup);
+        }
+
+        return tablesInWorkload;
     }
 
     /**
@@ -133,7 +161,9 @@ public class WorkloadGenerator {
         final String workloadFileLocation = workloadFolder.getAbsolutePath() + File.separator + fileName;
 
         if (spec.isQueryAgainstSystemTable()) {
-            throw new NotImplementedException();
+            final StringBuilder script = createSystemTableWorkload(spec);
+
+            FileUtil.writeToFile(workloadFileLocation, script.toString());
         }
         else {
 
@@ -145,6 +175,47 @@ public class WorkloadGenerator {
 
         return workloadFileLocation;
 
+    }
+
+    private StringBuilder createSystemTableWorkload(final WorkloadType spec) {
+
+        final StringBuilder script = new StringBuilder();
+
+        final int tablesToCreate = 5; // this number of tables are created then dropped in sequence.
+
+        int createQueries = 0;
+        int dropQueries = 0;
+
+        for (int i = 0; i < QUERIES_IN_SCRIPT; i++) {
+            /*
+             * In this loop a single table is created/dropped each iteration.
+             * 
+             * When createQueries is less than the number of tables to be created, a new table (with the value of createTables) is created
+             * and createTables is incremented. This continues until tablesToCreate has been reached, at which point DROP commands are executed
+             * in the same way with dropQueries.
+             */
+
+            if (createQueries < tablesToCreate) {
+                //IF NOT EXISTS is used to prevent errors propagating through the workload.
+                script.append("CREATE TABLE IF NOT EXISTS test" + createQueries + " (id int);\n");
+                createQueries++;
+            }
+            else if (dropQueries < tablesToCreate) {
+                script.append("DROP TABLE IF EXISTS test" + dropQueries + ";\n");
+                dropQueries++;
+            }
+            else {
+                createQueries = 0;
+                dropQueries = 0;
+            }
+
+            if (spec.getSleepTime() > 0) {
+                script.append("<sleep>" + spec.getSleepTime() + "</sleep>\n");
+            }
+
+        }
+
+        return script;
     }
 
     private StringBuilder createTableManagerWorkload(final WorkloadType spec, final ArrayList<String> tablesInWorkload) {

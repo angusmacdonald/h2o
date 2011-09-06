@@ -49,7 +49,8 @@ public class WorkloadType {
 
     /**
     * @param readWriteRatio The ratio of reads to writes in the benchmark. 0 = all writes, 1 = all reads.
-    * @param queryAgainstSystemTable If true queries will be directed against the System Table (CREATE, DROP). If false, they will be directed against table managers (INSERT, UPDATE, DELETE).
+    * @param queryAgainstSystemTable If true queries will be directed against the System Table (CREATE, DROP). If false, they will be directed against table managers (INSERT, UPDATE, DELETE). If directed against the system table the parameters for {@link #multiQueryTransactionsEnabled}
+    * and {@link #readWriteRatio} are ignored.
     * @param sleepTime  How long to sleep between queries/updates to the database.
     * @param multiQueryTransactionsEnabled Whether queries/updates should take place within larger transactions (true) or they should all be executed individually.
     * @param queriesPerTransaction If {@link #multiQueryTransactionsEnabled} is true, how many queries should make up each transaction.

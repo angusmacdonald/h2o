@@ -63,6 +63,23 @@ public class ScriptGenerationTests {
     }
 
     @Test
+    public void testSystemTableWorkloadFile() throws IOException {
+
+        final WorkloadGenerator gen = new WorkloadGenerator();
+
+        final WorkloadType spec = new WorkloadType(0.5, true, 50, true, 5, LinkToTableLocation.ALL_ENCOMPASSING_WORKLOAD, true);
+        final TableGrouping tableGrouping = createTestTableGrouping();
+
+        final Map<String, Integer> createdWorkloads = gen.createWorkloads(spec, tableGrouping, createFolderPath());
+
+        System.out.println(PrettyPrinter.toString(createdWorkloads));
+
+        assertEquals(1, createdWorkloads.size());
+
+        setFolderToDelete(createdWorkloads);
+    }
+
+    @Test
     public void testGroupedWorkloadFile() throws IOException {
 
         final WorkloadGenerator gen = new WorkloadGenerator();

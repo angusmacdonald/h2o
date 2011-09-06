@@ -13,7 +13,7 @@ public class SyntaxGenerator {
         String startMachineCommand = "{start_machine id=\"" + id + "\"}";
 
         if (sleepAfterStart) {
-            startMachineCommand += SyntaxGenerator.createSleepCommand(3000);
+            startMachineCommand += "\n" + SyntaxGenerator.createSleepCommand(3000);
         }
 
         return startMachineCommand;
