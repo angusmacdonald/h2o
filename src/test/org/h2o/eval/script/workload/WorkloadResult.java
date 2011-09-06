@@ -109,7 +109,7 @@ public class WorkloadResult implements Serializable {
 
     public long getStartTime() {
 
-        if (queryLog.size() > 0) {
+        if (queryLog != null && queryLog.size() > 0) {
             final QueryLogEntry queryLogEntry = queryLog.get(0);
             if (queryLogEntry != null) {
                 return queryLogEntry.timeOfCommit - queryLogEntry.timeToExecute;

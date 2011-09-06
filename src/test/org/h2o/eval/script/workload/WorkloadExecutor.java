@@ -15,6 +15,7 @@ import org.h2o.util.exceptions.WorkloadParseException;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * Parses workloads and executes them against given database connections.
@@ -34,6 +35,11 @@ public class WorkloadExecutor {
     private static final String INCREMENT_COUNTER_TAG = "<increment/>";
     private static final String LOOP_END_TAG = "</loop>";
     private static final long MAX_WORKLOAD_DURATION = 60 * 60;
+
+    /**
+     * If the system is failing quickly (within 5 milliseconds), sleep for a while so you don't get lots of junk failed transactions. This determines how long to sleep for.
+     */
+    private static final int FAIL_QUICK_AVOIDANCE_SLEEP_TIME = 500;
 
     private final static SecureRandom random = new SecureRandom();
 
@@ -75,7 +81,12 @@ public class WorkloadExecutor {
 
         while (currentTime() < currentWorkloadEndTime()) { // Will repeat the same workload multiple times if its end is reached before the scheduled time.
 
-            stat.execute("SET AUTOCOMMIT ON;");
+            try {
+                stat.execute("SET AUTOCOMMIT ON;");
+            }
+            catch (final Exception e2) {
+                ErrorHandling.exceptionError(e2, "Failed to turn on auto-commit.");
+            }
 
             long timeBeforeQueryExecution = 0; //when a particular transaction started.
 
@@ -215,29 +226,43 @@ public class WorkloadExecutor {
 
                     final long timeAfterQueryExecution = currentTime();
 
+                    final long timeToExecute = timeAfterQueryExecution - timeBeforeQueryExecution;
                     if (autoCommitEnabled) {
-                        if (timeAfterQueryExecution - timeBeforeQueryExecution < 0 || timeAfterQueryExecution - timeBeforeQueryExecution > 20000) {
-                            System.out.println("HAMMER TIME.");
-                        }
 
-                        queryLog.add(QueryLogEntry.createQueryLogEntry(currentTime(), query, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
+                        queryLog.add(QueryLogEntry.createQueryLogEntry(currentTime(), query, successfullyExecuted, timeToExecute));
 
                         attemptedTransactions++;
 
                         if (successfullyExecuted) {
                             successfullyExecutedTransactions++;
+                        }
+                        else if (!successfullyExecuted && timeToExecute < 5) {
+                            try {
+                                Thread.sleep(500);
+                            }
+                            catch (final InterruptedException e) {
+                            }
                         }
 
                         timeBeforeQueryExecution = currentTime();
                     }
                     else if (!autoCommitEnabled && (query.contains("COMMIT;") || !successfullyExecuted)) {
 
+                        attemptedTransactions++;
+
                         if (successfullyExecuted) {
                             successfullyExecutedTransactions++;
                         }
-                        attemptedTransactions++;
+                        else if (!successfullyExecuted && timeToExecute < 5) {
+                            try {
+                                //If the system is failing quickly, sleep for a while so you don't get lots of junk failed transactions.
+                                Thread.sleep(FAIL_QUICK_AVOIDANCE_SLEEP_TIME);
+                            }
+                            catch (final InterruptedException e) {
+                            }
+                        }
 
-                        queryLog.add(QueryLogEntry.createQueryLogEntry(currentTime(), queriesInThisTransaction, successfullyExecuted, timeAfterQueryExecution - timeBeforeQueryExecution));
+                        queryLog.add(QueryLogEntry.createQueryLogEntry(currentTime(), queriesInThisTransaction, successfullyExecuted, timeToExecute));
                         queriesInThisTransaction.clear();
                         timeBeforeQueryExecution = currentTime(); // when auto-commit isn't enabled, the transaction starts after the previous one finishes.
                     }

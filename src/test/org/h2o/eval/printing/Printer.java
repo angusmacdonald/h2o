@@ -83,9 +83,11 @@ public class Printer {
         for (final WorkloadResult workloadResult : workloadResults) {
             final List<QueryLogEntry> queryLog = workloadResult.getQueryLog();
 
-            for (final QueryLogEntry queryLogEntry : queryLog) {
-                if (successful == queryLogEntry.successfulExecution) {
-                    count += queryLogEntry.timeToExecute;
+            if (queryLog != null) {
+                for (final QueryLogEntry queryLogEntry : queryLog) {
+                    if (successful == queryLogEntry.successfulExecution) {
+                        count += queryLogEntry.timeToExecute;
+                    }
                 }
             }
         }
