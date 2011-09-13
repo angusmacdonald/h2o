@@ -10,7 +10,12 @@ import org.h2o.eval.script.coord.instructions.SleepInstruction;
 import org.h2o.eval.script.coord.instructions.WorkloadInstruction;
 import org.h2o.util.exceptions.WorkloadParseException;
 
-public class CoordinationScriptExecutor {
+/**
+ * Use the {@link #parse(String)} method to parse a single line of a co-ordinator script.
+ * @author Angus Macdonald (angus.macdonald@st-andrews.ac.uk)
+ *
+ */
+public class CoordinationScriptParser {
 
     /**
      * Example format: {sleep=5000}

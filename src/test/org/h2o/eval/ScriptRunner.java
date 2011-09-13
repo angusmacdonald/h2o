@@ -62,6 +62,5 @@ public class ScriptRunner {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Workloads have completed");
 
-        System.exit(0);
     }
 }

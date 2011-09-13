@@ -87,6 +87,7 @@ public class CoordinationScriptGenRunner {
         final List<String> script = createCoordinationScript(runtime, probabilityOfFailure, frequencyOfFailure, numberOfMachines, numberOfTables, numberOfQueriesPerTransaction);
         ScriptRunner.runCoordinationScript("generatedDb", workerLocationsInet, replicationFactor, startWorkersLocallyForTesting, script, resultsFolderLocation);
 
+        System.exit(0);
     }
 
     private static List<String> createCoordinationScript(final long runtime, final double probabilityOfFailure, final long frequencyOfFailure, final int numberOfMachines, final int numberOfTables, final int numberOfQueriesPerTransaction) throws IOException {

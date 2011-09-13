@@ -33,7 +33,7 @@ import org.h2o.eval.interfaces.IWorker;
 import org.h2o.eval.interfaces.WorkloadException;
 import org.h2o.eval.printing.AveragedResultsCSVPrinter;
 import org.h2o.eval.printing.IndividualRunCSVPrinter;
-import org.h2o.eval.script.coord.CoordinationScriptExecutor;
+import org.h2o.eval.script.coord.CoordinationScriptParser;
 import org.h2o.eval.script.coord.instructions.CoordinatorScriptState;
 import org.h2o.eval.script.coord.instructions.Instruction;
 import org.h2o.eval.script.workload.Workload;
@@ -554,7 +554,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
         final List<Instruction> instructions = new LinkedList<Instruction>();
 
         for (final String action : script) {
-            final Instruction instruction = CoordinationScriptExecutor.parse(action);
+            final Instruction instruction = CoordinationScriptParser.parse(action);
 
             if (instruction != null) {
                 instructions.add(instruction);
