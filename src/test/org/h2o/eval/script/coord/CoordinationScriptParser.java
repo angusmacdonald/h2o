@@ -85,7 +85,7 @@ public class CoordinationScriptParser {
         return new MachineInstruction(parseSingleIDPattern(action, terminate_machine_pattern), null, false, false);
     }
 
-    public static Instruction parseQuery(final String action) throws WorkloadParseException {
+    public static Instruction parseQueryOrWorkload(final String action) throws WorkloadParseException {
 
         final Matcher matcher = query_pattern.matcher(action);
 
@@ -187,7 +187,7 @@ public class CoordinationScriptParser {
         }
         else {
             //Execute a query
-            return parseQuery(action);
+            return parseQueryOrWorkload(action);
 
         }
 

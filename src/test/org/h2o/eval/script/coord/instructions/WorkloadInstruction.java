@@ -15,7 +15,7 @@ public class WorkloadInstruction implements Instruction {
     /**
      * Workload to be executed.
      */
-    public final String workloadFile;
+    public final String workloadFilePath;
 
     /**
      * How long the workload should be executed for.
@@ -27,7 +27,7 @@ public class WorkloadInstruction implements Instruction {
     public WorkloadInstruction(final String id, final String workloadFile, final Long duration) {
 
         this.id = id;
-        this.workloadFile = workloadFile;
+        this.workloadFilePath = workloadFile;
         this.duration = duration == null ? 0 : duration;
 
     }
@@ -35,9 +35,9 @@ public class WorkloadInstruction implements Instruction {
     @Override
     public void execute(final CoordinatorScriptState coordState) throws RemoteException, StartupException, WorkloadException {
 
-        coordState.getCoordintor().executeWorkload(id, workloadFile, duration);
+        coordState.getCoordintor().executeWorkload(id, workloadFilePath, duration);
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Executing workload '" + workloadFile + "' for '" + duration + "', on '" + id + "'.");
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Executing workload '" + workloadFilePath + "' for '" + duration + "', on '" + id + "'.");
 
         if (!coordState.hasStartedExecution()) {
             coordState.startExecution();
