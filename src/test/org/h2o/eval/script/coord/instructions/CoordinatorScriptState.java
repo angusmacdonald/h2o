@@ -17,6 +17,8 @@ import org.h2o.util.exceptions.StartupException;
 
 public class CoordinatorScriptState {
 
+    private final String scriptFileLocation;
+
     private final Coordinator coord;
 
     private final Map<Integer, IWorker> scriptedInstances = new HashMap<Integer, IWorker>();
@@ -29,9 +31,10 @@ public class CoordinatorScriptState {
 
     private boolean startedExecution = false;
 
-    public CoordinatorScriptState(final Coordinator coord) {
+    public CoordinatorScriptState(final Coordinator coord, final String scriptFileLocation) {
 
         this.coord = coord;
+        this.scriptFileLocation = scriptFileLocation;
 
     }
 
@@ -134,6 +137,11 @@ public class CoordinatorScriptState {
 
         killMonitor.start();
 
+    }
+
+    public String getScriptFileLocation() {
+
+        return scriptFileLocation;
     }
 
 }

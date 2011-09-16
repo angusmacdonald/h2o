@@ -18,8 +18,8 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 public class ScriptRunner {
 
-    protected static void runCoordinationScript(final String databaseName, final List<InetAddress> workerLocationsInet, final Integer replicationFactor, final boolean startWorkersLocallyForTesting, final List<String> script, final String resultsFolderLocation) throws RemoteException,
-                    AlreadyBoundException, UnknownHostException, SQLException, IOException, StartupException {
+    protected static void runCoordinationScript(final String databaseName, final List<InetAddress> workerLocationsInet, final Integer replicationFactor, final boolean startWorkersLocallyForTesting, final List<String> script, final String resultsFolderLocation, final String coordinationScriptLocation)
+                    throws RemoteException, AlreadyBoundException, UnknownHostException, SQLException, IOException, StartupException {
 
         /*
         * Start workers locally if specified.
@@ -49,7 +49,7 @@ public class ScriptRunner {
         try {
             Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Results will be saved to: " + resultsFolderLocation);
 
-            coord.executeCoordinationScript(script, resultsFolderLocation, "generatedscript");
+            coord.executeCoordinationScript(script, resultsFolderLocation, coordinationScriptLocation);
 
         }
         catch (final Exception e) {

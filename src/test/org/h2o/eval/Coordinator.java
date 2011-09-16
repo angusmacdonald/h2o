@@ -77,7 +77,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
 
     private final Map<IWorker, Integer> workersWithActiveWorkloads = Collections.synchronizedMap(new HashMap<IWorker, Integer>());
 
-    private CoordinatorScriptState coordScriptState = new CoordinatorScriptState(this);
+    private CoordinatorScriptState coordScriptState;
 
     /*
      * Locator server fields.
@@ -519,14 +519,28 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
         coordScriptState.disableKillMonitor();
 
         try {
-            IndividualRunCSVPrinter.printResults(resultsFolderLocation + File.separator + dateFormatter.format(startDate) + "-results.csv", workloadResults, coordScriptState.getFailureLog());
-            AveragedResultsCSVPrinter.printResults(resultsFolderLocation + File.separator + "all.csv", workloadResults, coordinationScriptLocation, activeWorkers.size(), replicationFactor);
+            IndividualRunCSVPrinter.printResults(resultsFolderLocation + File.separator + getCoordinatorScriptName() + File.separator + dateFormatter.format(startDate) + "-results.csv", workloadResults, coordScriptState.getFailureLog());
+            AveragedResultsCSVPrinter.printResults(resultsFolderLocation + File.separator + getCoordinatorScriptName() + File.separator + "all.csv", workloadResults, coordinationScriptLocation, activeWorkers.size(), replicationFactor);
         }
         catch (final IOException e) {
 
             ErrorHandling.exceptionError(e, "Failed printing results file.");
         }
 
+    }
+
+    private String getCoordinatorScriptName() {
+
+        System.out.println(coordinationScriptLocation);
+
+        final int dotCoordPosition = coordinationScriptLocation.length() - ".coord".length();
+        int lastSlashLocation = coordinationScriptLocation.lastIndexOf("/", dotCoordPosition);
+
+        if (lastSlashLocation < 0) {
+            lastSlashLocation = coordinationScriptLocation.lastIndexOf("\\", dotCoordPosition);
+        }
+
+        return coordinationScriptLocation.substring(lastSlashLocation, dotCoordPosition);
     }
 
     private synchronized boolean areThereActiveWorkloads() {
@@ -578,7 +592,9 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
         this.resultsFolderLocation = resultsFolderLocation;
         this.coordinationScriptLocation = coordinationScriptLocation;
 
-        coordScriptState = new CoordinatorScriptState(this);
+        System.out.println("coordinationScriptLocation: " + coordinationScriptLocation);
+
+        coordScriptState = new CoordinatorScriptState(this, coordinationScriptLocation);
         coordScriptState.startKillMonitor();
 
         for (final Instruction instruction : script) {

@@ -73,7 +73,7 @@ public class CoordinationScriptRunner {
 
         final List<String> script = FileUtil.readAllLines(coordinatorScriptLocation);
 
-        ScriptRunner.runCoordinationScript(databaseName, workerLocationsInet, replicationFactor, startWorkersLocallyForTesting, script, resultsFolderLocation);
+        ScriptRunner.runCoordinationScript(databaseName, workerLocationsInet, replicationFactor, startWorkersLocallyForTesting, script, resultsFolderLocation, coordinatorScriptLocation);
 
         System.exit(0);
     }
