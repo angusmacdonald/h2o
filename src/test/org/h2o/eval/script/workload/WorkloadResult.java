@@ -123,6 +123,22 @@ public class WorkloadResult implements Serializable {
         }
     }
 
+    public long getEndTime() {
+
+        if (queryLog != null && queryLog.size() > 0) {
+            final QueryLogEntry queryLogEntry = queryLog.get(queryLog.size() - 1);
+            if (queryLogEntry != null) {
+                return queryLogEntry.timeOfCommit - queryLogEntry.timeToExecute;
+            }
+            else {
+                return Long.MAX_VALUE;
+            }
+        }
+        else {
+            return 0;
+        }
+    }
+
     public IWorkload getWorkload() {
 
         return workload;
@@ -134,6 +150,26 @@ public class WorkloadResult implements Serializable {
     public void removeWorkloadReference() {
 
         workload = null;
+    }
+
+    /**
+     * Get the number of transactions that were successfully executed between the two given time points (starting at 0, where 0 is based on {@link #getStartTime()}).
+     * @param currentTime
+     * @param newTime
+     * @return
+     */
+    public long getSuccessfulTransactionsBetween(final long currentTime, final long newTime) {
+
+        long transactionCount = 0;
+
+        for (final QueryLogEntry entry : queryLog) {
+            final long offsetTimeOfCommit = entry.timeOfCommit - getStartTime();
+            if (offsetTimeOfCommit >= currentTime && offsetTimeOfCommit <= newTime) {
+                transactionCount++;
+            }
+        }
+
+        return transactionCount;
     }
 
 }

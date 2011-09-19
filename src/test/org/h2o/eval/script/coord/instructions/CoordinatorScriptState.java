@@ -31,6 +31,8 @@ public class CoordinatorScriptState {
 
     private boolean startedExecution = false;
 
+    private long lengthOfLongestRunningWorkload = 0;
+
     public CoordinatorScriptState(final Coordinator coord, final String scriptFileLocation) {
 
         this.coord = coord;
@@ -142,6 +144,22 @@ public class CoordinatorScriptState {
     public String getScriptFileLocation() {
 
         return scriptFileLocation;
+    }
+
+    /**
+     * Returns the length that this co-ordination script executes for (effectively the length of the longest running workload).
+     * @return
+     */
+    public long getLengthOfLongestRunningWorkload() {
+
+        return lengthOfLongestRunningWorkload;
+    }
+
+    public void addNewWorkloadLength(final long workloadLength) {
+
+        if (workloadLength > lengthOfLongestRunningWorkload) {
+            lengthOfLongestRunningWorkload = workloadLength;
+        }
     }
 
 }

@@ -254,7 +254,7 @@ public class Worker extends Thread implements IWorker {
         hardKillOnLinux();
 
         try {
-            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Deleting lock files for DB.");
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Deleting lock files for DB.");
             deleteLockFile(); // delete any existing lock files to allow the db to be later restarted.
         }
         catch (final SQLException e) {
@@ -307,7 +307,7 @@ public class Worker extends Thread implements IWorker {
         final HashSet<String> exts = new HashSet<String>();
         exts.add(Constants.SUFFIX_LOCK_FILE);
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Deleting files with extensions: " + PrettyPrinter.toString(exts));
+        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Deleting files with extensions: " + PrettyPrinter.toString(exts));
 
         DeleteDbFiles.execute(Worker.PATH_TO_H2O_DATABASE, null, true, exts);
 

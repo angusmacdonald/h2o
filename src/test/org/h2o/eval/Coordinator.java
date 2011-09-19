@@ -33,6 +33,7 @@ import org.h2o.eval.interfaces.IWorker;
 import org.h2o.eval.interfaces.WorkloadException;
 import org.h2o.eval.printing.AveragedResultsCSVPrinter;
 import org.h2o.eval.printing.IndividualRunCSVPrinter;
+import org.h2o.eval.printing.TimeSlicePrinter;
 import org.h2o.eval.script.coord.CoordinationScriptParser;
 import org.h2o.eval.script.coord.instructions.CoordinatorScriptState;
 import org.h2o.eval.script.coord.instructions.Instruction;
@@ -86,11 +87,12 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
     private H2OPropertiesWrapper descriptorFile;
 
     /*
-     * Results file location:
+     * Results file location + format.
      */
     private static final DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
     public final static String DEFAULT_DATABASE_NAME = "MY_EVALUATION_DATABASE";
     public static final String DEFAULT_RESULTS_FOLDER_LOCATION = "generatedWorkloads";
+    private static final int TIME_SLICE_PERIOD = 5;
     private String resultsFolderLocation;
 
     /*
@@ -521,6 +523,8 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
         try {
             IndividualRunCSVPrinter.printResults(resultsFolderLocation + File.separator + getCoordinatorScriptName() + File.separator + dateFormatter.format(startDate) + "-results.csv", workloadResults, coordScriptState.getFailureLog());
             AveragedResultsCSVPrinter.printResults(resultsFolderLocation + File.separator + getCoordinatorScriptName() + File.separator + "all.csv", workloadResults, coordinationScriptLocation, activeWorkers.size(), replicationFactor);
+            TimeSlicePrinter.printResults(resultsFolderLocation + File.separator + getCoordinatorScriptName() + File.separator + "timeSlice.csv", workloadResults, coordScriptState.getLengthOfLongestRunningWorkload(), TIME_SLICE_PERIOD);
+
         }
         catch (final IOException e) {
 

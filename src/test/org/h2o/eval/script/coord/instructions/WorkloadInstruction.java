@@ -49,6 +49,7 @@ public class WorkloadInstruction implements Instruction {
             if (!FileUtil.exists(workloadFileLocationToUse)) { throw new WorkloadException("The workload file (at '" + workloadFilePath + "') could not be found."); }
         }
 
+        coordState.addNewWorkloadLength(duration);
         coordState.getCoordintor().executeWorkload(id, workloadFileLocationToUse, duration);
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Executing workload '" + workloadFilePath + "' for '" + duration + "', on '" + id + "'.");

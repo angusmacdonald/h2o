@@ -41,7 +41,7 @@ public class Printer {
 
         for (final WorkloadResult workloadResult : workloadResults) {
 
-            min = Math.max(min, workloadResult.getStartTime());
+            min = Math.max(min, workloadResult.getEndTime());
 
         }
         return min;
