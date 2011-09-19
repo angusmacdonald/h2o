@@ -158,14 +158,14 @@ public class WorkloadResult implements Serializable {
      * @param newTime
      * @return
      */
-    public long getSuccessfulTransactionsBetween(final long currentTime, final long newTime) {
+    public long getNumberOfSuccessfulQueriesBetween(final long currentTime, final long newTime) {
 
         long transactionCount = 0;
 
         for (final QueryLogEntry entry : queryLog) {
             final long offsetTimeOfCommit = entry.timeOfCommit - getStartTime();
             if (offsetTimeOfCommit >= currentTime && offsetTimeOfCommit <= newTime) {
-                transactionCount++;
+                transactionCount += entry.queryTypes.size();
             }
         }
 
