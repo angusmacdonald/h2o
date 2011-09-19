@@ -1,0 +1,12 @@
+SET AUTOCOMMIT OFF;
+SELECT * FROM test0 WHERE int_a > 679153090560;
+INSERT INTO test0 VALUES (<loop-counter/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-long/>, <generated-long/>);
+SELECT * FROM test0 WHERE int_a > 482310985662;
+INSERT INTO test0 VALUES (<loop-counter/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-long/>, <generated-long/>);
+SELECT * FROM test0 WHERE int_a > 679153090560;
+INSERT INTO test0 VALUES (<loop-counter/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-long/>, <generated-long/>);
+SELECT * FROM test0 WHERE int_a > 482310985662;
+INSERT INTO test0 VALUES (<loop-counter/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-long/>, <generated-long/>);
+SELECT * FROM test0 WHERE int_a > 679153090560;
+COMMIT;
+SET AUTOCOMMIT ON;
