@@ -23,6 +23,6 @@ public interface ICoordinatorScript {
 
     public void executeCoordinationScript(List<String> script, String resultsFolderLocation, String coordinationScriptLocation) throws WorkloadParseException, RemoteException, StartupException, SQLException, WorkloadException;
 
-    public void blockUntilWorkloadsComplete() throws RemoteException;;
+    public void blockUntilWorkloadsComplete(Integer timeSlicePeriod) throws RemoteException;;
 
 }

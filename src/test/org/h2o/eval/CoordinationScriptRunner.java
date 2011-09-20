@@ -32,6 +32,7 @@ public class CoordinationScriptRunner {
      *            <li><em>-t<name></em>. Optional (boolean). Whether to terminate any existing instances running at all workers (including stored state), before doing anything else.</li>
      *            <li><em>-d<name></em>. Optional (boolean). Whether to create a number of local worker instances to facilitate testing.</li>
      *            <li><em>-r<name></em>. Optional. The system-wide replication factor for user tables.</li>
+     *            li><em>-r<name></em>. Optional. The time slice to use when displaying data in timeSlice.csv (results data).</li>
      *            </ul>
      * @throws StartupException Thrown if a required parameter was not specified.
      * @throws IOException 
@@ -57,6 +58,8 @@ public class CoordinationScriptRunner {
 
         final Integer replicationFactor = processInteger(arguments.get("-r"));
 
+        final Integer timeSlicePeriod = processInteger(arguments.get("-t"));
+
         final boolean startWorkersLocallyForTesting = processBoolean(arguments.get("-d"));
 
         throwExceptionIfNull(replicationFactor, "The replication factor of the database system must be specified with the -r argument.");
@@ -73,7 +76,7 @@ public class CoordinationScriptRunner {
 
         final List<String> script = FileUtil.readAllLines(coordinatorScriptLocation);
 
-        ScriptRunner.runCoordinationScript(databaseName, workerLocationsInet, replicationFactor, startWorkersLocallyForTesting, script, resultsFolderLocation, coordinatorScriptLocation);
+        ScriptRunner.runCoordinationScript(databaseName, workerLocationsInet, replicationFactor, startWorkersLocallyForTesting, script, resultsFolderLocation, coordinatorScriptLocation, timeSlicePeriod);
 
         System.exit(0);
     }

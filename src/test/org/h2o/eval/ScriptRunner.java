@@ -18,8 +18,8 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 public class ScriptRunner {
 
-    protected static void runCoordinationScript(final String databaseName, final List<InetAddress> workerLocationsInet, final Integer replicationFactor, final boolean startWorkersLocallyForTesting, final List<String> script, final String resultsFolderLocation, final String coordinationScriptLocation)
-                    throws RemoteException, AlreadyBoundException, UnknownHostException, SQLException, IOException, StartupException {
+    protected static void runCoordinationScript(final String databaseName, final List<InetAddress> workerLocationsInet, final Integer replicationFactor, final boolean startWorkersLocallyForTesting, final List<String> script, final String resultsFolderLocation,
+                    final String coordinationScriptLocation, final Integer timeSlicePeriod) throws RemoteException, AlreadyBoundException, UnknownHostException, SQLException, IOException, StartupException {
 
         /*
         * Start workers locally if specified.
@@ -58,7 +58,7 @@ public class ScriptRunner {
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Blocking until workloads complete.");
 
-        coord.blockUntilWorkloadsComplete();
+        coord.blockUntilWorkloadsComplete(timeSlicePeriod);
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Workloads have completed");
 

@@ -92,7 +92,8 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
     private static final DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
     public final static String DEFAULT_DATABASE_NAME = "MY_EVALUATION_DATABASE";
     public static final String DEFAULT_RESULTS_FOLDER_LOCATION = "generatedWorkloads";
-    private static final int TIME_SLICE_PERIOD = 5;
+    private static final int DEFAULT_TIME_SLICE_PERIOD = 5;
+    private int timeSlicePeriod = DEFAULT_TIME_SLICE_PERIOD;
     private String resultsFolderLocation;
 
     /*
@@ -506,6 +507,16 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
     }
 
     @Override
+    public void blockUntilWorkloadsComplete(final Integer timeSlicePeriod) throws RemoteException {
+
+        if (timeSlicePeriod != null) {
+            this.timeSlicePeriod = timeSlicePeriod;
+        }
+
+        blockUntilWorkloadsComplete();
+    }
+
+    @Override
     public void blockUntilWorkloadsComplete() throws RemoteException {
 
         while (areThereActiveWorkloads()) {
@@ -523,7 +534,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
         try {
             IndividualRunCSVPrinter.printResults(resultsFolderLocation + File.separator + getCoordinatorScriptName() + File.separator + dateFormatter.format(startDate) + "-results.csv", workloadResults, coordScriptState.getFailureLog());
             AveragedResultsCSVPrinter.printResults(resultsFolderLocation + File.separator + getCoordinatorScriptName() + File.separator + "all.csv", workloadResults, coordinationScriptLocation, activeWorkers.size(), replicationFactor);
-            TimeSlicePrinter.printResults(resultsFolderLocation + File.separator + getCoordinatorScriptName() + File.separator + "timeSlice.csv", workloadResults, coordScriptState.getLengthOfLongestRunningWorkload(), TIME_SLICE_PERIOD);
+            TimeSlicePrinter.printResults(resultsFolderLocation + File.separator + getCoordinatorScriptName() + File.separator + "timeSlice.csv", workloadResults, coordScriptState.getLengthOfLongestRunningWorkload(), timeSlicePeriod);
 
         }
         catch (final IOException e) {

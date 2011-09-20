@@ -85,7 +85,7 @@ public class CoordinationScriptGenRunner {
         }
 
         final List<String> script = createCoordinationScript(runtime, probabilityOfFailure, frequencyOfFailure, numberOfMachines, numberOfTables, numberOfQueriesPerTransaction);
-        ScriptRunner.runCoordinationScript("generatedDb", workerLocationsInet, replicationFactor, startWorkersLocallyForTesting, script, resultsFolderLocation, "generatedScript");
+        ScriptRunner.runCoordinationScript("generatedDb", workerLocationsInet, replicationFactor, startWorkersLocallyForTesting, script, resultsFolderLocation, "generatedScript", 5);
 
         System.exit(0);
     }
