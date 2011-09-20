@@ -43,11 +43,20 @@ public class WorkloadInstruction implements Instruction {
         //test whether file exists. if it doesn't, try a path relative to the co-ordinator script. If that doesn't work, fail.
 
         if (!FileUtil.exists(workloadFileLocationToUse)) {
+
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Workload file not found at: " + workloadFileLocationToUse);
+
             //try a relative path from the co-ordinator path.
             workloadFileLocationToUse = getCoordinatorFilePath(coordState.getScriptFileLocation()) + File.separator + workloadFilePath;
 
-            if (!FileUtil.exists(workloadFileLocationToUse)) { throw new WorkloadException("The workload file (at '" + workloadFilePath + "') could not be found."); }
+            if (!FileUtil.exists(workloadFileLocationToUse)) {
+                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Workload file not found at: " + workloadFileLocationToUse);
+
+                throw new WorkloadException("The workload file (at '" + workloadFilePath + "') could not be found.");
+            }
         }
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Workload file found at: " + workloadFileLocationToUse);
 
         coordState.addNewWorkloadLength(duration);
         coordState.getCoordintor().executeWorkload(id, workloadFileLocationToUse, duration);
