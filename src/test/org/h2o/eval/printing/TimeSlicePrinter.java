@@ -29,7 +29,7 @@ public class TimeSlicePrinter extends Printer {
             FileUtil.writeToFile(fileLocation, printHeader(numberOfTimeSlices, timeSlicePeriodSecs), true);
         }
 
-        FileUtil.writeToFile(fileLocation, printRow(getNumberOfSuccessfulQueries(workloadResults, numberOfTimeSlices, timeSlicePeriodSecs)), false);
+        FileUtil.writeToFile(fileLocation, printRow(getNumberOfSuccessfulTransactions(workloadResults, numberOfTimeSlices, timeSlicePeriodSecs)), false);
     }
 
     private static String printHeader(final int numberOfTimeSlices, final int timeSlicePeriod) {
@@ -50,7 +50,7 @@ public class TimeSlicePrinter extends Printer {
         return row.toString();
     }
 
-    protected static long[] getNumberOfSuccessfulQueries(final List<WorkloadResult> workloadResults, final int numberOfTimeSlices, final int timeSlicePeriod) {
+    protected static long[] getNumberOfSuccessfulTransactions(final List<WorkloadResult> workloadResults, final int numberOfTimeSlices, final int timeSlicePeriod) {
 
         final long[] throughputPerTimeslice = new long[numberOfTimeSlices];
 
@@ -61,7 +61,7 @@ public class TimeSlicePrinter extends Printer {
             for (int i = 0; i < numberOfTimeSlices; i++) {
                 final long newTime = currentTime + timeSlicePeriod;
 
-                throughputPerTimeslice[i] = workloadResult.getNumberOfSuccessfulQueriesBetween(currentTime * 1000, newTime * 1000);
+                throughputPerTimeslice[i] = workloadResult.getNumberOfSuccessfulTransactionsBetween(currentTime * 1000, newTime * 1000);
 
                 currentTime = newTime;
             }
