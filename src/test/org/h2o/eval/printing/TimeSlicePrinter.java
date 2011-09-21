@@ -52,7 +52,7 @@ public class TimeSlicePrinter extends Printer {
 
     protected static long[] getNumberOfSuccessfulTransactions(final List<WorkloadResult> workloadResults, final int numberOfTimeSlices, final int timeSlicePeriod) {
 
-        final long[] throughputPerTimeslice = new long[numberOfTimeSlices];
+        final long[] throughputPerTimeSlicePerSecond = new long[numberOfTimeSlices];
 
         for (final WorkloadResult workloadResult : workloadResults) {
 
@@ -61,13 +61,15 @@ public class TimeSlicePrinter extends Printer {
             for (int i = 0; i < numberOfTimeSlices; i++) {
                 final long newTime = currentTime + timeSlicePeriod;
 
-                throughputPerTimeslice[i] = workloadResult.getNumberOfSuccessfulTransactionsBetween(currentTime * 1000, newTime * 1000);
+                final long timeSliceThroughput = workloadResult.getNumberOfSuccessfulTransactionsBetween(currentTime * 1000, newTime * 1000);
+
+                throughputPerTimeSlicePerSecond[i] = timeSliceThroughput / timeSlicePeriod;
 
                 currentTime = newTime;
             }
         }
 
-        return throughputPerTimeslice;
+        return throughputPerTimeSlicePerSecond;
     }
 
     private static String printRow(final long[] numberOfSuccessfulTransactions) {
