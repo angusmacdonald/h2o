@@ -24,6 +24,8 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
  */
 public class WorkloadExecutor {
 
+    private static final int MAX_CHAR_ARRAY_BYTES = 50;
+    private static final int MAX_BIG_INTEGER_BYTES = 20;
     private static final String GENERATED_LONG_PLACEHOLDER = "<generated-long/>";
     private static final String GENERATED_STRING_PLACEHOLDER = "<generated-string/>";
     private static final String COMMENT = "#";
@@ -32,6 +34,7 @@ public class WorkloadExecutor {
 
     private static final String LOOP_START_OPEN_TAG = "<loop";
     private static final String LOOP_COUNTER_PLACEHOLDER = "<loop-counter/>";
+    private static final String LAST_LOOP_COUNTER_PLACEHOLDER = "<last-loop-counter/>";
     private static final String INCREMENT_COUNTER_TAG = "<increment/>";
     private static final String LOOP_END_TAG = "</loop>";
     private static final long MAX_WORKLOAD_DURATION = 60 * 60;
@@ -317,6 +320,8 @@ public class WorkloadExecutor {
 
         query = query.replaceAll(LOOP_COUNTER_PLACEHOLDER, uniqueCounter + "");
 
+        query = query.replaceAll(LAST_LOOP_COUNTER_PLACEHOLDER, uniqueCounter + "");
+
         while (query.contains(GENERATED_STRING_PLACEHOLDER)) {
             query = query.replaceFirst(GENERATED_STRING_PLACEHOLDER, generateRandom40CharString());
         }
@@ -329,12 +334,12 @@ public class WorkloadExecutor {
 
     public static String generateBigIntegerValue() {
 
-        return new BigInteger(40, random) + "";
+        return new BigInteger(MAX_BIG_INTEGER_BYTES, random) + "";
     }
 
     public static String generateRandom40CharString() {
 
-        return "'" + new BigInteger(200, random).toString(32) + "'";
+        return "'" + new BigInteger(MAX_CHAR_ARRAY_BYTES, random).toString(32) + "'";
     }
 
     /**
