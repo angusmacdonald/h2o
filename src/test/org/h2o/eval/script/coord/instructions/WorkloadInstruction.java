@@ -59,7 +59,7 @@ public class WorkloadInstruction implements Instruction {
         Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Workload file found at: " + workloadFileLocationToUse);
 
         coordState.addNewWorkloadLength(duration);
-        coordState.getCoordintor().executeWorkload(id, workloadFileLocationToUse, duration);
+        coordState.getCoordintor().executeWorkload(id, workloadFileLocationToUse, duration, false);
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Executing workload '" + workloadFilePath + "' for '" + duration + "', on '" + id + "'.");
 

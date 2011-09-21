@@ -33,10 +33,16 @@ public class CoordinatorScriptState {
 
     private long lengthOfLongestRunningWorkload = 0;
 
-    public CoordinatorScriptState(final Coordinator coord, final String scriptFileLocation) {
+    private final String scriptName;
+
+    private final int diagnosticLevel;
+
+    public CoordinatorScriptState(final Coordinator coord, final String scriptFileLocation, final String scriptName, final int diagnosticLevel) {
 
         this.coord = coord;
         this.scriptFileLocation = scriptFileLocation;
+        this.scriptName = scriptName;
+        this.diagnosticLevel = diagnosticLevel;
 
     }
 
@@ -160,6 +166,16 @@ public class CoordinatorScriptState {
         if (workloadLength > lengthOfLongestRunningWorkload) {
             lengthOfLongestRunningWorkload = workloadLength;
         }
+    }
+
+    public String getScriptName() {
+
+        return scriptName;
+    }
+
+    public int getDiagnosticLevel() {
+
+        return diagnosticLevel;
     }
 
 }

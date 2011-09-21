@@ -66,8 +66,6 @@ public class Worker extends Thread implements IWorker {
 
     private static final boolean LOGGING_TO_FILE_ENABLED = true;
 
-    private static final int DATABASE_DIAGNOSTIC_LEVEL = 0; // 0 - full, 6 - none.
-
     private static String LOG_FILE_LOCATION;
 
     /**
@@ -164,7 +162,7 @@ public class Worker extends Thread implements IWorker {
             LOG_FILE_LOCATION = "C:\\Users\\Angus\\workspace\\h2o\\generatedWorkloads";
         }
         else {
-            LOG_FILE_LOCATION = "/tmp";
+            LOG_FILE_LOCATION = "/tmp/h2ologs";
         }
     }
 
@@ -180,7 +178,7 @@ public class Worker extends Thread implements IWorker {
     }
 
     @Override
-    public String startH2OInstance(final H2OPropertiesWrapper descriptor, final boolean startInRemoteDebug, final boolean disableReplication) throws RemoteException, StartupException {
+    public String startH2OInstance(final H2OPropertiesWrapper descriptor, final boolean startInRemoteDebug, final boolean disableReplication, final String logFileName, final int diagnosticLevel) throws RemoteException, StartupException {
 
         if (h2oProcess != null) {
             //Check if its still running.
@@ -197,7 +195,7 @@ public class Worker extends Thread implements IWorker {
         final String descriptorFileLocation = PATH_TO_H2O_DATABASE + File.separator + "descriptor.h2od";
         saveDescriptorToDisk(descriptor, descriptorFileLocation);
 
-        h2oProcess = startH2OProcess(setupBootstrapArgs(descriptorFileLocation), startInRemoteDebug);
+        h2oProcess = startH2OProcess(setupBootstrapArgs(descriptorFileLocation, logFileName, diagnosticLevel), startInRemoteDebug);
 
         sleep(10000);// wait for the database to start up.
 
@@ -467,9 +465,10 @@ public class Worker extends Thread implements IWorker {
     /**
      * Create a list of arguments needed to start {@link H2O}.
      * @param descriptorFileLocation The location of the descriptor file for this database system.
+     * @param diagnosticLevel 
      * @return The completed list of command line arguments.
      */
-    public List<String> setupBootstrapArgs(final String descriptorFileLocation) {
+    public List<String> setupBootstrapArgs(final String descriptorFileLocation, final String logFileName, final int diagnosticLevel) {
 
         final List<String> args = new LinkedList<String>();
         args.add("-i" + h2oInstanceName);
@@ -478,11 +477,11 @@ public class Worker extends Thread implements IWorker {
         args.add("-d" + descriptorFileLocation);
 
         if (LOGGING_TO_FILE_ENABLED) {
-            args.add("-o" + LOG_FILE_LOCATION + File.separator + "h2o-stdout.log");
-            args.add("-e" + LOG_FILE_LOCATION + File.separator + "h2o-stderr.log");
+            args.add("-o" + LOG_FILE_LOCATION + File.separator + logFileName);
+            args.add("-e" + LOG_FILE_LOCATION + File.separator + logFileName);
         }
 
-        args.add("-D" + DATABASE_DIAGNOSTIC_LEVEL);
+        args.add("-D" + diagnosticLevel);
 
         return args;
     }

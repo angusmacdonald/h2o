@@ -120,7 +120,7 @@ public class CoordinatorTests {
 
         assertEquals(1, eval.startH2OInstances(1));
 
-        eval.executeWorkload("src/test/org/h2o/eval/workloads/test.workload");
+        eval.executeWorkload("src/test/org/h2o/eval/workloads/test.workload", false);
 
         eval.blockUntilWorkloadsComplete();
     }

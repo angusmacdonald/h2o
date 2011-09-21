@@ -3,6 +3,7 @@ package org.h2o.eval.script.coord;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.h2o.eval.script.coord.instructions.CreateTableInstruction;
 import org.h2o.eval.script.coord.instructions.Instruction;
 import org.h2o.eval.script.coord.instructions.MachineInstruction;
 import org.h2o.eval.script.coord.instructions.QueryInstruction;
@@ -18,7 +19,7 @@ import org.h2o.util.exceptions.WorkloadParseException;
 public class CoordinationScriptParser {
 
     /**
-     * Example format: {sleep=5000}
+     * Example format: {sleep="5000"}
      */
     private static final String SLEEP_REGEX = "\\{sleep=\"(\\d+)\"\\}";
 
@@ -47,11 +48,19 @@ public class CoordinationScriptParser {
      */
     private static final String START_MACHINE_REGEX = "\\{start_machine id=\"(\\d+)\"(?:\\s+fail-after=\"(\\d+)\")?(?:\\s+block-workloads=\"(true|false)\")?\\}";
 
+    /**
+     * Example format: {create_table id="1" name="test0" schema="id int, id int, str_a varchar(40), int_a BIGINT" prepopulate_with="300"}
+     * 
+     * prepopulate_with is the only optional value.
+     */
+    private static final String CREATE_TABLE_REGEX = "\\{create_table id=\"(\\d+)\"(?:\\s+name=\"([^\"]+)\")(?:\\s+schema=\"([^\"]+)\")(?:\\s+prepopulate_with=\"(\\d+)\")?\\}";
+
     private static final Pattern start_machine_pattern = Pattern.compile(START_MACHINE_REGEX);
     private static final Pattern terminate_machine_pattern = Pattern.compile(TERMINATE_MACHINE_REGEX);
     private static final Pattern query_pattern = Pattern.compile(QUERY_REGEX);
     private static final Pattern workload_pattern = Pattern.compile(EXECUTE_WORKLOAD_REGEX);
     private static final Pattern sleep_pattern = Pattern.compile(SLEEP_REGEX);
+    private static final Pattern create_table_pattern = Pattern.compile(CREATE_TABLE_REGEX);
 
     public static MachineInstruction parseStartMachine(final String action) throws WorkloadParseException {
 
@@ -107,6 +116,28 @@ public class CoordinationScriptParser {
             return new QueryInstruction(id, query);
         }
 
+    }
+
+    public static Instruction parseCreateTableOperation(final String action) throws WorkloadParseException {
+
+        final Matcher matcher = create_table_pattern.matcher(action);
+
+        String tableName = null;
+        String schema = null;
+        String prepopulateWith = null;
+        String id = null;
+        if (matcher.matches()) {
+            id = matcher.group(1);
+            tableName = matcher.group(2);
+            schema = matcher.group(3);
+            prepopulateWith = matcher.group(4);
+
+        }
+        else {
+            throw new WorkloadParseException("Invalid syntax in : " + action);
+        }
+
+        return new CreateTableInstruction(id, tableName, schema, prepopulateWith);
     }
 
     protected static WorkloadInstruction parseWorkloadRequest(final String query, final String id) throws WorkloadParseException {
@@ -183,6 +214,10 @@ public class CoordinationScriptParser {
         }
         else if (sleep_pattern.matcher(action).matches()) {
             return parseSleepOperation(action);
+
+        }
+        else if (create_table_pattern.matcher(action).matches()) {
+            return parseCreateTableOperation(action);
 
         }
         else {

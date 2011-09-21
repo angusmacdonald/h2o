@@ -72,7 +72,7 @@ public class WorkerTests {
         final H2OPropertiesWrapper descriptorFile = H2OPropertiesWrapper.getWrapper(databaseDescriptorLocation);
         descriptorFile.loadProperties();
 
-        worker.startH2OInstance(descriptorFile, false, false);
+        worker.startH2OInstance(descriptorFile, false, false, "test.log", 0);
 
         worker.terminateH2OInstance();
     }
@@ -97,9 +97,9 @@ public class WorkerTests {
         final H2OPropertiesWrapper descriptorFile = H2OPropertiesWrapper.getWrapper(databaseDescriptorLocation);
         descriptorFile.loadProperties();
 
-        worker.startH2OInstance(descriptorFile, false, false);
+        worker.startH2OInstance(descriptorFile, false, false, "test.log", 0);
         Thread.sleep(5000);
-        worker2.startH2OInstance(descriptorFile, false, false);
+        worker2.startH2OInstance(descriptorFile, false, false, "test.log", 0);
 
         worker.terminateH2OInstance();
         worker2.terminateH2OInstance();
@@ -124,8 +124,8 @@ public class WorkerTests {
         final H2OPropertiesWrapper descriptorFile = H2OPropertiesWrapper.getWrapper(databaseDescriptorLocation);
         descriptorFile.loadProperties();
 
-        worker.startH2OInstance(descriptorFile, false, false);
-        worker.startH2OInstance(descriptorFile, false, false);
+        worker.startH2OInstance(descriptorFile, false, false, "test.log", 0);
+        worker.startH2OInstance(descriptorFile, false, false, "test.log", 0);
 
         worker.terminateH2OInstance();
     }
@@ -149,7 +149,7 @@ public class WorkerTests {
         final H2OPropertiesWrapper descriptorFile = H2OPropertiesWrapper.getWrapper(databaseDescriptorLocation);
         descriptorFile.loadProperties();
 
-        worker.startH2OInstance(descriptorFile, false, false);
+        worker.startH2OInstance(descriptorFile, false, false, "test.log", 0);
 
         worker.stopH2OInstance();
 
@@ -176,12 +176,40 @@ public class WorkerTests {
         final H2OPropertiesWrapper descriptorFile = H2OPropertiesWrapper.getWrapper(databaseDescriptorLocation);
         descriptorFile.loadProperties();
 
-        worker.startH2OInstance(descriptorFile, false, false);
+        worker.startH2OInstance(descriptorFile, false, false, "test.log", 0);
 
         final Workload workload = new Workload("src/test/org/h2o/eval/workloads/test.workload", 0);
 
         worker.startWorkload(workload);
 
         worker.terminateH2OInstance();
+    }
+
+    /**
+     * Test that the {@link Worker} class is able to start up and query an H2O instance.
+     * @throws Exception Not expected.
+     */
+    @Test
+    public void testLoopWorkload() throws Exception {
+
+        worker = new Worker();
+
+        worker.deleteH2OInstanceState();
+
+        final H2OLocator locator = new H2OLocator("evaluationDB", 34000, true, Worker.PATH_TO_H2O_DATABASE);
+
+        final String databaseDescriptorLocation = locator.start();
+
+        final H2OPropertiesWrapper descriptorFile = H2OPropertiesWrapper.getWrapper(databaseDescriptorLocation);
+        descriptorFile.loadProperties();
+
+        worker.startH2OInstance(descriptorFile, false, false, "test.log", 0);
+
+        final Workload workload = new Workload("src/test/org/h2o/eval/workloads/loop.workload", 0);
+
+        worker.startWorkload(workload);
+
+        worker.terminateH2OInstance();
+
     }
 }

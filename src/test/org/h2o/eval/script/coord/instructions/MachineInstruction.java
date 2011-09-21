@@ -84,7 +84,7 @@ public class MachineInstruction implements Instruction {
         }
         else {
             //Machine is being restarted
-            worker.startH2OInstance(coordState.getDescriptorFile(), false, id == 0);
+            worker.startH2OInstance(coordState.getDescriptorFile(), false, id == 0, coordState.getScriptName(), coordState.getDiagnosticLevel());
             coordState.addScriptedInstance(id, worker);
             coordState.addToFailureLog(new FailureLogEntry(coordState.getCurrentExecutionTime(), coordState.getScriptedInstance(id).getLocalDatabaseName(), true));
         }

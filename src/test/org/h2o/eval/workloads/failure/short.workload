@@ -1,12 +1,6 @@
 SET AUTOCOMMIT OFF;
+INSERT INTO test0 VALUES (<loop-counter/>, <generated-string/>, <generated-long/>);
 SELECT * FROM test0 WHERE int_a > 679153090560;
-INSERT INTO test0 VALUES (<loop-counter/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-long/>, <generated-long/>);
-SELECT * FROM test0 WHERE int_a > 482310985662;
-INSERT INTO test0 VALUES (<loop-counter/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-long/>, <generated-long/>);
-SELECT * FROM test0 WHERE int_a > 679153090560;
-INSERT INTO test0 VALUES (<loop-counter/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-long/>, <generated-long/>);
-SELECT * FROM test0 WHERE int_a > 482310985662;
-INSERT INTO test0 VALUES (<loop-counter/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-string/>, <generated-long/>, <generated-long/>);
-SELECT * FROM test0 WHERE int_a > 679153090560;
+DELETE FROM test0 WHERE id=<last-loop-counter/>
 COMMIT;
 SET AUTOCOMMIT ON;

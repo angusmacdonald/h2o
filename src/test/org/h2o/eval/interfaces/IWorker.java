@@ -40,10 +40,12 @@ public interface IWorker extends Remote {
      * @param descriptorFileLocation Serialized version of the descriptor file.
      * @param startInDebug Whether to start the H2O instance in Java remote debug mode (this blocks until you connect with a remote debugger on port 8998.
      * @param disableReplication If true, an instance will be started with the NO_REPLICATE function, stating it doesn't want to be involved in replicating other instances state.
+     * @param logFileName   Where output for this database should be sent.
+     * @param diagnosticLevel   0 is full, 6 is none.
      * @return The JDBC connection string for this recently started database.
      * @throws StartupException If the instance couln't be started.
      */
-    public String startH2OInstance(final H2OPropertiesWrapper descriptorFileLocation, boolean startInDebug, boolean disableReplication) throws RemoteException, StartupException;
+    public String startH2OInstance(final H2OPropertiesWrapper descriptorFileLocation, boolean startInDebug, boolean disableReplication, String logFileName, int diagnosticLevel) throws RemoteException, StartupException;
 
     /**
      * Gracefully shutdown the H2O instance that this worker is running (by sending it a shutdown request).

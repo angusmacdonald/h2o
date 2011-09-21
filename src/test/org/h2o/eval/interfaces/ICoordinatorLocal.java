@@ -35,9 +35,10 @@ public interface ICoordinatorLocal {
     /**
      * Initiate execution of a specified workload.
      * @param workloadFileLocation  The location of the file containing the workload to be executed.
+     * @param block Whether to block waiting for the workload to complete.
      * @throws StartupException
      */
-    public void executeWorkload(String workloadFileLocation) throws StartupException;
+    public void executeWorkload(String workloadFileLocation, boolean block) throws StartupException;
 
     /**
      * Execute a co-ordinator script on this co-ordinator.

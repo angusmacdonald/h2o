@@ -26,18 +26,18 @@ public class WorkloadExecutor {
 
     private static final int MAX_CHAR_ARRAY_BYTES = 50;
     private static final int MAX_BIG_INTEGER_BYTES = 20;
-    private static final String GENERATED_LONG_PLACEHOLDER = "<generated-long/>";
-    private static final String GENERATED_STRING_PLACEHOLDER = "<generated-string/>";
-    private static final String COMMENT = "#";
-    private static final String SLEEP_OPEN_TAG = "<sleep>";
-    private static final String SLEEP_CLOSE_TAG = "</sleep>";
+    public static final String GENERATED_LONG_PLACEHOLDER = "<generated-long/>";
+    public static final String GENERATED_STRING_PLACEHOLDER = "<generated-string/>";
+    public static final String COMMENT = "#";
+    public static final String SLEEP_OPEN_TAG = "<sleep>";
+    public static final String SLEEP_CLOSE_TAG = "</sleep>";
 
     private static final String LOOP_START_OPEN_TAG = "<loop";
-    private static final String LOOP_COUNTER_PLACEHOLDER = "<loop-counter/>";
-    private static final String LAST_LOOP_COUNTER_PLACEHOLDER = "<last-loop-counter/>";
-    private static final String INCREMENT_COUNTER_TAG = "<increment/>";
-    private static final String LOOP_END_TAG = "</loop>";
-    private static final long MAX_WORKLOAD_DURATION = 60 * 60;
+    public static final String LOOP_COUNTER_PLACEHOLDER = "<loop-counter/>";
+    public static final String LAST_LOOP_COUNTER_PLACEHOLDER = "<last-loop-counter/>";
+    public static final String INCREMENT_COUNTER_TAG = "<increment/>";
+    public static final String LOOP_END_TAG = "</loop>";
+    private static final long MAX_WORKLOAD_DURATION = 10000;
 
     /**
      * If the system is failing quickly (within 5 milliseconds), sleep for a while so you don't get lots of junk failed transactions. This determines how long to sleep for.
@@ -147,7 +147,7 @@ public class WorkloadExecutor {
                 else if (query.startsWith(LOOP_START_OPEN_TAG)) { //We have reached the start of a loop.
 
                     try {
-                        loopIterations = Integer.valueOf(query.substring(query.indexOf("iterations=\"") + "iterations=\"".length(), query.lastIndexOf("\">")));
+                        loopIterations = Integer.valueOf(query.substring(query.indexOf("iterations=\"") + "iterations=\"".length(), query.lastIndexOf("\"/>")));
                     }
                     catch (final Exception e) {
                         throw new WorkloadParseException("Incorrectly formatted workload request: " + query + " (exception: " + e.getMessage() + ").");
@@ -191,10 +191,13 @@ public class WorkloadExecutor {
                     }
 
                     boolean successfullyExecuted = true;
+                    Diagnostic.traceNoEvent(DiagnosticLevel.NONE, "Executing query: " + query);
 
                     query = replacePlaceholderValues(uniqueCounter, query);
 
-                    // Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing query: " + query);
+                    Diagnostic.traceNoEvent(DiagnosticLevel.NONE, "Executing query: " + query);
+
+                    System.out.println(query);
 
                     try {
                         final boolean resultSet = stat.execute(query);

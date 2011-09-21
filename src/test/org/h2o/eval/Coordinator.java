@@ -15,6 +15,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -70,6 +71,9 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
     private final Set<InetAddress> workerLocations;
     private final List<IWorker> inactiveWorkers = new LinkedList<IWorker>();
     private final Set<IWorker> activeWorkers = new HashSet<IWorker>();
+
+    private static final int DEFAULT_DATABASE_DIAGNOSTIC_LEVEL = 0; // 0 - full, 6 - none.
+    private static final String DEFAULT_H2O_LOGFILE_NAME = "h2o.log";
 
     /**
      * Mapping from an integer ID to worker node for H2O instances that have been started through
@@ -182,7 +186,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
             }
 
             try {
-                worker.startH2OInstance(descriptorFile, false, false);
+                worker.startH2OInstance(descriptorFile, false, false, DEFAULT_H2O_LOGFILE_NAME, DEFAULT_DATABASE_DIAGNOSTIC_LEVEL);
 
                 activeWorkers.add(worker);
 
@@ -221,7 +225,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
             try {
                 if (worker.getHostname().equals(hostname)) {
 
-                    final String jdbcConnectionString = worker.startH2OInstance(descriptorFile, startInRemoteDebug, disableReplication);
+                    final String jdbcConnectionString = worker.startH2OInstance(descriptorFile, startInRemoteDebug, disableReplication, DEFAULT_H2O_LOGFILE_NAME, DEFAULT_DATABASE_DIAGNOSTIC_LEVEL);
 
                     swapWorkerToActiveSet(worker);
 
@@ -296,7 +300,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
 
         final IWorker worker = inactiveWorkers.get(0);
 
-        worker.startH2OInstance(descriptorFile, false, disableReplication);
+        worker.startH2OInstance(descriptorFile, false, disableReplication, DEFAULT_H2O_LOGFILE_NAME, DEFAULT_DATABASE_DIAGNOSTIC_LEVEL);
 
         swapWorkerToActiveSet(worker);
 
@@ -431,26 +435,71 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
         return args;
     }
 
-    @Override
-    public void executeWorkload(final String workloadFileLocation) throws StartupException {
-
-        final IWorker worker = getActiveWorker();
-
-        executeWorkload(worker, workloadFileLocation, 0);
-
-    }
-
-    public void executeWorkload(final String id, final String workloadFileLocation, final long duration) throws StartupException {
+    /**
+     * Execute the workload given.
+     * @param workload A workload, every line being an instruction to execute.
+     * @throws StartupException 
+     */
+    public void executeWorkload(final String id, final ArrayList<String> workloadAsList, final long duration, final boolean block) throws StartupException {
 
         final IWorker worker = coordScriptState.getScriptedInstance(Integer.valueOf(id));
 
         if (worker == null) { throw new StartupException("No worker exists for this ID: " + id); }
 
-        executeWorkload(worker, workloadFileLocation, duration);
+        Workload workload = null;
+        try {
+            workload = new Workload(workloadAsList, duration);
+        }
+        catch (final Exception e) {
+            /*
+             * Shouldn't occur because the workload is not being read in from a file in this case.
+             */
+            ErrorHandling.exceptionError(e, "Error creating the workload.");
+
+        }
+
+        try {
+            worker.startWorkload(workload);
+        }
+        catch (final RemoteException e) {
+            ErrorHandling.exceptionError(e, "Couldn't connect to remote worker instance.");
+            throw new StartupException("Couldn't connect to remote worker instance.");
+        }
+        catch (final WorkloadParseException e) {
+            ErrorHandling.exceptionError(e, "Error parsing workload.");
+        }
+        catch (final SQLException e) {
+            ErrorHandling.exceptionError(e, "Error creating SQL statement for workload execution. Workload was never started.");
+        }
+
+        addWorkloadToRecords(worker);
+
+        if (block) {
+
+            blockUntilSpecificWorkloadCompletes(worker);
+        }
+    }
+
+    @Override
+    public void executeWorkload(final String workloadFileLocation, final boolean block) throws StartupException {
+
+        final IWorker worker = getActiveWorker();
+
+        executeWorkload(worker, workloadFileLocation, 0, block);
 
     }
 
-    private void executeWorkload(final IWorker worker, final String workloadFileLocation, final long duration) throws StartupException {
+    public void executeWorkload(final String id, final String workloadFileLocation, final long duration, final boolean block) throws StartupException {
+
+        final IWorker worker = coordScriptState.getScriptedInstance(Integer.valueOf(id));
+
+        if (worker == null) { throw new StartupException("No worker exists for this ID: " + id); }
+
+        executeWorkload(worker, workloadFileLocation, duration, block);
+
+    }
+
+    private void executeWorkload(final IWorker worker, final String workloadFileLocation, final long duration, final boolean block) throws StartupException {
 
         Workload workload;
         try {
@@ -480,6 +529,24 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
         }
 
         addWorkloadToRecords(worker);
+
+        if (block) {
+            blockUntilSpecificWorkloadCompletes(worker);
+        }
+    }
+
+    private void blockUntilSpecificWorkloadCompletes(final IWorker worker) {
+
+        while (areThereActiveWorkloadsOn(worker)) {
+
+            try {
+                Thread.sleep(1000);
+            }
+            catch (final InterruptedException e) {
+            }
+
+        };
+
     }
 
     private synchronized void addWorkloadToRecords(final IWorker worker) {
@@ -546,8 +613,6 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
 
     private String getCoordinatorScriptName() {
 
-        System.out.println(coordinationScriptLocation);
-
         final int dotCoordPosition = coordinationScriptLocation.length() - ".coord".length();
         int lastSlashLocation = coordinationScriptLocation.lastIndexOf("/", dotCoordPosition);
 
@@ -561,6 +626,11 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
     private synchronized boolean areThereActiveWorkloads() {
 
         return workersWithActiveWorkloads.size() > 0;
+    }
+
+    private synchronized boolean areThereActiveWorkloadsOn(final IWorker worker) {
+
+        return workersWithActiveWorkloads.containsKey(worker);
     }
 
     @Override
@@ -594,22 +664,20 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
     }
 
     @Override
-    public void executeCoordinationScript(final List<String> script, final String resultsFolderLocation, final String coordinationScriptName) throws WorkloadParseException, RemoteException, StartupException, SQLException, WorkloadException {
+    public void executeCoordinationScript(final List<String> script, final String resultsFolderLocation, final String coordinationScriptPath) throws WorkloadParseException, RemoteException, StartupException, SQLException, WorkloadException {
 
         final List<Instruction> parsedInstructions = parseCoordinationScript(script);
 
-        executeParsedCoordinationScript(parsedInstructions, resultsFolderLocation, coordinationScriptName);
+        executeParsedCoordinationScript(parsedInstructions, resultsFolderLocation, coordinationScriptPath);
 
     }
 
-    private void executeParsedCoordinationScript(final List<Instruction> script, final String resultsFolderLocation, final String coordinationScriptLocation) throws WorkloadParseException, RemoteException, StartupException, SQLException, WorkloadException {
+    private void executeParsedCoordinationScript(final List<Instruction> script, final String resultsFolderPath, final String coordinationScriptPath) throws WorkloadParseException, RemoteException, StartupException, SQLException, WorkloadException {
 
-        this.resultsFolderLocation = resultsFolderLocation;
-        this.coordinationScriptLocation = coordinationScriptLocation;
+        resultsFolderLocation = resultsFolderPath;
+        coordinationScriptLocation = coordinationScriptPath;
 
-        System.out.println("coordinationScriptLocation: " + coordinationScriptLocation);
-
-        coordScriptState = new CoordinatorScriptState(this, coordinationScriptLocation);
+        coordScriptState = new CoordinatorScriptState(this, coordinationScriptPath, getCoordinatorScriptName(), 0);
         coordScriptState.startKillMonitor();
 
         for (final Instruction instruction : script) {

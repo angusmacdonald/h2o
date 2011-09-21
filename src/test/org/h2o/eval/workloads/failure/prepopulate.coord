@@ -1,0 +1,8 @@
+{start_machine id="0"}
+{sleep="3000"}
+{start_machine id="1"}
+{start_machine id="2"}
+{create_table id="1" name="test0" schema="id int, str_a varchar(40), int_a BIGINT" prepopulate_with="300"}
+{0} {execute_workload="short.workload" duration="40000"}
+{sleep="20000"}
+{terminate_machine id="1"}

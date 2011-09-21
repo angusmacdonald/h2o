@@ -181,6 +181,17 @@ public class ScriptTests {
 
     }
 
+    /**
+     * Tests the pre-populate function.
+     * @throws Exception
+     */
+    @Test
+    public void prepopulateTest() throws Exception {
+
+        runScript("src/test/org/h2o/eval/workloads/failure/prepopulate.coord");
+
+    }
+
     public void runScript(final String scriptLocation) throws RemoteException, AlreadyBoundException, UnknownHostException, IOException, StartupException, FileNotFoundException, WorkloadParseException, SQLException, WorkloadException {
 
         workers = new IWorker[7];

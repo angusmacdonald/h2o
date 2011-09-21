@@ -40,6 +40,14 @@ public class Workload extends Thread implements IWorkload {
 
     }
 
+    public Workload(final ArrayList<String> workload, final long duration) throws FileNotFoundException, IOException {
+
+        this.duration = duration;
+
+        queries = workload;
+
+    }
+
     @Override
     public void initialiseOnWorker(final Connection connection, final Worker worker) {
 

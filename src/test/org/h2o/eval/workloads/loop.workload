@@ -1,0 +1,3 @@
+<loop iterations="300"/>
+INSERT INTO test0 VALUES(<loop-counter/>, <generated-string/>, <loop-counter/>);
+</loop>
