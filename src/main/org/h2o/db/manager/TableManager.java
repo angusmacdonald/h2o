@@ -880,7 +880,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
             temporaryInitialReplicas.clear();
 
             //Table replica replication:
-            if (replicaManager.getAllReplicasOnActiveMachines().size() < desiredRelationReplicationFactor) {
+            if (replicaManager.getAllReplicasOnActiveMachines().size() < desiredRelationReplicationFactor && db.isReplicating()) {
                 createNewReplicas();
             }
 
