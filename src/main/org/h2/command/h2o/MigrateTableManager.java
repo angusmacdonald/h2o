@@ -195,6 +195,8 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
             ErrorHandling.exceptionError(e, "Table Manager migration failed [" + schemaName + "." + tableName + "].");
         }
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Table Manager [" + schemaName + "." + tableName + "] migration complete (System Table has been notified).");
+
         return 1;
     }
 

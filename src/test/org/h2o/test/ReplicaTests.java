@@ -695,4 +695,31 @@ public class ReplicaTests extends TestBase {
         }
     }
 
+    /**
+     * Tests that the truncate table command works when a table has multiple replicas.
+     */
+    @Test
+    public void migrateTest() {
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "STARTING TEST");
+
+        try {
+            sb.executeUpdate("MIGRATE TABLEMANAGER test");
+
+            /*
+             * Test that the new Table Manager can be found.
+             */
+            sb.executeUpdate("INSERT INTO TEST VALUES(4, 'helloagain');");
+
+            /*
+             * Test that the old Table Manager is no longer accessible, and that the reference can be updated.
+             */
+            sa.executeUpdate("INSERT INTO TEST VALUES(5, 'helloagainagain');");
+        }
+        catch (final SQLException e) {
+            e.printStackTrace();
+            fail("An Unexpected SQLException was thrown.");
+        }
+    }
+
 }

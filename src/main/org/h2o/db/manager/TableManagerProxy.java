@@ -123,6 +123,7 @@ public class TableManagerProxy extends StreamProxy implements ITableManagerRemot
             final Connection connection = (Connection) startCall("prepareForMigration");
             final JSONWriter jw = connection.getJSONwriter();
             setUpJSONArrayForRMI(jw);
+            jw.value(newLocation);
             handleVoidCall(makeCall(connection));
             finishCall(connection);
         }
@@ -133,6 +134,7 @@ public class TableManagerProxy extends StreamProxy implements ITableManagerRemot
             throw e;
         }
         catch (final Exception e) {
+            e.printStackTrace();
             dealWithException(e);
         }
     }

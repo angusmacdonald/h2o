@@ -311,9 +311,16 @@ public class TableManagerServer extends ApplicationServer {
             @Override
             public void execute(final JSONReader args, final JSONWriter writer) throws Exception {
 
-                final String p0 = args.stringValue();
-                table_manager.prepareForMigration(p0);
-                writer.value("");
+                try {
+                    final String p0 = args.stringValue();
+                    table_manager.prepareForMigration(p0);
+                    writer.value("");
+                }
+                catch (final Exception e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                    throw e;
+                }
 
             }
         });

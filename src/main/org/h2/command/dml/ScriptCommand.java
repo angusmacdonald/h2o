@@ -240,7 +240,7 @@ public class ScriptCommand extends ScriptBase {
 
                 }
                 else {
-                    throw new SQLException("H2O. Incompatible Table Type.");
+                    throw new SQLException("H2O. Incompatible Table Type" + tableType);
                 }
 
                 // XXX to add indexes the mechanism used above would have to
