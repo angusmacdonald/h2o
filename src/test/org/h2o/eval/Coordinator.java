@@ -290,7 +290,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
         return allWorkers;
     }
 
-    public IWorker startH2OInstance(final boolean disableReplication) throws StartupException, RemoteException {
+    public IWorker startH2OInstance(final boolean disableReplication, final String logFileName, final int diagnosticLevel) throws StartupException, RemoteException {
 
         if (inactiveWorkers.size() == 0) {
             scanForWorkerNodes(workerLocations);
@@ -300,7 +300,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
 
         final IWorker worker = inactiveWorkers.get(0);
 
-        worker.startH2OInstance(descriptorFile, false, disableReplication, DEFAULT_H2O_LOGFILE_NAME, DEFAULT_DATABASE_DIAGNOSTIC_LEVEL);
+        worker.startH2OInstance(descriptorFile, false, disableReplication, logFileName, diagnosticLevel);
 
         swapWorkerToActiveSet(worker);
 
@@ -620,7 +620,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
             lastSlashLocation = coordinationScriptLocation.lastIndexOf("\\", dotCoordPosition);
         }
 
-        return coordinationScriptLocation.substring(lastSlashLocation, dotCoordPosition);
+        return coordinationScriptLocation.substring(lastSlashLocation + 1, dotCoordPosition);
     }
 
     private synchronized boolean areThereActiveWorkloads() {

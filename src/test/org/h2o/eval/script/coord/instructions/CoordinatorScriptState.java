@@ -71,9 +71,9 @@ public class CoordinatorScriptState {
 
     }
 
-    public IWorker startH2OInstance(final boolean noReplicate) throws RemoteException, StartupException {
+    public IWorker startH2OInstance(final boolean noReplicate, final String logFileName, final int diagnosticLevel) throws RemoteException, StartupException {
 
-        return coord.startH2OInstance(noReplicate);
+        return coord.startH2OInstance(noReplicate, logFileName, diagnosticLevel);
     }
 
     public H2OPropertiesWrapper getDescriptorFile() {
