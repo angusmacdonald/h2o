@@ -9,6 +9,7 @@ import org.h2o.util.exceptions.StartupException;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 public class QueryInstruction implements Instruction {
 
@@ -35,9 +36,15 @@ public class QueryInstruction implements Instruction {
 
         final IWorker worker = coordState.getScriptedInstance(Integer.valueOf(id));
 
-        coordState.getCoordintor().executeQuery(worker, query);
+        try {
+            coordState.getCoordintor().executeQuery(worker, query);
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Executing query '" + query + "' on '" + id + "'.");
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Executing query '" + query + "' on '" + id + "'.");
+        }
+        catch (final SQLException e) {
+            ErrorHandling.errorNoEvent("SQL Exception thrown when executing query: " + query);
+            throw e;
+        }
 
     }
 

@@ -65,8 +65,11 @@ public class WorkloadExecutor {
 
         final long workloadStartTime = currentTime();
 
+        boolean singleRun = false; // if set to true the workload completes after a single execution, and doesn't start again.
+
         if (duration <= 0) { //if no duration is specified, 'timeout' after a specified period.
             duration = MAX_WORKLOAD_DURATION;
+            singleRun = true;
         }
 
         workloadEndTime = workloadStartTime + duration;
@@ -191,13 +194,10 @@ public class WorkloadExecutor {
                     }
 
                     boolean successfullyExecuted = true;
-                    Diagnostic.traceNoEvent(DiagnosticLevel.NONE, "Executing query: " + query);
 
                     query = replacePlaceholderValues(uniqueCounter, query);
 
-                    Diagnostic.traceNoEvent(DiagnosticLevel.NONE, "Executing query: " + query);
-
-                    System.out.println(query);
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing query: " + query);
 
                     try {
                         final boolean resultSet = stat.execute(query);
@@ -297,6 +297,9 @@ public class WorkloadExecutor {
                 }
             }
 
+            if (singleRun) {
+                break;
+            }
         }
 
         final WorkloadResult result = new WorkloadResult(queryLog, successfullyExecutedTransactions, attemptedTransactions, worker, workload);
