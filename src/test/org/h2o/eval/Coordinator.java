@@ -677,7 +677,7 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
         resultsFolderLocation = resultsFolderPath;
         coordinationScriptLocation = coordinationScriptPath;
 
-        coordScriptState = new CoordinatorScriptState(this, coordinationScriptPath, getCoordinatorScriptName(), 0);
+        coordScriptState = new CoordinatorScriptState(this, coordinationScriptPath, getCoordinatorScriptName() + ".log", 0);
         coordScriptState.startKillMonitor();
 
         for (final Instruction instruction : script) {
