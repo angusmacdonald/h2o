@@ -599,9 +599,10 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
         coordScriptState.disableKillMonitor();
 
         try {
-            IndividualRunCSVPrinter.printResults(resultsFolderLocation + File.separator + getCoordinatorScriptName() + File.separator + dateFormatter.format(startDate) + "-results.csv", workloadResults, coordScriptState.getFailureLog());
-            AveragedResultsCSVPrinter.printResults(resultsFolderLocation + File.separator + getCoordinatorScriptName() + File.separator + "all.csv", workloadResults, coordinationScriptLocation, activeWorkers.size(), replicationFactor);
-            TimeSlicePrinter.printResults(resultsFolderLocation + File.separator + getCoordinatorScriptName() + File.separator + "timeSlice.csv", workloadResults, coordScriptState.getLengthOfLongestRunningWorkload(), timeSlicePeriod);
+            final String coordinatorScriptName = getCoordinatorScriptName();
+            IndividualRunCSVPrinter.printResults(resultsFolderLocation + File.separator + coordinatorScriptName + File.separator + dateFormatter.format(startDate) + "-results.csv", workloadResults, coordScriptState.getFailureLog());
+            AveragedResultsCSVPrinter.printResults(resultsFolderLocation + File.separator + coordinatorScriptName + File.separator + "all.csv", workloadResults, coordinationScriptLocation, activeWorkers.size(), replicationFactor);
+            TimeSlicePrinter.printResults(resultsFolderLocation + File.separator + coordinatorScriptName + File.separator + "timeSlice-" + coordinatorScriptName + ".csv", workloadResults, coordScriptState.getLengthOfLongestRunningWorkload(), timeSlicePeriod);
 
         }
         catch (final IOException e) {

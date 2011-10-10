@@ -1,6 +1,9 @@
 package org.h2o.eval.script.coord.instructions;
 
 import java.rmi.RemoteException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import org.h2o.eval.interfaces.IWorker;
 import org.h2o.eval.interfaces.WorkloadException;
@@ -32,6 +35,8 @@ public class MachineInstruction implements Instruction {
      * True if the machine is being started, false if it is being terminated.
      */
     public boolean startMachine;
+
+    private static final DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
 
     public MachineInstruction(final Integer id, final Long fail_after, final boolean blockWorkloads, final boolean startMachine) {
 
@@ -79,7 +84,7 @@ public class MachineInstruction implements Instruction {
          * Start machine. This blocks the co-ordinator script until the machine is restarted.
          */
         if (worker == null) { //Machine is being started for the first time.
-            worker = coordState.startH2OInstance(id == 0, coordState.getScriptName(), coordState.getDiagnosticLevel()); //disable replication on the first instance.
+            worker = coordState.startH2OInstance(id == 0, coordState.getScriptName() + "--" + dateFormatter.format(new Date()), coordState.getDiagnosticLevel()); //disable replication on the first instance.
             coordState.addScriptedInstance(id, worker);
         }
         else {
@@ -99,5 +104,4 @@ public class MachineInstruction implements Instruction {
             coordState.addKillOrder(id, System.currentTimeMillis() + fail_after);
         }
     }
-
 }

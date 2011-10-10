@@ -37,7 +37,7 @@ public class WorkloadExecutor {
     public static final String LAST_LOOP_COUNTER_PLACEHOLDER = "<last-loop-counter/>";
     public static final String INCREMENT_COUNTER_TAG = "<increment/>";
     public static final String LOOP_END_TAG = "</loop>";
-    private static final long MAX_WORKLOAD_DURATION = 10000;
+    private static final long MAX_WORKLOAD_DURATION = 50000;
 
     /**
      * If the system is failing quickly (within 5 milliseconds), sleep for a while so you don't get lots of junk failed transactions. This determines how long to sleep for.
