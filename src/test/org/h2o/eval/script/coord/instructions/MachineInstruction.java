@@ -54,7 +54,7 @@ public class MachineInstruction implements Instruction {
             startMachine(coordState);
         }
         else {
-            terminateMachine(coordState);
+            terminateMachine(coordState);;
         }
     }
 

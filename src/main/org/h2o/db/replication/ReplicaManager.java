@@ -210,6 +210,11 @@ public class ReplicaManager {
         //Diagnostic.trace(DiagnosticLevel.FULL, "commit: " + commit + " table info: " + tableInfo.getFullTableName());
 
         if (!ReplicaManager.thisTableWasUpdated(committedQueries, tableInfo)) { return new HashSet<DatabaseInstanceWrapper>(); }
+
+        if (commit) {
+            removeDeadReplicasFromSetOfReplicas(committedQueries);
+        }
+
         //Replicas that are currently marked as active (this may be changed during this update).
         final HashMap<DatabaseInstanceWrapper, Integer> oldActiveReplicas = new HashMap<DatabaseInstanceWrapper, Integer>(activeReplicas);
 
@@ -332,6 +337,37 @@ public class ReplicaManager {
         else {
             return instancesUpdated;
         }
+    }
+
+    private void removeDeadReplicasFromSetOfReplicas(final Collection<CommitResult> committedQueries) {
+
+        final Set<DatabaseInstanceWrapper> toRemove = new HashSet<DatabaseInstanceWrapper>();
+        final Set<DatabaseInstanceWrapper> locationsUpdated = new HashSet<DatabaseInstanceWrapper>();
+
+        for (final CommitResult commitResult : committedQueries) {
+            locationsUpdated.add(commitResult.getDatabaseInstanceWrapper());
+        }
+
+        for (final DatabaseInstanceWrapper replica : allReplicas.keySet()) {
+            if (!replica.isActive()) {
+                toRemove.add(replica);
+            }
+        }
+
+        for (final DatabaseInstanceWrapper replica : activeReplicas.keySet()) {
+            if (!replica.isActive()) {
+                toRemove.add(replica);
+            }
+        }
+
+        for (final DatabaseInstanceWrapper replica : toRemove) {
+
+            if (!locationsUpdated.contains(replica)) {
+                allReplicas.remove(replica);
+                activeReplicas.remove(replica);
+            }
+        }
+
     }
 
     /**

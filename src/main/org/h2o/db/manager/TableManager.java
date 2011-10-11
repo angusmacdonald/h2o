@@ -569,7 +569,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
             // Update the set of 'active replicas' and their update IDs.
             if (commit) {
-                //Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Query committed. Replica set will be updated.");
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Query committed. Replica set will be updated.");
                 //The method call below changes update IDs which is why rollbacks don't call it.
                 updateActiveReplicaSet(commit, committedQueries, asynchronousCommit, lockType);
             }
@@ -636,7 +636,6 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
             if (!asynchronousCommit && changed.size() < replicaManager.getActiveReplicas().size() && changed.size() > 1) {
                 // This is the first part of a query. Some replicas will be made inactive.
 
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Newly inactive replicas: " + PrettyPrinter.toString(changed));
                 persistInactiveInformation(tableInfo, changed);
             }
             else {
