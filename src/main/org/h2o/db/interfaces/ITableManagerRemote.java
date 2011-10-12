@@ -184,7 +184,7 @@ public interface ITableManagerRemote extends IH2ORemote, IMigratable {
 
     /**
      * Notify the table manager that the machine with the specified address has failed.
-     * @param failedMachine Machine that has failed.
+     * @param failedMachine Machine that has failed. NULL if this is to be used to notify the table manager that a new machine has joined. TODO change method name to reflect this.
      * @throws RPCException 
      */
     public void notifyOfFailure(DatabaseID failedMachine) throws RPCException;

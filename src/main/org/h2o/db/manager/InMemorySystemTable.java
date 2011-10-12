@@ -12,9 +12,13 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.h2.engine.Database;
 import org.h2o.db.DatabaseInstanceProxy;
@@ -208,6 +212,8 @@ public final class InMemorySystemTable implements ISystemTable {
 
         databasesInSystem.remove(databaseURL);
         databasesInSystem.put(databaseURL, databaseInstanceRemote);
+
+        informTableManagersOfMachineStartupOrFailure(null);
 
         return 1;
     }
@@ -722,7 +728,7 @@ public final class InMemorySystemTable implements ISystemTable {
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "The database instance " + suspectedDbURL + " is no longer active. Removing from membership set.");
                 databasesInSystem.remove(suspectedDbURL);
                 checkTableManagerAccessibility(suspectedDbURL);
-                informTableManagersOfMachineFailure(suspectedDbURL);
+                informTableManagersOfMachineStartupOrFailure(suspectedDbURL);
             }
         }
 
@@ -730,19 +736,22 @@ public final class InMemorySystemTable implements ISystemTable {
 
     /**
      * Send a message to every table manager informing them that a machine (which possibly holds one of their replicas) has failed.
-     * @param failedMachine The machine that has failed.
+     * @param failedMachine The machine that has failed. null if a new machine has started.
      */
-    private void informTableManagersOfMachineFailure(final DatabaseID failedMachine) {
+    private void informTableManagersOfMachineStartupOrFailure(final DatabaseID failedMachine) {
+
+        final List<NotifyTableManagersOfFailureAsync> asyncRequests = new LinkedList<NotifyTableManagersOfFailureAsync>();
 
         for (final TableManagerWrapper tableManagerWrapper : tableManagers.values()) {
-            try {
-                tableManagerWrapper.getTableManager().notifyOfFailure(failedMachine);
-            }
-            catch (final RPCException e) {
-                //Don't do anything here.
-            }
+            asyncRequests.add(new NotifyTableManagersOfFailureAsync(tableManagerWrapper.getTableManager(), failedMachine));
+
         }
 
-    }
+        final ExecutorService exec = Executors.newFixedThreadPool(2);
+        while (asyncRequests.size() > 0) {
+            exec.submit(asyncRequests.remove(0));
+        }
+        exec.shutdown();
 
+    }
 }

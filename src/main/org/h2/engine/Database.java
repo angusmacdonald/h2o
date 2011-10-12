@@ -1186,6 +1186,7 @@ public class Database implements DataHandler, Observer, ISystemStatus {
 
         try {
             system_table_server.start();
+            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "System Table Server started for database " + getID() + " on port " + preferredSystemTablePort + ".");
         }
         catch (final Exception e) {
             ErrorHandling.hardExceptionError(e, "Couldn't start system table instance server.");

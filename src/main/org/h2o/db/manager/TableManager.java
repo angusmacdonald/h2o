@@ -912,7 +912,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
 
             Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Table Manager for " + fullName + " (on " + db.getID() + ") will attempt to replicate to " + newReplicasNeeded + " of these machines: " + PrettyPrinter.toString(potentialReplicaLocations));
 
-            final String createReplicaSQL = "CREATE  REPLICA " + fullName + " FROM '" + replicaManager.getPrimaryLocation().getURL().getURLwithRMIPort() + "'";
+            final String createReplicaSQL = "CREATE  REPLICA " + fullName + " FROM '" + replicaManager.getPrimaryLocation().getURL().getURL() + "'";
 
             final Set<DatabaseInstanceWrapper> locationOfNewReplicas = new HashSet<DatabaseInstanceWrapper>();
 
@@ -925,6 +925,8 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
                     final IDatabaseInstanceRemote instance = wrapper.getDatabaseInstance();
 
                     try {
+
+                        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing " + createReplicaSQL + " on " + instance.getAddress() + ".");
                         final int result = instance.executeUpdate(createReplicaSQL, true);
 
                         if (result == 0) {
@@ -1043,14 +1045,17 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
     @Override
     public void notifyOfFailure(final DatabaseID failedMachine) throws RPCException {
 
-        replicaManager.markMachineAsFailed(failedMachine);
+        if (failedMachine != null) {
 
-        /*
-         * Contact the meta-data replica manager for this machine as well.
-         */
+            replicaManager.markMachineAsFailed(failedMachine);
 
-        db.getMetaDataReplicaManager().notifyOfFailure(failedMachine);
+            /*
+             * Contact the meta-data replica manager for this machine as well.
+             */
 
+            db.getMetaDataReplicaManager().notifyOfFailure(failedMachine);
+
+        }
         /*
          * Check whether any new replicas are needed.
          */
