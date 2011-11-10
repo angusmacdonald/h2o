@@ -3,6 +3,7 @@ package org.h2o.eval.script.coord;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.h2o.eval.script.coord.instructions.CheckReplFactorInstruction;
 import org.h2o.eval.script.coord.instructions.CreateTableInstruction;
 import org.h2o.eval.script.coord.instructions.Instruction;
 import org.h2o.eval.script.coord.instructions.MachineInstruction;
@@ -55,12 +56,19 @@ public class CoordinationScriptParser {
      */
     private static final String CREATE_TABLE_REGEX = "\\{create_table id=\"(\\d+)\"(?:\\s+name=\"([^\"]+)\")(?:\\s+schema=\"([^\"]+)\")(?:\\s+prepopulate_with=\"(\\d+)\")?\\}";
 
+    /**
+     * Example format: {check_repl_factor table="name" expected="3"}
+
+     */
+    private static final String CHECK_REPL_REGEX = "\\{check_repl_factor (?:name=\"([^\"]+)\")\\s+expected=\"(\\d+)\"\\}";
+
     private static final Pattern start_machine_pattern = Pattern.compile(START_MACHINE_REGEX);
     private static final Pattern terminate_machine_pattern = Pattern.compile(TERMINATE_MACHINE_REGEX);
     private static final Pattern query_pattern = Pattern.compile(QUERY_REGEX);
     private static final Pattern workload_pattern = Pattern.compile(EXECUTE_WORKLOAD_REGEX);
     private static final Pattern sleep_pattern = Pattern.compile(SLEEP_REGEX);
     private static final Pattern create_table_pattern = Pattern.compile(CREATE_TABLE_REGEX);
+    private static final Pattern check_replication_factor_pattern = Pattern.compile(CHECK_REPL_REGEX);
 
     public static MachineInstruction parseStartMachine(final String action) throws WorkloadParseException {
 
@@ -138,6 +146,24 @@ public class CoordinationScriptParser {
         }
 
         return new CreateTableInstruction(id, tableName, schema, prepopulateWith);
+    }
+
+    public static Instruction parseCheckReplOperation(final String action) throws WorkloadParseException {
+
+        final Matcher matcher = check_replication_factor_pattern.matcher(action);
+
+        String tableName = null;
+        int expected = 0;
+        if (matcher.matches()) {
+            tableName = matcher.group(1);
+            expected = Integer.valueOf(matcher.group(2));
+
+        }
+        else {
+            throw new WorkloadParseException("Invalid syntax in : " + action);
+        }
+
+        return new CheckReplFactorInstruction(tableName, expected);
     }
 
     protected static WorkloadInstruction parseWorkloadRequest(final String query, final String id) throws WorkloadParseException {
@@ -218,6 +244,10 @@ public class CoordinationScriptParser {
         }
         else if (create_table_pattern.matcher(action).matches()) {
             return parseCreateTableOperation(action);
+
+        }
+        else if (check_replication_factor_pattern.matcher(action).matches()) {
+            return parseCheckReplOperation(action);
 
         }
         else {

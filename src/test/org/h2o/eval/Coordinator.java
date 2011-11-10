@@ -687,9 +687,9 @@ public class Coordinator implements ICoordinatorRemote, ICoordinatorLocal, ICoor
 
     }
 
-    public void executeQuery(final IWorker worker, final String query) throws RemoteException, SQLException {
+    public int executeQuery(final IWorker worker, final String query) throws RemoteException, SQLException {
 
-        worker.executeQuery(query);
+        return worker.executeQuery(query);
     }
 
     public void killInstance(final Integer workerID) throws RemoteException, ShutdownException {

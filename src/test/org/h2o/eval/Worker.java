@@ -513,10 +513,17 @@ public class Worker extends Thread implements IWorker {
     }
 
     @Override
-    public void executeQuery(final String query) throws RemoteException, SQLException {
+    public int executeQuery(final String query) throws RemoteException, SQLException {
 
         final Statement stat = connection.createStatement();
-        stat.execute(query);
+        final boolean resultSet = stat.execute(query);
+
+        if (!resultSet) {
+            return stat.getUpdateCount();
+        }
+        else {
+            return -2;
+        }
 
     }
 

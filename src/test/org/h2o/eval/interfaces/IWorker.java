@@ -114,7 +114,7 @@ public interface IWorker extends Remote {
      * @param query Query to be executed.
      * @throws SQLException If the query was not successfully executed.
      */
-    public void executeQuery(String query) throws RemoteException, SQLException;
+    public int executeQuery(String query) throws RemoteException, SQLException;
 
     /**
      * Get the local hostname on which this worker is running.
