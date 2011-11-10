@@ -749,9 +749,11 @@ public final class InMemorySystemTable implements ISystemTable {
 
         final ExecutorService exec = Executors.newFixedThreadPool(2);
         while (asyncRequests.size() > 0) {
+            System.out.println("job submitted.");
             exec.submit(asyncRequests.remove(0));
         }
         exec.shutdown();
+        System.out.println("moving on.");
 
     }
 }

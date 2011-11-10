@@ -229,6 +229,7 @@ public class H2LockManager {
 
             final long now = System.currentTimeMillis();
             if (now >= max) {
+                
                 traceLock(session, exclusive, "timeout after " + session.getLockTimeout());
 
                 throw Message.getSQLException(ErrorCode.LOCK_TIMEOUT_1, tableData.getName());

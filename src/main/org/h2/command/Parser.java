@@ -77,6 +77,7 @@ import org.h2.command.dml.TransactionCommand;
 import org.h2.command.dml.Update;
 import org.h2.command.h2o.CreateReplica;
 import org.h2.command.h2o.DropReplica;
+import org.h2.command.h2o.GetReplicationFactor;
 import org.h2.command.h2o.MigrateSystemTable;
 import org.h2.command.h2o.MigrateTableManager;
 import org.h2.command.h2o.RecreateTableManager;
@@ -451,7 +452,7 @@ public class Parser {
                         c = parseGrantRevoke(GrantRevoke.GRANT);
                     }
                     else if (readIf("GET")) {
-                        c = parseGetRmiPort();
+                        c = parseGet();
                     }
                     break;
                 case 'H':
@@ -5484,19 +5485,30 @@ public class Parser {
      * @return
      * @throws SQLException
      */
-    private GetRmiPort parseGetRmiPort() throws SQLException {
+    private Prepared parseGet() throws SQLException {
 
-        read("RMI");
-        read("PORT");
+        if (readIf("RMI")) {
+            read("PORT");
 
-        String databaseLocation = null;
-        if (readIf("AT")) {
-            databaseLocation = readExpression().toString();
+            String databaseLocation = null;
+            if (readIf("AT")) {
+                databaseLocation = readExpression().toString();
+            }
+
+            final GetRmiPort command = new GetRmiPort(session, getSchema(), databaseLocation);
+
+            return command;
         }
+        else if (readIf("REPLICATION")) {
+            read("FACTOR");
 
-        final GetRmiPort command = new GetRmiPort(session, getSchema(), databaseLocation);
+            final String tableName = readExpression().toString();
 
-        return command;
+            final GetReplicationFactor command = new GetReplicationFactor(session, tableName);
+
+            return command;
+        }
+        return null;
     }
 
     /**
