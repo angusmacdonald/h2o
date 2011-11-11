@@ -9,6 +9,7 @@
 {sleep="10000"}
 {1} CREATE TABLE test0 (id int, str_a varchar(40), str_b varchar(40), str_c varchar(40), str_d varchar(40), int_a BIGINT, int_b BIGINT);
 {sleep="20000"}
+{check_repl_factor name="test0" expected="3"}
 {0} {execute_workload="src/test/org/h2o/eval/workloads/failure/table-test0.workload" duration="80000"}
 {sleep="20000"}
 {terminate_machine id="1"}

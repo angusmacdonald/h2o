@@ -76,9 +76,9 @@ public class CoordinationScriptRunner {
 
         final List<String> script = FileUtil.readAllLines(coordinatorScriptLocation);
 
-        ScriptRunner.runCoordinationScript(databaseName, workerLocationsInet, replicationFactor, startWorkersLocallyForTesting, script, resultsFolderLocation, coordinatorScriptLocation, timeSlicePeriod);
+        final int result = ScriptRunner.runCoordinationScript(databaseName, workerLocationsInet, replicationFactor, startWorkersLocallyForTesting, script, resultsFolderLocation, coordinatorScriptLocation, timeSlicePeriod);
 
-        System.exit(0);
+        System.exit(result);
     }
 
     private static boolean processBoolean(final String arg) {

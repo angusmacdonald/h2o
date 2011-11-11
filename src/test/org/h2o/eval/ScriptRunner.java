@@ -18,7 +18,7 @@ import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 public class ScriptRunner {
 
-    protected static void runCoordinationScript(final String databaseName, final List<InetAddress> workerLocationsInet, final Integer replicationFactor, final boolean startWorkersLocallyForTesting, final List<String> script, final String resultsFolderLocation,
+    protected static int runCoordinationScript(final String databaseName, final List<InetAddress> workerLocationsInet, final Integer replicationFactor, final boolean startWorkersLocallyForTesting, final List<String> script, final String resultsFolderLocation,
                     final String coordinationScriptLocation, final Integer timeSlicePeriod) throws RemoteException, AlreadyBoundException, UnknownHostException, SQLException, IOException, StartupException {
 
         /*
@@ -51,16 +51,18 @@ public class ScriptRunner {
 
             coord.executeCoordinationScript(script, resultsFolderLocation, coordinationScriptLocation);
 
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Blocking until workloads complete.");
+
+            coord.blockUntilWorkloadsComplete(timeSlicePeriod);
+
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Workloads have completed");
         }
         catch (final Exception e) {
             ErrorHandling.exceptionError(e, "Failed to execute co-ordinator script.");
+
+            return 1;
         }
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Blocking until workloads complete.");
-
-        coord.blockUntilWorkloadsComplete(timeSlicePeriod);
-
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Workloads have completed");
-
+        return 0;
     }
 }
