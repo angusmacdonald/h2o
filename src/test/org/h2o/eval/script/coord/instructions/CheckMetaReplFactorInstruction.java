@@ -30,7 +30,7 @@ public class CheckMetaReplFactorInstruction implements Instruction {
     @Override
     public void execute(final CoordinatorScriptState coordState) throws RemoteException, StartupException, WorkloadException, SQLException {
 
-        final String query = "GET META-REPLICATION FACTOR " + tableName;
+        final String query = "GET METAREPLICATION FACTOR " + tableName;
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "CSCRIPT: Executing query '" + query + "' on '0'.");
 

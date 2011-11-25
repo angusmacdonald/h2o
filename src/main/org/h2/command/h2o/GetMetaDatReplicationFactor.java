@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import org.h2.command.Prepared;
 import org.h2.engine.Session;
 import org.h2.result.LocalResult;
+import org.h2o.db.id.TableInfo;
 import org.h2o.db.query.TableProxyManager;
 import org.h2o.util.exceptions.MovedException;
 
@@ -13,7 +14,7 @@ import uk.ac.standrews.cs.nds.rpc.RPCException;
 /**
  * Returns the replication factor of a given table.
  * 
- * Syntax: GET META-REPLICATION FACTOR <table_name>
+ * Syntax: GET META-REPLICATION FACTOR <table_name>  -- table name optional.
  * @author angus
  *
  */
@@ -31,10 +32,23 @@ public class GetMetaDatReplicationFactor extends Prepared {
     public int update() throws SQLException, RPCException {
 
         try {
+            if (tableName == null) {
+                final int currentReplicationFactor = 0;
+                //TODO
+                //                final DatabaseID sysTableLocation = session.getDatabase().getSystemTable().getLocalDatabaseID();
+                //                final IDatabaseInstanceRemote locationOfMetaData = session.getDatabase().getSystemTable().getDatabaseInstance(sysTableLocation);
+                //                
+                //                locationOfMetaData.get
 
-            final int currentReplicationFactor = session.getDatabase().getSystemTable().getReplicaLocations().size();
+                return currentReplicationFactor;
+            }
+            else {
+                final TableInfo ti = new TableInfo("PUBLIC." + tableName);
 
-            return currentReplicationFactor;
+                final int currentReplicationFactor = session.getDatabase().getSystemTable().getReplicaLocations().get(ti).size();
+
+                return currentReplicationFactor;
+            }
         }
         catch (final MovedException e) {
             e.printStackTrace();

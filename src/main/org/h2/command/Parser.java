@@ -5509,7 +5509,7 @@ public class Parser {
 
             return command;
         }
-        else if (readIf("META-REPLICATION")) {
+        else if (readIf("METAREPLICATION")) {
             read("FACTOR");
 
             final String tableName = readExpression().toString();

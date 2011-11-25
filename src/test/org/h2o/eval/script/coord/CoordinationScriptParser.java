@@ -67,7 +67,7 @@ public class CoordinationScriptParser {
      * Example format: {check_meta_repl_factor table="name" expected="3"}
 
      */
-    private static final String CHECK_META_REPL_REGEX = "\\{check_repl_factor (?:name=\"([^\"]+)\")?\\s*expected=\"(\\d+)\"\\}";
+    private static final String CHECK_META_REPL_REGEX = "\\{check_meta_repl_factor (?:name=\"([^\"]+)\")?\\s*expected=\"(\\d+)\"\\}";
 
     private static final Pattern start_machine_pattern = Pattern.compile(START_MACHINE_REGEX);
     private static final Pattern terminate_machine_pattern = Pattern.compile(TERMINATE_MACHINE_REGEX);
@@ -76,7 +76,7 @@ public class CoordinationScriptParser {
     private static final Pattern sleep_pattern = Pattern.compile(SLEEP_REGEX);
     private static final Pattern create_table_pattern = Pattern.compile(CREATE_TABLE_REGEX);
     private static final Pattern check_replication_factor_pattern = Pattern.compile(CHECK_REPL_REGEX);
-    private static final Pattern check_meta_replication_factor_pattern = Pattern.compile(CHECK_REPL_REGEX);
+    private static final Pattern check_meta_replication_factor_pattern = Pattern.compile(CHECK_META_REPL_REGEX);
 
     public static MachineInstruction parseStartMachine(final String action) throws WorkloadParseException {
 
