@@ -756,4 +756,11 @@ public final class InMemorySystemTable implements ISystemTable {
         System.out.println("moving on.");
 
     }
+
+    @Override
+    public int getCurrentSystemTableReplication() throws RPCException, MovedException {
+
+        //Not implemented by the Inmemory System Table.
+        return 0;
+    }
 }

@@ -599,8 +599,14 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
     @Override
     public void suspectInstanceOfFailure(final DatabaseID predecessorURL) throws RPCException, MovedException {
 
-        // TODO Auto-generated method stub
+        // Done by in-memory system table.
 
+    }
+
+    @Override
+    public int getCurrentSystemTableReplication() throws RPCException, MovedException {
+
+        return super.getMetaDataReplicationFactor();
     }
 
 }

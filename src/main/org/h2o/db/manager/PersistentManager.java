@@ -695,4 +695,9 @@ public abstract class PersistentManager {
         metaDataReplicaManager.updateLocatorFiles(isSystemTable);
     }
 
+    public int getMetaDataReplicationFactor() {
+
+        return metaDataReplicaManager.getReplicaLocations(isSystemTable).length;
+    }
+
 }

@@ -502,6 +502,15 @@ public class SystemTableServer extends ApplicationServer {
                 marshaller.serializeDatabaseID(system_table.getLocalDatabaseID(), response);
             }
         });
+
+        handler_map.put("getCurrentSystemTableReplication", new IHandler() {
+
+            @Override
+            public void execute(final JSONReader args, final JSONWriter response) throws Exception {
+
+                response.value(system_table.getCurrentSystemTableReplication());
+            }
+        });
     }
 
     public void completeVoidResponse(final JSONWriter response) throws JSONException {

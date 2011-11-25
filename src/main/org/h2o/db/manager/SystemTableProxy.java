@@ -808,4 +808,21 @@ public class SystemTableProxy extends StreamProxy implements ISystemTableMigrata
             return null; // not reached
         }
     }
+
+    @Override
+    public int getCurrentSystemTableReplication() throws RPCException, MovedException {
+
+        try {
+            final Connection connection = (Connection) startCall("getCurrentSystemTableReplication");
+            final JSONReader reader = makeCall(connection);
+            final int result = reader.intValue();
+            finishCall(connection);
+
+            return result;
+        }
+        catch (final Exception e) {
+            dealWithException(e);
+            return -1; // not reached
+        }
+    }
 }

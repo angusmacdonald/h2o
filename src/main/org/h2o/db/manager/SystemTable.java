@@ -454,4 +454,10 @@ public class SystemTable implements ISystemTableMigratable {
 
         return database.getID();
     }
+
+    @Override
+    public int getCurrentSystemTableReplication() throws RPCException, MovedException {
+
+        return persisted.getCurrentSystemTableReplication();
+    }
 }

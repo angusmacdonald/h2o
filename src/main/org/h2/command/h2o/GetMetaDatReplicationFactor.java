@@ -33,12 +33,7 @@ public class GetMetaDatReplicationFactor extends Prepared {
 
         try {
             if (tableName == null) {
-                final int currentReplicationFactor = 0;
-                //TODO
-                //                final DatabaseID sysTableLocation = session.getDatabase().getSystemTable().getLocalDatabaseID();
-                //                final IDatabaseInstanceRemote locationOfMetaData = session.getDatabase().getSystemTable().getDatabaseInstance(sysTableLocation);
-                //                
-                //                locationOfMetaData.get
+                final int currentReplicationFactor = session.getDatabase().getSystemTable().getCurrentSystemTableReplication();
 
                 return currentReplicationFactor;
             }
