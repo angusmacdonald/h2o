@@ -77,6 +77,7 @@ import org.h2.command.dml.TransactionCommand;
 import org.h2.command.dml.Update;
 import org.h2.command.h2o.CreateReplica;
 import org.h2.command.h2o.DropReplica;
+import org.h2.command.h2o.GetMetaDatReplicationFactor;
 import org.h2.command.h2o.GetReplicationFactor;
 import org.h2.command.h2o.MigrateSystemTable;
 import org.h2.command.h2o.MigrateTableManager;
@@ -5505,6 +5506,15 @@ public class Parser {
             final String tableName = readExpression().toString();
 
             final GetReplicationFactor command = new GetReplicationFactor(session, tableName);
+
+            return command;
+        }
+        else if (readIf("META-REPLICATION")) {
+            read("FACTOR");
+
+            final String tableName = readExpression().toString();
+
+            final GetMetaDatReplicationFactor command = new GetMetaDatReplicationFactor(session, tableName);
 
             return command;
         }
