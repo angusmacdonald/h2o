@@ -13,6 +13,7 @@ import org.h2o.db.query.TableProxyManager;
 import org.h2o.util.exceptions.MovedException;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 /**
  * Returns the replication factor of a given table.
@@ -35,7 +36,7 @@ public class GetMetaDatReplicationFactor extends Prepared {
     public int update() throws SQLException, RPCException {
 
         try {
-            if (tableName == null) {
+            if (tableName == null || tableName.equals("NULL")) {
                 final int currentReplicationFactor = session.getDatabase().getSystemTable().getCurrentSystemTableReplication();
 
                 return currentReplicationFactor;
@@ -44,6 +45,9 @@ public class GetMetaDatReplicationFactor extends Prepared {
                 final TableInfo ti = new TableInfo("PUBLIC." + tableName);
 
                 final Map<TableInfo, Set<DatabaseID>> replicaLocations = session.getDatabase().getSystemTable().getReplicaLocations();
+                System.err.println("-----");
+                System.err.println(tableName);
+                System.err.println(PrettyPrinter.toString(replicaLocations));
                 final Set<DatabaseID> replicaLocationsForTi = replicaLocations.get(ti);
 
                 int currentReplicationFactor = 0;
