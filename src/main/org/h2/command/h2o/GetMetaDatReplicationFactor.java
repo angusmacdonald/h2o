@@ -1,10 +1,13 @@
 package org.h2.command.h2o;
 
 import java.sql.SQLException;
+import java.util.Map;
+import java.util.Set;
 
 import org.h2.command.Prepared;
 import org.h2.engine.Session;
 import org.h2.result.LocalResult;
+import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.query.TableProxyManager;
 import org.h2o.util.exceptions.MovedException;
@@ -40,7 +43,14 @@ public class GetMetaDatReplicationFactor extends Prepared {
             else {
                 final TableInfo ti = new TableInfo("PUBLIC." + tableName);
 
-                final int currentReplicationFactor = session.getDatabase().getSystemTable().getReplicaLocations().get(ti).size();
+                final Map<TableInfo, Set<DatabaseID>> replicaLocations = session.getDatabase().getSystemTable().getReplicaLocations();
+                final Set<DatabaseID> replicaLocationsForTi = replicaLocations.get(ti);
+
+                int currentReplicationFactor = 0;
+
+                if (replicaLocationsForTi != null) {
+                    currentReplicationFactor = replicaLocationsForTi.size();
+                }
 
                 return currentReplicationFactor;
             }
