@@ -31,6 +31,7 @@ import org.h2.value.Transfer;
 import org.h2.value.Value;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * One server thread is opened per client connection.
@@ -93,6 +94,7 @@ public class TcpServerThread implements Runnable {
                     final String sessionId = transfer.readString();
                     final int command = transfer.readInt();
                     stop = true;
+                    System.err.println("Stop=true for 97");
                     if (command == SessionRemote.SESSION_CANCEL_STATEMENT) {
                         // cancel a running statement
                         final int statementId = transfer.readInt();
@@ -156,6 +158,7 @@ public class TcpServerThread implements Runnable {
             trace("Disconnect");
         }
         catch (final Throwable e) {
+            e.printStackTrace();
             server.traceError(e);
         }
         finally {
@@ -221,6 +224,7 @@ public class TcpServerThread implements Runnable {
         catch (final IOException e2) {
             server.traceError(e2);
             // if writing the error does not work, close the connection
+            ErrorHandling.exceptionError(e2, "Stop=true for 226");
             stop = true;
         }
     }

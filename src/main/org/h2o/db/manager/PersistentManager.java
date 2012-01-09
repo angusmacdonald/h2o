@@ -84,7 +84,7 @@ public abstract class PersistentManager {
 
         final Session session = db.getSystemSession();
 
-        if (session == null) {
+        if (session == null || session.isClosed()) {
             ErrorHandling.error("Couldn't find system session. Local database has been shutdown.");
             return;
         }
@@ -104,7 +104,7 @@ public abstract class PersistentManager {
 
         final Session session = db.getSystemSession();
 
-        if (session != null) {
+        if (session != null && !session.isClosed()) {
             queryParser = new Parser(session, true);
         }
         else {
@@ -608,10 +608,12 @@ public abstract class PersistentManager {
 
         Session s = null;
 
-        if (db.getSessions(false).length > 0) {
+        if (db.getSessions(false).length > 0 && !db.getSessions(false)[0].isClosed()) {
+            System.err.println("getting regular session.");
             s = db.getSessions(false)[0];
         }
         else {
+            System.err.println("getting system session.");
             s = db.getSystemSession();
         }
 

@@ -47,7 +47,12 @@ public class MigrateSystemTable extends org.h2.command.ddl.SchemaCommand {
             session.getDatabase().getSystemTableReference().migrateSystemTableToLocalInstance(noReplicateToPreviousInstance);
         }
         catch (final SystemTableAccessException e) {
-            throw new SQLException("Failed to recreate System Table on this machine.");
+            System.err.println("----");
+            e.printStackTrace();
+            final SQLException sqlException = new SQLException(e);
+            sqlException.setStackTrace(e.getStackTrace());
+
+            throw sqlException;
         }
 
         return 0;

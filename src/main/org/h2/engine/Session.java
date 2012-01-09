@@ -485,7 +485,7 @@ public class Session extends SessionWithState {
      */
     public Command prepareLocal(String sql) throws SQLException {
 
-        if (closed) { throw Message.getSQLException(ErrorCode.CONNECTION_BROKEN); }
+        if (closed) { throw new SQLException("Could not connect to the database instance specified. Connection is broken: " + getDatabase().getID()); }
 
         /*
          * If this is an internal query no H2O level locks will be acquired - they must have already been acquired somewhere else.
@@ -683,6 +683,7 @@ public class Session extends SessionWithState {
                 closed = true;
             }
         }
+
     }
 
     /**

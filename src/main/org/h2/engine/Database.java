@@ -2683,6 +2683,12 @@ public class Database implements DataHandler, Observer, ISystemStatus {
         return systemSession;
     }
 
+    public void recreateSystemSession() {
+
+        systemSession = new Session(this, h2oSystemUser);
+
+    }
+
     @Override
     public void handleInvalidChecksum() throws SQLException {
 

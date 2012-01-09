@@ -80,13 +80,22 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
             /*
              * Create a new set of schema tables locally.
              */
+
+            String sql = "";
             try {
-                String sql = createSQL(TABLES, CONNECTIONS);
-                sql += "\n\nCREATE TABLE IF NOT EXISTS " + TABLEMANAGERSTATE + "(" + "table_id INTEGER NOT NULL, " + "connection_id INTEGER NOT NULL, " + "primary_location_connection_id INTEGER NOT NULL, " + "active BOOLEAN, " + "FOREIGN KEY (table_id) REFERENCES " + TABLES + " (table_id) ON DELETE CASCADE , " + " FOREIGN KEY (connection_id) REFERENCES " + CONNECTIONS + " (connection_id)); "; //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$
+                sql = createSQL(TABLES, CONNECTIONS);
+                sql += "\n\nCREATE TABLE IF NOT EXISTS " + TABLEMANAGERSTATE + "(" + "table_id INTEGER NOT NULL, " + "connection_id INTEGER NOT NULL, " + "primary_location_connection_id INTEGER NOT NULL, " + "active BOOLEAN, " + "FOREIGN KEY (table_id) REFERENCES " + TABLES
+                                + " (table_id) ON DELETE CASCADE , " + " FOREIGN KEY (connection_id) REFERENCES " + CONNECTIONS + " (connection_id)); ";
 
-                final boolean success = getNewQueryParser();
+                boolean success = getNewQueryParser();
 
-                if (!success) { throw new StartupException("Database has already been shutdown."); }
+                if (!success) {
+                    queryParser.getSession().getDatabase().recreateSystemSession();
+                    success = getNewQueryParser();
+                }
+
+                if (!success || queryParser.getSession().isClosed()) { throw new StartupException("Database or session has already been shutdown (database?:" + queryParser.getSession().getDatabase().isClosing() + ")"); }
+
                 sqlQuery = queryParser.prepareCommand(sql);
 
                 sqlQuery.update();
@@ -95,7 +104,7 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
             }
             catch (final SQLException e) {
                 e.printStackTrace();
-                throw new Exception("Couldn't create manager state tables.");
+                throw new Exception("Couldn't create manager state tables with query: " + sql);
             }
         }
 

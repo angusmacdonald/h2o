@@ -336,7 +336,9 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         }
         catch (final Exception e) {
             ErrorHandling.exceptionError(e, "Failed to create new in-memory System Table.");
-            throw new SystemTableAccessException("Failed to create new in-memory System Table.");
+            final SystemTableAccessException systemTableAccessException = new SystemTableAccessException(e);
+            systemTableAccessException.setStackTrace(e.getStackTrace());
+            throw systemTableAccessException;
         }
 
         db.startSystemTableServer(newSystemTable);
