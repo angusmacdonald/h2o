@@ -607,7 +607,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
         final TableInfo tableInfo = new TableInfo(tableName, schemaName, db.getID());
         final boolean successful = db.getSystemTableReference().addTableInformation(this, tableInfo, replicaLocations);
 
-        if (!successful) { throw new SQLException("Failed to add Table Manager reference to System Table."); }
+        if (!successful) { throw new SQLException("Failed to add Table Manager reference to System Table. Current machine: " + db.getID() + ", System Table Loc: " + db.getSystemTableReference().getSystemTableURL()); }
 
         try {
             persistToCompleteStartup(tableInfo);

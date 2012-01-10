@@ -115,6 +115,7 @@ public class SystemTable implements ISystemTableMigratable {
             return persisted.addTableInformation(tableManager, tableDetails, replicaLocations) && inMemory.addTableInformation(tableManager, tableDetails, replicaLocations);
         }
         catch (final SQLException e) {
+            System.err.println("Failed to add table information::");
             e.printStackTrace();
             return false;
         }
@@ -385,12 +386,18 @@ public class SystemTable implements ISystemTableMigratable {
 
         final Queue<DatabaseInstanceWrapper> rankedInstances = monitoring.getRankedListOfInstances(metric, requirements);
         final Queue<DatabaseInstanceWrapper> inactiveInstancesRemoved = SystemTable.removeInactiveInstances(rankedInstances, monitoring, getDatabaseInstances());
-        final Queue<DatabaseInstanceWrapper> unMonitoredInstancesAdded = SystemTable.addUnMonitoredMachinesToEndOfQueue(inactiveInstancesRemoved, getDatabaseInstances(), excludedMachines);
+        final Queue<DatabaseInstanceWrapper> unMonitoredInstancesAdded = SystemTable.addUnMonitoredMachinesToEndOfQueue(inactiveInstancesRemoved, getDatabaseInstances(), getExcludedMachines());
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Ranked list of instances (" + unMonitoredInstancesAdded.size() + "): " + PrettyPrinter.toString(unMonitoredInstancesAdded));
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Ranked list of instances (" + unMonitoredInstancesAdded.size() + "): " + PrettyPrinter.toString(unMonitoredInstancesAdded));
 
         return unMonitoredInstancesAdded;
 
+    }
+
+    private Set<DatabaseInstanceWrapper> getExcludedMachines() {
+
+        excludedMachines.addAll(inMemory.getNoReplicateInstances());
+        return excludedMachines;
     }
 
     public static Queue<DatabaseInstanceWrapper> addUnMonitoredMachinesToEndOfQueue(final Queue<DatabaseInstanceWrapper> rankedActiveInstances, final Set<DatabaseInstanceWrapper> allInstances, final Set<DatabaseInstanceWrapper> excludedInstances) {
@@ -444,7 +451,7 @@ public class SystemTable implements ISystemTableMigratable {
 
         preMethodTest();
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Added machine to set of excluded machines for replication: " + id);
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Added machine to set of excluded machines for replication: " + id);
         excludedMachines.add(new DatabaseInstanceWrapper(id, null, true));
 
     }
@@ -459,5 +466,12 @@ public class SystemTable implements ISystemTableMigratable {
     public int getCurrentSystemTableReplication() throws RPCException, MovedException {
 
         return persisted.getCurrentSystemTableReplication();
+    }
+
+    @Override
+    public Set<DatabaseInstanceWrapper> getNoReplicateInstances() {
+
+        // Not implemented remotely.
+        return null;
     }
 }

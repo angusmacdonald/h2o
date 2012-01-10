@@ -825,4 +825,11 @@ public class SystemTableProxy extends StreamProxy implements ISystemTableMigrata
             return -1; // not reached
         }
     }
+
+    @Override
+    public Set<DatabaseInstanceWrapper> getNoReplicateInstances() {
+
+        // NOT IMPLEMENTED REMOTELY>
+        return null;
+    }
 }

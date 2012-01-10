@@ -240,4 +240,6 @@ public interface ISystemTable {
     public void suspectInstanceOfFailure(DatabaseID predecessorURL) throws RPCException, MovedException;
 
     public int getCurrentSystemTableReplication() throws RPCException, MovedException;
+
+    public Set<DatabaseInstanceWrapper> getNoReplicateInstances();
 }

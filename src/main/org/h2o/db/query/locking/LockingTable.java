@@ -35,6 +35,7 @@ import org.h2.table.LockLogger;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 /**
  * Represents a locking table for a given table - this is maintained by the table's Table Manager.
@@ -83,9 +84,9 @@ public class LockingTable implements ILockingTable, Serializable {
             return LockType.NONE;
         }
 
-        if (writeLockHolder != null) {
+        if (writeLockHolder != null && !writeLockHolder.getRequestLocation().equals(requestingUser.getRequestLocation())) {
 
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "lock refused(1): " + requestedLock + " on " + fullName + " requester: " + requestingUser);
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "lock refused(1): " + requestedLock + " on " + fullName + " requester: " + requestingUser + ", writeLockHolder: " + writeLockHolder);
 
             // Exclusive lock already held by another session, so can't grant any type of lock.
             return LockType.NONE;
@@ -112,8 +113,8 @@ public class LockingTable implements ILockingTable, Serializable {
             return requestedLock; // Either WRITE or CREATE
         }
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "lock refused(2): " + requestedLock + " on " + fullName + " requester: " + requestingUser);
-
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "lock refused(2): " + requestedLock + " on " + fullName + " requester: " + requestingUser);
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "locks held by: " + writeLockHolder + ", " + PrettyPrinter.toString(readLockHolders));
         // Request is for a DROP lock, or for a WRITE/CREATE lock while there are current READ lock holders.
         // None of these can be granted.
         return LockType.NONE;

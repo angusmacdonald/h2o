@@ -13,6 +13,8 @@ import org.h2o.db.query.TableProxyManager;
 import org.h2o.util.exceptions.MovedException;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 /**
@@ -49,6 +51,8 @@ public class GetMetaDatReplicationFactor extends Prepared {
                 System.err.println(tableName);
                 System.err.println(PrettyPrinter.toString(replicaLocations));
                 final Set<DatabaseID> replicaLocationsForTi = replicaLocations.get(ti);
+
+                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Replication locations for " + ti + ": " + PrettyPrinter.toString(replicaLocationsForTi));
 
                 int currentReplicationFactor = 0;
 

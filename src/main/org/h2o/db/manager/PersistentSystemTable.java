@@ -618,4 +618,11 @@ public class PersistentSystemTable extends PersistentManager implements ISystemT
         return super.getMetaDataReplicationFactor();
     }
 
+    @Override
+    public Set<DatabaseInstanceWrapper> getNoReplicateInstances() {
+
+        // Only implemented in InMemorySystemTable.
+        return null;
+    }
+
 }

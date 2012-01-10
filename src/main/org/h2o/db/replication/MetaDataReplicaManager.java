@@ -403,6 +403,7 @@ public class MetaDataReplicaManager {
                     sqlQuery.close();
                 }
                 catch (final RPCException e) {
+                    System.err.println("Error in meta-data query: " + query);
                     ErrorHandling.exceptionError(e, "Query: " + query);
                 }
             }

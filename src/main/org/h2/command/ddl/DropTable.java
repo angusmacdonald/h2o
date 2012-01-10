@@ -90,7 +90,7 @@ public class DropTable extends SchemaCommand {
 
         ITableManagerRemote tableManager = null;
         if (table == null) {
-            tableManager = getSchema().getDatabase().getSystemTableReference().lookup((getSchema().getName() + "." + tableName), false);
+            tableManager = getSchema().getDatabase().getSystemTableReference().lookup(getSchema().getName() + "." + tableName, false);
         }
 
         if (table == null && tableManager == null) {
@@ -199,6 +199,7 @@ public class DropTable extends SchemaCommand {
                 if (tableManager == null) {
                     // Will happen if the table doesn't exist but IF NOT EXISTS has been specified.
                     tableProxy = TableProxy.getDummyQueryProxy(new LockRequest(session));
+
                 }
                 else {
                     /*

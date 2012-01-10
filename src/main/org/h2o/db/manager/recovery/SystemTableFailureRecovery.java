@@ -395,14 +395,11 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
                 throw new SystemTableAccessException("This System Table is already being migrated to another instance.");
             }
         }
-        System.out.println("XXX about to recreateSystemTable");
 
         /*
          * Build the System Table's state from that of the existing table.
          */
         try {
-
-            System.out.println("XXX about to recreateSystemTable");
 
             newSystemTable.recreateSystemTable(oldSystemTable);
         }

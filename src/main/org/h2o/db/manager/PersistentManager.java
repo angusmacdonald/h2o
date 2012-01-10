@@ -699,6 +699,7 @@ public abstract class PersistentManager {
 
     public int getMetaDataReplicationFactor() {
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Replication locations for System Table: " + PrettyPrinter.toString(metaDataReplicaManager.getReplicaLocations(isSystemTable)));
         return metaDataReplicaManager.getReplicaLocations(isSystemTable).length;
     }
 

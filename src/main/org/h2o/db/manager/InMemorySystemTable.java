@@ -95,6 +95,8 @@ public final class InMemorySystemTable implements ISystemTable {
 
     private boolean started = false;
 
+    private final Set<DatabaseInstanceWrapper> noReplicateInstances = new HashSet<DatabaseInstanceWrapper>();
+
     public InMemorySystemTable(final Database database) throws Exception {
 
         this.database = database;
@@ -126,10 +128,10 @@ public final class InMemorySystemTable implements ISystemTable {
 
         final TableManagerWrapper tableManagerWrapper = new TableManagerWrapper(basicTableInfo, tableManager, tableDetails.getDatabaseID());
 
-        if (tableManagers.containsKey(basicTableInfo)) {
-            ErrorHandling.errorNoEvent("Table " + tableDetails + " already exists.");
-            return false; // this table already exists.
-        }
+        //        if (tableManagers.containsKey(basicTableInfo)) {
+        //            ErrorHandling.errorNoEvent("Table " + tableDetails + " already exists.");
+        //            return false; // this table already exists.
+        //        }
 
         tableManagers.put(basicTableInfo, tableManagerWrapper);
 
@@ -375,7 +377,7 @@ public final class InMemorySystemTable implements ISystemTable {
             }
 
             boolean active = remoteDB.getValue() == null ? true : remoteDB.getValue().isActive();
-
+            boolean isReplicating = true;
             if (dir == null) {
                 if (remoteDB.getKey().equals(database.getID())) {
                     // Local machine.
@@ -388,6 +390,7 @@ public final class InMemorySystemTable implements ISystemTable {
                         //dir = database.getRemoteInterface().getDatabaseInstanceAt(remoteDB.getKey()); //TODO Replace with method call to call database instance server directly...
                         dir = DatabaseInstanceProxy.getProxy(remoteDB.getKey());
                         if (dir != null) {
+                            isReplicating = dir.isReplicating();
                             active = true;
                         }
                     }
@@ -398,7 +401,13 @@ public final class InMemorySystemTable implements ISystemTable {
                 }
             }
 
-            databasesInSystem.put(remoteDB.getKey(), new DatabaseInstanceWrapper(remoteDB.getKey(), dir, active));
+            final DatabaseInstanceWrapper da = new DatabaseInstanceWrapper(remoteDB.getKey(), dir, active);
+            databasesInSystem.put(remoteDB.getKey(), da);
+
+            if (!isReplicating) {
+                noReplicateInstances.add(da);
+            }
+
         }
 
         Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Obtaining references to Table Managers.");
@@ -762,5 +771,11 @@ public final class InMemorySystemTable implements ISystemTable {
 
         //Not implemented by the Inmemory System Table.
         return 0;
+    }
+
+    @Override
+    public Set<DatabaseInstanceWrapper> getNoReplicateInstances() {
+
+        return noReplicateInstances;
     }
 }
