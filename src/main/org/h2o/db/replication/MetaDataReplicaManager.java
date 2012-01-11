@@ -232,6 +232,7 @@ public class MetaDataReplicaManager {
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL,
                                 "Does " + (isSystemTable ? "system table" : "table manager") + " meta-data need to be replicated? Currently " + replicaManager.allReplicasSize() + ", and there needs to be " + managerStateReplicationFactor + "(" + databaseInstances.size() + " machines available).");
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Meta-data on " + db.getID() + " currently replicated to : " + PrettyPrinter.toString(replicaManager.getAllReplicas()));
+                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Data can be replicated to the following machines: " + PrettyPrinter.toString(databaseInstances));
             }
 
             if (databaseInstances.size() != 1) {

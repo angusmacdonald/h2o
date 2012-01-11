@@ -358,7 +358,7 @@ public class Database implements DataHandler, Observer, ISystemStatus {
 
     private boolean connected = false;
 
-    private boolean allowReplication;
+    private boolean allowReplication = true;
 
     public Database(final String name, final ConnectionInfo ci, final String cipher) throws SQLException {
 

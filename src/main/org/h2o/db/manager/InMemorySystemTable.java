@@ -405,6 +405,7 @@ public final class InMemorySystemTable implements ISystemTable {
             databasesInSystem.put(remoteDB.getKey(), da);
 
             if (!isReplicating) {
+                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "The database " + da + " is not to be used for replication.");
                 noReplicateInstances.add(da);
             }
 
