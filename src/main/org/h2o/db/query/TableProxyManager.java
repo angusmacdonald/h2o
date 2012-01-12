@@ -453,7 +453,7 @@ public class TableProxyManager {
             session.getDatabase().getSystemTable().recreateTableManager(new TableInfo(tableManagerProxy.getFullTableName()));
         }
         catch (final RPCException e) {
-            ErrorHandling.errorNoEvent("Failed to contact system table when attempting to recover from failed Table Manager.");
+            ErrorHandling.exceptionError(e, "Failed to contact system table when attempting to recover from failed Table Manager.");
             try {
                 session.getDatabase().getSystemTableReference().failureRecovery();
             }

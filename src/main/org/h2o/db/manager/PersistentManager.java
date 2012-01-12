@@ -176,7 +176,7 @@ public abstract class PersistentManager {
 
             final int connectionID = getConnectionID(dbID);
 
-            assert connectionID != -1;
+            assert connectionID != -1 : "Connection ID was -1 for database " + dbID;
 
             if (!isTableListed(tableDetails)) { // the table doesn't already
                 // exist in the System Table.

@@ -187,12 +187,13 @@ public class SystemTableReference implements ISystemTableReference {
              * table instance has failed, so we should try to recreate the System Table somewhere else.
              */
 
-            ErrorHandling.errorNoEvent(db.getID() + ": The current System Table reference points to an inactive instance. " + "H2O will attempt to find an active System Table.");
+            ErrorHandling.exceptionError(e, db.getID() + ": The current System Table reference points to an inactive instance. " + "H2O will attempt to find an active System Table.");
 
             try {
                 systemTableWrapper = systemTableRecovery.get();
                 forceResendMonitoringData();
                 foundSystemTable = true; // would throw an exception if it didn't.
+                System.err.println("Got the system table at " + systemTableWrapper.getURL());
             }
             catch (final LocatorException e1) {
                 ErrorHandling.errorNoEvent("Couldn't find any locator servers when looking for the System Table: " + e1.getMessage());
@@ -205,13 +206,19 @@ public class SystemTableReference implements ISystemTableReference {
         }
 
         if (foundSystemTable && systemTableWrapper.getSystemTable() != null) {
+            System.err.println("SystemTableWrapper has a reference to the SystemTable.");
             try {
                 db.setConnected(true);
+                systemTableWrapper.getSystemTable().getCurrentSystemTableReplication();
                 systemTableNode = systemTableWrapper.getSystemTable().getChordReference();
             }
             catch (final RPCException e) {
                 e.printStackTrace();
                 ErrorHandling.errorNoEvent("Failed to obtain the new System Table's chord reference.");
+            }
+            catch (final MovedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
             }
         }
 
@@ -413,7 +420,7 @@ public class SystemTableReference implements ISystemTableReference {
                     handleMovedException(e);
                 }
                 catch (final RPCException e) {
-                    ErrorHandling.errorNoEvent("Error trying to connect to existing System Table reference.");
+                    ErrorHandling.errorNoEvent("Error trying to connect to existing System Table reference at " + systemTableWrapper.getURL());
 
                     try {
                         systemTableWrapper = systemTableRecovery.get();

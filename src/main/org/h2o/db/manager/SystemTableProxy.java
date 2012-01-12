@@ -89,7 +89,7 @@ public class SystemTableProxy extends StreamProxy implements ISystemTableMigrata
             throw e;
         }
         catch (final Exception e) {
-            ErrorHandling.exceptionError(e, "Error looking up a table manager location.");
+            ErrorHandling.exceptionError(e, "Error looking up a table manager location on ST at " + node_address);
             dealWithException(e);
             return null; // not reached
         }

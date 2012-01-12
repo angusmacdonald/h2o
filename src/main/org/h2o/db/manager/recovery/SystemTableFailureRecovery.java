@@ -79,7 +79,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         }
         catch (final SQLException e) {
             //This just means that no System Table was active, not that it can't be found anywhere.
-            ErrorHandling.errorNoEvent(db.getID() + ": Couldn't find active System Table at any of the locator sites. Will try to recreate System Table elsewhere.");
+            ErrorHandling.exceptionError(e, db.getID() + ": Couldn't find active System Table at any of the locator sites. Will try to recreate System Table elsewhere.");
         }
 
         return reinstantiateSystemTable();
@@ -171,7 +171,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
         }
 
         db.setConnected(true);
-
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Connected to new System Table on " + newSystemTableWrapper.getURL());
         return newSystemTableWrapper;
     }
 
@@ -256,8 +256,8 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
      */
     private SystemTableWrapper startSystemTableOnOneOfSpecifiedMachines(final List<String> stLocations) throws SystemTableAccessException {
 
-        for (final String systemTableLocation : stLocations) {
-            final DatabaseID url = DatabaseID.parseURL(systemTableLocation);
+        for (final String possibleNewSTLocation : stLocations) {
+            final DatabaseID url = DatabaseID.parseURL(possibleNewSTLocation);
 
             IDatabaseInstanceRemote databaseInstance = null;
 
@@ -269,6 +269,7 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
             }
             catch (final Exception e) {
                 // May be thrown if database isn't active.
+                System.err.println("Database at " + url + " is not active. Moving onto other database.");
                 continue;
             }
 
@@ -277,18 +278,23 @@ public class SystemTableFailureRecovery implements ISystemTableFailureRecovery {
              */
             if (databaseInstance != null) {
 
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Connected to machine at " + url + ". Beginning attempt to recreate System Table.");
-
                 ISystemTableMigratable systemTable = null;
+
                 try {
+
+                    databaseInstance.isReplicating();
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Connected to machine at " + url + ". Beginning attempt to recreate System Table.");
+
                     systemTable = databaseInstance.recreateSystemTable(); // throws a SystemTableCreationException if it fails.
                 }
                 catch (final RPCException e) {
                     // May be thrown if database isn't active.
+                    System.err.println("Database at " + url + " is not active. Moving onto other database.");
                     continue;
                 }
                 catch (final SQLException e) {
                     // Thrown if it failed to create the System Table.
+                    System.err.println("Database at " + url + " is not active. Moving onto other database.");
                     e.printStackTrace();
                     continue; // try another machine.
                 }

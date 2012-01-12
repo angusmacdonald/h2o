@@ -97,6 +97,8 @@ public final class InMemorySystemTable implements ISystemTable {
 
     private final Set<DatabaseInstanceWrapper> noReplicateInstances = new HashSet<DatabaseInstanceWrapper>();
 
+    private int recreateCount = 0;
+
     public InMemorySystemTable(final Database database) throws Exception {
 
         this.database = database;
@@ -253,7 +255,9 @@ public final class InMemorySystemTable implements ISystemTable {
          * know of it?
          */
 
-        if (tableManagerWrapper != null && database.getID().equals(tableManagerWrapper.getURL())) {
+        final Set<DatabaseID> replicaLocations = tmReplicaLocations.get(tableManagerWrapper.getTableInfo());
+
+        if (tableManagerWrapper != null && (database.getID().equals(tableManagerWrapper.getURL()) || replicaLocations.contains(database.getID()))) {
             /*
              * It is okay to re-instantiate the Table Manager here.
              */
@@ -261,7 +265,7 @@ public final class InMemorySystemTable implements ISystemTable {
                 tm = new TableManager(ti, database, true);
                 tm.recreateReplicaManagerState(tableManagerWrapper.getURL().sanitizedLocation());
                 H2OEventBus.publish(new H2OEvent(database.getID().getURL(), DatabaseStates.TABLE_MANAGER_CREATION, ti.getFullTableName()));
-
+                System.out.println("Table Manager recreated on System Table Machine: " + database.getID());
             }
             catch (final SQLException e) {
                 e.printStackTrace();
@@ -287,14 +291,15 @@ public final class InMemorySystemTable implements ISystemTable {
                 else {
                     // Remove location we know isn't active, then try to
                     // instantiate the table manager elsewhere.
-                    final Set<DatabaseID> replicaLocations = tmReplicaLocations.get(tableManagerWrapper.getTableInfo());
                     replicaLocations.remove(tableManagerWrapper.getURL());
 
                     for (final DatabaseID replicaLocation : replicaLocations) {
-                        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Attempting to recreate table manager for " + tableManagerWrapper.getTableInfo() + " on " + replicaLocation);
 
                         dir = getDatabaseInstance(replicaLocation);
-                        if (dir != null) {
+                        if (dir != null && recreateCount < 20) {
+                            Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Attempting to recreate table manager for " + tableManagerWrapper.getTableInfo() + " on " + replicaLocation);
+
+                            recreateCount++;
                             dir.executeUpdate("RECREATE TABLEMANAGER " + ti.getFullTableName() + " FROM '" + url.sanitizedLocation() + "';", false);
                         }
                     }

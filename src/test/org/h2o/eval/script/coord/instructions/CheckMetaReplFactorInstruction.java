@@ -24,7 +24,6 @@ public class CheckMetaReplFactorInstruction implements Instruction {
         this.tableName = tableName;
         this.expected = expected;
 
-        // TODO Auto-generated constructor stub
     }
 
     @Override
@@ -36,7 +35,14 @@ public class CheckMetaReplFactorInstruction implements Instruction {
 
         final IWorker worker = coordState.getScriptedInstance(0); //always perform query on first machine.
 
-        final int replication_factor = coordState.getCoordintor().executeQuery(worker, query);
+        int replication_factor = 0;
+        try {
+            replication_factor = coordState.getCoordintor().executeQuery(worker, query);
+        }
+        catch (final Exception e) {
+            // Happens when the system can't communicate with the System Table - some co-ordinator tests may deliberately cause this.
+            e.printStackTrace();
+        }
 
         if (replication_factor != expected) { throw new WorkloadException("Replication factor was not correct. Expected " + expected + ", but it was " + replication_factor); }
 

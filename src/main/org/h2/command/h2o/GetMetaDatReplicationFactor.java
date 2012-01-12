@@ -39,13 +39,22 @@ public class GetMetaDatReplicationFactor extends Prepared {
 
         try {
             if (tableName == null || tableName.equals("NULL")) {
-                final int currentReplicationFactor = session.getDatabase().getSystemTable().getCurrentSystemTableReplication();
+                if (session.getDatabase().isConnected()) {
 
-                return currentReplicationFactor;
+                    return session.getDatabase().getSystemTable().getCurrentSystemTableReplication();
+
+                }
+                else {
+                    return 0;
+                }
             }
             else {
                 final TableInfo ti = new TableInfo("PUBLIC." + tableName);
+                if (!session.getDatabase().isConnected()) {
 
+                return 0;
+
+                }
                 final Map<TableInfo, Set<DatabaseID>> replicaLocations = session.getDatabase().getSystemTable().getReplicaLocations();
                 System.err.println("-----");
                 System.err.println(tableName);
