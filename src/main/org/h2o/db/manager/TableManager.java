@@ -38,6 +38,8 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.h2.command.Command;
 import org.h2.command.Parser;
@@ -195,6 +197,10 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
      * Metric used to query the System Table when asking where to create a replica.
      */
     private static IMetric createReplicaMetric = new CreateReplicaMetric();
+
+    final ExecutorService exec = Executors.newFixedThreadPool(2);
+
+    private boolean newReplicasAvailable = false;
 
     /**
      * A new Table Manager object is created when acquiring locks during a CREATE TABLE operation and when recreating or moving
@@ -584,6 +590,16 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
             if (!asynchronousCommit && tableAlreadyExists) { // if the table doesn't already exist, an exception was thrown calling completeCreationByUpdatingSystemTable(), and no locks are held.
                 lockingTable.releaseLock(lockRequest);
             }
+
+            if (newReplicasAvailable) {
+                try {
+                    createNewReplicas();
+                }
+                catch (final MovedException e) {
+                    ErrorHandling.exceptionError(e, "Error checking whether new replicas need to be created on the Table Manager for " + db.getID());
+                }
+                newReplicasAvailable = false;
+            }
         }
     }
 
@@ -902,70 +918,7 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
      */
     private void createNewReplicas() throws RPCException, MovedException {
 
-        final int currentReplicationFactor = replicaManager.getAllReplicasOnActiveMachines().size();
-        final int newReplicasNeeded = desiredRelationReplicationFactor - currentReplicationFactor;
-
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Deciding whether to create new replicas. Current replication factor is " + currentReplicationFactor + " and the desired replication factor is " + desiredRelationReplicationFactor + ".");
-
-        if (newReplicasNeeded > 0) {
-            final Queue<DatabaseInstanceWrapper> potentialReplicaLocations = getDB().getSystemTableReference().getRankedListOfInstances(createReplicaMetric, Requirements.NO_FILTERING);
-
-            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Table Manager for " + fullName + " (on " + db.getID() + ") will attempt to replicate to " + newReplicasNeeded + " of these machines: " + PrettyPrinter.toString(potentialReplicaLocations));
-
-            final String createReplicaSQL = "CREATE  REPLICA " + fullName + " FROM '" + replicaManager.getPrimaryLocation().getURL().getURL() + "'";
-
-            final Set<DatabaseInstanceWrapper> locationOfNewReplicas = new HashSet<DatabaseInstanceWrapper>();
-
-            DatabaseInstanceWrapper wrapper = null;
-            while ((wrapper = potentialReplicaLocations.poll()) != null) {
-
-                if (!replicaManager.contains(wrapper)) {
-                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Attempting to replicate table state of " + fullName + " to " + wrapper.getURL());
-
-                    final IDatabaseInstanceRemote instance = wrapper.getDatabaseInstance();
-
-                    try {
-
-                        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing " + createReplicaSQL + " on " + instance.getAddress() + ".");
-                        final int result = instance.executeUpdate(createReplicaSQL, true);
-
-                        if (result == 0) {
-                            Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Successfully replicated " + tableInfo.getFullTableName() + " onto " + wrapper.getURL());
-                            locationOfNewReplicas.add(wrapper);
-                        }
-                    }
-                    catch (final RPCException e) {
-                        ErrorHandling.errorNoEvent("Tried to create replica of " + tableInfo.getFullTableName() + " onto " + wrapper.getURL() + ", but couldn't connnect: " + e.getMessage());
-
-                        db.getSystemTable().suspectInstanceOfFailure(wrapper.getURL());
-                    }
-                    catch (final SQLException e) {
-                        ErrorHandling.errorNoEvent("Tried to create replica of " + tableInfo.getFullTableName() + " onto " + wrapper.getURL() + ", but couldn't connnect: " + e.getMessage());
-
-                    }
-                }
-                else {
-                    Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "There is already a replica on " + wrapper.getURL() + ", so we won't replicate here.");
-                }
-            } //end of while loop attempting replication.
-
-            // Update meta-data to reflect new replica locations.
-
-            for (final DatabaseInstanceWrapper databaseInstanceWrapper : locationOfNewReplicas) {
-                // Update Table Manager meta-data.
-
-                final TableInfo tableDetails = new TableInfo(tableInfo, databaseInstanceWrapper.getURL());
-                try {
-                    addReplicaInformation(tableDetails);
-                }
-                catch (final SQLException e) {
-                    ErrorHandling.errorNoEvent("Failed to add information regarding new replicas for " + tableInfo.getFullTableName() + " on " + db.getID() + ".");
-
-                }
-
-            }
-
-        }
+        exec.submit(new CreateNewReplicasAsync(this, replicaManager, db.getSystemTableReference(), desiredRelationReplicationFactor, db.getID()));
 
     }
 
@@ -1045,7 +998,9 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
     @Override
     public void notifyOfFailure(final DatabaseID failedMachine) throws RPCException {
 
-        if (failedMachine != null) {
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Notification of failure (or startup if null) for: " + failedMachine);
+
+        if (failedMachine != null) { // if it is null this indicates that a new machine has started.
 
             replicaManager.markMachineAsFailed(failedMachine);
 
@@ -1056,17 +1011,13 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
             db.getMetaDataReplicaManager().notifyOfFailure(failedMachine);
 
         }
-        /*
-         * Check whether any new replicas are needed.
-         */
+        else {
+            /*
+             * Check whether any new replicas are needed.
+             */
 
-        try {
-            createNewReplicas();
+            newReplicasAvailable = true;
         }
-        catch (final MovedException e) {
-            ErrorHandling.exceptionError(e, "Error checking whether new replicas need to be created on the Table Manager for " + db.getID());
-        }
-
     }
 
     @Override

@@ -732,7 +732,7 @@ public class Session extends SessionWithState {
                      * Thrown if we try to log something, but a lock isn't held.
                      */
 
-                    Message.throwInternalError();
+                    //                    Message.throwInternalError();
                 }
             }
         }

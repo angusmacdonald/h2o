@@ -261,7 +261,7 @@ public class CommandContainer extends Command {
 
     private void doLock() throws SQLException {
 
-        final long max = System.currentTimeMillis() + session.getLockTimeout();
+        final long max = System.currentTimeMillis() + 120000;
 
         while (true) {
 

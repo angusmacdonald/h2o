@@ -8,19 +8,19 @@ import uk.ac.standrews.cs.nds.rpc.RPCException;
 public class NotifyTableManagersOfFailureAsync implements Runnable {
 
     private final ITableManagerRemote tm;
-    private final DatabaseID failedMachine;
+    private final DatabaseID machine;
 
     public NotifyTableManagersOfFailureAsync(final ITableManagerRemote tm, final DatabaseID failedMachine) {
 
         this.tm = tm;
-        this.failedMachine = failedMachine;
+        machine = failedMachine;
     }
 
     @Override
     public final void run() {
 
         try {
-            tm.notifyOfFailure(failedMachine);
+            tm.notifyOfFailure(machine);
         }
         catch (final RPCException e) {
             e.printStackTrace();

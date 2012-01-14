@@ -85,6 +85,7 @@ import uk.ac.standrews.cs.nds.rpc.RPCException;
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
 import uk.ac.standrews.cs.nds.util.ErrorHandling;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 /**
  * This class represents the statement CREATE REPLICA
@@ -292,7 +293,19 @@ public class CreateReplica extends SchemaCommand {
                 createEntirelyNewReplica = false;
             }
             else {
-                throw new SQLException("Replica already exists at this location.");
+                //throw new SQLException("Replica already exists at this location.");
+                //    createEntirelyNewReplica = false;
+                //   updateData = true;
+                try {
+                    final String query = "\nDROP REPLICA " + getSchema().getName() + "." + tableName + ";";
+                    final Parser queryParser = new Parser(session, true);
+                    final Command sqlQuery = queryParser.prepareCommand(query);
+                    sqlQuery.update();
+                }
+                catch (final Exception e) {
+                    System.err.println("error!");
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -461,6 +474,8 @@ public class CreateReplica extends SchemaCommand {
 
                 }
 
+                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Data to be added: " + PrettyPrinter.toString(inserts));
+
                 command.update();
             }
 
@@ -491,6 +506,7 @@ public class CreateReplica extends SchemaCommand {
             }
         }
         catch (final SQLException e) {
+            e.printStackTrace();
             db.checkPowerOff();
             db.removeSchemaObject(session, table);
             throw e;

@@ -124,7 +124,7 @@ public class SystemTableReference implements ISystemTableReference {
 
     private long timeOfLastUpdate = 0;
 
-    private static final long MAXIMUM_AGE_OF_CACHE_CONTENTS = 10000;
+    private static final long MAXIMUM_AGE_OF_CACHE_CONTENTS = 0;
 
     /*
      * GENERAL DATABASE.
@@ -206,7 +206,7 @@ public class SystemTableReference implements ISystemTableReference {
         }
 
         if (foundSystemTable && systemTableWrapper.getSystemTable() != null) {
-            System.err.println("SystemTableWrapper has a reference to the SystemTable.");
+
             try {
                 db.setConnected(true);
                 systemTableWrapper.getSystemTable().getCurrentSystemTableReplication();

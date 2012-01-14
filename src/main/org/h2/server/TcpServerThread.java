@@ -31,7 +31,6 @@ import org.h2.value.Transfer;
 import org.h2.value.Value;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
-import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 /**
  * One server thread is opened per client connection.
@@ -224,7 +223,6 @@ public class TcpServerThread implements Runnable {
         catch (final IOException e2) {
             server.traceError(e2);
             // if writing the error does not work, close the connection
-            ErrorHandling.exceptionError(e2, "Stop=true for 226");
             stop = true;
         }
     }

@@ -91,7 +91,7 @@ public class WorkloadExecutor {
                 stat.execute("SET AUTOCOMMIT ON;");
             }
             catch (final Exception e2) {
-                ErrorHandling.exceptionError(e2, "Failed to turn on auto-commit.");
+                ErrorHandling.exceptionErrorNoEvent(e2, "Failed to turn on auto-commit."); //can occur if there is no active system table (which some tests require).
             }
 
             long timeBeforeQueryExecution = 0; //when a particular transaction started.

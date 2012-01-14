@@ -414,6 +414,7 @@ public class MetaDataReplicaManager {
                     result = replica.getKey().getDatabaseInstance().executeUpdate(query, true);
                 }
                 catch (final RPCException e) {
+                    e.printStackTrace();
                     failed.put(replica.getKey(), replica.getValue());
                 }
             }
