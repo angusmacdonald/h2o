@@ -239,6 +239,8 @@ public class H2O {
         this.sysOutLocation = sysOutLocation;
         this.sysErrLocation = sysErrLocation;
 
+        System.out.println("Logging at level'" + diagnosticLevel + "' to location '" + sysOutLocation + "' and '" + sysErrLocation + "'.");
+
         databaseType = DatabaseType.DISK;
 
         Diagnostic.setLevel(diagnosticLevel);

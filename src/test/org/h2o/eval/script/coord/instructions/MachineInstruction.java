@@ -84,7 +84,7 @@ public class MachineInstruction implements Instruction {
          * Start machine. This blocks the co-ordinator script until the machine is restarted.
          */
         if (worker == null) { //Machine is being started for the first time.
-            worker = coordState.startH2OInstance(id == 0, coordState.getScriptName() + "--" + dateFormatter.format(new Date()), coordState.getDiagnosticLevel()); //disable replication on the first instance.
+            worker = coordState.startH2OInstance(id == 0, coordState.getScriptName() + "-" + dateFormatter.format(new Date()) + ".log", coordState.getDiagnosticLevel()); //disable replication on the first instance.
             coordState.addScriptedInstance(id, worker);
         }
         else {
