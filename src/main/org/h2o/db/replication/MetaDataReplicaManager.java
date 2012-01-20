@@ -409,6 +409,10 @@ public class MetaDataReplicaManager {
                     System.err.println("Error in meta-data query: " + query);
                     ErrorHandling.exceptionError(e, "Query: " + query);
                 }
+                catch (final SQLException e) {
+                    ErrorHandling.exceptionError(e, "Failed to execute query on " + replica.getKey().getURL());
+                    failed.put(replica.getKey(), replica.getValue());
+                }
             }
             else {
                 try {
@@ -419,12 +423,16 @@ public class MetaDataReplicaManager {
                     ErrorHandling.exceptionError(e, "Failed to execute query on " + replica.getKey().getURL());
                     failed.put(replica.getKey(), replica.getValue());
                 }
+                catch (final SQLException e) {
+                    ErrorHandling.exceptionError(e, "Failed to execute query on " + replica.getKey().getURL());
+                    failed.put(replica.getKey(), replica.getValue());
+                }
             }
         }
 
         final boolean hasRemoved = failed.size() > 0;
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.NONE, "List of failed machines: " + PrettyPrinter.toString(failed));
+        ErrorHandling.errorNoEvent("List of failed machines: " + PrettyPrinter.toString(failed));
 
         if (hasRemoved) {
             if (!isSystemTable) {
