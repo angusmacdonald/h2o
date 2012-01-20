@@ -147,12 +147,12 @@ public class DatabaseInstance implements IDatabaseInstanceRemote {
 
             Command command = null;
             if (systemTableCommand) {
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'Executing query on " + getURL() + ": " + sql);
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "'(1)Executing query on " + getURL() + ": " + sql);
                 final Parser schemaParser = new Parser(database.getH2OSession(), true);
                 command = schemaParser.prepareCommand(sql);
             }
             else {
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing query on " + getURL() + ": " + sql);
+                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "(2)Executing query on " + getURL() + ": " + sql);
 
                 command = parser.prepareCommand(sql);
             }

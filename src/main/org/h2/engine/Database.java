@@ -1062,7 +1062,7 @@ public class Database implements DataHandler, Observer, ISystemStatus {
                 createH2OTables(false, databaseExists);
             }
             catch (final Exception e) {
-                ErrorHandling.exceptionError(e, "Error creating H2O tables.");
+                ErrorHandling.exceptionError(e, "Error creating or adding to H2O tables.");
             }
 
             // called here, because at this point the system is ready to replicate TM state.
@@ -3121,7 +3121,13 @@ public class Database implements DataHandler, Observer, ISystemStatus {
             }
         }
 
-        systemTableRef.getSystemTable().addConnectionInformation(getID(), new DatabaseInstanceWrapper(getID(), databaseRemote.getLocalDatabaseInstance(), true));
+        try {
+            systemTableRef.getSystemTable().addConnectionInformation(getID(), new DatabaseInstanceWrapper(getID(), databaseRemote.getLocalDatabaseInstance(), true));
+        }
+        catch (final Exception e) {
+            ErrorHandling.errorNoEvent("Error connecting to system table at: " + systemTableRef.getSystemTableURL());
+            throw e;
+        }
 
     }
 

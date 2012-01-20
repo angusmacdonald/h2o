@@ -315,6 +315,8 @@ public abstract class PersistentManager {
 
         }
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "|| " + db.getID() + "|| " + sql);
+
         try {
             return executeUpdate(sql);
         }
@@ -526,7 +528,17 @@ public abstract class PersistentManager {
 
         final String sql = "UPDATE " + replicaRelation + " SET active=" + active + " WHERE table_id=" + tableID + " AND connection_id=" + connectionID + ";\n";
 
-        return executeUpdate(sql);
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "|| " + db.getID() + "|| " + sql);
+
+        try {
+            return executeUpdate(sql);
+        }
+        catch (final SQLException e) {
+            System.err.println("Is system table: " + isSystemTable);
+            System.err.println("Local machine: " + db.getID());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     protected LocalResult executeQuery(final String query) throws SQLException {
@@ -652,10 +664,14 @@ public abstract class PersistentManager {
         final DatabaseID dbID = databaseInstance.getURL();
         final String sql = "\nUPDATE " + connectionRelation + " SET active = false WHERE machine_name='" + dbID.getHostname() + "' AND connection_port=" + dbID.getPort() + " AND connection_type='" + dbID.getConnectionType() + "';";
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "|| " + db.getID() + "|| " + sql);
+
         try {
             executeUpdate(sql);
         }
         catch (final SQLException e) {
+            System.err.println("Is system table: " + isSystemTable);
+            System.err.println("Local machine: " + db.getID());
             e.printStackTrace();
         }
 
