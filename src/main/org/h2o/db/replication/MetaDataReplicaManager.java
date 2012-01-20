@@ -709,13 +709,15 @@ public class MetaDataReplicaManager {
      */
     public void notifyOfFailure(final DatabaseID failedMachine) {
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "The meta-data replication manager on " + db.getID() + " has been notified of the failure of " + failedMachine);
+        Diagnostic.traceNoEvent(DiagnosticLevel.NONE, "The meta-data replication manager on " + db.getID() + " has been notified of the failure of " + failedMachine);
 
         //        systemTableReplicas.markMachineAsFailed(failedMachine);
         //        tableManagerReplicas.markMachineAsFailed(failedMachine);
 
         systemTableReplicas.remove(new DatabaseInstanceWrapper(failedMachine, null, false));
         tableManagerReplicas.remove(new DatabaseInstanceWrapper(failedMachine, null, false));
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.NONE, "The remaining actie table manager replicas are: " + PrettyPrinter.toString(tableManagerReplicas));
     }
 
 }

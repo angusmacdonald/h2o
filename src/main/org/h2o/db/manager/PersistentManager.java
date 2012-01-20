@@ -315,7 +315,7 @@ public abstract class PersistentManager {
 
         }
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.NONE, "|| " + db.getID() + "|| " + sql);
+        Diagnostic.traceNoEvent(DiagnosticLevel.NONE, "|| " + db.getID() + "|| " + sql.substring(2));
 
         try {
             return executeUpdate(sql);
@@ -664,14 +664,14 @@ public abstract class PersistentManager {
         final DatabaseID dbID = databaseInstance.getURL();
         final String sql = "\nUPDATE " + connectionRelation + " SET active = false WHERE machine_name='" + dbID.getHostname() + "' AND connection_port=" + dbID.getPort() + " AND connection_type='" + dbID.getConnectionType() + "';";
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "|| " + db.getID() + "|| " + sql);
+        Diagnostic.traceNoEvent(DiagnosticLevel.NONE, "|| " + db.getID() + "|| " + sql);
 
         try {
             executeUpdate(sql);
         }
         catch (final SQLException e) {
-            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Is system table: " + isSystemTable);
-            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Local machine: " + db.getID());
+            Diagnostic.traceNoEvent(DiagnosticLevel.NONE, "Is system table: " + isSystemTable);
+            Diagnostic.traceNoEvent(DiagnosticLevel.NONE, "Local machine: " + db.getID());
             e.printStackTrace();
         }
 
