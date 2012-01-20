@@ -315,7 +315,15 @@ public abstract class PersistentManager {
 
         }
 
-        return executeUpdate(sql);
+        try {
+            return executeUpdate(sql);
+        }
+        catch (final SQLException e) {
+            System.err.println("Is system table: " + isSystemTable);
+            System.err.println("Local machine: " + db.getID());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     /**
