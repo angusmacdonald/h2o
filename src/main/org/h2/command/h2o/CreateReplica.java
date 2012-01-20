@@ -490,7 +490,7 @@ public class CreateReplica extends SchemaCommand {
                     ITableManagerRemote tableManager = db.getSystemTableReference().lookup(getSchema().getName() + "." + tableName, true);
 
                     if (tableManager == null) { throw new SQLException("Error creating replica for " + tableName + ". Table Manager not found."); }
-
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "About to create replica for " + tableName + ", with table manager at " + tableManager.getAddress());
                     try {
                         tableManager.addReplicaInformation(ti);
 

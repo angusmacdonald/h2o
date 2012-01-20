@@ -315,14 +315,14 @@ public abstract class PersistentManager {
 
         }
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "|| " + db.getID() + "|| " + sql);
+        Diagnostic.traceNoEvent(DiagnosticLevel.NONE, "|| " + db.getID() + "|| " + sql);
 
         try {
             return executeUpdate(sql);
         }
         catch (final SQLException e) {
-            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Is system table: " + isSystemTable);
-            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Local machine: " + db.getID());
+            Diagnostic.traceNoEvent(DiagnosticLevel.NONE, "Is system table: " + isSystemTable);
+            Diagnostic.traceNoEvent(DiagnosticLevel.NONE, "Local machine: " + db.getID());
             e.printStackTrace();
             throw e;
         }

@@ -270,11 +270,25 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
     @Override
     public void addReplicaInformation(final TableInfo tableDetails) throws RPCException, MovedException, SQLException {
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "About to add connection information for " + tableDetails + " on Table Manager at " + db.getID());
+
         preMethodTest();
 
-        super.addConnectionInformation(tableDetails.getDatabaseID(), true);
-        super.addReplicaInformation(tableDetails);
-        replicaManager.add(getDatabaseInstance(tableDetails.getDatabaseID()));
+        try {
+            super.addConnectionInformation(tableDetails.getDatabaseID(), true);
+            super.addReplicaInformation(tableDetails);
+            replicaManager.add(getDatabaseInstance(tableDetails.getDatabaseID()));
+        }
+        catch (final SQLException e) {
+
+            e.printStackTrace();
+            throw e;
+        }
+        catch (final RPCException e) {
+
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @Override
