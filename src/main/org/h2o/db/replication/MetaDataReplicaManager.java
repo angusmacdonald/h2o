@@ -392,6 +392,8 @@ public class MetaDataReplicaManager {
         final Map<DatabaseInstanceWrapper, Integer> replicas = replicaManager.getAllReplicasOnActiveMachines();
         final Map<DatabaseInstanceWrapper, Integer> failed = new HashMap<DatabaseInstanceWrapper, Integer>();
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.NONE, "About to execute meta-data update (isSystemTable:" + isSystemTable + "[ query: " + query + "] onto " + PrettyPrinter.toString(replicas));
+
         int result = -1;
         for (final Entry<DatabaseInstanceWrapper, Integer> replica : replicas.entrySet()) {
 
@@ -410,7 +412,7 @@ public class MetaDataReplicaManager {
             }
             else {
                 try {
-                    //Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing meta-data update on " + replica.getKey().getURL() + "[ query: " + query + "]");
+                    Diagnostic.traceNoEvent(DiagnosticLevel.NONE, "Executing meta-data update on " + replica.getKey().getURL() + "[ query: " + query + "]");
                     result = replica.getKey().getDatabaseInstance().executeUpdate(query, true);
                 }
                 catch (final RPCException e) {
