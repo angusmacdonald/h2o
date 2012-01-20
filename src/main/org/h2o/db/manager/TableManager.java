@@ -280,13 +280,12 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
             replicaManager.add(getDatabaseInstance(tableDetails.getDatabaseID()));
         }
         catch (final SQLException e) {
-
-            e.printStackTrace();
+            ErrorHandling.exceptionError(e, "Adding replica info failed because of this, for table " + tableDetails.getDatabaseID());
             throw e;
         }
         catch (final RPCException e) {
+            ErrorHandling.exceptionError(e, "Adding replica info failed because of this, for table " + tableDetails.getDatabaseID());
 
-            e.printStackTrace();
             throw e;
         }
     }

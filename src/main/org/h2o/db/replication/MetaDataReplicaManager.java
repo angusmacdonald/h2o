@@ -416,13 +416,15 @@ public class MetaDataReplicaManager {
                     result = replica.getKey().getDatabaseInstance().executeUpdate(query, true);
                 }
                 catch (final RPCException e) {
-                    e.printStackTrace();
+                    ErrorHandling.exceptionError(e, "Failed to execute query on " + replica.getKey().getURL());
                     failed.put(replica.getKey(), replica.getValue());
                 }
             }
         }
 
         final boolean hasRemoved = failed.size() > 0;
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.NONE, "List of failed machines: " + PrettyPrinter.toString(failed));
 
         if (hasRemoved) {
             if (!isSystemTable) {
