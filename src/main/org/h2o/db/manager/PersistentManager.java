@@ -321,8 +321,8 @@ public abstract class PersistentManager {
             return executeUpdate(sql);
         }
         catch (final SQLException e) {
-            System.err.println("Is system table: " + isSystemTable);
-            System.err.println("Local machine: " + db.getID());
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Is system table: " + isSystemTable);
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Local machine: " + db.getID());
             e.printStackTrace();
             throw e;
         }
@@ -534,8 +534,8 @@ public abstract class PersistentManager {
             return executeUpdate(sql);
         }
         catch (final SQLException e) {
-            System.err.println("Is system table: " + isSystemTable);
-            System.err.println("Local machine: " + db.getID());
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Is system table: " + isSystemTable);
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Local machine: " + db.getID());
             e.printStackTrace();
             throw e;
         }
@@ -629,11 +629,11 @@ public abstract class PersistentManager {
         Session s = null;
 
         if (db.getSessions(false).length > 0 && !db.getSessions(false)[0].isClosed()) {
-            System.err.println("getting regular session.");
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "getting regular session.");
             s = db.getSessions(false)[0];
         }
         else {
-            System.err.println("getting system session.");
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "getting system session.");
             s = db.getSystemSession();
         }
 
@@ -670,8 +670,8 @@ public abstract class PersistentManager {
             executeUpdate(sql);
         }
         catch (final SQLException e) {
-            System.err.println("Is system table: " + isSystemTable);
-            System.err.println("Local machine: " + db.getID());
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Is system table: " + isSystemTable);
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Local machine: " + db.getID());
             e.printStackTrace();
         }
 
