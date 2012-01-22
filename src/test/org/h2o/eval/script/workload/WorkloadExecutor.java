@@ -202,6 +202,8 @@ public class WorkloadExecutor {
                     try {
                         final boolean resultSet = stat.execute(query);
 
+                        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Executed query: " + query);
+
                         if (resultSet) {
                             //Not currently checked.
                         }
@@ -235,7 +237,9 @@ public class WorkloadExecutor {
                     final long timeToExecute = timeAfterQueryExecution - timeBeforeQueryExecution;
                     if (autoCommitEnabled) {
 
-                        queryLog.add(QueryLogEntry.createQueryLogEntry(currentTime(), query, successfullyExecuted, timeToExecute));
+                        if (!query.contains("SET AUTOCOMMIT")) {
+                            queryLog.add(QueryLogEntry.createQueryLogEntry(currentTime(), query, successfullyExecuted, timeToExecute));
+                        }
 
                         attemptedTransactions++;
 
@@ -252,7 +256,7 @@ public class WorkloadExecutor {
 
                         timeBeforeQueryExecution = currentTime();
                     }
-                    else if (!autoCommitEnabled && (query.contains("COMMIT;") || !successfullyExecuted)) {
+                    else if (!autoCommitEnabled && query.contains("COMMIT;") && !query.contains("SET AUTOCOMMIT") || !successfullyExecuted) {
 
                         attemptedTransactions++;
 
@@ -272,7 +276,7 @@ public class WorkloadExecutor {
                         queriesInThisTransaction.clear();
                         timeBeforeQueryExecution = currentTime(); // when auto-commit isn't enabled, the transaction starts after the previous one finishes.
                     }
-                    else {
+                    else if (!query.contains("SET AUTOCOMMIT")) {
                         queriesInThisTransaction.add(query);
                     }
 

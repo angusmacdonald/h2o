@@ -9,6 +9,7 @@ import org.h2.engine.Session;
 import org.h2.result.LocalResult;
 import org.h2o.db.id.DatabaseID;
 import org.h2o.db.id.TableInfo;
+import org.h2o.db.interfaces.IDatabaseInstanceRemote;
 import org.h2o.db.query.TableProxyManager;
 import org.h2o.util.exceptions.MovedException;
 
@@ -66,7 +67,23 @@ public class GetMetaDatReplicationFactor extends Prepared {
                 int currentReplicationFactor = 0;
 
                 if (replicaLocationsForTi != null) {
-                    currentReplicationFactor = replicaLocationsForTi.size();
+
+                    for (final DatabaseID id : replicaLocationsForTi) {
+
+                        try {
+
+                            final IDatabaseInstanceRemote dir = session.getDatabase().getRemoteInterface().getDatabaseInstanceAt(id);
+
+                            if (dir.isAlive()) {
+                                currentReplicationFactor++;
+                            }
+                        }
+                        catch (final Exception e) {
+                            e.printStackTrace();
+                            //Machine has failed.
+                        }
+                    }
+
                 }
 
                 return currentReplicationFactor;
