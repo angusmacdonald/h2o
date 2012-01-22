@@ -98,7 +98,7 @@ public class MachineInstruction implements Instruction {
             coordState.resumeWorkloads();
         }
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "CSCRIPT: Starting machine with ID '" + id + "'");
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "CSCRIPT: Starting machine with ID '" + id + "' on " + worker.getHostname());
 
         if (fail_after != null) {
             coordState.addKillOrder(id, System.currentTimeMillis() + fail_after);
