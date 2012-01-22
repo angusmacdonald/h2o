@@ -115,7 +115,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
 
     public int migrateTableManagerToLocalInstance(ITableManagerRemote oldTableManager, final String schemaName, final Database db) throws SQLException {
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Preparing to migrate Table Manager for [" + schemaName + "." + tableName);
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Preparing to migrate Table Manager for [" + schemaName + "." + tableName + "] to " + db.getID());
 
         /*
          * Create a new System Table instance locally.
@@ -180,7 +180,7 @@ public class MigrateTableManager extends org.h2.command.ddl.SchemaCommand {
             e.printStackTrace();
             throw new SQLException("Migration process timed out [" + schemaName + "." + tableName + "]. It took too long.");
         }
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Table Manager [" + schemaName + "." + tableName + "] officially migrated.");
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Table Manager [" + schemaName + "." + tableName + "] officially migrated to " + db.getID() + ".");
 
         /*
          * Confirm the new System Tables location by updating all local state.

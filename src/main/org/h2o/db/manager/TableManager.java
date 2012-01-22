@@ -229,7 +229,9 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
         tableInfo = tableDetails.getGenericTableInfo();
 
         replicaManager = new ReplicaManager();
-        replicaManager.add(database.getLocalDatabaseInstanceInWrapper()); // the first replica will be created here.
+        if (!tableAlreadyExists) { // if it does already exist, this is it being recreated or migrated, in which case the replica manager will be recreated soon.
+            replicaManager.add(database.getLocalDatabaseInstanceInWrapper()); // the first replica will be created here.
+        }
 
         lockingTable = new LockingTable(schemaName, tableName);
 

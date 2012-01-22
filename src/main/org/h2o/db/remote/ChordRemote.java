@@ -1056,15 +1056,15 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
                     }
                 }
 
-                /*
-                 * Migrate Table Managers.
-                 */
-                for (final TableManagerWrapper wrapper : localManagers) {
+                if (successorDB != null) {
+                    for (final TableManagerWrapper wrapper : localManagers) {
 
-                    Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Migrating Table Manager [" + wrapper.getTableInfo().getFullTableName() + "] to successor: " + successor);
+                        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Migrating Table Manager [" + wrapper.getTableInfo().getFullTableName() + "] to successor: " + successor);
 
-                    successorDB.executeUpdate("MIGRATE TABLEMANAGER " + wrapper.getTableInfo().getFullTableName(), false);
+                        successorDB.executeUpdate("MIGRATE TABLEMANAGER " + wrapper.getTableInfo().getFullTableName(), false);
+                    }
                 }
+
             }
             catch (final Exception e) {
                 ErrorHandling.exceptionError(e, "(Error during shutdown on " + db.getID() + ") " + e.getMessage());

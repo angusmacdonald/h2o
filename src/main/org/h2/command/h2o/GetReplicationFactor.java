@@ -7,10 +7,14 @@ import org.h2.engine.Session;
 import org.h2.result.LocalResult;
 import org.h2o.db.id.TableInfo;
 import org.h2o.db.query.TableProxyManager;
+import org.h2o.db.wrappers.DatabaseInstanceWrapper;
 import org.h2o.db.wrappers.TableManagerWrapper;
 import org.h2o.util.exceptions.MovedException;
 
 import uk.ac.standrews.cs.nds.rpc.RPCException;
+import uk.ac.standrews.cs.nds.util.Diagnostic;
+import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.PrettyPrinter;
 
 /**
  * Returns the replication factor of a given table.
@@ -35,9 +39,23 @@ public class GetReplicationFactor extends Prepared {
         try {
             final TableManagerWrapper tm = session.getDatabase().getSystemTable().lookup(new TableInfo("PUBLIC." + tableName));
 
-            final int currentReplicationFactor = tm.getTableManager().getReplicasOnActiveMachines().size();
+            int replFactor = 0;
 
-            return currentReplicationFactor;
+            for (final DatabaseInstanceWrapper wrapper : tm.getTableManager().getReplicasOnActiveMachines().keySet()) {
+                try {
+                    if (wrapper.getDatabaseInstance().isAlive()) {
+                        replFactor++;
+                    }
+                }
+                catch (final Exception e) {
+                    e.printStackTrace();
+                    //Machine has failed.
+                }
+            }
+
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Replication factor for " + tableName + " is " + replFactor + " (" + PrettyPrinter.toString(tm.getTableManager().getReplicasOnActiveMachines()) + ")");
+
+            return replFactor;
         }
         catch (final MovedException e) {
             e.printStackTrace();
