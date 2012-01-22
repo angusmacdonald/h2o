@@ -465,6 +465,8 @@ public class SystemTable implements ISystemTableMigratable {
     @Override
     public int getCurrentSystemTableReplication() throws RPCException, MovedException {
 
+        if (database.isClosing() || !database.isConnected()) { return 0; }
+
         return persisted.getCurrentSystemTableReplication();
     }
 
