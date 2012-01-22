@@ -45,7 +45,10 @@ public class GetMetaDatReplicationFactor extends Prepared {
 
                 if (session.getDatabase().isConnected()) {
 
-                    return session.getDatabase().getSystemTable().getCurrentSystemTableReplication();
+                    final int systemTableReplFactor = session.getDatabase().getSystemTable().getCurrentSystemTableReplication();
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Getting meta-data replication factor from system table at " + session.getDatabase().getSystemTable().getLocalDatabaseID() + " (it is " + systemTableReplFactor + ".");
+
+                    return systemTableReplFactor;
 
                 }
                 else {
