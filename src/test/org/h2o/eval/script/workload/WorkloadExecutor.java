@@ -202,8 +202,6 @@ public class WorkloadExecutor {
                     try {
                         final boolean resultSet = stat.execute(query);
 
-                        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Executed query: " + query);
-
                         if (resultSet) {
                             //Not currently checked.
                         }
