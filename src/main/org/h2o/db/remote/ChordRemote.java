@@ -1077,10 +1077,11 @@ public class ChordRemote implements IDatabaseRemote, IChordInterface, Observer {
 
                 // Migrate the System Table to this node before shutdown.
                 try {
-                    Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Migrating System Table to successor: " + successor);
                     successorDB = getDatabaseInstanceAt(successor);
 
                     if (successorDB.isReplicating()) {
+                        Diagnostic.traceNoEvent(DiagnosticLevel.INIT, "Migrating System Table to successor: " + successor);
+
                         successorDB.executeUpdate("MIGRATE SYSTEMTABLE", false);
                     }
 
