@@ -9,6 +9,7 @@ import org.h2o.util.exceptions.StartupException;
 
 import uk.ac.standrews.cs.nds.util.Diagnostic;
 import uk.ac.standrews.cs.nds.util.DiagnosticLevel;
+import uk.ac.standrews.cs.nds.util.ErrorHandling;
 
 public class CheckMetaReplFactorInstruction implements Instruction {
 
@@ -41,11 +42,15 @@ public class CheckMetaReplFactorInstruction implements Instruction {
         }
         catch (final Exception e) {
             // Happens when the system can't communicate with the System Table - some co-ordinator tests may deliberately cause this.
-            e.printStackTrace();
+            ErrorHandling.exceptionError(e, "This is acceptable if the System Table is not intended to be accessible in this case.");
         }
 
-        if (replication_factor != expected) { throw new WorkloadException("Replication factor was not correct. Expected " + expected + ", but it was " + replication_factor); }
+        if (replication_factor != expected) {
+            throw new WorkloadException("Replication factor was not correct. Expected " + expected + ", but it was " + replication_factor);
+        }
+        else {
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Replication factor was expected to be " + expected + " and was.");
+        }
 
     }
-
 }

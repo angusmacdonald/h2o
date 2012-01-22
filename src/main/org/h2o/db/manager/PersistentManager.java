@@ -723,8 +723,11 @@ public abstract class PersistentManager {
 
     public int getMetaDataReplicationFactor() {
 
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Replication locations for System Table: " + PrettyPrinter.toString(metaDataReplicaManager.getReplicaLocations(isSystemTable)));
-        return metaDataReplicaManager.getReplicaLocations(isSystemTable).length;
-    }
+        final String[] replicaLocations = metaDataReplicaManager.getReplicaLocations(isSystemTable);
 
+        if (replicaLocations.length == 1 && replicaLocations[0].contains(db.getID().getURL()) && db.isClosing() || !db.isConnected()) { return 0; } //replicaLocations[0].contains(db.getID().getURL()
+
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Replication locations for System Table: " + PrettyPrinter.toString(replicaLocations));
+        return replicaLocations.length;
+    }
 }
