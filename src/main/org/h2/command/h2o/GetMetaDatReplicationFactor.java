@@ -40,6 +40,9 @@ public class GetMetaDatReplicationFactor extends Prepared {
 
         try {
             if (tableName == null || tableName.equals("NULL")) {
+
+                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Checking the meta-data replication factor for the system table.");
+
                 if (session.getDatabase().isConnected()) {
 
                     return session.getDatabase().getSystemTable().getCurrentSystemTableReplication();
@@ -50,6 +53,8 @@ public class GetMetaDatReplicationFactor extends Prepared {
                 }
             }
             else {
+                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Checking the meta-data replication factor for " + tableName + ".");
+
                 final TableInfo ti = new TableInfo("PUBLIC." + tableName);
                 if (!session.getDatabase().isConnected()) {
 
@@ -74,9 +79,10 @@ public class GetMetaDatReplicationFactor extends Prepared {
 
                             final IDatabaseInstanceRemote dir = session.getDatabase().getRemoteInterface().getDatabaseInstanceAt(id);
 
-                            if (dir.isAlive()) {
-                                currentReplicationFactor++;
-                            }
+                            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "The database at " + dir.getURL() + " is still active and holds a copy of " + tableName + ".");
+
+                            currentReplicationFactor++;
+
                         }
                         catch (final Exception e) {
                             e.printStackTrace();
