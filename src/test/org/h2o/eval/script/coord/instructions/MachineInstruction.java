@@ -66,7 +66,7 @@ public class MachineInstruction implements Instruction {
         catch (final ShutdownException e) {
             ErrorHandling.exceptionError(e, "Failed to shutdown instance with ID " + id + ".");
         }
-        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "CSCRIPT: Terminated machine with ID '" + id + "'");
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "CSCRIPT: Terminated machine with ID '" + id + "' at " + new Date());
 
         coordState.addToFailureLog(new FailureLogEntry(coordState.getCurrentExecutionTime(), coordState.getScriptedInstance(id).getLocalDatabaseName(), false));
 

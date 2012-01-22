@@ -43,6 +43,8 @@ public class GetReplicationFactor extends Prepared {
 
             for (final DatabaseInstanceWrapper wrapper : tm.getTableManager().getReplicasOnActiveMachines().keySet()) {
                 try {
+
+                    wrapper.getDatabaseInstance().getChordPort();
                     if (wrapper.getDatabaseInstance().isAlive()) {
                         replFactor++;
                     }
