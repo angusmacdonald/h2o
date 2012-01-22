@@ -273,7 +273,7 @@ public class Worker extends Thread implements IWorker {
             try {
 
                 final String killH2OInstance = "/usr/bin/pkill -9 -f '.*" + H2O.class.getCanonicalName() + ".*'";
-                Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Killing H2O instance: " + killH2OInstance);
+                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Killing H2O instance: " + killH2OInstance);
                 Runtime.getRuntime().exec(killH2OInstance);
             }
             catch (final IOException e) {

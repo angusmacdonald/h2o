@@ -226,7 +226,7 @@ public class DatabaseInstance implements IDatabaseInstanceRemote {
     @Override
     public boolean isAlive() {
 
-        return alive && !database.isClosing();
+        return alive && !database.isClosing() && database.isConnected();
     }
 
     @Override
