@@ -53,7 +53,16 @@ public class CreateNewReplicasAsync implements Runnable {
 
                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Table Manager for " + tableManager.getFullTableName() + " (on " + databaseID + ") will attempt to replicate to " + newReplicasNeeded + " of these machines: " + PrettyPrinter.toString(potentialReplicaLocations));
 
-                final String createReplicaSQL = "CREATE  REPLICA " + tableManager.getFullTableName() + " FROM '" + replicaManager.getPrimaryLocation().getURL().getURL() + "'";
+                DatabaseInstanceWrapper primaryLocation = null;
+
+                Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, PrettyPrinter.toString(replicaManager.getAllReplicasOnActiveMachines()));
+
+                for (final DatabaseInstanceWrapper wrapper : replicaManager.getAllReplicasOnActiveMachines().keySet()) {
+                    primaryLocation = wrapper;
+                    break;
+                }
+
+                final String createReplicaSQL = "CREATE  REPLICA " + tableManager.getFullTableName() + " FROM '" + primaryLocation.getURL().getURL() + "'";
 
                 final Set<DatabaseInstanceWrapper> locationOfNewReplicas = new HashSet<DatabaseInstanceWrapper>();
 

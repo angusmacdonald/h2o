@@ -1031,6 +1031,8 @@ public class TableManager extends PersistentManager implements ITableManagerRemo
              * Check whether any new replicas are needed.
              */
 
+            Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "A new machine is available onto which new replicas can be added.");
+            //This is done asynchronously to stop deadlock.
             newReplicasAvailable = true;
         }
     }

@@ -238,6 +238,8 @@ public class CreateReplica extends SchemaCommand {
     @Override
     public int update() throws SQLException, RPCException {
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Creating replica for " + tableName + ".");
+
         final Database db = session.getDatabase();
 
         if (whereReplicaWillBeCreated != null || db.getFullDatabasePath().equals(whereReplicaWillBeCreated)) {
@@ -688,13 +690,18 @@ public class CreateReplica extends SchemaCommand {
 
     private void connect(final String tableLocation, final boolean clearLinkConnectionCache) throws SQLException {
 
+        Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "About to readSQL from " + tableLocation + ".");
+
         final Database db = session.getDatabase();
         if (!empty) {
             conn = db.getLinkConnection("org.h2.Driver", tableLocation, PersistentSystemTable.USERNAME, PersistentSystemTable.PASSWORD, clearLinkConnectionCache);
             synchronized (conn) {
                 try {
                     readMetaData();
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Meta-data now read for " + tableName + ".");
+
                     getTableData();
+                    Diagnostic.traceNoEvent(DiagnosticLevel.FINAL, "Table data now read for " + tableName + ".");
 
                 }
                 catch (final SQLException e) {
