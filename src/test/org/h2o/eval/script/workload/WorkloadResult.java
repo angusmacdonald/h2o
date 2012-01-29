@@ -160,13 +160,12 @@ public class WorkloadResult implements Serializable {
      */
     public long getNumberOfSuccessfulTransactionsBetween(final long currentTime, final long newTime) {
 
-        //System.out.println(PrettyPrinter.toString(queryLog));
-
         long transactionCount = 0;
 
         for (final QueryLogEntry entry : queryLog) {
+
             final long offsetTimeOfCommit = entry.timeOfCommit - getStartTime();
-            if (offsetTimeOfCommit >= currentTime && offsetTimeOfCommit <= newTime && entry.queryTypes.size() > 0) {
+            if (offsetTimeOfCommit >= currentTime && offsetTimeOfCommit <= newTime && entry.queryTypes.size() > 0 && entry.successfulExecution) {
                 transactionCount += 1; //the following measures the number of queries: entry.queryTypes.size();
             }
         }

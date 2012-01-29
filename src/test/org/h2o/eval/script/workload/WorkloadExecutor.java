@@ -221,8 +221,9 @@ public class WorkloadExecutor {
                              */
                             try {
                                 Diagnostic.traceNoEvent(DiagnosticLevel.FULL, "Executing rollback because transaction has failed.");
-                                stat.execute("ROLLBACK;");
                                 queriesInThisTransaction.clear();
+                                stat.execute("ROLLBACK;");
+
                             }
                             catch (final Exception e1) {
                                 //May throw an exception is there is nothing to roll back.
