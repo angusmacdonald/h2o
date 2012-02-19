@@ -106,9 +106,8 @@ public class QueryLogEntry extends LogEntry implements Serializable {
                 queryType = QueryType.SELECT;
                 tableInvolved = query.substring("SELECT * FROM ".length(), query.indexOf(" WHERE"));
             }
-            else {
-                System.out.println(query);
-            }
+            System.out.println(">>>: " + query);
+            System.err.println(">>>: " + query);
 
             if (tableInvolved != null) {
                 tablesInvolved.add(tableInvolved);
